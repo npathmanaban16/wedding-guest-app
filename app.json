@@ -1,0 +1,56 @@
+{
+  "expo": {
+    "name": "Neha & Naveen",
+    "slug": "wedding-guest-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "wedding-guest-app",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FBF7F4"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.nehanaveen.weddingapp",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Allow Neha & Naveen Wedding App to access your photos to share memories.",
+        "NSCameraUsageDescription": "Allow Neha & Naveen Wedding App to use your camera to capture memories.",
+        "NSPhotoLibraryAddUsageDescription": "Allow Neha & Naveen Wedding App to save photos."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#FBF7F4"
+      },
+      "package": "com.nehanaveen.weddingapp",
+      "permissions": [
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "CAMERA"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Neha & Naveen Wedding App to access your photos.",
+          "cameraPermission": "Allow Neha & Naveen Wedding App to use your camera."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
