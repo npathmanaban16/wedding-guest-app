@@ -136,11 +136,13 @@ export default function MyInfoScreen() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    getMyInfo().then((data) => {
-      setInfo(data);
-      setLoading(false);
-    });
-  }, []);
+    if (guestName) {
+      getMyInfo(guestName).then((data) => {
+        setInfo(data);
+        setLoading(false);
+      });
+    }
+  }, [guestName]);
 
   const update = (key: keyof MyInfo) => (value: string) => {
     setInfo((prev) => ({ ...prev, [key]: value }));
@@ -148,8 +150,9 @@ export default function MyInfoScreen() {
   };
 
   const handleSave = async () => {
+    if (!guestName) return;
     setSaving(true);
-    await saveMyInfo(info);
+    await saveMyInfo(guestName, info);
     setSaving(false);
     setSaved(true);
     Alert.alert('Saved!', 'Your details have been saved on this device.');
