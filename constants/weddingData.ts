@@ -1,14 +1,14 @@
 // ============================================================
-// WEDDING DATA — update these details with your actual information
+// WEDDING DATA
 // ============================================================
 
 export const WEDDING = {
   bride: "Neha",
   groom: "Naveen",
   coupleNames: "Neha & Naveen",
-  weddingDate: new Date("2026-08-15T15:00:00"), // TODO: Update with your actual date & time
-  location: "Switzerland",
-  hashtag: "#NehaNaveen2026",       // TODO: Update with your hashtag
+  weddingDate: new Date("2026-05-23T17:00:00"), // Saturday 23 May 2026, ceremony at 5:00 PM
+  location: "Montreux, Switzerland",
+  hashtag: "#NehaNaveen2026",       // TODO: Update with your actual hashtag
   website: "https://www.neha-naveen.com",
   contactEmail: "wedding@neha-naveen.com", // TODO: Update
 };
@@ -21,8 +21,8 @@ export interface WeddingEvent {
   id: string;
   title: string;
   emoji: string;
-  date: string;      // Display string, e.g. "Friday, 14 August 2026"
-  time: string;      // Display string, e.g. "7:00 PM"
+  date: string;
+  time: string;
   venue: string;
   address: string;
   dressCode: string;
@@ -32,64 +32,68 @@ export interface WeddingEvent {
 
 export const EVENTS: WeddingEvent[] = [
   {
-    id: "welcome-dinner",
-    title: "Welcome Dinner",
-    emoji: "🍽️",
-    date: "Friday, 14 August 2026",      // TODO: Update
-    time: "7:00 PM",
-    venue: "Restaurant Cheval Blanc",     // TODO: Update
-    address: "Bahnhofstrasse 10, Zermatt, Switzerland", // TODO: Update
-    dressCode: "Smart Casual — think elegant but comfortable. Denim welcome!",
+    id: "rehearsal-mehendi",
+    title: "Rehearsal Dinner & Mehendi",
+    emoji: "🌿",
+    date: "Thursday, 21 May 2026",
+    time: "6:00 PM – 9:00 PM",
+    venue: "Lavaux Vineyards | Le Baron Tavernier",
+    address: "Lavaux, Switzerland (transportation provided from hotel)",
+    dressCode:
+      "Smart casual Indian or Western attire. White, soft neutrals, shades of green or rose.",
     description:
-      "Join us for an intimate welcome dinner the evening before the big day. This is a relaxed gathering for us to spend time with our nearest and dearest before all the excitement begins.",
-    notes: "Dinner will be followed by drinks on the terrace with views of the Matterhorn.",
+      "A rehearsal dinner inspired by mehendi traditions, following the ceremony rehearsal earlier in the day. Join us for an intimate evening among UNESCO-listed terraced vineyards above Lake Geneva.",
+    notes:
+      "Transportation will be provided from the Fairmont Le Montreux Palace. Wear loose or open-sleeved clothing so henna can be applied to hands and arms!",
+  },
+  {
+    id: "sangeet",
+    title: "Sangeet",
+    emoji: "💃",
+    date: "Friday, 22 May 2026",
+    time: "6:30 PM – 11:00 PM",
+    venue: "Fairmont Le Montreux Palace | La Coupole & La Terrasse du Petit Palais",
+    address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
+    dressCode:
+      "Festive Indian or semi-formal Western. Bright jewel tones and festive hues — think vibrant lehengas, sarees, sherwanis, or colourful cocktail attire.",
+    description:
+      "Welcome party with dancing, drinks, and dinner. This is the big celebration night — come ready to dance!",
+    notes:
+      "La Terrasse du Petit Palais offers stunning views over Lake Geneva. Cocktail attire with an Indian festive flair is encouraged.",
   },
   {
     id: "ceremony",
     title: "Wedding Ceremony",
     emoji: "💍",
-    date: "Saturday, 15 August 2026",    // TODO: Update
-    time: "3:00 PM",
-    venue: "Chapel of St. Mauritius",    // TODO: Update
-    address: "Kirchplatz, Zermatt, Switzerland", // TODO: Update
+    date: "Saturday, 23 May 2026",
+    time: "5:00 PM",
+    venue: "Fairmont Le Montreux Palace | Garden",
+    address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
     dressCode:
-      "Formal / Black Tie Optional. Ladies: floor-length gowns or elegant midi dresses. Gentlemen: suits or tuxedos.",
+      "Indian formal or black-tie Western. Elegant neutrals and muted evening tones. Please avoid white, ivory, and cream.",
     description:
-      "The ceremony will be an intimate civil service followed by a symbolic blessing. Please arrive 20–30 minutes early to be seated. Tissues recommended! 🥲",
-    notes:
-      "The chapel is a short walk from the main square. Electric taxis will be available from the hotel.",
+      "The wedding ceremony in the beautiful gardens of the Fairmont, with the Alps and Lake Geneva as backdrop. Please arrive 20–30 minutes early to be seated.",
+    notes: "Cocktail hour to follow at 6:00 PM.",
   },
   {
     id: "reception",
-    title: "Wedding Reception & Dinner",
+    title: "Reception",
     emoji: "🥂",
-    date: "Saturday, 15 August 2026",   // TODO: Update
-    time: "6:00 PM",
-    venue: "Grand Hotel Zermatterhof",  // TODO: Update
-    address: "Bahnhofstrasse 55, Zermatt, Switzerland", // TODO: Update
-    dressCode: "Formal / Black Tie Optional — same outfit as the ceremony.",
+    date: "Saturday, 23 May 2026",
+    time: "7:30 PM – 1:00 AM",
+    venue: "Fairmont Le Montreux Palace | Salle des Fêtes",
+    address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
+    dressCode:
+      "Indian formal or black-tie Western. Elegant neutrals and muted evening tones — same outfit as the ceremony.",
     description:
-      "The reception begins with cocktail hour in the garden, followed by a seated dinner and dancing. Speeches, cake, and lots of joy await!",
+      "Dinner, speeches, dancing, and celebrating into the night in the grand Salle des Fêtes ballroom.",
     notes:
-      "The venue has a late-night bar. Last shuttle back to nearby hotels runs at 1:00 AM.",
-  },
-  {
-    id: "farewell-brunch",
-    title: "Farewell Brunch",
-    emoji: "☀️",
-    date: "Sunday, 16 August 2026",     // TODO: Update
-    time: "10:30 AM",
-    venue: "Hotel Alex Zermatt",        // TODO: Update
-    address: "Bodmenstrasse 12, Zermatt, Switzerland", // TODO: Update
-    dressCode: "Casual — come as you are!",
-    description:
-      "A relaxed goodbye brunch for those still in town. Come and relive the highlights over eggs and mimosas before heading home.",
-    notes: "No RSVP needed — just show up!",
+      "The reception follows directly from the cocktail hour. Taxis can be arranged through the hotel concierge.",
   },
 ];
 
 // ============================================================
-// SWITZERLAND GUIDE
+// SWITZERLAND GUIDE — Montreux
 // ============================================================
 
 export interface GuideItem {
@@ -111,78 +115,95 @@ export interface GuideSection {
 export const SWITZERLAND_GUIDE: GuideSection[] = [
   {
     id: "getting-there",
-    title: "Getting to Zermatt",
-    emoji: "🚄",
+    title: "Getting to Montreux",
+    emoji: "✈️",
     items: [
+      {
+        id: "geneva-flight",
+        name: "Fly into Geneva (GVA) — recommended",
+        category: "Transport",
+        description:
+          "Geneva Airport is the closest major hub. Montreux is about 1 hour from Geneva by train or car — a scenic journey along the shores of Lake Geneva.",
+        tip: "Direct flights to Geneva from London, Paris, Amsterdam, Dubai, and many other cities. Book trains in advance at sbb.ch.",
+      },
       {
         id: "zurich-flight",
         name: "Fly into Zurich (ZRH)",
         category: "Transport",
         description:
-          "Zurich Airport is the main hub with direct flights from most major cities. From the airport, take the train to Brig or Visp, then change to the Matterhorn Gotthard Bahn to Zermatt.",
-        tip: "Book trains in advance on sbb.ch for cheaper fares. The journey takes around 3.5 hours.",
+          "Zurich is Switzerland's main hub if you can't get a direct flight to Geneva. Train from Zurich to Montreux takes about 2 hours.",
+        tip: "Zurich to Montreux is a beautiful ride through Central Switzerland.",
       },
       {
-        id: "geneva-flight",
-        name: "Fly into Geneva (GVA)",
+        id: "train-montreux",
+        name: "Train: Geneva Airport → Montreux",
         category: "Transport",
         description:
-          "Geneva Airport is closer to Zermatt if you're coming from western Europe. Train from Geneva to Visp, then to Zermatt — about 3 hours.",
-        tip: "Geneva to Zermatt by train is a gorgeous journey through the Rhône Valley.",
+          "Trains run several times every hour from Geneva Airport directly to Montreux. Journey time is about 1 hour. The Fairmont Le Montreux Palace is a 5-minute walk from Montreux train station.",
+        tip: "A Swiss Travel Pass gives unlimited train travel — great value if you're exploring Switzerland before or after the wedding.",
       },
       {
-        id: "train-to-zermatt",
-        name: "Train to Zermatt",
+        id: "taxi-uber",
+        name: "Taxi or Uber",
         category: "Transport",
         description:
-          "Zermatt is car-free! You must take the Matterhorn Gotthard Bahn from Visp or Brig to reach the village. Cars are left at Täsch, from where there's a shuttle train.",
-        tip: "Swiss Travel Pass covers most trains — great value if you plan to explore Switzerland.",
+          "Unlike Zermatt, Montreux is fully accessible by car. Uber operates in the Geneva/Lausanne region. A taxi from Geneva Airport to Montreux costs approximately CHF 120–160.",
+        tip: "Uber is usually cheaper than traditional taxis from the airport.",
       },
     ],
   },
   {
     id: "things-to-do",
     title: "Things to Do",
-    emoji: "🏔️",
+    emoji: "🏰",
     items: [
       {
-        id: "matterhorn",
-        name: "See the Matterhorn",
+        id: "chillon",
+        name: "Château de Chillon",
         category: "Sightseeing",
         description:
-          "The iconic pyramid-shaped peak is unmistakable on the Zermatt skyline. Head to Riffelberg or Gornergrat for the most stunning views.",
-        tip: "The Matterhorn Glacier Paradise (Klein Matterhorn) is the highest cable car in the Alps — incredible on a clear day!",
+          "Switzerland's most visited historic monument — a stunning medieval castle on a rocky island at the edge of Lake Geneva, just 3km from Montreux. Immortalised by Lord Byron.",
+        tip: "Walk or cycle along the lake promenade from Montreux (about 45 minutes). Or take bus 201.",
       },
       {
-        id: "gornergrat",
-        name: "Gornergrat Railway",
-        category: "Activity",
-        description:
-          "Take the cogwheel railway 3,089m up to Gornergrat for panoramic views of 29 four-thousanders, including the Matterhorn and Europe's largest glacier (outside the polar region).",
-        tip: "Go early morning for the clearest views and fewer crowds. Sunrise trips are magical.",
-      },
-      {
-        id: "hiking",
-        name: "Hiking",
-        category: "Activity",
-        description:
-          "Zermatt has over 400km of summer hiking trails for all abilities. The Five Lakes Walk (Fünf Seen Wanderung) is a classic — each lake reflects the Matterhorn differently.",
-        tip: "The Five Lakes Walk is about 10km and takes 3–4 hours. Moderate difficulty.",
-      },
-      {
-        id: "glacier-paradise",
-        name: "Matterhorn Glacier Paradise",
-        category: "Activity",
-        description:
-          "At 3,883m, this is the highest cable car station in the Alps. There's even an ice palace carved into the glacier!",
-        tip: "Bring a warm layer — it's very cold at the top even in summer.",
-      },
-      {
-        id: "village",
-        name: "Explore Zermatt Village",
+        id: "lake-promenade",
+        name: "Montreux Lake Promenade",
         category: "Sightseeing",
         description:
-          "The charming car-free village has beautiful old chalets, boutique shops, the Matterhorn Museum (Zermatlantis), and fantastic restaurants. A stroll through the Hinterdorf area is lovely.",
+          "A gorgeous flower-lined lakeside walkway stretching for several kilometres. In May the roses are in full bloom. The famous Freddie Mercury statue is on the promenade.",
+        tip: "May is peak blooming season — perfect for photos with the Alps reflecting on the lake.",
+      },
+      {
+        id: "rochers-de-naye",
+        name: "Rochers de Naye",
+        category: "Activity",
+        description:
+          "Take the GoldenPass cogwheel railway from Montreux station up to 2,042m for panoramic views over Lake Geneva and the Alps. There are marmots at the summit!",
+        tip: "The train journey itself is half the attraction — sit on the right side going up for lake views. About 55 minutes from Montreux.",
+      },
+      {
+        id: "lavaux",
+        name: "Lavaux Vineyards (UNESCO)",
+        category: "Activity",
+        description:
+          "The terraced vineyards between Lausanne and Montreux are a UNESCO World Heritage Site — and you'll be visiting for the Rehearsal Dinner! Come earlier for wine tasting and hiking.",
+        tip: "The Lavaux Vinorama in Rivaz has excellent local wine tasting with stunning views.",
+      },
+      {
+        id: "lausanne",
+        name: "Day Trip to Lausanne",
+        category: "Sightseeing",
+        description:
+          "A vibrant Swiss city just 30 minutes by train. Highlights: Gothic cathedral, Olympic Museum, the charming Old Town, and the lakefront at Ouchy.",
+        tip: "The Olympic Museum at Ouchy is world-class and right on the lake — worth a few hours.",
+      },
+      {
+        id: "golden-pass",
+        name: "GoldenPass Express Train",
+        category: "Activity",
+        description:
+          "One of Switzerland's most scenic train journeys starts in Montreux and winds through the mountains toward Interlaken and Lucerne. Even a short section is spectacular.",
+        tip: "Book panoramic seats at sbb.ch. The stretch from Montreux to Zweisimmen is especially dramatic.",
       },
     ],
   },
@@ -192,43 +213,44 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
     emoji: "🍷",
     items: [
       {
-        id: "whymper-stube",
-        name: "Whymper-Stube",
+        id: "baron-tavernier",
+        name: "Le Baron Tavernier",
         category: "Restaurant",
         description:
-          "A cosy, traditional Swiss restaurant named after Edward Whymper who first summited the Matterhorn. Famous for its raclette and fondues.",
-        tip: "Get the raclette — it's the real Swiss experience.",
+          "A beautiful estate restaurant in the Lavaux vineyards — this is where the Rehearsal Dinner is being held! The estate also offers wine tasting.",
+        tip: "The local Chasselas white wine from the Lavaux region is exceptional.",
       },
       {
-        id: "chez-vrony",
-        name: "Chez Vrony",
+        id: "fairmont-dining",
+        name: "Fairmont Le Montreux Palace",
         category: "Restaurant",
         description:
-          "A beloved mountain restaurant on the slopes of Sunnegga with spectacular Matterhorn views. Walk or ski down from Sunnegga station.",
-        tip: "Lunch here on a sunny day with a glass of local wine and a cheese plate is perfection.",
+          "The hotel has several dining options: Funky Claude's Bar (Japanese fusion), Le Deck (brasserie with lake views), and afternoon tea in the Salon.",
+        tip: "Funky Claude's Bar is a great spot for pre-dinner drinks — named after legendary Montreux Jazz Festival founder Claude Nobs.",
       },
       {
-        id: "elsie-bar",
-        name: "Elsie's Bar",
-        category: "Bar",
-        description:
-          "A Zermatt institution since 1970. Tiny and atmospheric, Elsie's is the place for an après-ski drink or a late-night cocktail.",
-        tip: "The Matterhorn-shaped chocolate they bring with your drinks is adorable.",
-      },
-      {
-        id: "cervo",
-        name: "Cervo Mountain Resort",
+        id: "la-rouvenaz",
+        name: "Hôtel & Restaurant La Rouvenaz",
         category: "Restaurant",
         description:
-          "Upscale dining with stunning mountain views. The Bistro Cervo and SITI Restaurant offer excellent modern Alpine cuisine.",
+          "A Montreux institution right on the lakeside, serving Swiss-Italian cuisine with beautiful lake views. Known for fresh fish from Lake Geneva.",
+        tip: "Perch (perche) from Lake Geneva is a local speciality — try the classic meunière style.",
       },
       {
-        id: "supermarkt",
+        id: "confiserie-zurcher",
+        name: "Confiserie Zurcher",
+        category: "Café",
+        description:
+          "A traditional Swiss confectionery and café — perfect for breakfast pastries, hot chocolate, and handmade chocolates to take home.",
+        tip: "Pick up a box of Swiss chocolates as a souvenir — made in-house.",
+      },
+      {
+        id: "coop-migros",
         name: "Coop & Migros Supermarkets",
         category: "Practical",
         description:
-          "Both supermarkets are in the village centre. Stock up on Swiss chocolate, local cheeses, and wine — much better value than restaurants for breakfast supplies!",
-        tip: "Try Gruyère, Emmental, and Appenzeller cheese. And Cailler chocolate — it's Swiss-made.",
+          "Both supermarkets are in the Montreux town centre. Great for wine, cheese, chocolate, and breakfast supplies at much better value than restaurants.",
+        tip: "Try local Chasselas wine, Gruyère cheese, and Cailler chocolate (made nearby in Broc).",
       },
     ],
   },
@@ -242,39 +264,47 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         name: "Currency",
         category: "Practical",
         description:
-          "Switzerland uses Swiss Francs (CHF). 1 CHF ≈ £0.90 / €1.05 / $1.10. Most places accept cards but carry some cash for smaller shops.",
-        tip: "Swiss prices are high — budget around CHF 25–40 for a main course at a mid-range restaurant.",
+          "Switzerland uses Swiss Francs (CHF). 1 CHF ≈ £0.90 / €1.05 / $1.10. Cards are widely accepted but carry some cash for smaller shops.",
+        tip: "Swiss prices are high — budget CHF 25–40 for a main course at a mid-range restaurant.",
       },
       {
         id: "language",
         name: "Language",
         category: "Practical",
         description:
-          "Zermatt is in the German-speaking region of Switzerland. German is the main language, but almost everyone in the village speaks English fluently.",
-        tip: "Learn 'Merci' (thank you) and 'Hoi' (hi) — locals appreciate the effort!",
+          "Montreux is in French-speaking Switzerland. French is the main language, but English is widely spoken in hotels, restaurants, and tourist areas.",
+        tip: "'Merci' (thank you), 'Bonjour' (hello), 'S'il vous plaît' (please) — locals appreciate the effort!",
       },
       {
-        id: "weather",
-        name: "Weather in August",
+        id: "weather-may",
+        name: "Weather in May",
         category: "Practical",
         description:
-          "August is warm in the valley (18–25°C) but much colder at altitude. Expect warm sunny days and the possibility of afternoon thunderstorms in the mountains.",
-        tip: "Layer up for mountain excursions. A light waterproof jacket is essential.",
+          "May in Montreux is beautiful spring weather: 15–22°C on warm days. Expect occasional rain — pack a light waterproof jacket. The lake acts as a heat buffer making it milder than inland.",
+        tip: "May is peak blooming season — the lake promenade will be stunning with roses and flowers.",
       },
       {
-        id: "electric-taxis",
-        name: "Getting Around",
+        id: "getting-around",
+        name: "Getting Around Montreux",
         category: "Transport",
         description:
-          "Zermatt is car-free. You'll get around on foot, by electric taxi, horse-drawn carriage, or hotel shuttle. The village is compact — most things are walkable.",
-        tip: "Electric taxis are quick and not too expensive for luggage or late nights.",
+          "Montreux is a normal town — cars, taxis, and Uber all work here. The town centre is walkable. Trains connect to Lausanne (30 min), Geneva (1 hr), and beyond.",
+        tip: "The Fairmont is 5 minutes on foot from Montreux train station. Most wedding venues are at or near the hotel.",
+      },
+      {
+        id: "adaptor",
+        name: "Plug Adaptor",
+        category: "Practical",
+        description:
+          "Switzerland uses Type J sockets, which are unique to Switzerland. A universal travel adaptor will cover this.",
+        tip: "Don't forget — EU adaptors don't always fit Swiss sockets!",
       },
       {
         id: "emergency",
         name: "Emergency Numbers",
         category: "Practical",
         description:
-          "Police: 117 | Ambulance: 144 | Fire: 118 | Mountain Rescue: 1414. The nearest hospital is in Visp, about 35km away.",
+          "Police: 117 | Ambulance: 144 | Fire: 118. The nearest hospital is RSMR in Vevey, about 5km from Montreux.",
       },
     ],
   },
@@ -304,83 +334,112 @@ export const PACKING_GUIDE: PackingCategory[] = [
     emoji: "👗",
     items: [
       {
-        id: "welcome-dinner-outfit",
-        label: "Welcome Dinner — Smart Casual outfit",
-        tip: "Think elegant but relaxed. A nice blouse with trousers, or a midi dress. No jeans required, but fine if you prefer.",
+        id: "mehendi-outfit",
+        label: "Rehearsal Dinner / Mehendi — Smart casual Indian or Western",
+        tip: "White, soft neutrals, shades of green or rose. Wear loose or open-sleeved clothing so henna can be applied easily to hands and arms!",
+      },
+      {
+        id: "sangeet-outfit",
+        label: "Sangeet — Festive Indian or semi-formal Western",
+        tip: "Bright jewel tones and festive hues! Think vibrant lehenga, saree, salwar kameez, sherwani, or a colourful cocktail dress. This is the big dancing night — dress to impress!",
       },
       {
         id: "ceremony-outfit",
-        label: "Ceremony & Reception — Formal outfit",
-        tip: "Ladies: floor-length gown or elegant midi dress in any colour except white/ivory. Gentlemen: suit or tuxedo. Heels not required — cobblestones can be tricky!",
+        label: "Ceremony & Reception — Indian formal or black-tie Western",
+        tip: "Elegant neutrals and muted evening tones. Bridal lehenga, silk saree, sherwani, formal gown, or tuxedo. Please avoid white, ivory, and cream.",
       },
       {
-        id: "farewell-brunch-outfit",
-        label: "Farewell Brunch — Casual outfit",
-        tip: "Whatever you're comfortable in! Jeans, casual dress, whatever.",
+        id: "casual-exploring",
+        label: "Casual sightseeing / daytime clothes (2–3 outfits)",
+        tip: "Comfortable walking shoes essential — you'll be on the lake promenade and cobblestone streets.",
       },
       {
-        id: "hiking-outfit",
-        label: "Hiking / Mountain day outfit",
-        tip: "Moisture-wicking layers, waterproof jacket, and sturdy walking shoes or hiking boots.",
-      },
-      {
-        id: "casual-sightseeing",
-        label: "Casual sightseeing clothes (2–3 outfits)",
-        tip: "Comfortable walking shoes are a must — Zermatt's streets are cobblestone and hilly.",
+        id: "travel-outfit",
+        label: "Comfortable travel outfit for the journey",
       },
     ],
   },
   {
     id: "footwear",
     title: "Footwear",
-    emoji: "👟",
+    emoji: "👠",
     items: [
       {
-        id: "comfortable-walking",
-        label: "Comfortable walking shoes / trainers",
-        tip: "Essential — you'll be walking a lot on cobblestones.",
+        id: "heels-events",
+        label: "Dressy shoes / heels for Sangeet, Ceremony & Reception",
+        tip: "All three main events are indoors at the Fairmont — heels are fine. Block heels or kitten heels are great for dancing at the Sangeet.",
       },
       {
-        id: "dress-shoes",
-        label: "Dress shoes for the ceremony & reception",
-        tip: "Consider block heels or low heels — stilettos on cobblestones are tricky!",
+        id: "flats-mehendi",
+        label: "Flats or comfortable shoes for Mehendi dinner",
+        tip: "Le Baron Tavernier is a vineyard estate — you may be on terraced outdoor terrain.",
       },
       {
-        id: "hiking-boots",
-        label: "Hiking boots or sturdy trail shoes (optional)",
-        tip: "Only needed if you plan to hike. Trail runners also work for easier hikes.",
+        id: "walking-shoes",
+        label: "Comfortable walking shoes / trainers for sightseeing",
+        tip: "Essential for the Montreux promenade and Château de Chillon — quite a lot of walking.",
       },
     ],
   },
   {
     id: "weather-gear",
-    title: "Weather & Mountain Gear",
-    emoji: "🏔️",
+    title: "May Weather Essentials",
+    emoji: "🌦️",
     items: [
       {
         id: "light-jacket",
-        label: "Waterproof / windproof jacket",
-        tip: "Mountain weather changes fast. A packable rain jacket is perfect.",
+        label: "Light waterproof / windproof jacket",
+        tip: "May in Montreux can bring spring showers. A packable rain jacket is perfect.",
       },
       {
-        id: "warm-layer",
-        label: "Warm mid-layer (fleece or puffer)",
-        tip: "Temperatures at altitude (3000m+) can be close to freezing even in August.",
+        id: "layers",
+        label: "Light layers / cardigan",
+        tip: "Evenings by the lake can be cool (12–15°C). Bring a wrap or light jacket for outdoor moments.",
       },
       {
         id: "sunglasses",
         label: "Sunglasses",
-        tip: "UV is intense at altitude. Polarised lenses recommended.",
+        tip: "The lake glare on sunny days is intense.",
       },
       {
         id: "sunscreen",
-        label: "High-SPF sunscreen (SPF 50+)",
-        tip: "Mountain sun is much stronger — you'll burn faster than at sea level.",
+        label: "Sunscreen (SPF 30+)",
+        tip: "Especially if you're heading up to Rochers de Naye.",
+      },
+    ],
+  },
+  {
+    id: "indian-attire-extras",
+    title: "Indian Attire Extras",
+    emoji: "✨",
+    items: [
+      {
+        id: "dupatta",
+        label: "Dupatta / stole / wrap for each Indian outfit",
+        tip: "Handy for cooler evenings outdoors and essential for completing Indian formal looks.",
       },
       {
-        id: "hat",
-        label: "Sun hat + warm beanie",
-        tip: "A sun hat for the village and a beanie for the mountain cable cars.",
+        id: "jewellery",
+        label: "Jewellery for each event",
+        tip: "Pack pieces in individual pouches to avoid tangling. Sangeet = bold statement jewellery; Ceremony = elegant classics.",
+      },
+      {
+        id: "safety-pins",
+        label: "Safety pins (essential if wearing a saree)",
+        tip: "A small pouch of safety pins is a lifesaver for keeping a saree draped all night.",
+      },
+      {
+        id: "fashion-tape",
+        label: "Double-sided fashion tape",
+        tip: "Lifesaver for blouses, dupattas, and formal dresses.",
+      },
+      {
+        id: "bindi",
+        label: "Bindis and accessories",
+      },
+      {
+        id: "clutch",
+        label: "Small clutch / evening bag for Sangeet and Reception",
       },
     ],
   },
@@ -390,25 +449,34 @@ export const PACKING_GUIDE: PackingCategory[] = [
     emoji: "🧳",
     items: [
       { id: "passport", label: "Passport / ID" },
-      { id: "travel-insurance", label: "Travel insurance documents", tip: "Especially important for mountain activities." },
-      { id: "euros-francs", label: "Swiss Francs (CHF) — some cash", tip: "Cards accepted widely but some places are cash-only." },
-      { id: "adaptor", label: "Swiss plug adaptor (Type J)", tip: "Swiss sockets are unique — Type J adaptors. A universal adaptor usually works." },
-      { id: "meds", label: "Personal medications + basic first aid", tip: "Pharmacies (Apotheke) are available in the village." },
-      { id: "reusable-bottle", label: "Reusable water bottle", tip: "Swiss tap water is some of the best in the world — drink freely!" },
-      { id: "day-bag", label: "Small day backpack", tip: "Useful for mountain excursions." },
-      { id: "camera", label: "Camera / extra memory cards", tip: "There will be lots of photo opportunities — storage fills up fast!" },
-    ],
-  },
-  {
-    id: "beauty",
-    title: "Beauty & Toiletries",
-    emoji: "💄",
-    items: [
-      { id: "lip-balm", label: "SPF lip balm", tip: "Your lips will thank you at altitude." },
-      { id: "moisturiser", label: "Rich moisturiser", tip: "Mountain air is very dry." },
-      { id: "nail-kit", label: "Mini nail kit for the wedding day" },
-      { id: "dry-shampoo", label: "Dry shampoo (travel-sized)" },
-      { id: "wedding-bag", label: "Small clutch / evening bag for the reception" },
+      {
+        id: "travel-insurance",
+        label: "Travel insurance documents",
+      },
+      {
+        id: "currency",
+        label: "Some Swiss Francs (CHF) cash",
+        tip: "Cards widely accepted but some cafés and markets prefer cash.",
+      },
+      {
+        id: "adaptor",
+        label: "Swiss plug adaptor (Type J / universal adaptor)",
+        tip: "Swiss sockets are unique — EU adaptors don't always fit.",
+      },
+      {
+        id: "meds",
+        label: "Personal medications + basic first aid",
+      },
+      {
+        id: "reusable-bottle",
+        label: "Reusable water bottle",
+        tip: "Swiss tap water is some of the cleanest in the world.",
+      },
+      {
+        id: "camera",
+        label: "Camera / extra memory cards",
+        tip: "The Fairmont gardens, Lake Geneva, and Alps make for incredible photos.",
+      },
     ],
   },
 ];

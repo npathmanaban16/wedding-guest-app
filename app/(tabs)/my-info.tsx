@@ -18,14 +18,15 @@ import { useAuth } from '@/context/AuthContext';
 import { getMyInfo, saveMyInfo, MyInfo } from '@/services/storage';
 
 const HOTEL_OPTIONS = [
-  'Hotel Zermatterhof',
-  'Mont Cervin Palace',
-  'Riffelalp Resort',
-  'Hotel Julen',
-  'Hotel Alex Zermatt',
-  'Cervo Mountain Resort',
-  'Hotel Riffelberg',
+  'Fairmont Le Montreux Palace (wedding hotel)',
+  'Hôtel Suisse & Majestic',
+  'Hotel Eden Palace au Lac',
+  'Eurotel Riviera Montreux',
+  'Maison Décotterd',
+  'Hôtel du Grand Lac Excelsior',
+  'Golf Hôtel René Capt',
   'AirBnb / Other rental',
+  'Staying in Lausanne or nearby',
   'Day trip (not staying overnight)',
 ];
 
