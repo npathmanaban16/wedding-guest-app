@@ -218,9 +218,9 @@ export default function MyInfoScreen() {
         {/* Arrival section */}
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTag}>Arrival</Text>
-          <Text style={styles.sectionTitle}>Getting to Zermatt</Text>
+          <Text style={styles.sectionTitle}>Getting to Montreux</Text>
           <Field
-            label="Estimated arrival time in Zermatt"
+            label="Estimated arrival time in Montreux"
             value={info.arrivalTime}
             onChange={update('arrivalTime')}
             placeholder="e.g. Friday 3:00 PM"

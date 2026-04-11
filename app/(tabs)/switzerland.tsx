@@ -103,9 +103,9 @@ export default function SwitzerlandScreen() {
       {/* Page header */}
       <View style={styles.pageHeader}>
         <Text style={styles.pageTitle}>Switzerland Guide</Text>
-        <Text style={styles.pageSubtitleTag}>Zermatt & Beyond</Text>
+        <Text style={styles.pageSubtitleTag}>Montreux & Beyond</Text>
         <Text style={styles.pageSubtitle}>
-          Everything you need to know about Zermatt and making the most of your trip
+          Everything you need to know about Montreux and making the most of your trip
         </Text>
       </View>
 

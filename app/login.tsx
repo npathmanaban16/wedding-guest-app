@@ -10,6 +10,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Animated,
+  Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
@@ -130,7 +131,12 @@ export default function LoginScreen() {
 
           <Text style={styles.hint}>
             Can't find your name?{' '}
-            <Text style={styles.hintLink}>Contact the couple</Text>
+            <Text
+              style={styles.hintLink}
+              onPress={() => Linking.openURL(`mailto:${WEDDING.contactEmail}`)}
+            >
+              Contact the couple
+            </Text>
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>

@@ -10,7 +10,7 @@ export const WEDDING = {
   location: "Montreux, Switzerland",
   hashtag: "#NehaNaveen2026",       // TODO: Update with your actual hashtag
   website: "https://www.neha-naveen.com",
-  contactEmail: "wedding@neha-naveen.com", // TODO: Update
+  contactEmail: "nehanaveen2026@gmail.com",
 };
 
 // ============================================================
@@ -147,7 +147,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         name: "Taxi or Uber",
         category: "Transport",
         description:
-          "Unlike Zermatt, Montreux is fully accessible by car. Uber operates in the Geneva/Lausanne region. A taxi from Geneva Airport to Montreux costs approximately CHF 120–160.",
+          "Montreux is fully accessible by car. Uber operates in the Geneva/Lausanne region. A taxi from Geneva Airport to Montreux costs approximately CHF 120–160.",
         tip: "Uber is usually cheaper than traditional taxis from the airport.",
       },
     ],

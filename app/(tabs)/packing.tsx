@@ -182,10 +182,9 @@ export default function PackingScreen() {
 
       {/* Tips footer */}
       <View style={styles.tipsFooter}>
-        <Text style={styles.tipsTitle}>Zermatt is car-free</Text>
+        <Text style={styles.tipsTitle}>Tip: Pack for the Lake & the Mountains</Text>
         <Text style={styles.tipsText}>
-          You'll carry your luggage from the train station. Pack light if you can, or arrange
-          luggage transport with your hotel in advance.
+          May in Montreux can bring spring showers and cool evenings by the lake. Bring layers and a packable rain jacket alongside your event outfits.
         </Text>
       </View>
     </ScrollView>
