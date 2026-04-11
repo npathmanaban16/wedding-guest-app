@@ -4,14 +4,8 @@
     "slug": "wedding-guest-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
     "scheme": "wedding-guest-app",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/images/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#FBF7F4"
-    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.nehanaveen.weddingapp",
@@ -22,10 +16,6 @@
       }
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#FBF7F4"
-      },
       "package": "com.nehanaveen.weddingapp",
       "permissions": [
         "READ_EXTERNAL_STORAGE",
@@ -35,8 +25,7 @@
     },
     "web": {
       "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "output": "static"
     },
     "plugins": [
       "expo-router",
