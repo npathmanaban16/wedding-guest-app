@@ -18,7 +18,7 @@ import { useAuth } from '@/context/AuthContext';
 import { getSongRequests, addSongRequest, SongRequest } from '@/services/storage';
 
 const SAMPLE_SUGGESTIONS = [
-  { song: 'Can't Help Falling in Love', artist: 'Elvis Presley' },
+  { song: "Can't Help Falling in Love", artist: 'Elvis Presley' },
   { song: 'Perfect', artist: 'Ed Sheeran' },
   { song: 'At Last', artist: 'Etta James' },
   { song: 'Jai Ho', artist: 'A.R. Rahman' },
