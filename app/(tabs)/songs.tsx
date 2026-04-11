@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, Radius, Shadow } from '@/constants/theme';
+import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { getSongRequests, addSongRequest, SongRequest } from '@/services/storage';
 
@@ -32,9 +32,9 @@ const SAMPLE_SUGGESTIONS = [
 
 function SongCard({ request }: { request: SongRequest }) {
   return (
-    <View style={[styles.songCard, Shadow.small]}>
+    <View style={styles.songCard}>
       <View style={styles.musicIcon}>
-        <Ionicons name="musical-note" size={18} color={Colors.primary} />
+        <Ionicons name="musical-note" size={16} color={Colors.primary} />
       </View>
       <View style={styles.songInfo}>
         <Text style={styles.songTitle}>{request.song}</Text>
@@ -69,7 +69,7 @@ export default function SongsScreen() {
       setRequests((prev) => [newRequest, ...prev]);
       setSong('');
       setArtist('');
-      Alert.alert('🎵 Song requested!', `"${newRequest.song}" has been added to the DJ's list.`);
+      Alert.alert('Song requested!', `"${newRequest.song}" has been added to the DJ's list.`);
     } catch {
       Alert.alert('Error', 'Could not submit your request. Please try again.');
     } finally {
@@ -94,18 +94,18 @@ export default function SongsScreen() {
       >
         {/* Page header */}
         <View style={styles.pageHeader}>
-          <Text style={styles.pageEmoji}>🎵</Text>
           <Text style={styles.pageTitle}>Song Requests</Text>
+          <Text style={styles.pageSubtitleTag}>Reception Playlist</Text>
           <Text style={styles.pageSubtitle}>
             What songs do you want to dance to? Request your favourites for the reception!
           </Text>
         </View>
 
         {/* Request form */}
-        <View style={[styles.formCard, Shadow.medium]}>
+        <View style={styles.formCard}>
           <Text style={styles.formTitle}>Request a song</Text>
 
-          <Text style={styles.inputLabel}>Song name *</Text>
+          <Text style={styles.inputLabel}>Song name</Text>
           <TextInput
             style={styles.input}
             placeholder="e.g. Jai Ho"
@@ -135,7 +135,7 @@ export default function SongsScreen() {
               <ActivityIndicator color={Colors.white} size="small" />
             ) : (
               <>
-                <Ionicons name="musical-notes" size={18} color={Colors.white} />
+                <Ionicons name="musical-notes" size={17} color={Colors.white} />
                 <Text style={styles.submitButtonText}>Request this song</Text>
               </>
             )}
@@ -144,7 +144,7 @@ export default function SongsScreen() {
 
         {/* Suggestions */}
         <View style={styles.suggestionsSection}>
-          <Text style={styles.suggestionsTitle}>Need inspiration? 💡</Text>
+          <Text style={styles.suggestionsLabel}>Need inspiration?</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -190,17 +190,27 @@ const styles = StyleSheet.create({
   pageHeader: {
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.lg,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.xl,
   },
-  pageEmoji: { fontSize: 48, marginBottom: Spacing.sm },
   pageTitle: {
-    fontSize: Typography.xxl,
-    fontFamily: Typography.serif,
+    fontSize: 34,
+    fontFamily: Fonts.serifSemiBold,
     color: Colors.textPrimary,
     marginBottom: Spacing.xs,
+    letterSpacing: 0.3,
+  },
+  pageSubtitleTag: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 10,
+    letterSpacing: 2.5,
+    textTransform: 'uppercase',
+    color: Colors.gold,
+    marginBottom: Spacing.sm,
   },
   pageSubtitle: {
-    fontSize: Typography.sm,
+    fontSize: 13,
+    fontFamily: Fonts.sans,
     color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
@@ -212,28 +222,33 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     borderRadius: Radius.lg,
     padding: Spacing.lg,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    ...Shadow.small,
   },
   formTitle: {
-    fontSize: Typography.lg,
-    fontFamily: Typography.serif,
+    fontSize: 21,
+    fontFamily: Fonts.serifSemiBold,
     color: Colors.textPrimary,
     marginBottom: Spacing.md,
+    letterSpacing: 0.2,
   },
   inputLabel: {
-    fontSize: Typography.xs,
-    color: Colors.textMuted,
+    fontFamily: Fonts.sansMedium,
+    fontSize: 10,
+    letterSpacing: 2,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    color: Colors.textMuted,
     marginBottom: Spacing.xs,
-    fontWeight: '600',
   },
   input: {
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.md,
     paddingVertical: 12,
-    fontSize: Typography.base,
+    fontSize: 15,
+    fontFamily: Fonts.sans,
     color: Colors.textPrimary,
     backgroundColor: Colors.background,
     marginBottom: Spacing.md,
@@ -248,17 +263,20 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
     marginTop: Spacing.xs,
   },
-  submitButtonDisabled: { backgroundColor: Colors.border },
+  submitButtonDisabled: { opacity: 0.5 },
   submitButtonText: {
     color: Colors.white,
-    fontSize: Typography.base,
-    fontWeight: '600',
+    fontSize: 15,
+    fontFamily: Fonts.sansMedium,
   },
 
   suggestionsSection: { marginBottom: Spacing.lg },
-  suggestionsTitle: {
-    fontSize: Typography.sm,
-    color: Colors.textSecondary,
+  suggestionsLabel: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 10,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    color: Colors.textMuted,
     paddingHorizontal: Spacing.lg,
     marginBottom: Spacing.sm,
   },
@@ -273,22 +291,24 @@ const styles = StyleSheet.create({
     marginRight: Spacing.xs,
   },
   suggestionSong: {
-    fontSize: Typography.sm,
+    fontSize: 13,
+    fontFamily: Fonts.sansMedium,
     color: Colors.textPrimary,
-    fontWeight: '500',
     marginBottom: 2,
   },
   suggestionArtist: {
-    fontSize: Typography.xs,
+    fontSize: 11,
+    fontFamily: Fonts.sans,
     color: Colors.textMuted,
   },
 
   requestsSection: { paddingHorizontal: Spacing.lg },
   requestsTitle: {
-    fontSize: Typography.base,
-    fontFamily: Typography.serif,
+    fontSize: 17,
+    fontFamily: Fonts.serifSemiBold,
     color: Colors.textPrimary,
     marginBottom: Spacing.md,
+    letterSpacing: 0.2,
   },
   loader: { marginTop: Spacing.xl },
 
@@ -299,30 +319,37 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     padding: Spacing.md,
     marginBottom: Spacing.sm,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    ...Shadow.small,
   },
   musicIcon: {
-    width: 36,
-    height: 36,
+    width: 34,
+    height: 34,
     borderRadius: Radius.full,
     backgroundColor: Colors.surfaceWarm,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: Spacing.sm,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
   },
   songInfo: { flex: 1 },
   songTitle: {
-    fontSize: Typography.base,
+    fontSize: 15,
+    fontFamily: Fonts.sansMedium,
     color: Colors.textPrimary,
-    fontWeight: '500',
     marginBottom: 1,
   },
   songArtist: {
-    fontSize: Typography.sm,
+    fontSize: 13,
+    fontFamily: Fonts.sans,
     color: Colors.textSecondary,
     marginBottom: 2,
   },
   requestedBy: {
-    fontSize: Typography.xs,
+    fontSize: 11,
+    fontFamily: Fonts.sans,
     color: Colors.textMuted,
   },
 });

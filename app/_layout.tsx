@@ -3,11 +3,11 @@ import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useFonts } from 'expo-font';
 import {
-  CormorantGarant_400Regular,
-  CormorantGarant_400Regular_Italic,
-  CormorantGarant_500Medium,
-  CormorantGarant_600SemiBold,
-} from '@expo-google-fonts/cormorant-garant';
+  CormorantGaramond_400Regular,
+  CormorantGaramond_400Regular_Italic,
+  CormorantGaramond_500Medium,
+  CormorantGaramond_600SemiBold,
+} from '@expo-google-fonts/cormorant-garamond';
 import {
   DMSans_400Regular,
   DMSans_500Medium,
@@ -19,10 +19,10 @@ import { Colors } from '@/constants/theme';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
-    CormorantGarant_400Regular,
-    CormorantGarant_400Regular_Italic,
-    CormorantGarant_500Medium,
-    CormorantGarant_600SemiBold,
+    CormorantGaramond_400Regular,
+    CormorantGaramond_400Regular_Italic,
+    CormorantGaramond_500Medium,
+    CormorantGaramond_600SemiBold,
     DMSans_400Regular,
     DMSans_500Medium,
     DMSans_600SemiBold,

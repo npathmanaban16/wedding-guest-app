@@ -25,10 +25,10 @@ export const Colors = {
 };
 
 export const Fonts = {
-  serif: 'CormorantGarant_400Regular',
-  serifItalic: 'CormorantGarant_400Regular_Italic',
-  serifMedium: 'CormorantGarant_500Medium',
-  serifSemiBold: 'CormorantGarant_600SemiBold',
+  serif: 'CormorantGaramond_400Regular',
+  serifItalic: 'CormorantGaramond_400Regular_Italic',
+  serifMedium: 'CormorantGaramond_500Medium',
+  serifSemiBold: 'CormorantGaramond_600SemiBold',
   sans: 'DMSans_400Regular',
   sansMedium: 'DMSans_500Medium',
   sansSemiBold: 'DMSans_600SemiBold',
@@ -36,7 +36,7 @@ export const Fonts = {
 
 export const Typography = {
   // Kept for legacy references — use Fonts.* for new code
-  serif: 'CormorantGarant_600SemiBold',
+  serif: 'CormorantGaramond_600SemiBold',
   sans: 'DMSans_400Regular',
 
   xs: 11,

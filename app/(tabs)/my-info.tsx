@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, Radius, Shadow } from '@/constants/theme';
+import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { getMyInfo, saveMyInfo, MyInfo } from '@/services/storage';
 
@@ -152,7 +152,7 @@ export default function MyInfoScreen() {
     await saveMyInfo(info);
     setSaving(false);
     setSaved(true);
-    Alert.alert('Saved! 🎉', 'Your details have been saved on this device.');
+    Alert.alert('Saved!', 'Your details have been saved on this device.');
   };
 
   if (loading) {
@@ -175,16 +175,16 @@ export default function MyInfoScreen() {
       >
         {/* Page header */}
         <View style={styles.pageHeader}>
-          <Text style={styles.pageEmoji}>✈️</Text>
           <Text style={styles.pageTitle}>My Details</Text>
+          <Text style={styles.pageSubtitleTag}>Your Information</Text>
           <Text style={styles.pageSubtitle}>
             Help us plan for your arrival and make sure we have everything just right for you!
           </Text>
         </View>
 
         {/* Guest name display */}
-        <View style={[styles.guestBadge, Shadow.small]}>
-          <Ionicons name="person-circle-outline" size={28} color={Colors.primary} />
+        <View style={styles.guestBadge}>
+          <Ionicons name="person-circle-outline" size={26} color={Colors.primary} />
           <View style={styles.guestBadgeText}>
             <Text style={styles.guestBadgeLabel}>Logged in as</Text>
             <Text style={styles.guestBadgeName}>{guestName}</Text>
@@ -193,9 +193,10 @@ export default function MyInfoScreen() {
 
         {/* Accommodation section */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>🏨 Accommodation</Text>
+          <Text style={styles.sectionTag}>Accommodation</Text>
+          <Text style={styles.sectionTitle}>Where are you staying?</Text>
           <PickerField
-            label="Where are you staying?"
+            label="Hotel or accommodation"
             options={HOTEL_OPTIONS}
             value={info.hotel}
             onChange={update('hotel')}
@@ -216,7 +217,8 @@ export default function MyInfoScreen() {
 
         {/* Arrival section */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>🚄 Arrival</Text>
+          <Text style={styles.sectionTag}>Arrival</Text>
+          <Text style={styles.sectionTitle}>Getting to Zermatt</Text>
           <Field
             label="Estimated arrival time in Zermatt"
             value={info.arrivalTime}
@@ -233,7 +235,8 @@ export default function MyInfoScreen() {
 
         {/* Dietary section */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>🍽️ Dietary Requirements</Text>
+          <Text style={styles.sectionTag}>Dietary</Text>
+          <Text style={styles.sectionTitle}>Dietary Requirements</Text>
           <PickerField
             label="Any dietary requirements?"
             options={DIETARY_OPTIONS}
@@ -253,7 +256,8 @@ export default function MyInfoScreen() {
 
         {/* Song request section */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>🎵 Song Request</Text>
+          <Text style={styles.sectionTag}>Music</Text>
+          <Text style={styles.sectionTitle}>Song Request</Text>
           <Text style={styles.sectionSubtext}>
             Got a song you'd love to hear at the reception? Pop it here (or use the Song Requests tab for more!).
           </Text>
@@ -267,7 +271,8 @@ export default function MyInfoScreen() {
 
         {/* Extra notes */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>💬 Anything else?</Text>
+          <Text style={styles.sectionTag}>Notes</Text>
+          <Text style={styles.sectionTitle}>Anything else?</Text>
           <Text style={styles.sectionSubtext}>
             Accessibility needs, special requests, or just a message for the couple?
           </Text>
@@ -290,7 +295,7 @@ export default function MyInfoScreen() {
             <ActivityIndicator color={Colors.white} size="small" />
           ) : (
             <>
-              <Ionicons name={saved ? 'checkmark-circle' : 'save-outline'} size={20} color={Colors.white} />
+              <Ionicons name={saved ? 'checkmark-circle' : 'save-outline'} size={19} color={Colors.white} />
               <Text style={styles.saveButtonText}>{saved ? 'Saved!' : 'Save my details'}</Text>
             </>
           )}
@@ -302,7 +307,7 @@ export default function MyInfoScreen() {
 
         {/* Logout */}
         <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-          <Ionicons name="log-out-outline" size={18} color={Colors.textMuted} />
+          <Ionicons name="log-out-outline" size={17} color={Colors.textMuted} />
           <Text style={styles.logoutText}>Switch guest account</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -319,17 +324,27 @@ const styles = StyleSheet.create({
   pageHeader: {
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.lg,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.xl,
   },
-  pageEmoji: { fontSize: 48, marginBottom: Spacing.sm },
   pageTitle: {
-    fontSize: Typography.xxl,
-    fontFamily: Typography.serif,
+    fontSize: 34,
+    fontFamily: Fonts.serifSemiBold,
     color: Colors.textPrimary,
     marginBottom: Spacing.xs,
+    letterSpacing: 0.3,
+  },
+  pageSubtitleTag: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 10,
+    letterSpacing: 2.5,
+    textTransform: 'uppercase',
+    color: Colors.gold,
+    marginBottom: Spacing.sm,
   },
   pageSubtitle: {
-    fontSize: Typography.sm,
+    fontSize: 13,
+    fontFamily: Fonts.sans,
     color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
@@ -343,10 +358,24 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.lg,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    ...Shadow.small,
   },
   guestBadgeText: { flex: 1, marginLeft: Spacing.sm },
-  guestBadgeLabel: { fontSize: Typography.xs, color: Colors.textMuted },
-  guestBadgeName: { fontSize: Typography.base, fontFamily: Typography.serif, color: Colors.textPrimary },
+  guestBadgeLabel: {
+    fontSize: 10,
+    fontFamily: Fonts.sansMedium,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    color: Colors.textMuted,
+  },
+  guestBadgeName: {
+    fontSize: 17,
+    fontFamily: Fonts.serifSemiBold,
+    color: Colors.textPrimary,
+    letterSpacing: 0.2,
+  },
 
   sectionCard: {
     marginHorizontal: Spacing.lg,
@@ -354,16 +383,28 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     borderRadius: Radius.lg,
     padding: Spacing.lg,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
     ...Shadow.small,
   },
+  sectionTag: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 10,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    color: Colors.gold,
+    marginBottom: 4,
+  },
   sectionTitle: {
-    fontSize: Typography.md,
-    fontFamily: Typography.serif,
+    fontSize: 17,
+    fontFamily: Fonts.serifSemiBold,
     color: Colors.textPrimary,
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.sm,
+    letterSpacing: 0.2,
   },
   sectionSubtext: {
-    fontSize: Typography.xs,
+    fontSize: 12,
+    fontFamily: Fonts.sans,
     color: Colors.textMuted,
     lineHeight: 18,
     marginBottom: Spacing.sm,
@@ -371,20 +412,21 @@ const styles = StyleSheet.create({
 
   field: { marginBottom: Spacing.md },
   fieldLabel: {
-    fontSize: Typography.xs,
-    color: Colors.textMuted,
+    fontFamily: Fonts.sansMedium,
+    fontSize: 10,
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    color: Colors.textMuted,
     marginBottom: Spacing.xs,
-    fontWeight: '600',
   },
   fieldInput: {
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.md,
     paddingVertical: 12,
-    fontSize: Typography.base,
+    fontSize: 15,
+    fontFamily: Fonts.sans,
     color: Colors.textPrimary,
     backgroundColor: Colors.background,
   },
@@ -397,7 +439,7 @@ const styles = StyleSheet.create({
   pickerButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.md,
@@ -406,7 +448,8 @@ const styles = StyleSheet.create({
   },
   pickerValue: {
     flex: 1,
-    fontSize: Typography.base,
+    fontSize: 15,
+    fontFamily: Fonts.sans,
     color: Colors.textPrimary,
   },
   optionsList: {
@@ -430,12 +473,13 @@ const styles = StyleSheet.create({
   },
   optionText: {
     flex: 1,
-    fontSize: Typography.base,
+    fontSize: 15,
+    fontFamily: Fonts.sans,
     color: Colors.textPrimary,
   },
   optionTextSelected: {
+    fontFamily: Fonts.sansMedium,
     color: Colors.primary,
-    fontWeight: '500',
   },
 
   saveButton: {
@@ -453,12 +497,13 @@ const styles = StyleSheet.create({
   saveButtonDisabled: { opacity: 0.6 },
   saveButtonText: {
     color: Colors.white,
-    fontSize: Typography.base,
-    fontWeight: '600',
+    fontSize: 15,
+    fontFamily: Fonts.sansMedium,
   },
 
   privacyNote: {
-    fontSize: Typography.xs,
+    fontSize: 11,
+    fontFamily: Fonts.sans,
     color: Colors.textMuted,
     textAlign: 'center',
     paddingHorizontal: Spacing.xl,
@@ -474,7 +519,8 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
   },
   logoutText: {
-    fontSize: Typography.sm,
+    fontSize: 13,
+    fontFamily: Fonts.sans,
     color: Colors.textMuted,
     textDecorationLine: 'underline',
   },
