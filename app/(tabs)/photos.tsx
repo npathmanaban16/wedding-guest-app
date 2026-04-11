@@ -9,13 +9,12 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
-  FlatList,
   Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, Radius, Shadow } from '@/constants/theme';
+import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { getPhotos, addPhoto, PhotoRecord } from '@/services/storage';
 import { WEDDING } from '@/constants/weddingData';
@@ -125,8 +124,8 @@ export default function PhotosScreen() {
       setCaption('');
       await loadPhotos();
       Alert.alert(
-        '🎉 Shared!',
-        "Your photo has been added to the wedding gallery. The couple will love it!",
+        'Shared!',
+        'Your photo has been added to the wedding gallery. The couple will love it!',
       );
     } catch {
       Alert.alert('Error', 'Could not save your photo. Please try again.');
@@ -147,16 +146,16 @@ export default function PhotosScreen() {
     >
       {/* Page header */}
       <View style={styles.pageHeader}>
-        <Text style={styles.pageEmoji}>📸</Text>
-        <Text style={styles.pageTitle}>Photo & Video Gallery</Text>
+        <Text style={styles.pageTitle}>Photo Gallery</Text>
+        <Text style={styles.pageSubtitleTag}>Share Your Moments</Text>
         <Text style={styles.pageSubtitle}>
           Share your favourite moments from the weekend
         </Text>
       </View>
 
       {/* Shared album banner */}
-      <View style={[styles.sharedAlbumBanner, Shadow.small]}>
-        <Text style={styles.bannerEmoji}>☁️</Text>
+      <View style={styles.sharedAlbumBanner}>
+        <Ionicons name="cloud-outline" size={20} color={Colors.accent} style={{ marginRight: Spacing.sm, marginTop: 1 }} />
         <View style={styles.bannerText}>
           <Text style={styles.bannerTitle}>Also share on the cloud</Text>
           <Text style={styles.bannerSubtitle}>
@@ -167,7 +166,7 @@ export default function PhotosScreen() {
 
       {/* Upload section */}
       {selectedUri ? (
-        <View style={[styles.previewCard, Shadow.medium]}>
+        <View style={styles.previewCard}>
           <Text style={styles.previewLabel}>Selected {selectedType}</Text>
           {selectedType === 'photo' ? (
             <Image source={{ uri: selectedUri }} style={styles.preview} />
@@ -197,7 +196,7 @@ export default function PhotosScreen() {
               {uploading ? (
                 <ActivityIndicator color={Colors.white} size="small" />
               ) : (
-                <Text style={styles.submitButtonText}>Share ✦</Text>
+                <Text style={styles.submitButtonText}>Share</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -205,24 +204,24 @@ export default function PhotosScreen() {
       ) : (
         <View style={styles.uploadButtons}>
           <TouchableOpacity
-            style={[styles.uploadButton, Shadow.small]}
+            style={styles.uploadButton}
             onPress={() => pickMedia('photo')}
           >
-            <Ionicons name="images-outline" size={28} color={Colors.primary} />
+            <Ionicons name="images-outline" size={26} color={Colors.primary} />
             <Text style={styles.uploadButtonLabel}>Choose Photo</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.uploadButton, Shadow.small]}
+            style={styles.uploadButton}
             onPress={() => pickMedia('video')}
           >
-            <Ionicons name="film-outline" size={28} color={Colors.primary} />
+            <Ionicons name="film-outline" size={26} color={Colors.primary} />
             <Text style={styles.uploadButtonLabel}>Choose Video</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.uploadButton, Shadow.small]}
+            style={styles.uploadButton}
             onPress={takePhoto}
           >
-            <Ionicons name="camera-outline" size={28} color={Colors.primary} />
+            <Ionicons name="camera-outline" size={26} color={Colors.primary} />
             <Text style={styles.uploadButtonLabel}>Take Photo</Text>
           </TouchableOpacity>
         </View>
@@ -257,17 +256,27 @@ const styles = StyleSheet.create({
   pageHeader: {
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.lg,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.xl,
   },
-  pageEmoji: { fontSize: 48, marginBottom: Spacing.sm },
   pageTitle: {
-    fontSize: Typography.xxl,
-    fontFamily: Typography.serif,
+    fontSize: 34,
+    fontFamily: Fonts.serifSemiBold,
     color: Colors.textPrimary,
     marginBottom: Spacing.xs,
+    letterSpacing: 0.3,
+  },
+  pageSubtitleTag: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 10,
+    letterSpacing: 2.5,
+    textTransform: 'uppercase',
+    color: Colors.gold,
+    marginBottom: Spacing.sm,
   },
   pageSubtitle: {
-    fontSize: Typography.sm,
+    fontSize: 13,
+    fontFamily: Fonts.sans,
     color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
@@ -278,22 +287,25 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.lg,
-    backgroundColor: Colors.sageLight,
+    backgroundColor: Colors.accentLight,
     borderRadius: Radius.lg,
     padding: Spacing.md,
+    borderWidth: 0.5,
+    borderColor: Colors.accent + '30',
   },
-  bannerEmoji: { fontSize: 24, marginRight: Spacing.sm },
   bannerText: { flex: 1 },
   bannerTitle: {
-    fontSize: Typography.base,
-    fontFamily: Typography.serif,
-    color: Colors.sageDark,
+    fontSize: 15,
+    fontFamily: Fonts.serifMedium,
+    color: Colors.accent,
     marginBottom: 2,
   },
   bannerSubtitle: {
-    fontSize: Typography.xs,
-    color: Colors.sageDark,
+    fontSize: 12,
+    fontFamily: Fonts.sans,
+    color: Colors.accent,
     lineHeight: 18,
+    opacity: 0.85,
   },
 
   uploadButtons: {
@@ -309,9 +321,13 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     alignItems: 'center',
     gap: Spacing.xs,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    ...Shadow.small,
   },
   uploadButtonLabel: {
-    fontSize: Typography.xs,
+    fontSize: 11,
+    fontFamily: Fonts.sansMedium,
     color: Colors.textSecondary,
     textAlign: 'center',
   },
@@ -322,13 +338,16 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     borderRadius: Radius.lg,
     padding: Spacing.md,
-    overflow: 'hidden',
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    ...Shadow.small,
   },
   previewLabel: {
-    fontSize: Typography.xs,
+    fontSize: 10,
+    fontFamily: Fonts.sansMedium,
     color: Colors.textMuted,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1.5,
     marginBottom: Spacing.sm,
   },
   preview: {
@@ -348,7 +367,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   videoPreviewText: {
-    fontSize: Typography.sm,
+    fontSize: 13,
+    fontFamily: Fonts.sans,
     color: Colors.textMuted,
     marginTop: Spacing.xs,
   },
@@ -357,10 +377,11 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     borderRadius: Radius.md,
     padding: Spacing.sm,
-    fontSize: Typography.sm,
+    fontSize: 15,
+    fontFamily: Fonts.sans,
     color: Colors.textPrimary,
     marginBottom: Spacing.md,
-    fontFamily: Typography.sans,
+    backgroundColor: Colors.background,
   },
   previewButtons: {
     flexDirection: 'row',
@@ -368,15 +389,16 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     flex: 1,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
+    borderWidth: 1,
+    borderColor: Colors.primary,
     borderRadius: Radius.full,
     paddingVertical: 12,
     alignItems: 'center',
   },
   cancelButtonText: {
-    fontSize: Typography.base,
-    color: Colors.textSecondary,
+    fontSize: 15,
+    fontFamily: Fonts.sansMedium,
+    color: Colors.primary,
   },
   submitButton: {
     flex: 2,
@@ -387,17 +409,18 @@ const styles = StyleSheet.create({
   },
   submitButtonDisabled: { opacity: 0.6 },
   submitButtonText: {
-    fontSize: Typography.base,
+    fontSize: 15,
+    fontFamily: Fonts.sansMedium,
     color: Colors.white,
-    fontWeight: '600',
   },
 
   gallerySection: { paddingHorizontal: Spacing.lg },
   gallerySectionTitle: {
-    fontSize: Typography.base,
-    fontFamily: Typography.serif,
+    fontSize: 17,
+    fontFamily: Fonts.serifSemiBold,
     color: Colors.textPrimary,
     marginBottom: Spacing.md,
+    letterSpacing: 0.2,
   },
   galleryLoader: { marginTop: Spacing.xl },
   grid: {
@@ -438,7 +461,8 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   captionText: {
-    fontSize: Typography.xs,
+    fontSize: 11,
+    fontFamily: Fonts.sans,
     color: Colors.white,
   },
   submittedByStrip: {
@@ -452,6 +476,7 @@ const styles = StyleSheet.create({
   },
   submittedByText: {
     fontSize: 9,
+    fontFamily: Fonts.sans,
     color: 'rgba(255,255,255,0.85)',
   },
 });
