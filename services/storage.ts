@@ -2,18 +2,13 @@
  * Storage service — persists guest data to Supabase with AsyncStorage as a
  * local cache/fallback for offline use.
  *
- * Tables required in Supabase (run the SQL in supabase/schema.sql):
- *   - guest_info
- *   - song_requests
+ * Run supabase/schema.sql then supabase/seed.sql before using the app.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
 
-// ─── Keys ────────────────────────────────────────────────────────────────────
-
 const KEYS = {
   myInfo: (name: string) => `@wedding_my_info_${name}`,
-  songRequests: '@wedding_song_requests',
   packingChecklist: '@wedding_packing_checklist',
   photos: '@wedding_photos',
 };
@@ -21,14 +16,18 @@ const KEYS = {
 // ─── My Info ─────────────────────────────────────────────────────────────────
 
 export interface MyInfo {
+  // Editable by guest
   hotel: string;
   checkIn: string;
   checkOut: string;
   arrivalTime: string;
   flightNumber: string;
-  dietary: string;
-  songRequest: string;
   extraNotes: string;
+  // Pre-collected from RSVP (read-only in app)
+  dietary: string;
+  meal1: string;
+  meal2: string;
+  meal3: string;
 }
 
 const DEFAULT_MY_INFO: MyInfo = {
@@ -37,13 +36,14 @@ const DEFAULT_MY_INFO: MyInfo = {
   checkOut: '',
   arrivalTime: '',
   flightNumber: '',
-  dietary: '',
-  songRequest: '',
   extraNotes: '',
+  dietary: '',
+  meal1: '',
+  meal2: '',
+  meal3: '',
 };
 
 export async function getMyInfo(guestName: string): Promise<MyInfo> {
-  // Try Supabase first
   try {
     const { data, error } = await supabase
       .from('guest_info')
@@ -58,11 +58,12 @@ export async function getMyInfo(guestName: string): Promise<MyInfo> {
         checkOut: data.check_out ?? '',
         arrivalTime: data.arrival_time ?? '',
         flightNumber: data.flight_number ?? '',
-        dietary: data.dietary ?? '',
-        songRequest: data.song_request ?? '',
         extraNotes: data.extra_notes ?? '',
+        dietary: data.dietary ?? '',
+        meal1: data.meal_1 ?? '',
+        meal2: data.meal_2 ?? '',
+        meal3: data.meal_3 ?? '',
       };
-      // Update local cache
       await AsyncStorage.setItem(KEYS.myInfo(guestName), JSON.stringify(info));
       return info;
     }
@@ -70,14 +71,13 @@ export async function getMyInfo(guestName: string): Promise<MyInfo> {
     // Network unavailable — fall through to local cache
   }
 
-  // Fall back to local cache
   const raw = await AsyncStorage.getItem(KEYS.myInfo(guestName));
   if (!raw) return DEFAULT_MY_INFO;
   return { ...DEFAULT_MY_INFO, ...JSON.parse(raw) };
 }
 
 export async function saveMyInfo(guestName: string, info: MyInfo): Promise<void> {
-  // Save to Supabase (upsert by guest_name)
+  // Only update editable fields — dietary and meal choices are set by seed SQL
   await supabase.from('guest_info').upsert(
     {
       guest_name: guestName,
@@ -86,15 +86,12 @@ export async function saveMyInfo(guestName: string, info: MyInfo): Promise<void>
       check_out: info.checkOut,
       arrival_time: info.arrivalTime,
       flight_number: info.flightNumber,
-      dietary: info.dietary,
-      song_request: info.songRequest,
       extra_notes: info.extraNotes,
       updated_at: new Date().toISOString(),
     },
     { onConflict: 'guest_name' },
   );
 
-  // Always cache locally too
   await AsyncStorage.setItem(KEYS.myInfo(guestName), JSON.stringify(info));
 }
 
@@ -125,12 +122,9 @@ export async function getSongRequests(): Promise<SongRequest[]> {
       }));
     }
   } catch {
-    // Fall back to local cache
+    // offline fallback — no local cache for shared song requests
   }
-
-  const raw = await AsyncStorage.getItem(KEYS.songRequests);
-  if (!raw) return [];
-  return JSON.parse(raw);
+  return [];
 }
 
 export async function addSongRequest(

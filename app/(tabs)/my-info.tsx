@@ -30,28 +30,15 @@ const HOTEL_OPTIONS = [
   'Day trip (not staying overnight)',
 ];
 
-const DIETARY_OPTIONS = [
-  'No restrictions',
-  'Vegetarian',
-  'Vegan',
-  'Gluten-free',
-  'Halal',
-  'Kosher',
-  'Nut allergy',
-  'Dairy-free',
-  'Other (please specify below)',
-];
-
 interface FieldProps {
   label: string;
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   multiline?: boolean;
-  keyboardType?: 'default' | 'email-address' | 'phone-pad';
 }
 
-function Field({ label, value, onChange, placeholder, multiline, keyboardType }: FieldProps) {
+function Field({ label, value, onChange, placeholder, multiline }: FieldProps) {
   return (
     <View style={styles.field}>
       <Text style={styles.fieldLabel}>{label}</Text>
@@ -63,9 +50,19 @@ function Field({ label, value, onChange, placeholder, multiline, keyboardType }:
         placeholderTextColor={Colors.textMuted}
         multiline={multiline}
         numberOfLines={multiline ? 3 : 1}
-        keyboardType={keyboardType ?? 'default'}
         autoCapitalize="sentences"
       />
+    </View>
+  );
+}
+
+function ReadOnlyField({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.field}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <View style={styles.readOnlyField}>
+        <Text style={styles.readOnlyText}>{value || '—'}</Text>
+      </View>
     </View>
   );
 }
@@ -102,9 +99,7 @@ function PickerField({ label, options, value, onChange }: PickerFieldProps) {
                 setOpen(false);
               }}
             >
-              <Text
-                style={[styles.optionText, value === opt && styles.optionTextSelected]}
-              >
+              <Text style={[styles.optionText, value === opt && styles.optionTextSelected]}>
                 {opt}
               </Text>
               {value === opt && (
@@ -127,9 +122,11 @@ export default function MyInfoScreen() {
     checkOut: '',
     arrivalTime: '',
     flightNumber: '',
-    dietary: '',
-    songRequest: '',
     extraNotes: '',
+    dietary: '',
+    meal1: '',
+    meal2: '',
+    meal3: '',
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -155,7 +152,7 @@ export default function MyInfoScreen() {
     await saveMyInfo(guestName, info);
     setSaving(false);
     setSaved(true);
-    Alert.alert('Saved!', 'Your details have been saved on this device.');
+    Alert.alert('Saved!', 'Your details have been saved.');
   };
 
   if (loading) {
@@ -208,13 +205,13 @@ export default function MyInfoScreen() {
             label="Check-in date"
             value={info.checkIn}
             onChange={update('checkIn')}
-            placeholder="e.g. Friday 14 August 2026"
+            placeholder="e.g. Friday 22 May 2026"
           />
           <Field
             label="Check-out date"
             value={info.checkOut}
             onChange={update('checkOut')}
-            placeholder="e.g. Sunday 16 August 2026"
+            placeholder="e.g. Sunday 24 May 2026"
           />
         </View>
 
@@ -226,50 +223,49 @@ export default function MyInfoScreen() {
             label="Estimated arrival time in Montreux"
             value={info.arrivalTime}
             onChange={update('arrivalTime')}
-            placeholder="e.g. Friday 3:00 PM"
+            placeholder="e.g. Thursday 3:00 PM"
           />
           <Field
             label="Flight number (if applicable)"
             value={info.flightNumber}
             onChange={update('flightNumber')}
-            placeholder="e.g. LX1234 arriving Zurich 11:30"
+            placeholder="e.g. LX1234 arriving Geneva 11:30"
           />
         </View>
 
-        {/* Dietary section */}
+        {/* Meal choices — pre-collected, read-only */}
+        {(info.meal1 || info.meal2 || info.meal3) ? (
+          <View style={styles.sectionCard}>
+            <Text style={styles.sectionTag}>Menu</Text>
+            <Text style={styles.sectionTitle}>Your Meal Selections</Text>
+            <Text style={styles.sectionSubtext}>
+              Your meal choices from your RSVP. Contact us if anything needs to change.
+            </Text>
+            <ReadOnlyField label="Starter" value={info.meal1} />
+            <ReadOnlyField label="Second Course" value={info.meal2} />
+            <ReadOnlyField label="Main Course" value={info.meal3} />
+          </View>
+        ) : null}
+
+        {/* Dietary — pre-collected, read-only */}
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTag}>Dietary</Text>
           <Text style={styles.sectionTitle}>Dietary Requirements</Text>
-          <PickerField
-            label="Any dietary requirements?"
-            options={DIETARY_OPTIONS}
-            value={info.dietary}
-            onChange={update('dietary')}
-          />
-          {(info.dietary === 'Other (please specify below)' || info.dietary === 'Nut allergy') && (
-            <Field
-              label="Please specify"
-              value={info.extraNotes}
-              onChange={update('extraNotes')}
-              placeholder="Please describe your dietary needs..."
-              multiline
-            />
+          {info.dietary ? (
+            <>
+              <Text style={styles.sectionSubtext}>
+                We have noted the following from your RSVP. Contact us if anything has changed.
+              </Text>
+              <View style={styles.dietaryBadge}>
+                <Ionicons name="alert-circle-outline" size={16} color={Colors.primary} />
+                <Text style={styles.dietaryBadgeText}>{info.dietary}</Text>
+              </View>
+            </>
+          ) : (
+            <Text style={styles.noRestrictions}>
+              No dietary restrictions noted from your RSVP. If anything has changed, please contact us.
+            </Text>
           )}
-        </View>
-
-        {/* Song request section */}
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionTag}>Music</Text>
-          <Text style={styles.sectionTitle}>Song Request</Text>
-          <Text style={styles.sectionSubtext}>
-            Got a song you'd love to hear at the reception? Pop it here (or use the Song Requests tab for more!).
-          </Text>
-          <Field
-            label="Your favourite song request"
-            value={info.songRequest}
-            onChange={update('songRequest')}
-            placeholder="e.g. Jai Ho — A.R. Rahman"
-          />
         </View>
 
         {/* Extra notes */}
@@ -305,7 +301,7 @@ export default function MyInfoScreen() {
         </TouchableOpacity>
 
         <Text style={styles.privacyNote}>
-          Your details are saved on this device. We may contact you about your responses to help plan the wedding.
+          Your accommodation and arrival details are shared with Neha & Naveen to help with planning.
         </Text>
 
         {/* Logout */}
@@ -439,6 +435,44 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
 
+  readOnlyField: {
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 12,
+    backgroundColor: Colors.surfaceWarm,
+  },
+  readOnlyText: {
+    fontSize: 15,
+    fontFamily: Fonts.sans,
+    color: Colors.textPrimary,
+  },
+
+  dietaryBadge: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: Colors.surfaceWarm,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    gap: Spacing.xs,
+  },
+  dietaryBadgeText: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: Fonts.sans,
+    color: Colors.textPrimary,
+    lineHeight: 20,
+  },
+  noRestrictions: {
+    fontSize: 14,
+    fontFamily: Fonts.sans,
+    color: Colors.textMuted,
+    lineHeight: 20,
+  },
+
   pickerButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -471,9 +505,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: Colors.divider,
   },
-  optionItemSelected: {
-    backgroundColor: Colors.surfaceWarm,
-  },
+  optionItemSelected: { backgroundColor: Colors.surfaceWarm },
   optionText: {
     flex: 1,
     fontSize: 15,
