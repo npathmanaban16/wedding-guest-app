@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, Radius, Shadow } from '@/constants/theme';
+import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { EVENTS, WeddingEvent } from '@/constants/weddingData';
 
 if (Platform.OS === 'android') {
@@ -28,23 +28,20 @@ function EventCard({ event }: { event: WeddingEvent }) {
 
   return (
     <TouchableOpacity
-      style={[styles.card, Shadow.small]}
+      style={styles.card}
       onPress={toggle}
       activeOpacity={0.9}
     >
       {/* Header row */}
       <View style={styles.cardHeader}>
-        <Text style={styles.eventEmoji}>{event.emoji}</Text>
         <View style={styles.cardHeaderText}>
           <Text style={styles.eventTitle}>{event.title}</Text>
-          <Text style={styles.eventDateTime}>
-            {event.date}
-          </Text>
-          <Text style={styles.eventTime}>⏰ {event.time}</Text>
+          <Text style={styles.eventDateTime}>{event.date}</Text>
+          <Text style={styles.eventTime}>{event.time}</Text>
         </View>
         <Ionicons
           name={expanded ? 'chevron-up' : 'chevron-down'}
-          size={20}
+          size={18}
           color={Colors.textMuted}
         />
       </View>
@@ -58,7 +55,7 @@ function EventCard({ event }: { event: WeddingEvent }) {
           <InfoRow icon="navigate-outline" label="Address" value={event.address} />
 
           <View style={styles.dressCodeCard}>
-            <Text style={styles.dressCodeLabel}>👗 Dress Code</Text>
+            <Text style={styles.dressCodeLabel}>Dress Code</Text>
             <Text style={styles.dressCodeText}>{event.dressCode}</Text>
           </View>
 
@@ -66,7 +63,7 @@ function EventCard({ event }: { event: WeddingEvent }) {
 
           {event.notes && (
             <View style={styles.notesCard}>
-              <Text style={styles.notesIcon}>💡</Text>
+              <Ionicons name="information-circle-outline" size={16} color={Colors.gold} style={{ marginRight: Spacing.xs, marginTop: 1 }} />
               <Text style={styles.notesText}>{event.notes}</Text>
             </View>
           )}
@@ -85,7 +82,7 @@ interface InfoRowProps {
 function InfoRow({ icon, label, value }: InfoRowProps) {
   return (
     <View style={styles.infoRow}>
-      <Ionicons name={icon} size={16} color={Colors.secondary} style={styles.infoIcon} />
+      <Ionicons name={icon} size={15} color={Colors.primary} style={styles.infoIcon} />
       <View style={styles.infoContent}>
         <Text style={styles.infoLabel}>{label}</Text>
         <Text style={styles.infoValue}>{value}</Text>
@@ -104,8 +101,8 @@ export default function ScheduleScreen() {
     >
       {/* Page header */}
       <View style={styles.pageHeader}>
-        <Text style={styles.pageEmoji}>📅</Text>
         <Text style={styles.pageTitle}>Wedding Schedule</Text>
+        <Text style={styles.pageSubtitleTag}>Programme</Text>
         <Text style={styles.pageSubtitle}>Tap each event for full details, venue, and dress code</Text>
       </View>
 
@@ -126,8 +123,9 @@ export default function ScheduleScreen() {
 
       {/* Footer note */}
       <View style={styles.footerNote}>
+        <Ionicons name="time-outline" size={14} color={Colors.textMuted} style={{ marginRight: Spacing.xs }} />
         <Text style={styles.footerText}>
-          🔔 All times are Central European Summer Time (CEST / UTC+2)
+          All times are Central European Summer Time (CEST / UTC+2)
         </Text>
       </View>
     </ScrollView>
@@ -141,17 +139,27 @@ const styles = StyleSheet.create({
   pageHeader: {
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.xl,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.xl,
   },
-  pageEmoji: { fontSize: 40, marginBottom: Spacing.sm },
   pageTitle: {
-    fontSize: Typography.xxl,
-    fontFamily: Typography.serif,
+    fontSize: 34,
+    fontFamily: Fonts.serifSemiBold,
     color: Colors.textPrimary,
     marginBottom: Spacing.xs,
+    letterSpacing: 0.3,
+  },
+  pageSubtitleTag: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 10,
+    letterSpacing: 2.5,
+    textTransform: 'uppercase',
+    color: Colors.gold,
+    marginBottom: Spacing.sm,
   },
   pageSubtitle: {
-    fontSize: Typography.sm,
+    fontSize: 13,
+    fontFamily: Fonts.sans,
     color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
@@ -164,19 +172,19 @@ const styles = StyleSheet.create({
     left: -16,
     top: 24,
     bottom: -Spacing.md,
-    width: 2,
-    backgroundColor: Colors.secondaryLight,
+    width: 1,
+    backgroundColor: Colors.border,
   },
   dot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: Colors.secondary,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: Colors.primary,
     position: 'absolute',
-    left: -22,
-    top: 18,
+    left: -21,
+    top: 19,
     borderWidth: 2,
-    borderColor: Colors.white,
+    borderColor: Colors.background,
   },
   timelineContent: { flex: 1 },
 
@@ -184,26 +192,29 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     borderRadius: Radius.lg,
     padding: Spacing.md,
-    overflow: 'hidden',
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    ...Shadow.small,
   },
   cardHeader: { flexDirection: 'row', alignItems: 'flex-start' },
-  eventEmoji: { fontSize: 28, marginRight: Spacing.sm, marginTop: 2 },
   cardHeaderText: { flex: 1 },
   eventTitle: {
-    fontSize: Typography.md,
-    fontFamily: Typography.serif,
+    fontSize: 17,
+    fontFamily: Fonts.serifSemiBold,
     color: Colors.textPrimary,
-    marginBottom: 2,
+    marginBottom: 3,
+    letterSpacing: 0.2,
   },
   eventDateTime: {
-    fontSize: Typography.xs,
+    fontSize: 11,
+    fontFamily: Fonts.sans,
     color: Colors.textMuted,
     marginBottom: 2,
   },
   eventTime: {
-    fontSize: Typography.sm,
-    color: Colors.secondary,
-    fontWeight: '600',
+    fontSize: 13,
+    fontFamily: Fonts.sansMedium,
+    color: Colors.primary,
   },
 
   cardBody: { marginTop: Spacing.sm },
@@ -221,14 +232,16 @@ const styles = StyleSheet.create({
   infoIcon: { marginRight: Spacing.sm, marginTop: 2 },
   infoContent: { flex: 1 },
   infoLabel: {
-    fontSize: Typography.xs,
+    fontSize: 10,
+    fontFamily: Fonts.sansMedium,
     color: Colors.textMuted,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1.5,
     marginBottom: 2,
   },
   infoValue: {
-    fontSize: Typography.sm,
+    fontSize: 13,
+    fontFamily: Fonts.sans,
     color: Colors.textPrimary,
     lineHeight: 20,
   },
@@ -238,23 +251,27 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     padding: Spacing.sm,
     marginBottom: Spacing.sm,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
   },
   dressCodeLabel: {
-    fontSize: Typography.xs,
-    fontWeight: '700',
-    color: Colors.primary,
-    marginBottom: Spacing.xs,
+    fontFamily: Fonts.sansMedium,
+    fontSize: 10,
+    letterSpacing: 2,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    color: Colors.gold,
+    marginBottom: 4,
   },
   dressCodeText: {
-    fontSize: Typography.sm,
+    fontSize: 13,
+    fontFamily: Fonts.sans,
     color: Colors.textSecondary,
     lineHeight: 20,
   },
 
   description: {
-    fontSize: Typography.sm,
+    fontSize: 13,
+    fontFamily: Fonts.sans,
     color: Colors.textSecondary,
     lineHeight: 22,
     marginBottom: Spacing.sm,
@@ -263,31 +280,36 @@ const styles = StyleSheet.create({
   notesCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#FFFBF0',
+    backgroundColor: Colors.surfaceWarm,
     borderRadius: Radius.md,
     padding: Spacing.sm,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.secondary,
+    borderLeftWidth: 2,
+    borderLeftColor: Colors.gold,
   },
-  notesIcon: { fontSize: 16, marginRight: Spacing.xs },
   notesText: {
     flex: 1,
-    fontSize: Typography.sm,
+    fontSize: 13,
+    fontFamily: Fonts.sans,
     color: Colors.textSecondary,
     lineHeight: 20,
   },
 
   footerNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginHorizontal: Spacing.lg,
     marginTop: Spacing.sm,
     padding: Spacing.md,
-    backgroundColor: Colors.sageLight,
+    backgroundColor: Colors.white,
     borderRadius: Radius.md,
-    alignItems: 'center',
+    borderWidth: 0.5,
+    borderColor: Colors.border,
   },
   footerText: {
-    fontSize: Typography.xs,
-    color: Colors.sageDark,
-    textAlign: 'center',
+    flex: 1,
+    fontSize: 11,
+    fontFamily: Fonts.sans,
+    color: Colors.textMuted,
+    lineHeight: 18,
   },
 });

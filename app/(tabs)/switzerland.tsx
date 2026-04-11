@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, Radius, Shadow } from '@/constants/theme';
+import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { SWITZERLAND_GUIDE, GuideSection, GuideItem } from '@/constants/weddingData';
 
 if (Platform.OS === 'android') {
@@ -29,7 +29,7 @@ function GuideItemCard({ item }: { item: GuideItem }) {
 
   return (
     <TouchableOpacity
-      style={[styles.itemCard, Shadow.small]}
+      style={styles.itemCard}
       onPress={toggle}
       activeOpacity={0.9}
     >
@@ -52,13 +52,14 @@ function GuideItemCard({ item }: { item: GuideItem }) {
           <Text style={styles.itemDescription}>{item.description}</Text>
           {item.tip && (
             <View style={styles.tipCard}>
-              <Text style={styles.tipEmoji}>✨</Text>
+              <Ionicons name="sparkles-outline" size={13} color={Colors.gold} style={{ marginRight: Spacing.xs, marginTop: 1 }} />
               <Text style={styles.tipText}>{item.tip}</Text>
             </View>
           )}
           {item.link && (
-            <TouchableOpacity onPress={() => Linking.openURL(item.link!)}>
-              <Text style={styles.linkText}>Open in browser →</Text>
+            <TouchableOpacity onPress={() => Linking.openURL(item.link!)} style={styles.linkButton}>
+              <Text style={styles.linkText}>Open in browser</Text>
+              <Ionicons name="arrow-forward" size={13} color={Colors.primary} />
             </TouchableOpacity>
           )}
         </View>
@@ -71,7 +72,6 @@ function SectionBlock({ section }: { section: GuideSection }) {
   return (
     <View style={styles.sectionBlock}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionEmoji}>{section.emoji}</Text>
         <Text style={styles.sectionTitle}>{section.title}</Text>
       </View>
       {section.items.map((item) => (
@@ -102,8 +102,8 @@ export default function SwitzerlandScreen() {
     >
       {/* Page header */}
       <View style={styles.pageHeader}>
-        <Text style={styles.pageEmoji}>🇨🇭</Text>
         <Text style={styles.pageTitle}>Switzerland Guide</Text>
+        <Text style={styles.pageSubtitleTag}>Zermatt & Beyond</Text>
         <Text style={styles.pageSubtitle}>
           Everything you need to know about Zermatt and making the most of your trip
         </Text>
@@ -140,27 +140,27 @@ export default function SwitzerlandScreen() {
 
       {/* Quick facts */}
       <View style={styles.quickFacts}>
-        <Text style={styles.quickFactsTitle}>🗺️ Quick Facts</Text>
+        <Text style={styles.quickFactsTitle}>Quick Facts</Text>
         <View style={styles.factRow}>
           <Text style={styles.factKey}>Currency</Text>
           <Text style={styles.factValue}>Swiss Franc (CHF)</Text>
         </View>
-        <View style={styles.divider} />
+        <View style={styles.factDivider} />
         <View style={styles.factRow}>
           <Text style={styles.factKey}>Language</Text>
           <Text style={styles.factValue}>German (English widely spoken)</Text>
         </View>
-        <View style={styles.divider} />
+        <View style={styles.factDivider} />
         <View style={styles.factRow}>
           <Text style={styles.factKey}>Time zone</Text>
           <Text style={styles.factValue}>CEST (UTC+2) in August</Text>
         </View>
-        <View style={styles.divider} />
+        <View style={styles.factDivider} />
         <View style={styles.factRow}>
           <Text style={styles.factKey}>Plug type</Text>
           <Text style={styles.factValue}>Type J (bring universal adaptor!)</Text>
         </View>
-        <View style={styles.divider} />
+        <View style={styles.factDivider} />
         <View style={styles.factRow}>
           <Text style={styles.factKey}>Emergency</Text>
           <Text style={styles.factValue}>Police 117 · Ambulance 144</Text>
@@ -177,17 +177,27 @@ const styles = StyleSheet.create({
   pageHeader: {
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.lg,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.xl,
   },
-  pageEmoji: { fontSize: 48, marginBottom: Spacing.sm },
   pageTitle: {
-    fontSize: Typography.xxl,
-    fontFamily: Typography.serif,
+    fontSize: 34,
+    fontFamily: Fonts.serifSemiBold,
     color: Colors.textPrimary,
     marginBottom: Spacing.xs,
+    letterSpacing: 0.3,
+  },
+  pageSubtitleTag: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 10,
+    letterSpacing: 2.5,
+    textTransform: 'uppercase',
+    color: Colors.gold,
+    marginBottom: Spacing.sm,
   },
   pageSubtitle: {
-    fontSize: Typography.sm,
+    fontSize: 13,
+    fontFamily: Fonts.sans,
     color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
@@ -200,7 +210,7 @@ const styles = StyleSheet.create({
   },
   filterPill: {
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
+    paddingVertical: 6,
     borderRadius: Radius.full,
     backgroundColor: Colors.white,
     borderWidth: 1,
@@ -212,26 +222,27 @@ const styles = StyleSheet.create({
     borderColor: Colors.primary,
   },
   filterText: {
-    fontSize: Typography.sm,
+    fontSize: 13,
+    fontFamily: Fonts.sans,
     color: Colors.textSecondary,
   },
   filterTextActive: {
+    fontFamily: Fonts.sansMedium,
     color: Colors.white,
-    fontWeight: '600',
   },
 
-  sectionBlock: { marginBottom: Spacing.sm, paddingHorizontal: Spacing.lg },
+  sectionBlock: { marginBottom: Spacing.xs, paddingHorizontal: Spacing.lg },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: Spacing.sm,
-    marginTop: Spacing.sm,
+    marginTop: Spacing.md,
   },
-  sectionEmoji: { fontSize: 22, marginRight: Spacing.sm },
   sectionTitle: {
-    fontSize: Typography.lg,
-    fontFamily: Typography.serif,
+    fontSize: 21,
+    fontFamily: Fonts.serifSemiBold,
     color: Colors.textPrimary,
+    letterSpacing: 0.2,
   },
 
   itemCard: {
@@ -239,6 +250,9 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     padding: Spacing.md,
     marginBottom: Spacing.sm,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    ...Shadow.small,
   },
   itemHeader: {
     flexDirection: 'row',
@@ -247,28 +261,29 @@ const styles = StyleSheet.create({
   itemHeaderText: { flex: 1 },
   categoryBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: Colors.sageLight,
+    backgroundColor: Colors.accentLight,
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.sm,
     paddingVertical: 2,
     marginBottom: Spacing.xs,
   },
   categoryText: {
-    fontSize: Typography.xs,
-    color: Colors.sageDark,
-    fontWeight: '600',
+    fontFamily: Fonts.sansMedium,
+    fontSize: 10,
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    color: Colors.accent,
   },
   itemName: {
-    fontSize: Typography.base,
-    fontFamily: Typography.serif,
+    fontSize: 15,
+    fontFamily: Fonts.serifMedium,
     color: Colors.textPrimary,
   },
 
   itemBody: { marginTop: Spacing.sm },
   itemDescription: {
-    fontSize: Typography.sm,
+    fontSize: 13,
+    fontFamily: Fonts.sans,
     color: Colors.textSecondary,
     lineHeight: 22,
     marginBottom: Spacing.sm,
@@ -280,19 +295,26 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     padding: Spacing.sm,
     marginBottom: Spacing.sm,
+    borderWidth: 0.5,
+    borderColor: Colors.divider,
   },
-  tipEmoji: { fontSize: 14, marginRight: Spacing.xs, marginTop: 1 },
   tipText: {
     flex: 1,
-    fontSize: Typography.sm,
+    fontSize: 13,
+    fontFamily: Fonts.sans,
     color: Colors.textSecondary,
     lineHeight: 20,
     fontStyle: 'italic',
   },
+  linkButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   linkText: {
-    fontSize: Typography.sm,
+    fontSize: 13,
+    fontFamily: Fonts.sansMedium,
     color: Colors.primary,
-    fontWeight: '600',
   },
 
   quickFacts: {
@@ -301,13 +323,16 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     borderRadius: Radius.lg,
     padding: Spacing.lg,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
     ...Shadow.small,
   },
   quickFactsTitle: {
-    fontSize: Typography.md,
-    fontFamily: Typography.serif,
+    fontSize: 21,
+    fontFamily: Fonts.serifSemiBold,
     color: Colors.textPrimary,
     marginBottom: Spacing.md,
+    letterSpacing: 0.2,
   },
   factRow: {
     flexDirection: 'row',
@@ -315,18 +340,19 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
   },
   factKey: {
-    fontSize: Typography.sm,
+    fontSize: 13,
+    fontFamily: Fonts.sans,
     color: Colors.textMuted,
     flex: 1,
   },
   factValue: {
-    fontSize: Typography.sm,
+    fontSize: 13,
+    fontFamily: Fonts.sansMedium,
     color: Colors.textPrimary,
-    fontWeight: '500',
     flex: 2,
     textAlign: 'right',
   },
-  divider: {
+  factDivider: {
     height: 1,
     backgroundColor: Colors.divider,
   },

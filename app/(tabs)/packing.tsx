@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, Radius, Shadow } from '@/constants/theme';
+import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { PACKING_GUIDE, PackingCategory, PackingItem } from '@/constants/weddingData';
 import { getCheckedItems, togglePackingItem } from '@/services/storage';
 
@@ -32,7 +32,7 @@ function PackingItemRow({
         activeOpacity={0.7}
       >
         <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
-          {checked && <Ionicons name="checkmark" size={14} color={Colors.white} />}
+          {checked && <Ionicons name="checkmark" size={13} color={Colors.white} />}
         </View>
         <Text style={[styles.itemLabel, checked && styles.itemLabelChecked]}>
           {item.label}
@@ -44,15 +44,15 @@ function PackingItemRow({
           >
             <Ionicons
               name={showTip ? 'information-circle' : 'information-circle-outline'}
-              size={18}
-              color={showTip ? Colors.secondary : Colors.textMuted}
+              size={17}
+              color={showTip ? Colors.primary : Colors.textMuted}
             />
           </TouchableOpacity>
         )}
       </TouchableOpacity>
       {item.tip && showTip && (
         <View style={styles.tipBubble}>
-          <Text style={styles.tipText}>✨ {item.tip}</Text>
+          <Text style={styles.tipText}>{item.tip}</Text>
         </View>
       )}
     </View>
@@ -73,9 +73,8 @@ function CategorySection({
   const allDone = checkedCount === total;
 
   return (
-    <View style={[styles.categoryCard, Shadow.small]}>
+    <View style={styles.categoryCard}>
       <View style={styles.categoryHeader}>
-        <Text style={styles.categoryEmoji}>{category.emoji}</Text>
         <View style={styles.categoryHeaderText}>
           <Text style={styles.categoryTitle}>{category.title}</Text>
           <Text style={styles.categoryProgress}>
@@ -83,9 +82,7 @@ function CategorySection({
           </Text>
         </View>
         {allDone && (
-          <View style={styles.allDoneBadge}>
-            <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
-          </View>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
         )}
       </View>
 
@@ -151,16 +148,16 @@ export default function PackingScreen() {
     >
       {/* Page header */}
       <View style={styles.pageHeader}>
-        <Text style={styles.pageEmoji}>🧳</Text>
         <Text style={styles.pageTitle}>Packing Guide</Text>
+        <Text style={styles.pageSubtitleTag}>What to Bring</Text>
         <Text style={styles.pageSubtitle}>
           Outfit ideas and everything you need for a Swiss wedding weekend
         </Text>
       </View>
 
       {/* Overall progress */}
-      <View style={[styles.overallProgress, Shadow.medium]}>
-        <Text style={styles.overallLabel}>Overall packing progress</Text>
+      <View style={styles.overallProgress}>
+        <Text style={styles.overallLabel}>Overall Progress</Text>
         <Text style={styles.overallPercent}>{overallPercent}%</Text>
         <View style={styles.progressTrackLarge}>
           <View style={[styles.progressFill, { width: `${overallPercent}%` }]} />
@@ -169,7 +166,7 @@ export default function PackingScreen() {
           {totalChecked} of {totalItems} items packed
         </Text>
         {overallPercent === 100 && (
-          <Text style={styles.allPackedText}>🎉 You're all packed! See you in Switzerland!</Text>
+          <Text style={styles.allPackedText}>You're all packed! See you in Switzerland!</Text>
         )}
       </View>
 
@@ -185,7 +182,7 @@ export default function PackingScreen() {
 
       {/* Tips footer */}
       <View style={styles.tipsFooter}>
-        <Text style={styles.tipsTitle}>🏔️ Zermatt is car-free</Text>
+        <Text style={styles.tipsTitle}>Zermatt is car-free</Text>
         <Text style={styles.tipsText}>
           You'll carry your luggage from the train station. Pack light if you can, or arrange
           luggage transport with your hotel in advance.
@@ -203,17 +200,27 @@ const styles = StyleSheet.create({
   pageHeader: {
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.lg,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.xl,
   },
-  pageEmoji: { fontSize: 48, marginBottom: Spacing.sm },
   pageTitle: {
-    fontSize: Typography.xxl,
-    fontFamily: Typography.serif,
+    fontSize: 34,
+    fontFamily: Fonts.serifSemiBold,
     color: Colors.textPrimary,
     marginBottom: Spacing.xs,
+    letterSpacing: 0.3,
+  },
+  pageSubtitleTag: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 10,
+    letterSpacing: 2.5,
+    textTransform: 'uppercase',
+    color: Colors.gold,
+    marginBottom: Spacing.sm,
   },
   pageSubtitle: {
-    fontSize: Typography.sm,
+    fontSize: 13,
+    fontFamily: Fonts.sans,
     color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
@@ -222,42 +229,47 @@ const styles = StyleSheet.create({
   overallProgress: {
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.lg,
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.white,
     borderRadius: Radius.lg,
     padding: Spacing.lg,
     alignItems: 'center',
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    ...Shadow.small,
   },
   overallLabel: {
-    color: Colors.white,
-    opacity: 0.8,
-    fontSize: Typography.sm,
+    fontFamily: Fonts.sansMedium,
+    fontSize: 10,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    color: Colors.textMuted,
     marginBottom: Spacing.xs,
   },
   overallPercent: {
-    color: Colors.white,
-    fontSize: Typography.xxxl,
-    fontFamily: Typography.serif,
-    fontWeight: '700',
+    fontSize: 46,
+    fontFamily: Fonts.serifSemiBold,
+    color: Colors.textPrimary,
     marginBottom: Spacing.sm,
+    letterSpacing: -1,
   },
   progressTrackLarge: {
     width: '100%',
-    height: 8,
-    backgroundColor: 'rgba(255,255,255,0.3)',
+    height: 6,
+    backgroundColor: Colors.divider,
     borderRadius: Radius.full,
     overflow: 'hidden',
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.sm,
   },
   overallCount: {
-    color: Colors.white,
-    opacity: 0.7,
-    fontSize: Typography.xs,
+    fontFamily: Fonts.sans,
+    fontSize: 13,
+    color: Colors.textMuted,
   },
   allPackedText: {
-    color: Colors.white,
-    fontSize: Typography.sm,
+    fontFamily: Fonts.serifItalic,
+    fontSize: 15,
+    color: Colors.success,
     marginTop: Spacing.sm,
-    fontWeight: '600',
   },
 
   categoryCard: {
@@ -266,28 +278,31 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     borderRadius: Radius.lg,
     padding: Spacing.md,
-    overflow: 'hidden',
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    ...Shadow.small,
   },
   categoryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: Spacing.sm,
   },
-  categoryEmoji: { fontSize: 24, marginRight: Spacing.sm },
   categoryHeaderText: { flex: 1 },
   categoryTitle: {
-    fontSize: Typography.base,
-    fontFamily: Typography.serif,
+    fontSize: 17,
+    fontFamily: Fonts.serifSemiBold,
     color: Colors.textPrimary,
+    letterSpacing: 0.2,
   },
   categoryProgress: {
-    fontSize: Typography.xs,
+    fontSize: 11,
+    fontFamily: Fonts.sans,
     color: Colors.textMuted,
+    marginTop: 2,
   },
-  allDoneBadge: {},
 
   progressTrack: {
-    height: 4,
+    height: 3,
     backgroundColor: Colors.divider,
     borderRadius: Radius.full,
     overflow: 'hidden',
@@ -295,7 +310,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: Colors.secondary,
+    backgroundColor: Colors.primaryLight,
     borderRadius: Radius.full,
   },
   progressFillDone: {
@@ -310,10 +325,10 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xs,
   },
   checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
-    borderWidth: 2,
+    width: 21,
+    height: 21,
+    borderRadius: 5,
+    borderWidth: 1.5,
     borderColor: Colors.border,
     marginRight: Spacing.sm,
     alignItems: 'center',
@@ -325,7 +340,8 @@ const styles = StyleSheet.create({
   },
   itemLabel: {
     flex: 1,
-    fontSize: Typography.sm,
+    fontSize: 13,
+    fontFamily: Fonts.sans,
     color: Colors.textPrimary,
     lineHeight: 20,
   },
@@ -340,9 +356,12 @@ const styles = StyleSheet.create({
     padding: Spacing.sm,
     marginTop: 2,
     marginLeft: 30,
+    borderWidth: 0.5,
+    borderColor: Colors.divider,
   },
   tipText: {
-    fontSize: Typography.xs,
+    fontSize: 11,
+    fontFamily: Fonts.sans,
     color: Colors.textSecondary,
     lineHeight: 18,
     fontStyle: 'italic',
@@ -351,19 +370,24 @@ const styles = StyleSheet.create({
   tipsFooter: {
     marginHorizontal: Spacing.lg,
     marginTop: Spacing.sm,
-    backgroundColor: Colors.sageLight,
+    backgroundColor: Colors.accentLight,
     borderRadius: Radius.lg,
     padding: Spacing.lg,
+    borderWidth: 0.5,
+    borderColor: Colors.accent + '30',
   },
   tipsTitle: {
-    fontSize: Typography.base,
-    fontFamily: Typography.serif,
-    color: Colors.sageDark,
+    fontSize: 17,
+    fontFamily: Fonts.serifSemiBold,
+    color: Colors.accent,
     marginBottom: Spacing.xs,
+    letterSpacing: 0.2,
   },
   tipsText: {
-    fontSize: Typography.sm,
-    color: Colors.sageDark,
+    fontSize: 13,
+    fontFamily: Fonts.sans,
+    color: Colors.accent,
     lineHeight: 20,
+    opacity: 0.85,
   },
 });
