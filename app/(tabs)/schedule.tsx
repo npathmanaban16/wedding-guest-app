@@ -8,6 +8,7 @@ import {
   LayoutAnimation,
   Platform,
   UIManager,
+  Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +21,15 @@ if (Platform.OS === 'android') {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
 }
 
+function BulletRow({ text }: { text: string }) {
+  return (
+    <View style={styles.bulletRow}>
+      <Text style={styles.bulletDot}>•</Text>
+      <Text style={styles.bulletText}>{text}</Text>
+    </View>
+  );
+}
+
 function EventCard({ event }: { event: WeddingEvent }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -29,12 +39,8 @@ function EventCard({ event }: { event: WeddingEvent }) {
   };
 
   return (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={toggle}
-      activeOpacity={0.9}
-    >
-      {/* Header row */}
+    <TouchableOpacity style={styles.card} onPress={toggle} activeOpacity={0.9}>
+      {/* Header */}
       <View style={styles.cardHeader}>
         <View style={styles.cardHeaderText}>
           <Text style={styles.eventTitle}>{event.title}</Text>
@@ -48,7 +54,6 @@ function EventCard({ event }: { event: WeddingEvent }) {
         />
       </View>
 
-      {/* Expanded content */}
       {expanded && (
         <View style={styles.cardBody}>
           <View style={styles.divider} />
@@ -56,16 +61,126 @@ function EventCard({ event }: { event: WeddingEvent }) {
           <InfoRow icon="location-outline" label="Venue" value={event.venue} />
           <InfoRow icon="navigate-outline" label="Address" value={event.address} />
 
+          {/* Dress Code */}
           <View style={styles.dressCodeCard}>
             <Text style={styles.dressCodeLabel}>Dress Code</Text>
             <Text style={styles.dressCodeText}>{event.dressCode}</Text>
+
+            {/* Black-tie breakdown */}
+            {event.blackTieGuide && (
+              <View style={styles.dressGuide}>
+                <View style={styles.dressGuideRow}>
+                  <Text style={styles.dressGuideKey}>Men</Text>
+                  <Text style={styles.dressGuideVal}>{event.blackTieGuide.men}</Text>
+                </View>
+                <View style={styles.dressGuideRow}>
+                  <Text style={styles.dressGuideKey}>Women</Text>
+                  <Text style={styles.dressGuideVal}>{event.blackTieGuide.women}</Text>
+                </View>
+              </View>
+            )}
+
+            {/* Colour palette */}
+            {event.colorPalette && (
+              <View style={styles.palette}>
+                <Text style={styles.paletteHeading}>Suggested Colour Palette</Text>
+                <View style={styles.paletteGrid}>
+                  {event.colorPalette.map((c) => (
+                    <View key={c.name} style={styles.swatchItem}>
+                      <View style={[styles.swatch, { backgroundColor: c.hex }]} />
+                      <Text style={styles.swatchLabel}>{c.name}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Outfit inspiration link */}
+            {event.outfitInspirationUrl && (
+              <TouchableOpacity
+                style={styles.outfitLink}
+                onPress={() => Linking.openURL(event.outfitInspirationUrl!)}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="sparkles-outline" size={13} color={Colors.primary} />
+                <Text style={styles.outfitLinkText}>Outfit Inspiration Generator</Text>
+                <Ionicons name="arrow-forward" size={13} color={Colors.primary} />
+              </TouchableOpacity>
+            )}
           </View>
+
+          {/* Indian attire guide (Sangeet) */}
+          {event.indianAttire && (
+            <View style={styles.indianAttireCard}>
+              <Text style={styles.indianAttireTitle}>Indian Attire Guide</Text>
+              <Text style={styles.indianAttireIntro}>
+                Indian outfits are not required — wear whatever makes you feel festive and fabulous!
+              </Text>
+              <Text style={styles.indianAttireGender}>For Women</Text>
+              {event.indianAttire.forWomen.map((item, i) => (
+                <BulletRow key={i} text={item} />
+              ))}
+              <Text style={[styles.indianAttireGender, { marginTop: Spacing.sm }]}>For Men</Text>
+              {event.indianAttire.forMen.map((item, i) => (
+                <BulletRow key={i} text={item} />
+              ))}
+            </View>
+          )}
 
           <Text style={styles.description}>{event.description}</Text>
 
+          {/* Outdoor note */}
+          {event.outdoorNote && (
+            <View style={[styles.notesCard, { borderLeftColor: '#D4920A' }]}>
+              <Ionicons
+                name="sunny-outline"
+                size={16}
+                color={Colors.gold}
+                style={{ marginRight: Spacing.xs, marginTop: 1 }}
+              />
+              <Text style={styles.notesText}>{event.outdoorNote}</Text>
+            </View>
+          )}
+
+          {/* Tuxedo rental note */}
+          {event.tuxedoNote && (
+            <View style={styles.infoBox}>
+              <View style={styles.infoBoxHeader}>
+                <Ionicons name="shirt-outline" size={14} color={Colors.primary} style={{ marginRight: Spacing.xs }} />
+                <Text style={styles.infoBoxTitle}>Tuxedo Rentals</Text>
+              </View>
+              <Text style={styles.infoBoxText}>{event.tuxedoNote}</Text>
+            </View>
+          )}
+
+          {/* Hair & makeup booking */}
+          {event.hairMakeupLinks && event.hairMakeupLinks.length > 0 && (
+            <View style={styles.infoBox}>
+              <Text style={styles.infoBoxTitle}>Book Hair & Makeup</Text>
+              <Text style={styles.infoBoxSubtitle}>At the Fairmont Le Montreux Palace</Text>
+              {event.hairMakeupLinks.map((link) => (
+                <TouchableOpacity
+                  key={link.url}
+                  style={styles.linkButton}
+                  onPress={() => Linking.openURL(link.url)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.linkText}>{link.label}</Text>
+                  <Ionicons name="arrow-forward" size={13} color={Colors.primary} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {/* General notes */}
           {event.notes && (
             <View style={styles.notesCard}>
-              <Ionicons name="information-circle-outline" size={16} color={Colors.gold} style={{ marginRight: Spacing.xs, marginTop: 1 }} />
+              <Ionicons
+                name="information-circle-outline"
+                size={16}
+                color={Colors.gold}
+                style={{ marginRight: Spacing.xs, marginTop: 1 }}
+              />
               <Text style={styles.notesText}>{event.notes}</Text>
             </View>
           )}
@@ -108,16 +223,16 @@ export default function ScheduleScreen() {
       <View style={styles.pageHeader}>
         <Text style={styles.pageTitle}>Wedding Schedule</Text>
         <Text style={styles.pageSubtitleTag}>Programme</Text>
-        <Text style={styles.pageSubtitle}>Tap each event for full details, venue, and dress code</Text>
+        <Text style={styles.pageSubtitle}>
+          Tap each event for full details, venue, dress code, and colour palette
+        </Text>
       </View>
 
       {/* Timeline */}
       <View style={styles.timeline}>
         {visibleEvents.map((event, index) => (
           <View key={event.id} style={styles.timelineItem}>
-            {/* Connector line */}
             {index < visibleEvents.length - 1 && <View style={styles.connector} />}
-            {/* Dot */}
             <View style={styles.dot} />
             <View style={styles.timelineContent}>
               <EventCard event={event} />
@@ -251,6 +366,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
+  // Dress code block
   dressCodeCard: {
     backgroundColor: Colors.surfaceWarm,
     borderRadius: Radius.md,
@@ -272,6 +388,141 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     color: Colors.textSecondary,
     lineHeight: 20,
+    marginBottom: Spacing.sm,
+  },
+
+  // Men / Women breakdown
+  dressGuide: {
+    borderTopWidth: 0.5,
+    borderTopColor: Colors.divider,
+    paddingTop: Spacing.sm,
+    marginBottom: Spacing.sm,
+    gap: 5,
+  },
+  dressGuideRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  dressGuideKey: {
+    fontSize: 11,
+    fontFamily: Fonts.sansMedium,
+    color: Colors.textPrimary,
+    minWidth: 54,
+  },
+  dressGuideVal: {
+    flex: 1,
+    fontSize: 12,
+    fontFamily: Fonts.sans,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+  },
+
+  // Colour palette
+  palette: {
+    borderTopWidth: 0.5,
+    borderTopColor: Colors.divider,
+    paddingTop: Spacing.sm,
+  },
+  paletteHeading: {
+    fontSize: 10,
+    fontFamily: Fonts.sansMedium,
+    color: Colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    marginBottom: Spacing.sm,
+  },
+  paletteGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  swatchItem: {
+    width: '20%',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  swatch: {
+    width: 36,
+    height: 36,
+    borderRadius: 6,
+    marginBottom: 4,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+  },
+  swatchLabel: {
+    fontSize: 8,
+    fontFamily: Fonts.sans,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 11,
+  },
+
+  // Outfit inspiration link
+  outfitLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: Spacing.sm,
+    paddingTop: Spacing.sm,
+    borderTopWidth: 0.5,
+    borderTopColor: Colors.divider,
+  },
+  outfitLinkText: {
+    flex: 1,
+    fontSize: 13,
+    fontFamily: Fonts.sansMedium,
+    color: Colors.primary,
+  },
+
+  // Indian attire guide
+  indianAttireCard: {
+    backgroundColor: Colors.surfaceWarm,
+    borderRadius: Radius.md,
+    padding: Spacing.sm,
+    marginBottom: Spacing.sm,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+  },
+  indianAttireTitle: {
+    fontSize: 10,
+    fontFamily: Fonts.sansMedium,
+    color: Colors.gold,
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    marginBottom: 4,
+  },
+  indianAttireIntro: {
+    fontSize: 12,
+    fontFamily: Fonts.sans,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+    marginBottom: Spacing.sm,
+    fontStyle: 'italic',
+  },
+  indianAttireGender: {
+    fontSize: 11,
+    fontFamily: Fonts.sansMedium,
+    color: Colors.textPrimary,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  bulletRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 3,
+  },
+  bulletDot: {
+    fontSize: 12,
+    color: Colors.gold,
+    marginRight: 6,
+    lineHeight: 20,
+  },
+  bulletText: {
+    flex: 1,
+    fontSize: 12,
+    fontFamily: Fonts.sans,
+    color: Colors.textSecondary,
+    lineHeight: 20,
   },
 
   description: {
@@ -290,6 +541,7 @@ const styles = StyleSheet.create({
     padding: Spacing.sm,
     borderLeftWidth: 2,
     borderLeftColor: Colors.gold,
+    marginBottom: Spacing.sm,
   },
   notesText: {
     flex: 1,
@@ -297,6 +549,53 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     color: Colors.textSecondary,
     lineHeight: 20,
+  },
+
+  // Generic info box (tuxedo, hair/makeup)
+  infoBox: {
+    backgroundColor: Colors.surfaceWarm,
+    borderRadius: Radius.md,
+    padding: Spacing.sm,
+    marginBottom: Spacing.sm,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+  },
+  infoBoxHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  infoBoxTitle: {
+    fontSize: 10,
+    fontFamily: Fonts.sansMedium,
+    color: Colors.textPrimary,
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    marginBottom: 4,
+  },
+  infoBoxSubtitle: {
+    fontSize: 11,
+    fontFamily: Fonts.sans,
+    color: Colors.textMuted,
+    fontStyle: 'italic',
+    marginBottom: Spacing.sm,
+  },
+  infoBoxText: {
+    fontSize: 12,
+    fontFamily: Fonts.sans,
+    color: Colors.textSecondary,
+    lineHeight: 20,
+  },
+  linkButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 3,
+  },
+  linkText: {
+    fontSize: 13,
+    fontFamily: Fonts.sansMedium,
+    color: Colors.primary,
   },
 
   footerNote: {

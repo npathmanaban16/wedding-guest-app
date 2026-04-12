@@ -30,6 +30,13 @@ export interface WeddingEvent {
   description: string;
   notes?: string;
   weddingPartyOnly?: boolean;
+  colorPalette?: { name: string; hex: string }[];
+  outdoorNote?: string;
+  outfitInspirationUrl?: string;
+  indianAttire?: { forWomen: string[]; forMen: string[] };
+  blackTieGuide?: { men: string; women: string };
+  tuxedoNote?: string;
+  hairMakeupLinks?: { label: string; url: string }[];
 }
 
 export const EVENTS: WeddingEvent[] = [
@@ -48,6 +55,16 @@ export const EVENTS: WeddingEvent[] = [
     notes:
       "Transportation will be provided from the Fairmont Le Montreux Palace.",
     weddingPartyOnly: true,
+    colorPalette: [
+      { name: 'white', hex: '#FFFFFF' },
+      { name: 'ivory', hex: '#F5F0DC' },
+      { name: 'champagne', hex: '#EDD9A3' },
+      { name: 'gold', hex: '#C9A84C' },
+      { name: 'emerald', hex: '#2D6A4F' },
+      { name: 'sage', hex: '#78A38A' },
+      { name: 'deep rose', hex: '#8B2252' },
+      { name: 'magenta', hex: '#C41E5E' },
+    ],
   },
   {
     id: "sangeet",
@@ -63,6 +80,29 @@ export const EVENTS: WeddingEvent[] = [
       "Welcome party with dancing, drinks, and dinner. This is the big celebration night — come ready to dance!",
     notes:
       "La Terrasse du Petit Palais offers stunning views over Lake Geneva. Cocktail attire with an Indian festive flair is encouraged.",
+    colorPalette: [
+      { name: 'ruby red', hex: '#9B1C1C' },
+      { name: 'magenta', hex: '#C41E5E' },
+      { name: 'burnt orange', hex: '#E8602C' },
+      { name: 'marigold', hex: '#F0A500' },
+      { name: 'emerald green', hex: '#006B3C' },
+      { name: 'teal', hex: '#007272' },
+      { name: 'light blue', hex: '#89CFF0' },
+      { name: 'sapphire', hex: '#0F52BA' },
+    ],
+    outdoorNote: "The Sangeet will be held on a terrace and is outdoors, weather permitting. In the event of rain or inclement weather, it will be moved indoors.",
+    outfitInspirationUrl: "https://neha-naveen-wedding-outfit-inspo.netlify.app/",
+    indianAttire: {
+      forWomen: [
+        "Lehenga — A long skirt with a matching blouse and dupatta (scarf)",
+        "Sharara / Anarkali — A long, flowing dress with Indian embroidery or embellishments and pants",
+        "Saree — A draped fabric over a blouse and skirt. Beautiful but requires practice, so only if you're comfortable",
+      ],
+      forMen: [
+        "Kurta — A long tunic with slim pants, can be paired with a vest for a dressier look",
+        "Sherwani — A more formal embroidered tunic, often worn for weddings",
+      ],
+    },
   },
   {
     id: "ceremony",
@@ -77,6 +117,29 @@ export const EVENTS: WeddingEvent[] = [
     description:
       "The wedding ceremony in the beautiful gardens of the Fairmont, with the Alps and Lake Geneva as backdrop. Please arrive 20–30 minutes early to be seated.",
     notes: "Cocktail hour to follow at 6:00 PM.",
+    colorPalette: [
+      { name: 'blush', hex: '#F2C4CE' },
+      { name: 'dusty rose', hex: '#C8A0A0' },
+      { name: 'champagne', hex: '#EDD9A3' },
+      { name: 'sage', hex: '#8FAF88' },
+      { name: 'dove grey', hex: '#A8AFB8' },
+      { name: 'charcoal', hex: '#3C4043' },
+      { name: 'midnight', hex: '#191970' },
+      { name: 'deep taupe', hex: '#6B5A4E' },
+      { name: 'muted plum', hex: '#7B5080' },
+      { name: 'antique gold', hex: '#C9A84C' },
+    ],
+    outdoorNote: "The ceremony will take place in the garden at the Fairmont Le Montreux Palace. We recommend wearing shoes you'll be comfortable walking on grass in. In the event of inclement weather, the ceremony will be moved indoors.",
+    outfitInspirationUrl: "https://neha-naveen-wedding-outfit-inspo.netlify.app/",
+    blackTieGuide: {
+      men: "Tuxedos (or a black suit)",
+      women: "Floor-length gowns or formal Indian attire such as sarees or lehengas",
+    },
+    tuxedoNote: "Renting a tux? Rentals typically arrive ~10 days before the wedding. Standard returns are due within 5 days after the event. An extended 12-day return is available for ~$60 extra — useful if you're travelling after the wedding.",
+    hairMakeupLinks: [
+      { label: "Coiffure du Palace (Hair)", url: "https://salonkee.ch/salon/coiffure-du-palace?lang=en" },
+      { label: "Fairmont Spa (Makeup)", url: "https://emea.spatime.com/fhmp1820/5673372/offering/33647422?types=1,0,4,8,16" },
+    ],
   },
   {
     id: "reception",
@@ -92,6 +155,22 @@ export const EVENTS: WeddingEvent[] = [
       "Dinner, speeches, dancing, and celebrating into the night in the grand Salle des Fêtes ballroom.",
     notes:
       "The reception follows directly from the cocktail hour.",
+    colorPalette: [
+      { name: 'blush', hex: '#F2C4CE' },
+      { name: 'dusty rose', hex: '#C8A0A0' },
+      { name: 'champagne', hex: '#EDD9A3' },
+      { name: 'sage', hex: '#8FAF88' },
+      { name: 'dove grey', hex: '#A8AFB8' },
+      { name: 'charcoal', hex: '#3C4043' },
+      { name: 'midnight', hex: '#191970' },
+      { name: 'deep taupe', hex: '#6B5A4E' },
+      { name: 'muted plum', hex: '#7B5080' },
+      { name: 'antique gold', hex: '#C9A84C' },
+    ],
+    blackTieGuide: {
+      men: "Tuxedos (or a black suit)",
+      women: "Floor-length gowns or formal Indian attire such as sarees or lehengas",
+    },
   },
 ];
 
@@ -448,7 +527,7 @@ export const PACKING_GUIDE: PackingCategory[] = [
     title: "Travel Essentials",
     emoji: "🧳",
     items: [
-      { id: "passport", label: "Passport / ID" },
+      { id: "passport", label: "Passport / ID", tip: "Ensure your passport is valid through at least November 2026." },
       {
         id: "travel-insurance",
         label: "Travel insurance documents",
