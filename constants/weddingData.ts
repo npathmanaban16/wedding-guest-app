@@ -133,7 +133,7 @@ export const EVENTS: WeddingEvent[] = [
       men: "Tuxedos (or a black suit)",
       women: "Floor-length gowns or formal Indian attire such as sarees or lehengas",
     },
-    tuxedoNote: "Renting a tux? Rentals typically arrive ~10 days before the wedding. Standard returns are due within 5 days after the event. An extended 12-day return is available for ~$60 extra — useful if you're travelling after the wedding.",
+    tuxedoNote: "Renting a tux? Based on The Black Tux rental service: rentals typically arrive ~10 days before the wedding, with standard returns due within 5 days after the event. An extended 12-day return is available for ~$60 extra — useful if you're travelling after the wedding. Timelines and pricing may vary by rental service.",
     hairMakeupLinks: [
       { label: "Coiffure du Palace (Hair)", url: "https://salonkee.ch/salon/coiffure-du-palace?lang=en" },
       { label: "Fairmont Spa (Makeup)", url: "https://emea.spatime.com/fhmp1820/5673372/offering/33647422?types=1,0,4,8,16" },
