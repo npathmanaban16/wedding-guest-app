@@ -511,6 +511,7 @@ const styles = StyleSheet.create({
   outfitLinkWrapper: {
     marginTop: Spacing.md,
     paddingTop: Spacing.md,
+    marginBottom: Spacing.md,
     borderTopWidth: 0.5,
     borderTopColor: Colors.divider,
   },
