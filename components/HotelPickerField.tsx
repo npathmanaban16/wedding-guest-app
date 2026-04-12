@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   Modal,
@@ -21,8 +20,6 @@ export const HOTEL_OPTIONS = [
   'Royal Plaza Montreux',
 ];
 
-const OTHER = 'Other';
-
 interface Props {
   label: string;
   value: string;
@@ -31,33 +28,13 @@ interface Props {
 
 export function HotelPickerField({ label, value, onChange }: Props) {
   const [modalVisible, setModalVisible] = useState(false);
-  const isOther = value !== '' && !HOTEL_OPTIONS.includes(value);
-  const [otherText, setOtherText] = useState(isOther ? value : '');
 
-  const displayValue = HOTEL_OPTIONS.includes(value) ? value : value ? value : '';
-
-  const handleSelect = (option: string) => {
-    if (option === OTHER) {
-      setModalVisible(false);
-      onChange(otherText);
-    } else {
-      setModalVisible(false);
-      setOtherText('');
-      onChange(option);
-    }
-  };
-
-  const selectedLabel = HOTEL_OPTIONS.includes(value)
-    ? value
-    : value
-    ? `Other: ${value}`
-    : '';
+  const selectedLabel = HOTEL_OPTIONS.includes(value) ? value : '';
 
   return (
     <View style={styles.wrapper}>
       <Text style={styles.label}>{label}</Text>
 
-      {/* Trigger button */}
       <TouchableOpacity
         style={styles.trigger}
         onPress={() => setModalVisible(true)}
@@ -69,19 +46,6 @@ export function HotelPickerField({ label, value, onChange }: Props) {
         <Ionicons name="chevron-down" size={18} color={Colors.textMuted} />
       </TouchableOpacity>
 
-      {/* "Other" free-text input appears inline when no listed hotel is selected */}
-      {isOther && (
-        <TextInput
-          style={styles.otherInput}
-          value={value}
-          onChangeText={onChange}
-          placeholder="Enter your accommodation..."
-          placeholderTextColor={Colors.textMuted}
-          autoCorrect={false}
-        />
-      )}
-
-      {/* Modal picker */}
       <Modal
         visible={modalVisible}
         animationType="slide"
@@ -98,15 +62,14 @@ export function HotelPickerField({ label, value, onChange }: Props) {
           <Text style={styles.sheetTitle}>Where are you staying?</Text>
 
           <FlatList
-            data={[...HOTEL_OPTIONS, OTHER]}
+            data={HOTEL_OPTIONS}
             keyExtractor={(item) => item}
             renderItem={({ item }) => {
-              const isSelected =
-                item === OTHER ? isOther : value === item;
+              const isSelected = value === item;
               return (
                 <TouchableOpacity
                   style={[styles.option, isSelected && styles.optionSelected]}
-                  onPress={() => handleSelect(item)}
+                  onPress={() => { onChange(item); setModalVisible(false); }}
                   activeOpacity={0.7}
                 >
                   <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>
@@ -120,24 +83,6 @@ export function HotelPickerField({ label, value, onChange }: Props) {
             }}
             ItemSeparatorComponent={() => <View style={styles.separator} />}
           />
-
-          {/* "Other" inline text input inside modal */}
-          {(isOther || value === '') && (
-            <View style={styles.otherSection}>
-              <Text style={styles.otherLabel}>Or type your accommodation:</Text>
-              <TextInput
-                style={styles.otherModalInput}
-                value={isOther ? value : otherText}
-                onChangeText={(t) => {
-                  setOtherText(t);
-                  onChange(t);
-                }}
-                placeholder="Hotel or accommodation name..."
-                placeholderTextColor={Colors.textMuted}
-                autoCorrect={false}
-              />
-            </View>
-          )}
 
           <TouchableOpacity style={styles.doneButton} onPress={() => setModalVisible(false)}>
             <Text style={styles.doneButtonText}>Done</Text>
@@ -174,20 +119,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     color: Colors.textPrimary,
   },
-  otherInput: {
-    marginTop: Spacing.xs,
-    borderWidth: 1,
-    borderColor: Colors.primary,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 12,
-    fontSize: 15,
-    fontFamily: Fonts.sans,
-    color: Colors.textPrimary,
-    backgroundColor: Colors.background,
-  },
 
-  // Modal
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.35)',
@@ -238,33 +170,6 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: Colors.divider,
     marginHorizontal: Spacing.lg,
-  },
-
-  otherSection: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: Colors.divider,
-    marginTop: Spacing.xs,
-  },
-  otherLabel: {
-    fontSize: 11,
-    fontFamily: Fonts.sansMedium,
-    color: Colors.textMuted,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    marginBottom: Spacing.xs,
-  },
-  otherModalInput: {
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 12,
-    fontSize: 15,
-    fontFamily: Fonts.sans,
-    color: Colors.textPrimary,
-    backgroundColor: Colors.background,
   },
 
   doneButton: {

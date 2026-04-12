@@ -118,7 +118,7 @@ export default function SongsScreen() {
           <Text style={styles.inputLabel}>Artist (optional)</Text>
           <TextInput
             style={styles.input}
-            placeholder="e.g. A.R. Rahman"
+            placeholder="e.g. Dua Lipa"
             placeholderTextColor={Colors.textMuted}
             value={artist}
             onChangeText={setArtist}
