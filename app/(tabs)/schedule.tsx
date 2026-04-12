@@ -146,57 +146,57 @@ function EventCard({ event }: { event: WeddingEvent }) {
                     <Ionicons name="arrow-forward" size={13} color={Colors.primary} />
                   </TouchableOpacity>
                 )}
+
+                {/* Indian attire guide (Sangeet) */}
+                {event.indianAttire && (
+                  <View style={styles.indianAttireCard}>
+                    <Text style={styles.indianAttireTitle}>Indian Attire Guide</Text>
+                    <Text style={styles.indianAttireIntro}>
+                      Indian outfits are not required — wear whatever makes you feel festive and fabulous!
+                    </Text>
+                    <Text style={styles.indianAttireGender}>For Women</Text>
+                    {event.indianAttire.forWomen.map((item, i) => (
+                      <BulletRow key={i} text={item} />
+                    ))}
+                    <Text style={[styles.indianAttireGender, { marginTop: Spacing.sm }]}>For Men</Text>
+                    {event.indianAttire.forMen.map((item, i) => (
+                      <BulletRow key={i} text={item} />
+                    ))}
+                  </View>
+                )}
+
+                {/* Tuxedo rental note */}
+                {event.tuxedoNote && (
+                  <View style={styles.infoBox}>
+                    <View style={styles.infoBoxHeader}>
+                      <Ionicons name="shirt-outline" size={14} color={Colors.primary} style={{ marginRight: Spacing.xs }} />
+                      <Text style={styles.infoBoxTitle}>Tuxedo Rentals</Text>
+                    </View>
+                    <Text style={styles.infoBoxText}>{event.tuxedoNote}</Text>
+                  </View>
+                )}
+
+                {/* Hair & makeup booking */}
+                {event.hairMakeupLinks && event.hairMakeupLinks.length > 0 && (
+                  <View style={styles.infoBox}>
+                    <Text style={styles.infoBoxTitle}>Book Hair & Makeup</Text>
+                    <Text style={styles.infoBoxSubtitle}>At the Fairmont Le Montreux Palace</Text>
+                    {event.hairMakeupLinks.map((link) => (
+                      <TouchableOpacity
+                        key={link.url}
+                        style={styles.linkButton}
+                        onPress={() => Linking.openURL(link.url)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={styles.linkText}>{link.label}</Text>
+                        <Ionicons name="arrow-forward" size={13} color={Colors.primary} />
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
               </>
             )}
           </TouchableOpacity>
-
-          {/* Indian attire guide (Sangeet) */}
-          {event.indianAttire && (
-            <View style={styles.indianAttireCard}>
-              <Text style={styles.indianAttireTitle}>Indian Attire Guide</Text>
-              <Text style={styles.indianAttireIntro}>
-                Indian outfits are not required — wear whatever makes you feel festive and fabulous!
-              </Text>
-              <Text style={styles.indianAttireGender}>For Women</Text>
-              {event.indianAttire.forWomen.map((item, i) => (
-                <BulletRow key={i} text={item} />
-              ))}
-              <Text style={[styles.indianAttireGender, { marginTop: Spacing.sm }]}>For Men</Text>
-              {event.indianAttire.forMen.map((item, i) => (
-                <BulletRow key={i} text={item} />
-              ))}
-            </View>
-          )}
-
-          {/* Tuxedo rental note */}
-          {event.tuxedoNote && (
-            <View style={styles.infoBox}>
-              <View style={styles.infoBoxHeader}>
-                <Ionicons name="shirt-outline" size={14} color={Colors.primary} style={{ marginRight: Spacing.xs }} />
-                <Text style={styles.infoBoxTitle}>Tuxedo Rentals</Text>
-              </View>
-              <Text style={styles.infoBoxText}>{event.tuxedoNote}</Text>
-            </View>
-          )}
-
-          {/* Hair & makeup booking */}
-          {event.hairMakeupLinks && event.hairMakeupLinks.length > 0 && (
-            <View style={styles.infoBox}>
-              <Text style={styles.infoBoxTitle}>Book Hair & Makeup</Text>
-              <Text style={styles.infoBoxSubtitle}>At the Fairmont Le Montreux Palace</Text>
-              {event.hairMakeupLinks.map((link) => (
-                <TouchableOpacity
-                  key={link.url}
-                  style={styles.linkButton}
-                  onPress={() => Linking.openURL(link.url)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.linkText}>{link.label}</Text>
-                  <Ionicons name="arrow-forward" size={13} color={Colors.primary} />
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
 
           {/* General notes */}
           {event.notes && (
