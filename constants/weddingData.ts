@@ -111,7 +111,7 @@ export const EVENTS: WeddingEvent[] = [
     venue: "Fairmont Le Montreux Palace | Garden",
     address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
     dressCode:
-      "Indian formal or black-tie Western. Elegant neutrals and muted evening tones.",
+      "Indian formal or black-tie. Elegant neutrals and muted evening tones.",
     description:
       "The wedding ceremony in the beautiful gardens of the Fairmont, with the Alps and Lake Geneva as backdrop. Please arrive 20–30 minutes early to be seated.",
     notes: "Cocktail hour to follow at 6:00 PM.",
@@ -148,7 +148,7 @@ export const EVENTS: WeddingEvent[] = [
     venue: "Fairmont Le Montreux Palace | Salle des Fêtes",
     address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
     dressCode:
-      "Indian formal or black-tie Western. Elegant neutrals and muted evening tones — same outfit as the ceremony.",
+      "Indian formal or black-tie. Elegant neutrals and muted evening tones — same outfit as the ceremony.",
     description:
       "Dinner, speeches, dancing, and celebrating into the night in the grand Salle des Fêtes ballroom.",
     notes:
