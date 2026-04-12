@@ -142,14 +142,15 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         category: "Transport",
         description:
           "Trains run several times every hour from Geneva Airport directly to Montreux. Journey time is about 1 hour. The Fairmont Le Montreux Palace is a 5-minute walk from Montreux train station.",
-        tip: "A Swiss Travel Pass gives unlimited train travel — great value if you're exploring Switzerland before or after the wedding.",
+        tip: "Book tickets at sbb.ch or download the SBB Mobile app for easy booking and real-time timetables. A Swiss Travel Pass gives unlimited train travel — great value if you're exploring Switzerland before or after the wedding.",
+        link: "https://www.sbb.ch/en",
       },
       {
         id: "taxi-uber",
         name: "Taxi or Uber",
         category: "Transport",
         description:
-          "Montreux is fully accessible by car. Uber operates in the Geneva/Lausanne region. A taxi from Geneva Airport to Montreux costs approximately CHF 120–160.",
+          "Montreux is fully accessible by car. Uber operates in the Geneva/Lausanne region.",
         tip: "Uber is usually cheaper than traditional taxis from the airport.",
       },
     ],
@@ -188,7 +189,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         name: "Lavaux Vineyards (UNESCO)",
         category: "Activity",
         description:
-          "The terraced vineyards between Lausanne and Montreux are a UNESCO World Heritage Site — and you'll be visiting for the Rehearsal Dinner! Come earlier for wine tasting and hiking.",
+          "The terraced vineyards between Lausanne and Montreux are a UNESCO World Heritage Site. Come for wine tasting and hiking with stunning views over Lake Geneva.",
         tip: "The Lavaux Vinorama in Rivaz has excellent local wine tasting with stunning views.",
       },
       {
@@ -246,14 +247,6 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
           "A traditional Swiss confectionery and café — perfect for breakfast pastries, hot chocolate, and handmade chocolates to take home.",
         tip: "Pick up a box of Swiss chocolates as a souvenir — made in-house.",
       },
-      {
-        id: "coop-migros",
-        name: "Coop & Migros Supermarkets",
-        category: "Practical",
-        description:
-          "Both supermarkets are in the Montreux town centre. Great for wine, cheese, chocolate, and breakfast supplies at much better value than restaurants.",
-        tip: "Try local Chasselas wine, Gruyère cheese, and Cailler chocolate (made nearby in Broc).",
-      },
     ],
   },
   {
@@ -266,8 +259,9 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         name: "Currency",
         category: "Practical",
         description:
-          "Switzerland uses Swiss Francs (CHF). 1 CHF ≈ £0.90 / €1.05 / $1.10. Cards are widely accepted but carry some cash for smaller shops.",
-        tip: "Swiss prices are high — budget CHF 25–40 for a main course at a mid-range restaurant.",
+          "Switzerland uses Swiss Francs (CHF). 1 CHF ≈ £0.90 / €1.05 / $1.27. Cards are widely accepted but carry some cash for smaller shops.",
+        tip: "Swiss prices are high — budget CHF 25–40 for a main course at a mid-range restaurant. Check xe.com for the latest exchange rates.",
+        link: "https://www.xe.com/currencyconverter/convert/?Amount=1&From=CHF&To=USD",
       },
       {
         id: "language",
