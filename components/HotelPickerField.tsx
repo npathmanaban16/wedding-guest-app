@@ -8,6 +8,7 @@ import {
   FlatList,
   SafeAreaView,
   TextInput,
+  KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -79,6 +80,10 @@ export function HotelPickerField({ label, value, onChange }: Props) {
         transparent
         onRequestClose={() => setModalVisible(false)}
       >
+        <KeyboardAvoidingView
+          style={styles.kav}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
         <TouchableOpacity
           style={styles.backdrop}
           activeOpacity={1}
@@ -141,6 +146,7 @@ export function HotelPickerField({ label, value, onChange }: Props) {
             </Text>
           </TouchableOpacity>
         </SafeAreaView>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -173,6 +179,7 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
 
+  kav: { flex: 1 },
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.35)',
