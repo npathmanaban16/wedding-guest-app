@@ -39,7 +39,7 @@ function SongCard({ request }: { request: SongRequest }) {
       <View style={styles.songInfo}>
         <Text style={styles.songTitle}>{request.song}</Text>
         {request.artist ? <Text style={styles.songArtist}>{request.artist}</Text> : null}
-        <Text style={styles.requestedBy}>Requested by {request.requestedBy.split(' ')[0]}</Text>
+        <Text style={styles.requestedBy}>Requested by {request.requestedBy}</Text>
       </View>
     </View>
   );
