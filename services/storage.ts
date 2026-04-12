@@ -143,6 +143,18 @@ export async function savePushToken(guestName: string, token: string): Promise<v
 
 // ─── Onboarding ──────────────────────────────────────────────────────────────
 
+// In-memory flag so "I'll review later" works for the current session
+// without persisting to storage. Resets to false on app restart.
+let _onboardingSkippedThisSession = false;
+
+export function skipOnboardingForSession(): void {
+  _onboardingSkippedThisSession = true;
+}
+
+export function wasOnboardingSkippedThisSession(): boolean {
+  return _onboardingSkippedThisSession;
+}
+
 export async function isOnboardingDone(guestName: string): Promise<boolean> {
   const val = await AsyncStorage.getItem(KEYS.onboarding(guestName));
   return val === 'true';

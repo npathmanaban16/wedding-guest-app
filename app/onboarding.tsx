@@ -15,7 +15,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
-import { getMyInfo, saveMyInfo, markOnboardingDone } from '@/services/storage';
+import { getMyInfo, saveMyInfo, markOnboardingDone, skipOnboardingForSession } from '@/services/storage';
 import { HotelPickerField } from '@/components/HotelPickerField';
 import { DateField } from '@/components/DateField';
 
@@ -103,7 +103,7 @@ export default function OnboardingScreen() {
   };
 
   const handleSkip = () => {
-    // Don't mark as done — screen will reappear next time the app is opened
+    skipOnboardingForSession();
     router.replace('/(tabs)');
   };
 
