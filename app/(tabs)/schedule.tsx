@@ -93,7 +93,12 @@ function EventCard({ event }: { event: WeddingEvent }) {
             activeOpacity={0.85}
           >
             <View style={styles.dressCodeHeader}>
-              <Text style={styles.dressCodeLabel}>Dress Code</Text>
+              <View>
+                <Text style={styles.dressCodeLabel}>Dress Code</Text>
+                {!dressExpanded && (
+                  <Text style={styles.dressCodeHint}>Tap to expand</Text>
+                )}
+              </View>
               <Ionicons
                 name={dressExpanded ? 'chevron-up' : 'chevron-down'}
                 size={14}
@@ -136,15 +141,18 @@ function EventCard({ event }: { event: WeddingEvent }) {
 
                 {/* Outfit inspiration link */}
                 {event.outfitInspirationUrl && (
-                  <TouchableOpacity
-                    style={styles.outfitLink}
-                    onPress={() => Linking.openURL(event.outfitInspirationUrl!)}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="sparkles-outline" size={13} color={Colors.primary} />
-                    <Text style={styles.outfitLinkText}>Outfit Inspiration Generator</Text>
-                    <Ionicons name="arrow-forward" size={13} color={Colors.primary} />
-                  </TouchableOpacity>
+                  <View style={styles.outfitLinkWrapper}>
+                    <Text style={styles.outfitLinkLabel}>Need outfit ideas?</Text>
+                    <TouchableOpacity
+                      style={styles.outfitLink}
+                      onPress={() => Linking.openURL(event.outfitInspirationUrl!)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="sparkles-outline" size={14} color={Colors.white} />
+                      <Text style={styles.outfitLinkText}>Outfit Inspiration Generator</Text>
+                      <Ionicons name="arrow-forward" size={14} color={Colors.white} />
+                    </TouchableOpacity>
+                  </View>
                 )}
 
                 {/* Indian attire guide (Sangeet) */}
@@ -179,8 +187,8 @@ function EventCard({ event }: { event: WeddingEvent }) {
                 {/* Hair & makeup booking */}
                 {event.hairMakeupLinks && event.hairMakeupLinks.length > 0 && (
                   <View style={styles.infoBox}>
-                    <Text style={styles.infoBoxTitle}>Book Hair & Makeup</Text>
-                    <Text style={styles.infoBoxSubtitle}>At the Fairmont Le Montreux Palace</Text>
+                    <Text style={styles.infoBoxTitle}>Book Hair & Makeup <Text style={styles.optionalTag}>(optional)</Text></Text>
+                    <Text style={styles.infoBoxSubtitle}>For those who'd like to get ready at the Fairmont Le Montreux Palace</Text>
                     {event.hairMakeupLinks.map((link) => (
                       <TouchableOpacity
                         key={link.url}
@@ -413,6 +421,19 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: Colors.gold,
   },
+  dressCodeHint: {
+    fontSize: 10,
+    fontFamily: Fonts.sans,
+    color: Colors.textMuted,
+    marginTop: 2,
+  },
+  optionalTag: {
+    fontSize: 9,
+    fontFamily: Fonts.sans,
+    color: Colors.textMuted,
+    textTransform: 'none',
+    letterSpacing: 0,
+  },
   dressCodeText: {
     fontSize: 13,
     fontFamily: Fonts.sans,
@@ -487,20 +508,32 @@ const styles = StyleSheet.create({
   },
 
   // Outfit inspiration link
-  outfitLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: Spacing.sm,
-    paddingTop: Spacing.sm,
+  outfitLinkWrapper: {
+    marginTop: Spacing.md,
+    paddingTop: Spacing.md,
     borderTopWidth: 0.5,
     borderTopColor: Colors.divider,
   },
+  outfitLinkLabel: {
+    fontSize: 11,
+    fontFamily: Fonts.sans,
+    color: Colors.textMuted,
+    marginBottom: Spacing.xs,
+  },
+  outfitLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.md,
+    paddingVertical: 10,
+    paddingHorizontal: Spacing.md,
+  },
   outfitLinkText: {
-    flex: 1,
     fontSize: 13,
     fontFamily: Fonts.sansMedium,
-    color: Colors.primary,
+    color: Colors.white,
   },
 
   // Indian attire guide
