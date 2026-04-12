@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -81,8 +80,8 @@ export default function MyInfoScreen() {
     meal3: '',
   });
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const saveTimer = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
     if (guestName) {
@@ -93,18 +92,34 @@ export default function MyInfoScreen() {
     }
   }, [guestName]);
 
+  useEffect(() => () => clearTimeout(saveTimer.current), []);
+
+  const persist = useCallback(async (updated: MyInfo) => {
+    if (!guestName) return;
+    setSaveStatus('saving');
+    await saveMyInfo(guestName, updated);
+    setSaveStatus('saved');
+  }, [guestName]);
+
+  // For text fields: debounce 1 second after typing stops
   const update = (key: keyof MyInfo) => (value: string) => {
-    setInfo((prev) => ({ ...prev, [key]: value }));
-    setSaved(false);
+    setInfo((prev) => {
+      const updated = { ...prev, [key]: value };
+      setSaveStatus('idle');
+      clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(() => persist(updated), 1000);
+      return updated;
+    });
   };
 
-  const handleSave = async () => {
-    if (!guestName) return;
-    setSaving(true);
-    await saveMyInfo(guestName, info);
-    setSaving(false);
-    setSaved(true);
-    Alert.alert('Saved!', 'Your details have been saved.');
+  // For pickers / date fields: save immediately
+  const updateImmediate = (key: keyof MyInfo) => (value: string) => {
+    setInfo((prev) => {
+      const updated = { ...prev, [key]: value };
+      clearTimeout(saveTimer.current);
+      persist(updated);
+      return updated;
+    });
   };
 
   if (loading) {
@@ -175,12 +190,12 @@ export default function MyInfoScreen() {
           <HotelPickerField
             label="Hotel or accommodation"
             value={info.hotel}
-            onChange={update('hotel')}
+            onChange={updateImmediate('hotel')}
           />
           <DateField
             label="Check-in date"
             value={info.checkIn}
-            onChange={update('checkIn')}
+            onChange={updateImmediate('checkIn')}
             placeholder="Select date"
             minimumDate={MIN_DATE}
             maximumDate={MAX_DATE}
@@ -188,7 +203,7 @@ export default function MyInfoScreen() {
           <DateField
             label="Check-out date"
             value={info.checkOut}
-            onChange={update('checkOut')}
+            onChange={updateImmediate('checkOut')}
             placeholder="Select date"
             minimumDate={MIN_DATE}
             maximumDate={MAX_DATE}
@@ -265,21 +280,22 @@ export default function MyInfoScreen() {
           />
         </View>
 
-        {/* Save button */}
-        <TouchableOpacity
-          style={[styles.saveButton, saving && styles.saveButtonDisabled]}
-          onPress={handleSave}
-          disabled={saving}
-        >
-          {saving ? (
-            <ActivityIndicator color={Colors.white} size="small" />
-          ) : (
-            <>
-              <Ionicons name={saved ? 'checkmark-circle' : 'save-outline'} size={19} color={Colors.white} />
-              <Text style={styles.saveButtonText}>{saved ? 'Saved!' : 'Save my details'}</Text>
-            </>
-          )}
-        </TouchableOpacity>
+        {/* Auto-save status */}
+        {saveStatus !== 'idle' && (
+          <View style={styles.saveStatus}>
+            {saveStatus === 'saving' ? (
+              <>
+                <ActivityIndicator size="small" color={Colors.textMuted} style={{ marginRight: 6 }} />
+                <Text style={styles.saveStatusText}>Saving…</Text>
+              </>
+            ) : (
+              <>
+                <Ionicons name="checkmark-circle" size={15} color={Colors.primary} style={{ marginRight: 4 }} />
+                <Text style={[styles.saveStatusText, { color: Colors.primary }]}>All changes saved</Text>
+              </>
+            )}
+          </View>
+        )}
 
         <Text style={styles.privacyNote}>
           Your details are shared with Neha & Naveen to help with planning.
@@ -454,23 +470,17 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
-  saveButton: {
+  saveStatus: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.full,
-    paddingVertical: 16,
-    marginHorizontal: Spacing.lg,
-    gap: Spacing.xs,
-    marginBottom: Spacing.sm,
-    ...Shadow.medium,
+    paddingVertical: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
-  saveButtonDisabled: { opacity: 0.6 },
-  saveButtonText: {
-    color: Colors.white,
-    fontSize: 15,
-    fontFamily: Fonts.sansMedium,
+  saveStatusText: {
+    fontSize: 12,
+    fontFamily: Fonts.sans,
+    color: Colors.textMuted,
   },
 
   privacyNote: {
