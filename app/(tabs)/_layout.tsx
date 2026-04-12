@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Colors, Fonts, Typography } from '@/constants/theme';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { useEffect, useState } from 'react';
-import { isOnboardingDone, wasOnboardingSkippedThisSession } from '@/services/storage';
+import { isOnboardingDone } from '@/services/storage';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
@@ -27,7 +27,7 @@ const TABS: TabConfig[] = [
 ];
 
 export default function TabLayout() {
-  const { guestName, isLoading } = useAuth();
+  const { guestName, isLoading, onboardingSkipped } = useAuth();
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   usePushNotifications(guestName);
@@ -53,7 +53,7 @@ export default function TabLayout() {
   }
 
   if (!guestName) return <Redirect href="/login" />;
-  if (needsOnboarding && !wasOnboardingSkippedThisSession()) return <Redirect href="/onboarding" />;
+  if (needsOnboarding && !onboardingSkipped) return <Redirect href="/onboarding" />;
 
   return (
     <Tabs

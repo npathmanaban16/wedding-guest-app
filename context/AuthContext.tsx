@@ -7,8 +7,10 @@ const AUTH_STORAGE_KEY = '@wedding_guest_name';
 interface AuthContextType {
   guestName: string | null;
   isLoading: boolean;
+  onboardingSkipped: boolean;
   login: (name: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
+  skipOnboarding: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -16,6 +18,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [guestName, setGuestName] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [onboardingSkipped, setOnboardingSkipped] = useState(false);
 
   useEffect(() => {
     // Restore persisted login on app launch
@@ -25,6 +28,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       .finally(() => setIsLoading(false));
   }, []);
+
+  const skipOnboarding = () => setOnboardingSkipped(true);
+
+  // Reset skip flag whenever the logged-in guest changes
+  useEffect(() => { setOnboardingSkipped(false); }, [guestName]);
 
   const login = async (name: string): Promise<{ success: boolean; error?: string }> => {
     const trimmed = name.trim();
@@ -50,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ guestName, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ guestName, isLoading, onboardingSkipped, login, logout, skipOnboarding }}>
       {children}
     </AuthContext.Provider>
   );

@@ -15,7 +15,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
-import { getMyInfo, saveMyInfo, markOnboardingDone, skipOnboardingForSession } from '@/services/storage';
+import { getMyInfo, saveMyInfo, markOnboardingDone } from '@/services/storage';
 import { HotelPickerField } from '@/components/HotelPickerField';
 import { DateField } from '@/components/DateField';
 
@@ -55,7 +55,7 @@ function Field({ label, placeholder, value, onChangeText, icon, keyboardType, au
 
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
-  const { guestName } = useAuth();
+  const { guestName, skipOnboarding } = useAuth();
 
   const [hotel, setHotel] = useState('');
   const [checkIn, setCheckIn] = useState('');
@@ -103,7 +103,7 @@ export default function OnboardingScreen() {
   };
 
   const handleSkip = () => {
-    skipOnboardingForSession();
+    skipOnboarding();
     router.replace('/(tabs)');
   };
 
