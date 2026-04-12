@@ -128,6 +128,7 @@ export default function HomeScreen() {
         <QuickCard title="Share Photos" subtitle="Upload memories" onPress={() => router.push('/(tabs)/photos')} />
         <QuickCard title="Song Requests" subtitle="Request a track" onPress={() => router.push('/(tabs)/songs')} />
         <QuickCard title="My Details" subtitle="Hotel & arrival info" onPress={() => router.push('/(tabs)/my-info')} />
+        <QuickCard title="FAQs" subtitle="Dress codes & more" onPress={() => router.push('/(tabs)/faq')} />
       </View>
 
       {/* Hashtag */}
