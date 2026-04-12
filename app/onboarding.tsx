@@ -62,8 +62,6 @@ export default function OnboardingScreen() {
   const [checkOut, setCheckOut] = useState('');
   const [arrivalTime, setArrivalTime] = useState('');
   const [flightNumber, setFlightNumber] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
   const [saving, setSaving] = useState(false);
 
   const firstName = guestName?.split(' ')[0] ?? 'there';
@@ -80,8 +78,6 @@ export default function OnboardingScreen() {
         checkOut,
         arrivalTime: arrivalTime.trim(),
         flightNumber: flightNumber.trim(),
-        phone: phone.trim(),
-        email: email.trim(),
       });
     } catch {
       // silently continue — data will be editable from My Details
@@ -114,32 +110,6 @@ export default function OnboardingScreen() {
             Help us prepare for your arrival by sharing a few travel details. You can always
             update these later in the My Details tab.
           </Text>
-        </View>
-
-        {/* Contact card */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Ionicons name="call-outline" size={18} color={Colors.gold} style={{ marginRight: Spacing.sm }} />
-            <Text style={styles.cardTitle}>Your contact details</Text>
-          </View>
-          <Field
-            label="Phone number"
-            placeholder="e.g. +44 7700 900000"
-            value={phone}
-            onChangeText={setPhone}
-            icon="call-outline"
-            keyboardType="phone-pad"
-            autoCapitalize="none"
-          />
-          <Field
-            label="Email address"
-            placeholder="e.g. your@email.com"
-            value={email}
-            onChangeText={setEmail}
-            icon="mail-outline"
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
         </View>
 
         {/* Accommodation card */}
