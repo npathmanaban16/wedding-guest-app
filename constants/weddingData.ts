@@ -28,13 +28,14 @@ export interface WeddingEvent {
   dressCode: string;
   description: string;
   notes?: string;
+  weddingPartyOnly?: boolean;
 }
 
 export const EVENTS: WeddingEvent[] = [
   {
-    id: "rehearsal-mehendi",
-    title: "Rehearsal Dinner & Mehendi",
-    emoji: "🌿",
+    id: "rehearsal-dinner",
+    title: "Rehearsal Dinner",
+    emoji: "🍽️",
     date: "Thursday, 21 May 2026",
     time: "6:00 PM – 9:00 PM",
     venue: "Lavaux Vineyards | Le Baron Tavernier",
@@ -42,9 +43,10 @@ export const EVENTS: WeddingEvent[] = [
     dressCode:
       "Smart casual Indian or Western attire. White, soft neutrals, shades of green or rose.",
     description:
-      "A rehearsal dinner inspired by mehendi traditions, following the ceremony rehearsal earlier in the day. Join us for an intimate evening among UNESCO-listed terraced vineyards above Lake Geneva.",
+      "An intimate dinner for the wedding party, following the ceremony rehearsal earlier in the day. Join us for a beautiful evening among UNESCO-listed terraced vineyards above Lake Geneva.",
     notes:
-      "Transportation will be provided from the Fairmont Le Montreux Palace. Wear loose or open-sleeved clothing so henna can be applied to hands and arms!",
+      "Transportation will be provided from the Fairmont Le Montreux Palace.",
+    weddingPartyOnly: true,
   },
   {
     id: "sangeet",
@@ -325,6 +327,7 @@ export interface PackingItem {
   id: string;
   label: string;
   tip?: string;
+  weddingPartyOnly?: boolean;
 }
 
 export const PACKING_GUIDE: PackingCategory[] = [
@@ -335,8 +338,9 @@ export const PACKING_GUIDE: PackingCategory[] = [
     items: [
       {
         id: "mehendi-outfit",
-        label: "Rehearsal Dinner / Mehendi — Smart casual Indian or Western",
-        tip: "White, soft neutrals, shades of green or rose. Wear loose or open-sleeved clothing so henna can be applied easily to hands and arms!",
+        label: "Rehearsal Dinner — Smart casual Indian or Western",
+        tip: "White, soft neutrals, shades of green or rose. The venue is a vineyard estate — comfortable yet elegant.",
+        weddingPartyOnly: true,
       },
       {
         id: "sangeet-outfit",
@@ -371,8 +375,9 @@ export const PACKING_GUIDE: PackingCategory[] = [
       },
       {
         id: "flats-mehendi",
-        label: "Flats or comfortable shoes for Mehendi dinner",
+        label: "Flats or comfortable shoes for Rehearsal Dinner",
         tip: "Le Baron Tavernier is a vineyard estate — you may be on terraced outdoor terrain.",
+        weddingPartyOnly: true,
       },
       {
         id: "walking-shoes",

@@ -13,6 +13,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { EVENTS, WeddingEvent } from '@/constants/weddingData';
+import { useAuth } from '@/context/AuthContext';
+import { isWeddingParty } from '@/constants/guests';
 
 if (Platform.OS === 'android') {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
@@ -93,6 +95,9 @@ function InfoRow({ icon, label, value }: InfoRowProps) {
 
 export default function ScheduleScreen() {
   const insets = useSafeAreaInsets();
+  const { guestName } = useAuth();
+  const inWeddingParty = isWeddingParty(guestName ?? '');
+  const visibleEvents = EVENTS.filter((e) => !e.weddingPartyOnly || inWeddingParty);
 
   return (
     <ScrollView
@@ -108,10 +113,10 @@ export default function ScheduleScreen() {
 
       {/* Timeline */}
       <View style={styles.timeline}>
-        {EVENTS.map((event, index) => (
+        {visibleEvents.map((event, index) => (
           <View key={event.id} style={styles.timelineItem}>
             {/* Connector line */}
-            {index < EVENTS.length - 1 && <View style={styles.connector} />}
+            {index < visibleEvents.length - 1 && <View style={styles.connector} />}
             {/* Dot */}
             <View style={styles.dot} />
             <View style={styles.timelineContent}>

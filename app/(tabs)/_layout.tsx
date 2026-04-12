@@ -3,6 +3,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 import { Colors, Fonts, Typography } from '@/constants/theme';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
+import { useEffect, useState } from 'react';
+import { isOnboardingDone } from '@/services/storage';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -25,8 +27,22 @@ const TABS: TabConfig[] = [
 
 export default function TabLayout() {
   const { guestName, isLoading } = useAuth();
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (isLoading) return;
+    if (!guestName) {
+      setOnboardingChecked(true);
+      return;
+    }
+    isOnboardingDone(guestName).then((done) => {
+      setNeedsOnboarding(!done);
+      setOnboardingChecked(true);
+    });
+  }, [guestName, isLoading]);
+
+  if (isLoading || !onboardingChecked) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color={Colors.primary} />
@@ -35,6 +51,7 @@ export default function TabLayout() {
   }
 
   if (!guestName) return <Redirect href="/login" />;
+  if (needsOnboarding) return <Redirect href="/onboarding" />;
 
   return (
     <Tabs

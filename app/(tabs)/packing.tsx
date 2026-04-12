@@ -12,6 +12,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { PACKING_GUIDE, PackingCategory, PackingItem } from '@/constants/weddingData';
 import { getCheckedItems, togglePackingItem } from '@/services/storage';
+import { useAuth } from '@/context/AuthContext';
+import { isWeddingParty } from '@/constants/guests';
 
 function PackingItemRow({
   item,
@@ -116,6 +118,13 @@ export default function PackingScreen() {
   const insets = useSafeAreaInsets();
   const [checkedItems, setCheckedItems] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const { guestName } = useAuth();
+  const inWeddingParty = isWeddingParty(guestName ?? '');
+
+  const filteredGuide = PACKING_GUIDE.map((cat) => ({
+    ...cat,
+    items: cat.items.filter((item) => !item.weddingPartyOnly || inWeddingParty),
+  })).filter((cat) => cat.items.length > 0);
 
   useEffect(() => {
     getCheckedItems().then((items) => {
@@ -129,8 +138,10 @@ export default function PackingScreen() {
     setCheckedItems(updated);
   };
 
-  const totalItems = PACKING_GUIDE.reduce((sum, cat) => sum + cat.items.length, 0);
-  const totalChecked = checkedItems.length;
+  const totalItems = filteredGuide.reduce((sum, cat) => sum + cat.items.length, 0);
+  const totalChecked = checkedItems.filter((id) =>
+    filteredGuide.some((cat) => cat.items.some((item) => item.id === id))
+  ).length;
   const overallPercent = Math.round((totalChecked / totalItems) * 100);
 
   if (loading) {
@@ -171,7 +182,7 @@ export default function PackingScreen() {
       </View>
 
       {/* Categories */}
-      {PACKING_GUIDE.map((category) => (
+      {filteredGuide.map((category) => (
         <CategorySection
           key={category.id}
           category={category}

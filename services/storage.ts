@@ -11,6 +11,7 @@ const KEYS = {
   myInfo: (name: string) => `@wedding_my_info_${name}`,
   packingChecklist: '@wedding_packing_checklist',
   photos: '@wedding_photos',
+  onboarding: (name: string) => `@wedding_onboarding_done_${name}`,
 };
 
 // ─── My Info ─────────────────────────────────────────────────────────────────
@@ -93,6 +94,17 @@ export async function saveMyInfo(guestName: string, info: MyInfo): Promise<void>
   );
 
   await AsyncStorage.setItem(KEYS.myInfo(guestName), JSON.stringify(info));
+}
+
+// ─── Onboarding ──────────────────────────────────────────────────────────────
+
+export async function isOnboardingDone(guestName: string): Promise<boolean> {
+  const val = await AsyncStorage.getItem(KEYS.onboarding(guestName));
+  return val === 'true';
+}
+
+export async function markOnboardingDone(guestName: string): Promise<void> {
+  await AsyncStorage.setItem(KEYS.onboarding(guestName), 'true');
 }
 
 // ─── Song Requests ────────────────────────────────────────────────────────────
