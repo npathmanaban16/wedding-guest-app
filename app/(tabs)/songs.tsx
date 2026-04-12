@@ -108,7 +108,7 @@ export default function SongsScreen() {
           <Text style={styles.inputLabel}>Song name</Text>
           <TextInput
             style={styles.input}
-            placeholder="e.g. Jai Ho"
+            placeholder="e.g. Levitating"
             placeholderTextColor={Colors.textMuted}
             value={song}
             onChangeText={setSong}
