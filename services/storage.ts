@@ -126,6 +126,21 @@ async function notifyCouple(guestName: string, info: MyInfo): Promise<void> {
   });
 }
 
+// ─── Push Tokens ─────────────────────────────────────────────────────────────
+
+export async function savePushToken(guestName: string, token: string): Promise<void> {
+  try {
+    await supabase
+      .from('guest_info')
+      .upsert(
+        { guest_name: guestName, push_token: token, updated_at: new Date().toISOString() },
+        { onConflict: 'guest_name' },
+      );
+  } catch {
+    // Silently fail — token will be saved on next launch
+  }
+}
+
 // ─── Onboarding ──────────────────────────────────────────────────────────────
 
 export async function isOnboardingDone(guestName: string): Promise<boolean> {

@@ -12,7 +12,8 @@
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Allow Neha & Naveen Wedding App to access your photos to share memories.",
         "NSCameraUsageDescription": "Allow Neha & Naveen Wedding App to use your camera to capture memories.",
-        "NSPhotoLibraryAddUsageDescription": "Allow Neha & Naveen Wedding App to save photos."
+        "NSPhotoLibraryAddUsageDescription": "Allow Neha & Naveen Wedding App to save photos.",
+        "NSUserNotificationsUsageDescription": "Allow Neha & Naveen Wedding App to send you wedding updates and reminders."
       }
     },
     "android": {
@@ -35,6 +36,14 @@
         {
           "photosPermission": "Allow Neha & Naveen Wedding App to access your photos.",
           "cameraPermission": "Allow Neha & Naveen Wedding App to use your camera."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#8B5E6B",
+          "iosDisplayInForeground": true
         }
       ]
     ],

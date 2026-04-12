@@ -5,6 +5,7 @@ import { Colors, Fonts, Typography } from '@/constants/theme';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { useEffect, useState } from 'react';
 import { isOnboardingDone } from '@/services/storage';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -29,6 +30,7 @@ export default function TabLayout() {
   const { guestName, isLoading } = useAuth();
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  usePushNotifications(guestName);
 
   useEffect(() => {
     if (isLoading) return;

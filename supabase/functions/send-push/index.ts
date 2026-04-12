@@ -1,0 +1,91 @@
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
+  try {
+    const { message, sender } = await req.json();
+
+    if (!message || !sender) {
+      return new Response(JSON.stringify({ error: 'message and sender are required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Fetch all push tokens from the guests table
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    );
+
+    const { data: guests, error: dbError } = await supabase
+      .from('guest_info')
+      .select('push_token')
+      .not('push_token', 'is', null);
+
+    if (dbError) throw dbError;
+
+    const tokens: string[] = (guests ?? [])
+      .map((g: { push_token: string | null }) => g.push_token)
+      .filter((t): t is string => typeof t === 'string' && t.startsWith('ExponentPushToken'));
+
+    if (tokens.length === 0) {
+      return new Response(
+        JSON.stringify({ success: true, sent: 0, message: 'No registered devices yet' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    // Expo Push API accepts up to 100 notifications per request
+    const CHUNK_SIZE = 100;
+    let totalSent = 0;
+    let totalFailed = 0;
+
+    for (let i = 0; i < tokens.length; i += CHUNK_SIZE) {
+      const chunk = tokens.slice(i, i + CHUNK_SIZE);
+      const notifications = chunk.map((token) => ({
+        to: token,
+        title: sender,
+        body: message,
+        sound: 'default',
+        priority: 'high',
+      }));
+
+      const res = await fetch('https://exp.host/--/api/v2/push/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'Accept-Encoding': 'gzip, deflate',
+        },
+        body: JSON.stringify(notifications),
+      });
+
+      const result = await res.json();
+      const tickets = result.data ?? [];
+      tickets.forEach((ticket: { status: string }) => {
+        if (ticket.status === 'ok') totalSent++;
+        else totalFailed++;
+      });
+    }
+
+    return new Response(
+      JSON.stringify({ success: true, sent: totalSent, failed: totalFailed }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    );
+  } catch (err) {
+    return new Response(JSON.stringify({ error: String(err) }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+});

@@ -9,10 +9,12 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 import { Colors, Fonts, Typography, Spacing, Radius, Shadow } from '@/constants/theme';
 import { WEDDING, EVENTS } from '@/constants/weddingData';
 import { isWeddingParty } from '@/constants/guests';
+import { isAdminGuest } from '@/app/admin';
 
 function useCountdown(targetDate: Date) {
   const getTimeLeft = (target: Date) => {
@@ -61,6 +63,7 @@ export default function HomeScreen() {
   const countdown = useCountdown(WEDDING.weddingDate);
   const firstName = guestName?.split(' ')[0] ?? 'Guest';
   const inWeddingParty = isWeddingParty(guestName ?? '');
+  const isAdmin = isAdminGuest(guestName);
   const firstEvent = EVENTS.find((e) => !e.weddingPartyOnly || inWeddingParty)!
 
   return (
@@ -151,6 +154,18 @@ export default function HomeScreen() {
           <Text style={styles.registryButtonText}>View Registry</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Admin: send notification (only visible to Neha, Naveen, Astrid) */}
+      {isAdmin && (
+        <TouchableOpacity
+          style={styles.adminButton}
+          onPress={() => router.push('/admin')}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="notifications-outline" size={15} color={Colors.white} />
+          <Text style={styles.adminButtonText}>Send Guest Notification</Text>
+        </TouchableOpacity>
+      )}
 
       {/* Sign out */}
       <TouchableOpacity style={styles.signOut} onPress={logout}>
@@ -399,6 +414,23 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 
+  adminButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.sm,
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.full,
+    paddingVertical: 12,
+  },
+  adminButtonText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 14,
+    color: Colors.white,
+    letterSpacing: 0.2,
+  },
   signOut: {
     alignItems: 'center',
     paddingVertical: Spacing.md,
