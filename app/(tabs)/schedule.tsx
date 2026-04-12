@@ -188,7 +188,7 @@ function EventCard({ event }: { event: WeddingEvent }) {
                 {event.hairMakeupLinks && event.hairMakeupLinks.length > 0 && (
                   <View style={styles.infoBox}>
                     <Text style={styles.infoBoxTitle}>Book Hair & Makeup <Text style={styles.optionalTag}>(optional)</Text></Text>
-                    <Text style={styles.infoBoxSubtitle}>For those who'd like to get ready at the Fairmont Le Montreux Palace</Text>
+                    <Text style={styles.infoBoxSubtitle}>For those who want to book professional hair and makeup services</Text>
                     {event.hairMakeupLinks.map((link) => (
                       <TouchableOpacity
                         key={link.url}
