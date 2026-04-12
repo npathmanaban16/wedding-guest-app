@@ -10,18 +10,23 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius } from '@/constants/theme';
 
-function parseDate(value: string): Date {
-  if (value) {
-    const d = new Date(value);
-    if (!isNaN(d.getTime())) return d;
+// Parse YYYY-MM-DD as local time to avoid UTC offset shifting the date
+function parseLocalDate(value: string): Date | null {
+  const parts = value?.split('-').map(Number);
+  if (parts?.length === 3 && parts.every((n) => !isNaN(n))) {
+    return new Date(parts[0], parts[1] - 1, parts[2]);
   }
-  return new Date('2026-05-21');
+  return null;
+}
+
+function parseDate(value: string): Date {
+  return parseLocalDate(value) ?? new Date(2026, 4, 21);
 }
 
 function formatDisplay(value: string): string {
   if (!value) return '';
-  const d = new Date(value);
-  if (isNaN(d.getTime())) return value;
+  const d = parseLocalDate(value);
+  if (!d) return value;
   return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' });
 }
 
@@ -41,8 +46,10 @@ export function DateField({ label, value, onChange, placeholder, minimumDate, ma
   const handleChange = (_: DateTimePickerEvent, selected?: Date) => {
     if (Platform.OS === 'android') setShow(false);
     if (selected) {
-      const iso = selected.toISOString().split('T')[0];
-      onChange(iso);
+      const y = selected.getFullYear();
+      const m = String(selected.getMonth() + 1).padStart(2, '0');
+      const d = String(selected.getDate()).padStart(2, '0');
+      onChange(`${y}-${m}-${d}`);
     }
   };
 
