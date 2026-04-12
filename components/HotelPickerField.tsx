@@ -7,6 +7,7 @@ import {
   Modal,
   FlatList,
   SafeAreaView,
+  TextInput,
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +21,9 @@ export const HOTEL_OPTIONS = [
   'Royal Plaza Montreux',
 ];
 
+const OTHER = '__other__';
+const LIST_ITEMS = [...HOTEL_OPTIONS, OTHER];
+
 interface Props {
   label: string;
   value: string;
@@ -28,8 +32,31 @@ interface Props {
 
 export function HotelPickerField({ label, value, onChange }: Props) {
   const [modalVisible, setModalVisible] = useState(false);
+  const [otherText, setOtherText] = useState('');
+  const [showOtherInput, setShowOtherInput] = useState(false);
 
-  const selectedLabel = HOTEL_OPTIONS.includes(value) ? value : '';
+  const isKnownHotel = HOTEL_OPTIONS.includes(value);
+  const isOther = !isKnownHotel && value !== '';
+  const triggerLabel = isKnownHotel ? value : isOther ? value : '';
+
+  const handleSelect = (item: string) => {
+    if (item === OTHER) {
+      setOtherText(isOther ? value : '');
+      setShowOtherInput(true);
+    } else {
+      setShowOtherInput(false);
+      onChange(item);
+      setModalVisible(false);
+    }
+  };
+
+  const handleOtherConfirm = () => {
+    if (otherText.trim()) {
+      onChange(otherText.trim());
+    }
+    setShowOtherInput(false);
+    setModalVisible(false);
+  };
 
   return (
     <View style={styles.wrapper}>
@@ -37,11 +64,11 @@ export function HotelPickerField({ label, value, onChange }: Props) {
 
       <TouchableOpacity
         style={styles.trigger}
-        onPress={() => setModalVisible(true)}
+        onPress={() => { setShowOtherInput(false); setModalVisible(true); }}
         activeOpacity={0.8}
       >
-        <Text style={[styles.triggerText, !selectedLabel && { color: Colors.textMuted }]}>
-          {selectedLabel || 'Select hotel...'}
+        <Text style={[styles.triggerText, !triggerLabel && { color: Colors.textMuted }]}>
+          {triggerLabel || 'Select hotel...'}
         </Text>
         <Ionicons name="chevron-down" size={18} color={Colors.textMuted} />
       </TouchableOpacity>
@@ -61,31 +88,57 @@ export function HotelPickerField({ label, value, onChange }: Props) {
           <View style={styles.sheetHandle} />
           <Text style={styles.sheetTitle}>Where are you staying?</Text>
 
-          <FlatList
-            data={HOTEL_OPTIONS}
-            keyExtractor={(item) => item}
-            renderItem={({ item }) => {
-              const isSelected = value === item;
-              return (
-                <TouchableOpacity
-                  style={[styles.option, isSelected && styles.optionSelected]}
-                  onPress={() => { onChange(item); setModalVisible(false); }}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>
-                    {item}
-                  </Text>
-                  {isSelected && (
-                    <Ionicons name="checkmark" size={18} color={Colors.primary} />
-                  )}
-                </TouchableOpacity>
-              );
-            }}
-            ItemSeparatorComponent={() => <View style={styles.separator} />}
-          />
+          {showOtherInput ? (
+            <View style={styles.otherSection}>
+              <Text style={styles.otherLabel}>Enter your hotel name</Text>
+              <TextInput
+                style={styles.otherInput}
+                placeholder="e.g. Hotel Splendid"
+                placeholderTextColor={Colors.textMuted}
+                value={otherText}
+                onChangeText={setOtherText}
+                autoFocus
+                returnKeyType="done"
+                onSubmitEditing={handleOtherConfirm}
+              />
+            </View>
+          ) : (
+            <FlatList
+              data={LIST_ITEMS}
+              keyExtractor={(item) => item}
+              renderItem={({ item }) => {
+                const isSelected = item === OTHER ? isOther : value === item;
+                const displayText = item === OTHER ? 'Somewhere else...' : item;
+                return (
+                  <TouchableOpacity
+                    style={[styles.option, isSelected && styles.optionSelected]}
+                    onPress={() => handleSelect(item)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[
+                      styles.optionText,
+                      isSelected && styles.optionTextSelected,
+                      item === OTHER && styles.optionTextOther,
+                    ]}>
+                      {displayText}
+                    </Text>
+                    {isSelected && (
+                      <Ionicons name="checkmark" size={18} color={Colors.primary} />
+                    )}
+                  </TouchableOpacity>
+                );
+              }}
+              ItemSeparatorComponent={() => <View style={styles.separator} />}
+            />
+          )}
 
-          <TouchableOpacity style={styles.doneButton} onPress={() => setModalVisible(false)}>
-            <Text style={styles.doneButtonText}>Done</Text>
+          <TouchableOpacity
+            style={styles.doneButton}
+            onPress={showOtherInput ? handleOtherConfirm : () => setModalVisible(false)}
+          >
+            <Text style={styles.doneButtonText}>
+              {showOtherInput ? 'Confirm' : 'Done'}
+            </Text>
           </TouchableOpacity>
         </SafeAreaView>
       </Modal>
@@ -166,10 +219,38 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sansMedium,
     color: Colors.primary,
   },
+  optionTextOther: {
+    color: Colors.textMuted,
+    fontFamily: Fonts.sans,
+  },
   separator: {
     height: 1,
     backgroundColor: Colors.divider,
     marginHorizontal: Spacing.lg,
+  },
+
+  otherSection: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.md,
+  },
+  otherLabel: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 10,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    color: Colors.textMuted,
+    marginBottom: Spacing.xs,
+  },
+  otherInput: {
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 12,
+    fontSize: 15,
+    fontFamily: Fonts.sans,
+    color: Colors.textPrimary,
+    backgroundColor: Colors.background,
   },
 
   doneButton: {
