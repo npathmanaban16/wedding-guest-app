@@ -16,20 +16,23 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { getMyInfo, saveMyInfo, markOnboardingDone } from '@/services/storage';
+import { HotelPickerField } from '@/components/HotelPickerField';
+import { DateField } from '@/components/DateField';
 
-function Field({
-  label,
-  placeholder,
-  value,
-  onChangeText,
-  icon,
-}: {
+const MIN_DATE = new Date('2026-05-18');
+const MAX_DATE = new Date('2026-06-01');
+
+interface FieldProps {
   label: string;
   placeholder: string;
   value: string;
   onChangeText: (v: string) => void;
   icon: React.ComponentProps<typeof Ionicons>['name'];
-}) {
+  keyboardType?: 'default' | 'email-address' | 'phone-pad';
+  autoCapitalize?: 'none' | 'sentences' | 'words';
+}
+
+function Field({ label, placeholder, value, onChangeText, icon, keyboardType, autoCapitalize }: FieldProps) {
   return (
     <View style={styles.field}>
       <Text style={styles.fieldLabel}>{label}</Text>
@@ -42,6 +45,8 @@ function Field({
           value={value}
           onChangeText={onChangeText}
           autoCorrect={false}
+          keyboardType={keyboardType ?? 'default'}
+          autoCapitalize={autoCapitalize ?? 'sentences'}
         />
       </View>
     </View>
@@ -57,6 +62,8 @@ export default function OnboardingScreen() {
   const [checkOut, setCheckOut] = useState('');
   const [arrivalTime, setArrivalTime] = useState('');
   const [flightNumber, setFlightNumber] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [saving, setSaving] = useState(false);
 
   const firstName = guestName?.split(' ')[0] ?? 'there';
@@ -69,17 +76,18 @@ export default function OnboardingScreen() {
       await saveMyInfo(guestName, {
         ...existing,
         hotel: hotel.trim(),
-        checkIn: checkIn.trim(),
-        checkOut: checkOut.trim(),
+        checkIn,
+        checkOut,
         arrivalTime: arrivalTime.trim(),
         flightNumber: flightNumber.trim(),
+        phone: phone.trim(),
+        email: email.trim(),
       });
-      await markOnboardingDone(guestName);
-      router.replace('/(tabs)');
     } catch {
-      await markOnboardingDone(guestName);
-      router.replace('/(tabs)');
+      // silently continue — data will be editable from My Details
     }
+    await markOnboardingDone(guestName);
+    router.replace('/(tabs)');
   };
 
   const handleSkip = async () => {
@@ -108,55 +116,81 @@ export default function OnboardingScreen() {
           </Text>
         </View>
 
-        {/* Form card */}
+        {/* Contact card */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Ionicons name="call-outline" size={18} color={Colors.gold} style={{ marginRight: Spacing.sm }} />
+            <Text style={styles.cardTitle}>Your contact details</Text>
+          </View>
+          <Field
+            label="Phone number"
+            placeholder="e.g. +44 7700 900000"
+            value={phone}
+            onChangeText={setPhone}
+            icon="call-outline"
+            keyboardType="phone-pad"
+            autoCapitalize="none"
+          />
+          <Field
+            label="Email address"
+            placeholder="e.g. your@email.com"
+            value={email}
+            onChangeText={setEmail}
+            icon="mail-outline"
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+        </View>
+
+        {/* Accommodation card */}
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Ionicons name="bed-outline" size={18} color={Colors.gold} style={{ marginRight: Spacing.sm }} />
             <Text style={styles.cardTitle}>Where are you staying?</Text>
           </View>
-
-          <Field
-            label="Hotel / Accommodation"
-            placeholder="e.g. Fairmont Le Montreux Palace"
+          <HotelPickerField
+            label="Hotel or accommodation"
             value={hotel}
-            onChangeText={setHotel}
-            icon="business-outline"
+            onChange={setHotel}
           />
-          <Field
-            label="Check-in Date"
-            placeholder="e.g. 21 May 2026"
+          <DateField
+            label="Check-in date"
             value={checkIn}
-            onChangeText={setCheckIn}
-            icon="calendar-outline"
+            onChange={setCheckIn}
+            placeholder="Select date"
+            minimumDate={MIN_DATE}
+            maximumDate={MAX_DATE}
           />
-          <Field
-            label="Check-out Date"
-            placeholder="e.g. 25 May 2026"
+          <DateField
+            label="Check-out date"
             value={checkOut}
-            onChangeText={setCheckOut}
-            icon="calendar-outline"
+            onChange={setCheckOut}
+            placeholder="Select date"
+            minimumDate={MIN_DATE}
+            maximumDate={MAX_DATE}
           />
         </View>
 
+        {/* Arrival card */}
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Ionicons name="airplane-outline" size={18} color={Colors.gold} style={{ marginRight: Spacing.sm }} />
             <Text style={styles.cardTitle}>How are you arriving?</Text>
           </View>
-
           <Field
-            label="Arrival Time in Montreux"
+            label="Arrival time in Montreux"
             placeholder="e.g. 2:30 PM on 21 May"
             value={arrivalTime}
             onChangeText={setArrivalTime}
             icon="time-outline"
           />
           <Field
-            label="Flight Number (optional)"
+            label="Flight number (optional)"
             placeholder="e.g. LX1234"
             value={flightNumber}
             onChangeText={setFlightNumber}
             icon="paper-plane-outline"
+            autoCapitalize="characters"
           />
         </View>
 
@@ -249,9 +283,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
 
-  field: {
-    marginBottom: Spacing.md,
-  },
+  field: { marginBottom: Spacing.md },
   fieldLabel: {
     fontSize: 10,
     fontFamily: Fonts.sansMedium,
@@ -269,9 +301,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     paddingHorizontal: Spacing.sm,
   },
-  inputIcon: {
-    marginRight: Spacing.xs,
-  },
+  inputIcon: { marginRight: Spacing.xs },
   input: {
     flex: 1,
     paddingVertical: Platform.OS === 'ios' ? 12 : 10,

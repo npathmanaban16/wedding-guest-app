@@ -24,6 +24,8 @@ export interface MyInfo {
   arrivalTime: string;
   flightNumber: string;
   extraNotes: string;
+  phone: string;
+  email: string;
   // Pre-collected from RSVP (read-only in app)
   dietary: string;
   meal1: string;
@@ -38,6 +40,8 @@ const DEFAULT_MY_INFO: MyInfo = {
   arrivalTime: '',
   flightNumber: '',
   extraNotes: '',
+  phone: '',
+  email: '',
   dietary: '',
   meal1: '',
   meal2: '',
@@ -60,6 +64,8 @@ export async function getMyInfo(guestName: string): Promise<MyInfo> {
         arrivalTime: data.arrival_time ?? '',
         flightNumber: data.flight_number ?? '',
         extraNotes: data.extra_notes ?? '',
+        phone: data.phone ?? '',
+        email: data.email ?? '',
         dietary: data.dietary ?? '',
         meal1: data.meal_1 ?? '',
         meal2: data.meal_2 ?? '',
@@ -88,12 +94,36 @@ export async function saveMyInfo(guestName: string, info: MyInfo): Promise<void>
       arrival_time: info.arrivalTime,
       flight_number: info.flightNumber,
       extra_notes: info.extraNotes,
+      phone: info.phone,
+      email: info.email,
       updated_at: new Date().toISOString(),
     },
     { onConflict: 'guest_name' },
   );
 
   await AsyncStorage.setItem(KEYS.myInfo(guestName), JSON.stringify(info));
+
+  // Fire-and-forget email notification — silently ignore errors
+  notifyCouple(guestName, info).catch(() => {});
+}
+
+async function notifyCouple(guestName: string, info: MyInfo): Promise<void> {
+  const lines = [
+    `Guest: ${guestName}`,
+    info.phone       ? `Phone: ${info.phone}`              : null,
+    info.email       ? `Email: ${info.email}`              : null,
+    ``,
+    info.hotel       ? `Hotel: ${info.hotel}`              : null,
+    info.checkIn     ? `Check-in: ${info.checkIn}`         : null,
+    info.checkOut    ? `Check-out: ${info.checkOut}`       : null,
+    info.arrivalTime ? `Arrival: ${info.arrivalTime}`      : null,
+    info.flightNumber? `Flight: ${info.flightNumber}`      : null,
+    info.extraNotes  ? `\nNotes: ${info.extraNotes}`       : null,
+  ].filter(Boolean).join('\n');
+
+  await supabase.functions.invoke('send-notification', {
+    body: { guestName, details: lines },
+  });
 }
 
 // ─── Onboarding ──────────────────────────────────────────────────────────────

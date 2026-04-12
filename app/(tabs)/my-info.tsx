@@ -16,19 +16,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { getMyInfo, saveMyInfo, MyInfo } from '@/services/storage';
+import { HotelPickerField } from '@/components/HotelPickerField';
+import { DateField } from '@/components/DateField';
 
-const HOTEL_OPTIONS = [
-  'Fairmont Le Montreux Palace (wedding hotel)',
-  'Hôtel Suisse & Majestic',
-  'Hotel Eden Palace au Lac',
-  'Eurotel Riviera Montreux',
-  'Maison Décotterd',
-  'Hôtel du Grand Lac Excelsior',
-  'Golf Hôtel René Capt',
-  'AirBnb / Other rental',
-  'Staying in Lausanne or nearby',
-  'Day trip (not staying overnight)',
-];
+const MIN_DATE = new Date('2026-05-18');
+const MAX_DATE = new Date('2026-06-01');
 
 interface FieldProps {
   label: string;
@@ -36,9 +28,11 @@ interface FieldProps {
   onChange: (v: string) => void;
   placeholder?: string;
   multiline?: boolean;
+  keyboardType?: 'default' | 'email-address' | 'phone-pad';
+  autoCapitalize?: 'none' | 'sentences' | 'words';
 }
 
-function Field({ label, value, onChange, placeholder, multiline }: FieldProps) {
+function Field({ label, value, onChange, placeholder, multiline, keyboardType, autoCapitalize }: FieldProps) {
   return (
     <View style={styles.field}>
       <Text style={styles.fieldLabel}>{label}</Text>
@@ -50,7 +44,9 @@ function Field({ label, value, onChange, placeholder, multiline }: FieldProps) {
         placeholderTextColor={Colors.textMuted}
         multiline={multiline}
         numberOfLines={multiline ? 3 : 1}
-        autoCapitalize="sentences"
+        autoCapitalize={autoCapitalize ?? 'sentences'}
+        keyboardType={keyboardType ?? 'default'}
+        autoCorrect={false}
       />
     </View>
   );
@@ -67,52 +63,6 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
   );
 }
 
-interface PickerFieldProps {
-  label: string;
-  options: string[];
-  value: string;
-  onChange: (v: string) => void;
-}
-
-function PickerField({ label, options, value, onChange }: PickerFieldProps) {
-  const [open, setOpen] = useState(false);
-  return (
-    <View style={styles.field}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      <TouchableOpacity
-        style={styles.pickerButton}
-        onPress={() => setOpen((v) => !v)}
-      >
-        <Text style={[styles.pickerValue, !value && { color: Colors.textMuted }]}>
-          {value || 'Tap to select...'}
-        </Text>
-        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={18} color={Colors.textMuted} />
-      </TouchableOpacity>
-      {open && (
-        <View style={[styles.optionsList, Shadow.medium]}>
-          {options.map((opt) => (
-            <TouchableOpacity
-              key={opt}
-              style={[styles.optionItem, value === opt && styles.optionItemSelected]}
-              onPress={() => {
-                onChange(opt);
-                setOpen(false);
-              }}
-            >
-              <Text style={[styles.optionText, value === opt && styles.optionTextSelected]}>
-                {opt}
-              </Text>
-              {value === opt && (
-                <Ionicons name="checkmark" size={16} color={Colors.primary} />
-              )}
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-    </View>
-  );
-}
-
 export default function MyInfoScreen() {
   const insets = useSafeAreaInsets();
   const { guestName, logout } = useAuth();
@@ -123,6 +73,8 @@ export default function MyInfoScreen() {
     arrivalTime: '',
     flightNumber: '',
     extraNotes: '',
+    phone: '',
+    email: '',
     dietary: '',
     meal1: '',
     meal2: '',
@@ -191,27 +143,55 @@ export default function MyInfoScreen() {
           </View>
         </View>
 
+        {/* Contact section */}
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionTag}>Contact</Text>
+          <Text style={styles.sectionTitle}>Your contact details</Text>
+          <Text style={styles.sectionSubtext}>
+            So we can reach you if anything changes before or during the trip.
+          </Text>
+          <Field
+            label="Phone number"
+            value={info.phone}
+            onChange={update('phone')}
+            placeholder="e.g. +44 7700 900000"
+            keyboardType="phone-pad"
+            autoCapitalize="none"
+          />
+          <Field
+            label="Email address"
+            value={info.email}
+            onChange={update('email')}
+            placeholder="e.g. your@email.com"
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+        </View>
+
         {/* Accommodation section */}
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTag}>Accommodation</Text>
           <Text style={styles.sectionTitle}>Where are you staying?</Text>
-          <PickerField
+          <HotelPickerField
             label="Hotel or accommodation"
-            options={HOTEL_OPTIONS}
             value={info.hotel}
             onChange={update('hotel')}
           />
-          <Field
+          <DateField
             label="Check-in date"
             value={info.checkIn}
             onChange={update('checkIn')}
-            placeholder="e.g. Friday 22 May 2026"
+            placeholder="Select date"
+            minimumDate={MIN_DATE}
+            maximumDate={MAX_DATE}
           />
-          <Field
+          <DateField
             label="Check-out date"
             value={info.checkOut}
             onChange={update('checkOut')}
-            placeholder="e.g. Sunday 24 May 2026"
+            placeholder="Select date"
+            minimumDate={MIN_DATE}
+            maximumDate={MAX_DATE}
           />
         </View>
 
@@ -230,6 +210,7 @@ export default function MyInfoScreen() {
             value={info.flightNumber}
             onChange={update('flightNumber')}
             placeholder="e.g. LX1234 arriving Geneva 11:30"
+            autoCapitalize="characters"
           />
         </View>
 
@@ -301,7 +282,7 @@ export default function MyInfoScreen() {
         </TouchableOpacity>
 
         <Text style={styles.privacyNote}>
-          Your accommodation and arrival details are shared with Neha & Naveen to help with planning.
+          Your details are shared with Neha & Naveen to help with planning.
         </Text>
 
         {/* Logout */}
@@ -471,50 +452,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     color: Colors.textMuted,
     lineHeight: 20,
-  },
-
-  pickerButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 12,
-    backgroundColor: Colors.background,
-  },
-  pickerValue: {
-    flex: 1,
-    fontSize: 15,
-    fontFamily: Fonts.sans,
-    color: Colors.textPrimary,
-  },
-  optionsList: {
-    backgroundColor: Colors.white,
-    borderRadius: Radius.md,
-    marginTop: Spacing.xs,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    overflow: 'hidden',
-  },
-  optionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.divider,
-  },
-  optionItemSelected: { backgroundColor: Colors.surfaceWarm },
-  optionText: {
-    flex: 1,
-    fontSize: 15,
-    fontFamily: Fonts.sans,
-    color: Colors.textPrimary,
-  },
-  optionTextSelected: {
-    fontFamily: Fonts.sansMedium,
-    color: Colors.primary,
   },
 
   saveButton: {
