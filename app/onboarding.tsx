@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -62,9 +62,25 @@ export default function OnboardingScreen() {
   const [checkOut, setCheckOut] = useState('');
   const [arrivalTime, setArrivalTime] = useState('');
   const [flightNumber, setFlightNumber] = useState('');
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [hasPrefilled, setHasPrefilled] = useState(false);
 
   const firstName = guestName?.split(' ')[0] ?? 'there';
+
+  useEffect(() => {
+    if (!guestName) { setLoading(false); return; }
+    getMyInfo(guestName).then((data) => {
+      const prefilled = !!(data.hotel || data.arrivalTime || data.checkIn);
+      setHasPrefilled(prefilled);
+      setHotel(data.hotel);
+      setCheckIn(data.checkIn);
+      setCheckOut(data.checkOut);
+      setArrivalTime(data.arrivalTime);
+      setFlightNumber(data.flightNumber);
+      setLoading(false);
+    });
+  }, [guestName]);
 
   const handleSave = async () => {
     if (!guestName) return;
@@ -91,6 +107,14 @@ export default function OnboardingScreen() {
     router.replace('/(tabs)');
   };
 
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <KeyboardAvoidingView
       style={styles.root}
@@ -103,11 +127,16 @@ export default function OnboardingScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.greeting}>Welcome, {firstName}!</Text>
-          <Text style={styles.subtitle}>A quick note before you explore</Text>
+          <Text style={styles.greeting}>
+            {hasPrefilled ? `Hello, ${firstName}!` : `Welcome, ${firstName}!`}
+          </Text>
+          <Text style={styles.subtitle}>
+            {hasPrefilled ? 'Please confirm your details' : 'A quick note before you explore'}
+          </Text>
           <Text style={styles.body}>
-            Help us prepare for your arrival by sharing a few travel details. You can always
-            update these later in the My Details tab.
+            {hasPrefilled
+              ? "We've already noted some of your travel information. Please take a moment to check everything looks right — you can edit anything that's changed."
+              : 'Help us prepare for your arrival by sharing a few travel details. You can always update these later in the My Details tab.'}
           </Text>
         </View>
 
@@ -173,7 +202,9 @@ export default function OnboardingScreen() {
           {saving ? (
             <ActivityIndicator color={Colors.white} size="small" />
           ) : (
-            <Text style={styles.saveButtonText}>Save my details</Text>
+            <Text style={styles.saveButtonText}>
+              {hasPrefilled ? 'Confirm my details' : 'Save my details'}
+            </Text>
           )}
         </TouchableOpacity>
 
@@ -183,7 +214,9 @@ export default function OnboardingScreen() {
           activeOpacity={0.7}
           disabled={saving}
         >
-          <Text style={styles.skipButtonText}>Remind me next time</Text>
+          <Text style={styles.skipButtonText}>
+            {hasPrefilled ? "I'll review later" : 'Remind me next time'}
+          </Text>
         </TouchableOpacity>
 
         <View style={{ height: insets.bottom + Spacing.xxl }} />
@@ -195,6 +228,7 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
   container: { flex: 1 },
+  loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.background },
   content: {
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xxl,
