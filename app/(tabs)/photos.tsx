@@ -1,143 +1,21 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
-  TextInput,
-  Alert,
-  ActivityIndicator,
-  Dimensions,
+  Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
-import { useAuth } from '@/context/AuthContext';
-import { getPhotos, addPhoto, PhotoRecord } from '@/services/storage';
 import { WEDDING } from '@/constants/weddingData';
 
-const { width } = Dimensions.get('window');
-const PHOTO_SIZE = (width - Spacing.lg * 2 - Spacing.sm) / 2;
-
-function PhotoThumbnail({ photo }: { photo: PhotoRecord }) {
-  return (
-    <View style={styles.thumbnail}>
-      <Image source={{ uri: photo.uri }} style={styles.thumbnailImage} />
-      <View style={styles.thumbnailOverlay}>
-        {photo.type === 'video' && (
-          <View style={styles.videoIndicator}>
-            <Ionicons name="play" size={12} color={Colors.white} />
-          </View>
-        )}
-      </View>
-      {photo.caption ? (
-        <View style={styles.captionStrip}>
-          <Text style={styles.captionText} numberOfLines={1}>
-            {photo.caption}
-          </Text>
-        </View>
-      ) : null}
-      <View style={styles.submittedByStrip}>
-        <Text style={styles.submittedByText} numberOfLines={1}>
-          {photo.submittedBy.split(' ')[0]}
-        </Text>
-      </View>
-    </View>
-  );
-}
+const ALBUM_URL = 'https://photos.app.goo.gl/YCMxM6i7XRNzKERd6';
 
 export default function PhotosScreen() {
   const insets = useSafeAreaInsets();
-  const { guestName } = useAuth();
-  const [photos, setPhotos] = useState<PhotoRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const [caption, setCaption] = useState('');
-  const [selectedUri, setSelectedUri] = useState<string | null>(null);
-  const [selectedType, setSelectedType] = useState<'photo' | 'video'>('photo');
-
-  const loadPhotos = useCallback(async () => {
-    const data = await getPhotos();
-    setPhotos(data.reverse()); // newest first
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    loadPhotos();
-  }, [loadPhotos]);
-
-  const pickMedia = async (type: 'photo' | 'video') => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert(
-        'Permission required',
-        'Please allow photo library access to share photos.',
-      );
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: type === 'photo'
-        ? ImagePicker.MediaTypeOptions.Images
-        : ImagePicker.MediaTypeOptions.Videos,
-      allowsEditing: false,
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      setSelectedUri(result.assets[0].uri);
-      setSelectedType(type);
-    }
-  };
-
-  const takePhoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission required', 'Please allow camera access to take photos.');
-      return;
-    }
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: false,
-      quality: 0.8,
-    });
-    if (!result.canceled && result.assets[0]) {
-      setSelectedUri(result.assets[0].uri);
-      setSelectedType('photo');
-    }
-  };
-
-  const submitPhoto = async () => {
-    if (!selectedUri || !guestName) return;
-    setUploading(true);
-    try {
-      await addPhoto({
-        uri: selectedUri,
-        caption: caption.trim(),
-        submittedBy: guestName,
-        type: selectedType,
-      });
-      setSelectedUri(null);
-      setCaption('');
-      await loadPhotos();
-      Alert.alert(
-        'Shared!',
-        'Your photo has been added to the wedding gallery. The couple will love it!',
-      );
-    } catch {
-      Alert.alert('Error', 'Could not save your photo. Please try again.');
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const cancelSelection = () => {
-    setSelectedUri(null);
-    setCaption('');
-  };
 
   return (
     <ScrollView
@@ -149,101 +27,55 @@ export default function PhotosScreen() {
         <Text style={styles.pageTitle}>Photo Gallery</Text>
         <Text style={styles.pageSubtitleTag}>Share Your Moments</Text>
         <Text style={styles.pageSubtitle}>
-          Share your favourite moments from the weekend
+          Share your favourite photos and videos from the weekend
         </Text>
       </View>
 
-      {/* Shared album banner */}
-      <View style={styles.sharedAlbumBanner}>
-        <Ionicons name="cloud-outline" size={20} color={Colors.accent} style={{ marginRight: Spacing.sm, marginTop: 1 }} />
-        <View style={styles.bannerText}>
-          <Text style={styles.bannerTitle}>Also share on the cloud</Text>
-          <Text style={styles.bannerSubtitle}>
-            Tag your posts {WEDDING.hashtag} and we'll collect them all into a shared album after the wedding!
-          </Text>
+      {/* Main CTA card */}
+      <View style={styles.albumCard}>
+        <View style={styles.albumIconWrap}>
+          <Ionicons name="images" size={40} color={Colors.primary} />
         </View>
+        <Text style={styles.albumTitle}>Neha & Naveen's Shared Album</Text>
+        <Text style={styles.albumBody}>
+          All photos and videos from the wedding weekend live here. Add yours and see what everyone else captured.
+        </Text>
+        <TouchableOpacity
+          style={styles.albumButton}
+          onPress={() => Linking.openURL(ALBUM_URL)}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="logo-google" size={18} color={Colors.white} style={{ marginRight: Spacing.xs }} />
+          <Text style={styles.albumButtonText}>Open in Google Photos</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Upload section */}
-      {selectedUri ? (
-        <View style={styles.previewCard}>
-          <Text style={styles.previewLabel}>Selected {selectedType}</Text>
-          {selectedType === 'photo' ? (
-            <Image source={{ uri: selectedUri }} style={styles.preview} />
-          ) : (
-            <View style={styles.videoPreview}>
-              <Ionicons name="film-outline" size={48} color={Colors.textMuted} />
-              <Text style={styles.videoPreviewText}>Video selected</Text>
+      {/* How to add photos */}
+      <View style={styles.stepsCard}>
+        <Text style={styles.stepsTitle}>How to add your photos</Text>
+        {[
+          { n: '1', text: 'Tap "Open in Google Photos" above' },
+          { n: '2', text: 'Sign in with any Google account' },
+          { n: '3', text: 'Tap the + button to add photos or videos from your camera roll' },
+          { n: '4', text: 'They\'ll appear in the shared album for everyone to see' },
+        ].map((step) => (
+          <View key={step.n} style={styles.step}>
+            <View style={styles.stepNumber}>
+              <Text style={styles.stepNumberText}>{step.n}</Text>
             </View>
-          )}
-          <TextInput
-            style={styles.captionInput}
-            placeholder="Add a caption (optional)..."
-            placeholderTextColor={Colors.textMuted}
-            value={caption}
-            onChangeText={setCaption}
-            maxLength={120}
-          />
-          <View style={styles.previewButtons}>
-            <TouchableOpacity style={styles.cancelButton} onPress={cancelSelection}>
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.submitButton, uploading && styles.submitButtonDisabled]}
-              onPress={submitPhoto}
-              disabled={uploading}
-            >
-              {uploading ? (
-                <ActivityIndicator color={Colors.white} size="small" />
-              ) : (
-                <Text style={styles.submitButtonText}>Share</Text>
-              )}
-            </TouchableOpacity>
+            <Text style={styles.stepText}>{step.text}</Text>
           </View>
-        </View>
-      ) : (
-        <View style={styles.uploadButtons}>
-          <TouchableOpacity
-            style={styles.uploadButton}
-            onPress={() => pickMedia('photo')}
-          >
-            <Ionicons name="images-outline" size={26} color={Colors.primary} />
-            <Text style={styles.uploadButtonLabel}>Choose Photo</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.uploadButton}
-            onPress={() => pickMedia('video')}
-          >
-            <Ionicons name="film-outline" size={26} color={Colors.primary} />
-            <Text style={styles.uploadButtonLabel}>Choose Video</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.uploadButton}
-            onPress={takePhoto}
-          >
-            <Ionicons name="camera-outline" size={26} color={Colors.primary} />
-            <Text style={styles.uploadButtonLabel}>Take Photo</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+        ))}
+      </View>
 
-      {/* Gallery */}
-      <View style={styles.gallerySection}>
-        <Text style={styles.gallerySectionTitle}>
-          {photos.length > 0
-            ? `${photos.length} shared moment${photos.length !== 1 ? 's' : ''}`
-            : 'No photos yet — be the first!'}
+      {/* Hashtag nudge */}
+      <View style={styles.hashtagCard}>
+        <Ionicons name="rose-outline" size={16} color={Colors.gold} style={{ marginRight: Spacing.xs, marginTop: 1 }} />
+        <Text style={styles.hashtagText}>
+          Also tag your posts{' '}
+          <Text style={styles.hashtag}>{WEDDING.hashtag}</Text>
+          {' '}so we can find them!
         </Text>
-
-        {loading ? (
-          <ActivityIndicator color={Colors.primary} style={styles.galleryLoader} />
-        ) : (
-          <View style={styles.grid}>
-            {photos.map((photo) => (
-              <PhotoThumbnail key={photo.id} photo={photo} />
-            ))}
-          </View>
-        )}
       </View>
     </ScrollView>
   );
@@ -282,201 +114,123 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
-  sharedAlbumBanner: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+  albumCard: {
     marginHorizontal: Spacing.lg,
-    marginBottom: Spacing.lg,
-    backgroundColor: Colors.accentLight,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 0.5,
-    borderColor: Colors.accent + '30',
-  },
-  bannerText: { flex: 1 },
-  bannerTitle: {
-    fontSize: 15,
-    fontFamily: Fonts.serifMedium,
-    color: Colors.accent,
-    marginBottom: 2,
-  },
-  bannerSubtitle: {
-    fontSize: 12,
-    fontFamily: Fonts.sans,
-    color: Colors.accent,
-    lineHeight: 18,
-    opacity: 0.85,
-  },
-
-  uploadButtons: {
-    flexDirection: 'row',
-    paddingHorizontal: Spacing.lg,
-    gap: Spacing.sm,
-    marginBottom: Spacing.lg,
-  },
-  uploadButton: {
-    flex: 1,
+    marginBottom: Spacing.md,
     backgroundColor: Colors.white,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
+    borderRadius: Radius.lg,
+    padding: Spacing.xl,
     alignItems: 'center',
-    gap: Spacing.xs,
     borderWidth: 0.5,
     borderColor: Colors.border,
     ...Shadow.small,
   },
-  uploadButtonLabel: {
-    fontSize: 11,
-    fontFamily: Fonts.sansMedium,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-  },
-
-  previewCard: {
-    marginHorizontal: Spacing.lg,
-    marginBottom: Spacing.lg,
-    backgroundColor: Colors.white,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    borderWidth: 0.5,
-    borderColor: Colors.border,
-    ...Shadow.small,
-  },
-  previewLabel: {
-    fontSize: 10,
-    fontFamily: Fonts.sansMedium,
-    color: Colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 1.5,
-    marginBottom: Spacing.sm,
-  },
-  preview: {
-    width: '100%',
-    height: 240,
-    borderRadius: Radius.md,
-    marginBottom: Spacing.sm,
-    backgroundColor: Colors.divider,
-  },
-  videoPreview: {
-    width: '100%',
-    height: 160,
-    borderRadius: Radius.md,
-    marginBottom: Spacing.sm,
-    backgroundColor: Colors.divider,
+  albumIconWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: Colors.surfaceWarm,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: Spacing.md,
   },
-  videoPreviewText: {
+  albumTitle: {
+    fontSize: 20,
+    fontFamily: Fonts.serifSemiBold,
+    color: Colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: Spacing.sm,
+    letterSpacing: 0.2,
+  },
+  albumBody: {
     fontSize: 13,
     fontFamily: Fonts.sans,
-    color: Colors.textMuted,
-    marginTop: Spacing.xs,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 21,
+    marginBottom: Spacing.lg,
   },
-  captionInput: {
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: Radius.md,
-    padding: Spacing.sm,
-    fontSize: 15,
-    fontFamily: Fonts.sans,
-    color: Colors.textPrimary,
-    marginBottom: Spacing.md,
-    backgroundColor: Colors.background,
-  },
-  previewButtons: {
+  albumButton: {
     flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  cancelButton: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: Colors.primary,
-    borderRadius: Radius.full,
-    paddingVertical: 12,
     alignItems: 'center',
-  },
-  cancelButtonText: {
-    fontSize: 15,
-    fontFamily: Fonts.sansMedium,
-    color: Colors.primary,
-  },
-  submitButton: {
-    flex: 2,
     backgroundColor: Colors.primary,
     borderRadius: Radius.full,
-    paddingVertical: 12,
-    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: Spacing.xl,
+    ...Shadow.small,
   },
-  submitButtonDisabled: { opacity: 0.6 },
-  submitButtonText: {
+  albumButtonText: {
     fontSize: 15,
     fontFamily: Fonts.sansMedium,
     color: Colors.white,
+    letterSpacing: 0.2,
   },
 
-  gallerySection: { paddingHorizontal: Spacing.lg },
-  gallerySectionTitle: {
-    fontSize: 17,
+  stepsCard: {
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+    backgroundColor: Colors.white,
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    ...Shadow.small,
+  },
+  stepsTitle: {
+    fontSize: 15,
     fontFamily: Fonts.serifSemiBold,
     color: Colors.textPrimary,
     marginBottom: Spacing.md,
     letterSpacing: 0.2,
   },
-  galleryLoader: { marginTop: Spacing.xl },
-  grid: {
+  step: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
+    alignItems: 'flex-start',
+    marginBottom: Spacing.sm,
   },
-  thumbnail: {
-    width: PHOTO_SIZE,
-    height: PHOTO_SIZE,
-    borderRadius: Radius.md,
-    overflow: 'hidden',
-    backgroundColor: Colors.divider,
-  },
-  thumbnailImage: {
-    width: '100%',
-    height: '100%',
-  },
-  thumbnailOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    padding: Spacing.xs,
-  },
-  videoIndicator: {
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: Radius.full,
-    width: 24,
-    height: 24,
+  stepNumber: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: Spacing.sm,
+    marginTop: 1,
+    flexShrink: 0,
   },
-  captionStrip: {
-    position: 'absolute',
-    bottom: 20,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    paddingHorizontal: Spacing.xs,
-    paddingVertical: 2,
-  },
-  captionText: {
+  stepNumberText: {
     fontSize: 11,
-    fontFamily: Fonts.sans,
+    fontFamily: Fonts.sansMedium,
     color: Colors.white,
   },
-  submittedByStrip: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    paddingHorizontal: Spacing.xs,
-    paddingVertical: 2,
-  },
-  submittedByText: {
-    fontSize: 9,
+  stepText: {
+    flex: 1,
+    fontSize: 13,
     fontFamily: Fonts.sans,
-    color: 'rgba(255,255,255,0.85)',
+    color: Colors.textSecondary,
+    lineHeight: 21,
+  },
+
+  hashtagCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginHorizontal: Spacing.lg,
+    backgroundColor: Colors.surfaceWarm,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+  },
+  hashtagText: {
+    flex: 1,
+    fontSize: 13,
+    fontFamily: Fonts.sans,
+    color: Colors.textSecondary,
+    lineHeight: 20,
+  },
+  hashtag: {
+    fontFamily: Fonts.sansMedium,
+    color: Colors.primary,
   },
 });
