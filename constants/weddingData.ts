@@ -11,6 +11,7 @@ export const WEDDING = {
   hashtag: "#NehaNaveen2026",       // TODO: Update with your actual hashtag
   website: "https://www.neha-naveen.com",
   contactEmail: "nehanaveen2026@gmail.com",
+  registry: "https://blissandbone.sendbirdie.com/r/neha-naveen",
 };
 
 // ============================================================
@@ -72,7 +73,7 @@ export const EVENTS: WeddingEvent[] = [
     venue: "Fairmont Le Montreux Palace | Garden",
     address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
     dressCode:
-      "Indian formal or black-tie Western. Elegant neutrals and muted evening tones. Please avoid white, ivory, and cream.",
+      "Indian formal or black-tie Western. Elegant neutrals and muted evening tones.",
     description:
       "The wedding ceremony in the beautiful gardens of the Fairmont, with the Alps and Lake Geneva as backdrop. Please arrive 20–30 minutes early to be seated.",
     notes: "Cocktail hour to follow at 6:00 PM.",
@@ -90,7 +91,7 @@ export const EVENTS: WeddingEvent[] = [
     description:
       "Dinner, speeches, dancing, and celebrating into the night in the grand Salle des Fêtes ballroom.",
     notes:
-      "The reception follows directly from the cocktail hour. Taxis can be arranged through the hotel concierge.",
+      "The reception follows directly from the cocktail hour.",
   },
 ];
 

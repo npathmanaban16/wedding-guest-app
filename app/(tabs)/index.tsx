@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -133,6 +134,22 @@ export default function HomeScreen() {
       <View style={styles.hashtagCard}>
         <Text style={styles.hashtagLabel}>SHARE YOUR MOMENTS</Text>
         <Text style={styles.hashtag}>{WEDDING.hashtag}</Text>
+      </View>
+
+      {/* Registry */}
+      <View style={styles.registryCard}>
+        <Text style={styles.registryLabel}>GIFT REGISTRY</Text>
+        <Text style={styles.registryTitle}>Cash Registry</Text>
+        <Text style={styles.registryBody}>
+          Celebrating this special weekend in Switzerland with our loved ones is truly the only gift we need. However, for those who have kindly asked about gifting, we have set up a registry for this new chapter together.
+        </Text>
+        <TouchableOpacity
+          style={styles.registryButton}
+          onPress={() => Linking.openURL(WEDDING.registry)}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.registryButtonText}>View Registry</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Sign out */}
@@ -333,6 +350,53 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.serifSemiBold,
     fontSize: Typography.xl,
     color: Colors.accent,
+  },
+
+  registryCard: {
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.lg,
+    backgroundColor: Colors.white,
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
+    alignItems: 'center',
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    ...Shadow.small,
+  },
+  registryLabel: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 10,
+    letterSpacing: 2,
+    color: Colors.gold,
+    marginBottom: Spacing.xs,
+  },
+  registryTitle: {
+    fontFamily: Fonts.serifSemiBold,
+    fontSize: Typography.lg,
+    color: Colors.textPrimary,
+    marginBottom: Spacing.sm,
+    letterSpacing: 0.2,
+  },
+  registryBody: {
+    fontFamily: Fonts.sans,
+    fontSize: Typography.sm,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: Spacing.lg,
+  },
+  registryButton: {
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.full,
+    paddingVertical: 13,
+    paddingHorizontal: Spacing.xl,
+    ...Shadow.small,
+  },
+  registryButtonText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: Typography.base,
+    color: Colors.white,
+    letterSpacing: 0.3,
   },
 
   signOut: {
