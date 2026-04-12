@@ -86,9 +86,8 @@ export default function OnboardingScreen() {
     router.replace('/(tabs)');
   };
 
-  const handleSkip = async () => {
-    if (!guestName) return;
-    await markOnboardingDone(guestName);
+  const handleSkip = () => {
+    // Don't mark as done — screen will reappear next time the app is opened
     router.replace('/(tabs)');
   };
 
@@ -184,7 +183,7 @@ export default function OnboardingScreen() {
           activeOpacity={0.7}
           disabled={saving}
         >
-          <Text style={styles.skipButtonText}>I'll fill this in later</Text>
+          <Text style={styles.skipButtonText}>Remind me next time</Text>
         </TouchableOpacity>
 
         <View style={{ height: insets.bottom + Spacing.xxl }} />
