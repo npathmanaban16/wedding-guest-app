@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { Colors, Fonts, Typography, Spacing, Radius, Shadow } from '@/constants/theme';
 import { WEDDING, EVENTS } from '@/constants/weddingData';
+import { isWeddingParty } from '@/constants/guests';
 
 function useCountdown(targetDate: Date) {
   const getTimeLeft = (target: Date) => {
@@ -58,6 +59,8 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const countdown = useCountdown(WEDDING.weddingDate);
   const firstName = guestName?.split(' ')[0] ?? 'Guest';
+  const inWeddingParty = isWeddingParty(guestName ?? '');
+  const firstEvent = EVENTS.find((e) => !e.weddingPartyOnly || inWeddingParty)!
 
   return (
     <ScrollView
@@ -107,9 +110,9 @@ export default function HomeScreen() {
       {/* Next event */}
       <View style={[styles.eventCard, Shadow.small]}>
         <Text style={styles.eventTag}>FIRST EVENT</Text>
-        <Text style={styles.eventName}>{EVENTS[0].title}</Text>
-        <Text style={styles.eventDetail}>{EVENTS[0].date}</Text>
-        <Text style={styles.eventVenue}>{EVENTS[0].venue}</Text>
+        <Text style={styles.eventName}>{firstEvent.title}</Text>
+        <Text style={styles.eventDetail}>{firstEvent.date}</Text>
+        <Text style={styles.eventVenue}>{firstEvent.venue}</Text>
         <TouchableOpacity onPress={() => router.push('/(tabs)/schedule')}>
           <Text style={styles.eventLink}>View full schedule →</Text>
         </TouchableOpacity>
