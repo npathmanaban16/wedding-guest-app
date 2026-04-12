@@ -32,11 +32,20 @@ function BulletRow({ text }: { text: string }) {
 
 function EventCard({ event }: { event: WeddingEvent }) {
   const [expanded, setExpanded] = useState(false);
+  const [dressExpanded, setDressExpanded] = useState(false);
 
   const toggle = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded((v) => !v);
   };
+
+  const toggleDress = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setDressExpanded((v) => !v);
+  };
+
+  const swatchsPerRow = event.colorPalette && event.colorPalette.length <= 8 ? 4 : 5;
+  const swatchWidth = `${100 / swatchsPerRow}%` as const;
 
   return (
     <TouchableOpacity style={styles.card} onPress={toggle} activeOpacity={0.9}>
@@ -61,53 +70,85 @@ function EventCard({ event }: { event: WeddingEvent }) {
           <InfoRow icon="location-outline" label="Venue" value={event.venue} />
           <InfoRow icon="navigate-outline" label="Address" value={event.address} />
 
-          {/* Dress Code */}
-          <View style={styles.dressCodeCard}>
-            <Text style={styles.dressCodeLabel}>Dress Code</Text>
-            <Text style={styles.dressCodeText}>{event.dressCode}</Text>
+          {/* Description */}
+          <Text style={styles.description}>{event.description}</Text>
 
-            {/* Black-tie breakdown */}
-            {event.blackTieGuide && (
-              <View style={styles.dressGuide}>
-                <View style={styles.dressGuideRow}>
-                  <Text style={styles.dressGuideKey}>Men</Text>
-                  <Text style={styles.dressGuideVal}>{event.blackTieGuide.men}</Text>
-                </View>
-                <View style={styles.dressGuideRow}>
-                  <Text style={styles.dressGuideKey}>Women</Text>
-                  <Text style={styles.dressGuideVal}>{event.blackTieGuide.women}</Text>
-                </View>
-              </View>
-            )}
+          {/* Outdoor note */}
+          {event.outdoorNote && (
+            <View style={[styles.notesCard, { borderLeftColor: '#D4920A' }]}>
+              <Ionicons
+                name="sunny-outline"
+                size={16}
+                color={Colors.gold}
+                style={{ marginRight: Spacing.xs, marginTop: 1 }}
+              />
+              <Text style={styles.notesText}>{event.outdoorNote}</Text>
+            </View>
+          )}
 
-            {/* Colour palette */}
-            {event.colorPalette && (
-              <View style={styles.palette}>
-                <Text style={styles.paletteHeading}>Suggested Colour Palette</Text>
-                <View style={styles.paletteGrid}>
-                  {event.colorPalette.map((c) => (
-                    <View key={c.name} style={styles.swatchItem}>
-                      <View style={[styles.swatch, { backgroundColor: c.hex }]} />
-                      <Text style={styles.swatchLabel}>{c.name}</Text>
+          {/* Dress Code — collapsible */}
+          <TouchableOpacity
+            style={styles.dressCodeCard}
+            onPress={toggleDress}
+            activeOpacity={0.85}
+          >
+            <View style={styles.dressCodeHeader}>
+              <Text style={styles.dressCodeLabel}>Dress Code</Text>
+              <Ionicons
+                name={dressExpanded ? 'chevron-up' : 'chevron-down'}
+                size={14}
+                color={Colors.textMuted}
+              />
+            </View>
+
+            {dressExpanded && (
+              <>
+                <Text style={styles.dressCodeText}>{event.dressCode}</Text>
+
+                {/* Black-tie breakdown */}
+                {event.blackTieGuide && (
+                  <View style={styles.dressGuide}>
+                    <View style={styles.dressGuideRow}>
+                      <Text style={styles.dressGuideKey}>Men</Text>
+                      <Text style={styles.dressGuideVal}>{event.blackTieGuide.men}</Text>
                     </View>
-                  ))}
-                </View>
-              </View>
-            )}
+                    <View style={styles.dressGuideRow}>
+                      <Text style={styles.dressGuideKey}>Women</Text>
+                      <Text style={styles.dressGuideVal}>{event.blackTieGuide.women}</Text>
+                    </View>
+                  </View>
+                )}
 
-            {/* Outfit inspiration link */}
-            {event.outfitInspirationUrl && (
-              <TouchableOpacity
-                style={styles.outfitLink}
-                onPress={() => Linking.openURL(event.outfitInspirationUrl!)}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="sparkles-outline" size={13} color={Colors.primary} />
-                <Text style={styles.outfitLinkText}>Outfit Inspiration Generator</Text>
-                <Ionicons name="arrow-forward" size={13} color={Colors.primary} />
-              </TouchableOpacity>
+                {/* Color palette */}
+                {event.colorPalette && (
+                  <View style={styles.palette}>
+                    <Text style={styles.paletteHeading}>Suggested Color Palette</Text>
+                    <View style={styles.paletteGrid}>
+                      {event.colorPalette.map((c) => (
+                        <View key={c.name} style={[styles.swatchItem, { width: swatchWidth }]}>
+                          <View style={[styles.swatch, { backgroundColor: c.hex }]} />
+                          <Text style={styles.swatchLabel}>{c.name}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                )}
+
+                {/* Outfit inspiration link */}
+                {event.outfitInspirationUrl && (
+                  <TouchableOpacity
+                    style={styles.outfitLink}
+                    onPress={() => Linking.openURL(event.outfitInspirationUrl!)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="sparkles-outline" size={13} color={Colors.primary} />
+                    <Text style={styles.outfitLinkText}>Outfit Inspiration Generator</Text>
+                    <Ionicons name="arrow-forward" size={13} color={Colors.primary} />
+                  </TouchableOpacity>
+                )}
+              </>
             )}
-          </View>
+          </TouchableOpacity>
 
           {/* Indian attire guide (Sangeet) */}
           {event.indianAttire && (
@@ -124,21 +165,6 @@ function EventCard({ event }: { event: WeddingEvent }) {
               {event.indianAttire.forMen.map((item, i) => (
                 <BulletRow key={i} text={item} />
               ))}
-            </View>
-          )}
-
-          <Text style={styles.description}>{event.description}</Text>
-
-          {/* Outdoor note */}
-          {event.outdoorNote && (
-            <View style={[styles.notesCard, { borderLeftColor: '#D4920A' }]}>
-              <Ionicons
-                name="sunny-outline"
-                size={16}
-                color={Colors.gold}
-                style={{ marginRight: Spacing.xs, marginTop: 1 }}
-              />
-              <Text style={styles.notesText}>{event.outdoorNote}</Text>
             </View>
           )}
 
@@ -224,7 +250,7 @@ export default function ScheduleScreen() {
         <Text style={styles.pageTitle}>Wedding Schedule</Text>
         <Text style={styles.pageSubtitleTag}>Programme</Text>
         <Text style={styles.pageSubtitle}>
-          Tap each event for full details, venue, dress code, and colour palette
+          Tap each event for full details, venue, dress code, and color palette
         </Text>
       </View>
 
@@ -375,19 +401,24 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: Colors.border,
   },
+  dressCodeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   dressCodeLabel: {
     fontFamily: Fonts.sansMedium,
     fontSize: 10,
     letterSpacing: 2,
     textTransform: 'uppercase',
     color: Colors.gold,
-    marginBottom: 4,
   },
   dressCodeText: {
     fontSize: 13,
     fontFamily: Fonts.sans,
     color: Colors.textSecondary,
     lineHeight: 20,
+    marginTop: Spacing.xs,
     marginBottom: Spacing.sm,
   },
 
@@ -436,7 +467,6 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   swatchItem: {
-    width: '20%',
     alignItems: 'center',
     marginBottom: Spacing.sm,
   },

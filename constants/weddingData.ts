@@ -6,7 +6,7 @@ export const WEDDING = {
   bride: "Neha",
   groom: "Naveen",
   coupleNames: "Neha & Naveen",
-  weddingDate: new Date("2026-05-23T17:00:00"), // Saturday 23 May 2026, ceremony at 5:00 PM
+  weddingDate: new Date("2026-05-23T15:00:00Z"), // Saturday 23 May 2026, 5:00 PM CEST (UTC+2)
   location: "Montreux, Switzerland",
   hashtag: "#NehaNaveen2026",       // TODO: Update with your actual hashtag
   website: "https://www.neha-naveen.com",
@@ -78,8 +78,6 @@ export const EVENTS: WeddingEvent[] = [
       "Festive Indian or semi-formal Western. Bright jewel tones and festive hues — think vibrant lehengas, sarees, sherwanis, or colourful cocktail attire.",
     description:
       "Welcome party with dancing, drinks, and dinner. This is the big celebration night — come ready to dance!",
-    notes:
-      "La Terrasse du Petit Palais offers stunning views over Lake Geneva. Cocktail attire with an Indian festive flair is encouraged.",
     colorPalette: [
       { name: 'ruby red', hex: '#9B1C1C' },
       { name: 'magenta', hex: '#C41E5E' },
@@ -124,7 +122,7 @@ export const EVENTS: WeddingEvent[] = [
       { name: 'sage', hex: '#8FAF88' },
       { name: 'dove grey', hex: '#A8AFB8' },
       { name: 'charcoal', hex: '#3C4043' },
-      { name: 'midnight', hex: '#191970' },
+      { name: 'black', hex: '#000000' },
       { name: 'deep taupe', hex: '#6B5A4E' },
       { name: 'muted plum', hex: '#7B5080' },
       { name: 'antique gold', hex: '#C9A84C' },
@@ -162,7 +160,7 @@ export const EVENTS: WeddingEvent[] = [
       { name: 'sage', hex: '#8FAF88' },
       { name: 'dove grey', hex: '#A8AFB8' },
       { name: 'charcoal', hex: '#3C4043' },
-      { name: 'midnight', hex: '#191970' },
+      { name: 'black', hex: '#000000' },
       { name: 'deep taupe', hex: '#6B5A4E' },
       { name: 'muted plum', hex: '#7B5080' },
       { name: 'antique gold', hex: '#C9A84C' },
