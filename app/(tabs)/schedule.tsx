@@ -16,6 +16,7 @@ import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { EVENTS, WeddingEvent } from '@/constants/weddingData';
 import { useAuth } from '@/context/AuthContext';
 import { isWeddingParty } from '@/constants/guests';
+import { FairmontMap } from '@/components/FairmontMap';
 
 if (Platform.OS === 'android') {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
@@ -262,6 +263,11 @@ export default function ScheduleScreen() {
         </Text>
       </View>
 
+      {/* Venue map */}
+      <View style={styles.mapSection}>
+        <FairmontMap />
+      </View>
+
       {/* Timeline */}
       <View style={styles.timeline}>
         {visibleEvents.map((event, index) => (
@@ -319,6 +325,10 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
+  mapSection: {
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.xl,
+  },
   timeline: { paddingLeft: Spacing.xl, paddingRight: Spacing.lg },
   timelineItem: { flexDirection: 'row', marginBottom: Spacing.md, position: 'relative' },
   connector: {
