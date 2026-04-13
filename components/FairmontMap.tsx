@@ -73,7 +73,7 @@ export function FairmontMap() {
         <View>
           <View style={s.divider} />
 
-          {/* ── Map schematic ── */}
+          {/* ── Schematic ── */}
           <View style={s.mapWrap}>
             {/* Compass */}
             <View style={s.compass}>
@@ -86,32 +86,52 @@ export function FairmontMap() {
               <Text style={s.streetLabel}>Av. Claude-Nobs</Text>
             </View>
 
-            {/* Building row: Grand Hôtel (left 2/3) | Petit Palais (right 1/3) */}
-            <View style={s.buildingRow}>
-              <View style={s.mainBuilding}>
+            {/* ① Main Building: hotel interior (left 60%) + garden (right 40%) */}
+            <View style={s.mainBldRow}>
+              <View style={s.mainInterior}>
                 <Text style={s.bldLabel}>Grand Hôtel</Text>
                 <Pin n={3} color={VENUES[2].color} />
+                <Text style={s.roomLabel}>Salle des Fêtes</Text>
               </View>
-              <View style={s.petitPalais}>
-                <Text style={s.bldLabel}>Petit{'\n'}Palais</Text>
-                <Pin n={1} color={VENUES[0].color} />
-              </View>
-            </View>
-
-            {/* Garden row: main garden (left 2/3) | Terrasse du Petit Palais (right 1/3) */}
-            <View style={s.gardenRow}>
-              <View style={s.garden}>
+              <View style={s.gardenSep} />
+              <View style={s.gardenSection}>
                 <Pin n={2} color={VENUES[1].color} />
                 <Text style={s.gardenLabel}>Garden</Text>
               </View>
-              <View style={s.terrasse}>
-                <Text style={s.terrasseLabel}>Terrasse{'\n'}du Petit{'\n'}Palais</Text>
-              </View>
             </View>
 
-            {/* Promenade */}
-            <View style={s.promenade}>
-              <Text style={s.promenadeLabel}>— Promenade —</Text>
+            {/* ② Outside gap between buildings, with tunnel connector */}
+            {/* Tunnel is centred below the hotel interior */}
+            <View style={s.gapRow}>
+              {/* left void */}
+              <View style={{ flex: 0.40 }} />
+              {/* tunnel strip */}
+              <View style={s.tunnelStrip}>
+                <Text style={s.tunnelLabel}>tunnel</Text>
+              </View>
+              {/* right void */}
+              <View style={{ flex: 0.42 }} />
+            </View>
+
+            {/* ③ Le Petit Palais — separate building, reached via tunnel */}
+            {/* Centred to align with the tunnel connector above */}
+            <View style={s.petitRow}>
+              {/* left void — 22% keeps Petit Palais centre ≈ tunnel centre */}
+              <View style={{ flex: 0.22 }} />
+              <View style={s.petitBlock}>
+                {/* La Coupole (indoor room, upper floor) */}
+                <View style={s.coupoleArea}>
+                  <Text style={s.bldLabel}>Le Petit Palais</Text>
+                  <Pin n={1} color={VENUES[0].color} />
+                  <Text style={s.roomLabel}>La Coupole</Text>
+                </View>
+                {/* Terrasse du Petit Palais (outdoor, faces the lake) */}
+                <View style={s.terrasseArea}>
+                  <Text style={s.terrasseLabel}>Terrasse du Petit Palais</Text>
+                </View>
+              </View>
+              {/* right void */}
+              <View style={{ flex: 0.23 }} />
             </View>
 
             {/* Lake */}
@@ -179,7 +199,7 @@ const s = StyleSheet.create({
     backgroundColor: Colors.divider,
   },
 
-  // ── Map ──────────────────────────────────────────────
+  // ── Map ──────────────────────────────────────────────────────────
   mapWrap: {
     overflow: 'hidden',
     position: 'relative',
@@ -210,6 +230,7 @@ const s = StyleSheet.create({
     lineHeight: 10,
   },
 
+  // Street
   street: {
     height: 20,
     backgroundColor: '#CCCAC4',
@@ -223,46 +244,45 @@ const s = StyleSheet.create({
     letterSpacing: 0.4,
   },
 
-  buildingRow: {
+  // Main building row: hotel interior + garden side by side
+  mainBldRow: {
     flexDirection: 'row',
-    height: 68,
+    height: 78,
   },
-  mainBuilding: {
-    flex: 2,
+  mainInterior: {
+    flex: 3,
     backgroundColor: '#BFB4A0',
-    borderRightWidth: 2,
-    borderRightColor: '#8A8078',
     alignItems: 'center',
     justifyContent: 'space-evenly',
     paddingVertical: 6,
   },
-  petitPalais: {
-    flex: 1,
-    backgroundColor: '#CABFB0',
-    alignItems: 'center',
-    justifyContent: 'space-evenly',
-    paddingVertical: 6,
+  // Thin border where the hotel building meets the garden
+  gardenSep: {
+    width: 1.5,
+    backgroundColor: '#4A7040',
   },
-  bldLabel: {
-    fontSize: 8,
-    fontFamily: Fonts.sansMedium,
-    color: '#2A2018',
-    textAlign: 'center',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    lineHeight: 11,
-  },
-
-  gardenRow: {
-    flexDirection: 'row',
-    height: 86,
-  },
-  garden: {
+  gardenSection: {
     flex: 2,
     backgroundColor: '#7B9E6E',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 5,
+    gap: 4,
+  },
+
+  bldLabel: {
+    fontSize: 8,
+    fontFamily: Fonts.sansMedium,
+    color: '#2A2018',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    textAlign: 'center',
+  },
+  roomLabel: {
+    fontSize: 7.5,
+    fontFamily: Fonts.sans,
+    color: '#2A2018',
+    textAlign: 'center',
+    opacity: 0.75,
   },
   gardenLabel: {
     fontSize: 8,
@@ -271,15 +291,58 @@ const s = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
-  terrasse: {
-    flex: 1,
-    backgroundColor: '#9BB888',
-    borderLeftWidth: 1.5,
-    borderLeftColor: '#CABFB0',
-    borderTopWidth: 1.5,
-    borderTopColor: '#CABFB0',
-    alignItems: 'center',
+
+  // Gap between the two buildings
+  gapRow: {
+    flexDirection: 'row',
+    height: 26,
+    backgroundColor: Colors.background,
+    alignItems: 'stretch',
+  },
+  tunnelStrip: {
+    flex: 0.18,
+    backgroundColor: '#C8C4BC',
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: '#A8A4A0',
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  tunnelLabel: {
+    fontSize: 7,
+    fontFamily: Fonts.sans,
+    color: '#555',
+    letterSpacing: 0.5,
+  },
+
+  // Petit Palais row — separate building
+  petitRow: {
+    flexDirection: 'row',
+    backgroundColor: Colors.background,
+  },
+  petitBlock: {
+    flex: 0.55,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#A8A4A0',
+    borderRadius: 2,
+  },
+  // La Coupole — the main indoor venue room
+  coupoleArea: {
+    height: 52,
+    backgroundColor: '#C8BEB2',
+    alignItems: 'center',
+    justifyContent: 'space-evenly',
+    paddingVertical: 4,
+  },
+  // Terrasse du Petit Palais — outdoor terrace facing the lake
+  terrasseArea: {
+    height: 38,
+    backgroundColor: '#9BB888',
+    borderTopWidth: 1,
+    borderTopColor: '#A8A4A0',
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingHorizontal: 4,
   },
   terrasseLabel: {
@@ -290,19 +353,7 @@ const s = StyleSheet.create({
     lineHeight: 11,
   },
 
-  promenade: {
-    height: 14,
-    backgroundColor: '#C0BAB2',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  promenadeLabel: {
-    fontSize: 7.5,
-    fontFamily: Fonts.sans,
-    color: '#4A4640',
-    letterSpacing: 0.5,
-  },
-
+  // Lake
   lake: {
     height: 38,
     backgroundColor: '#9DC4D8',
@@ -316,7 +367,7 @@ const s = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
-  // ── Pins ────────────────────────────────────────────
+  // ── Pins ─────────────────────────────────────────────────────────
   pin: {
     width: 22,
     height: 22,
@@ -332,7 +383,7 @@ const s = StyleSheet.create({
     color: '#fff',
   },
 
-  // ── Legend ──────────────────────────────────────────
+  // ── Legend ───────────────────────────────────────────────────────
   legend: {
     padding: Spacing.md,
     gap: Spacing.sm,
