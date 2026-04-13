@@ -15,28 +15,17 @@ if (Platform.OS === 'android') {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
 }
 
+// Colours matching the floor plan's visual language
+const VENUE_BLUE  = '#C5DFF0';  // indoor wedding venue rooms
+const VENUE_GREEN = '#BDD8AE';  // outdoor wedding venue areas
+const CONTEXT     = '#EFEBE4';  // non-venue hotel rooms
+const DIVIDER     = '#ADA9A4';  // internal room dividers
+const OUTLINE     = '#4A4540';  // building outlines
+
 const VENUES = [
-  {
-    n: 1,
-    event: 'Sangeet',
-    room: 'La Coupole & Terrasse du Petit Palais',
-    when: 'Fri 22 May · 6:30 PM',
-    color: '#B81D56',
-  },
-  {
-    n: 2,
-    event: 'Ceremony',
-    room: 'Garden',
-    when: 'Sat 23 May · 5:00 PM',
-    color: '#4A7040',
-  },
-  {
-    n: 3,
-    event: 'Reception',
-    room: 'Salle des Fêtes',
-    when: 'Sat 23 May · 7:30 PM',
-    color: Colors.primary,
-  },
+  { n: 1, event: 'Sangeet',   room: 'La Coupole & Terrasse du Petit Palais', when: 'Fri 22 May · 6:30 PM', color: '#B81D56' },
+  { n: 2, event: 'Ceremony',  room: 'Garden',                                when: 'Sat 23 May · 5:00 PM', color: '#4A7040' },
+  { n: 3, event: 'Reception', room: 'Salle des Fêtes',                       when: 'Sat 23 May · 7:30 PM', color: Colors.primary },
 ];
 
 function Pin({ n, color }: { n: number; color: string }) {
@@ -62,85 +51,98 @@ export function FairmontMap() {
           <Text style={s.tag}>Venue Overview</Text>
           <Text style={s.title}>Hotel Map</Text>
         </View>
-        <Ionicons
-          name={open ? 'chevron-up' : 'chevron-down'}
-          size={16}
-          color={Colors.textMuted}
-        />
+        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.textMuted} />
       </TouchableOpacity>
 
       {open && (
         <View>
           <View style={s.divider} />
 
-          {/* ── Schematic ── */}
-          <View style={s.mapWrap}>
-            {/* Compass */}
-            <View style={s.compass}>
-              <Text style={s.compassArrow}>↑</Text>
-              <Text style={s.compassN}>N</Text>
-            </View>
+          <View style={s.mapArea}>
 
-            {/* Street */}
-            <View style={s.street}>
-              <Text style={s.streetLabel}>Av. Claude-Nobs</Text>
-            </View>
-
-            {/* ① Main Building: hotel interior (left 60%) + garden (right 40%) */}
-            <View style={s.mainBldRow}>
-              <View style={s.mainInterior}>
-                <Text style={s.bldLabel}>Grand Hôtel</Text>
-                <Pin n={3} color={VENUES[2].color} />
-                <Text style={s.roomLabel}>Salle des Fêtes</Text>
+            {/* ── MAIN BUILDING ─────────────────────────────── */}
+            <View style={s.bldTitleRow}>
+              <Text style={s.bldTitle}>Main Building</Text>
+              {/* North compass */}
+              <View style={s.compass}>
+                <Text style={s.compassArrow}>↑</Text>
+                <Text style={s.compassN}>N</Text>
               </View>
-              <View style={s.gardenSep} />
-              <View style={s.gardenSection}>
+            </View>
+
+            <View style={s.mainBld}>
+              {/* Left column: Salles des Congrès / Bars & Dining */}
+              <View style={s.mainLeft}>
+                <View style={[s.room, { backgroundColor: CONTEXT, flex: 1, borderBottomWidth: 0.75, borderBottomColor: DIVIDER }]}>
+                  <Text style={s.roomText}>Salles des{'\n'}Congrès</Text>
+                </View>
+                <View style={[s.room, { backgroundColor: CONTEXT, flex: 1 }]}>
+                  <Text style={s.roomText}>Bars &{'\n'}Dining</Text>
+                </View>
+              </View>
+
+              {/* Centre column: Salle des Fêtes (③) / Grand Hall */}
+              <View style={s.mainMid}>
+                <View style={[s.room, { backgroundColor: VENUE_BLUE, flex: 1.5, borderBottomWidth: 0.75, borderBottomColor: DIVIDER, gap: 4 }]}>
+                  <Text style={s.venueText}>Salle des{'\n'}Fêtes</Text>
+                  <Pin n={3} color={VENUES[2].color} />
+                </View>
+                <View style={[s.room, { backgroundColor: CONTEXT, flex: 1 }]}>
+                  <Text style={s.roomText}>Grand Hall{'\n'}(Lobby)</Text>
+                </View>
+              </View>
+
+              {/* Right: Garden (②) — full height */}
+              <View style={[s.room, { backgroundColor: VENUE_GREEN, flex: 1.5, gap: 5 }]}>
                 <Pin n={2} color={VENUES[1].color} />
-                <Text style={s.gardenLabel}>Garden</Text>
+                <Text style={s.gardenText}>Garden</Text>
               </View>
             </View>
 
-            {/* ② Outside gap between buildings, with tunnel connector */}
-            {/* Tunnel is centred below the hotel interior */}
+            {/* ── Tunnel connector ──────────────────────────── */}
+            {/* Centred under the hotel interior, aligned with Petit Palais */}
             <View style={s.gapRow}>
-              {/* left void */}
               <View style={{ flex: 0.40 }} />
-              {/* tunnel strip */}
               <View style={s.tunnelStrip}>
-                <Text style={s.tunnelLabel}>tunnel</Text>
+                <Text style={s.tunnelText}>tunnel</Text>
               </View>
-              {/* right void */}
               <View style={{ flex: 0.42 }} />
             </View>
 
-            {/* ③ Le Petit Palais — separate building, reached via tunnel */}
-            {/* Centred to align with the tunnel connector above */}
-            <View style={s.petitRow}>
-              {/* left void — 22% keeps Petit Palais centre ≈ tunnel centre */}
+            {/* ── LE PETIT PALAIS ───────────────────────────── */}
+            {/* Offset ~22 % from left to sit under the tunnel */}
+            <View style={s.petitRowWrap}>
               <View style={{ flex: 0.22 }} />
-              <View style={s.petitBlock}>
-                {/* La Coupole (indoor room, upper floor) */}
-                <View style={s.coupoleArea}>
-                  <Text style={s.bldLabel}>Le Petit Palais</Text>
-                  <Pin n={1} color={VENUES[0].color} />
-                  <Text style={s.roomLabel}>La Coupole</Text>
-                </View>
-                {/* Terrasse du Petit Palais (outdoor, faces the lake) */}
-                <View style={s.terrasseArea}>
-                  <Text style={s.terrasseLabel}>Terrasse du Petit Palais</Text>
+              <View style={{ flex: 0.55 }}>
+                <Text style={s.bldTitle}>Le Petit Palais</Text>
+                <View style={s.petitBld}>
+                  {/* Left: Parking + Spa */}
+                  <View style={[s.room, { backgroundColor: CONTEXT, flex: 1, borderRightWidth: 0.75, borderRightColor: DIVIDER }]}>
+                    <Text style={s.roomText}>Parking{'\n'}& Spa</Text>
+                  </View>
+                  {/* Right column: La Coupole (①) / Terrasse (①) */}
+                  <View style={s.petitRight}>
+                    <View style={[s.room, { backgroundColor: VENUE_BLUE, flex: 1.3, borderBottomWidth: 0.75, borderBottomColor: DIVIDER, gap: 4 }]}>
+                      <Text style={s.venueText}>La Coupole</Text>
+                      <Pin n={1} color={VENUES[0].color} />
+                    </View>
+                    <View style={[s.room, { backgroundColor: VENUE_GREEN, flex: 1 }]}>
+                      <Text style={s.venueText}>Terrasse du{'\n'}Petit Palais</Text>
+                    </View>
+                  </View>
                 </View>
               </View>
-              {/* right void */}
               <View style={{ flex: 0.23 }} />
             </View>
 
-            {/* Lake */}
+            {/* Lake Geneva */}
             <View style={s.lake}>
-              <Text style={s.lakeLabel}>Lac Léman  ·  Lake Geneva</Text>
+              <Text style={s.lakeText}>Lac Léman  ·  Lake Geneva</Text>
             </View>
+
           </View>
 
-          {/* ── Legend ── */}
+          {/* ── Legend ─────────────────────────────────────── */}
           <View style={s.legend}>
             {VENUES.map(v => (
               <View key={v.n} style={s.legendRow}>
@@ -193,25 +195,38 @@ const s = StyleSheet.create({
     color: Colors.textPrimary,
     letterSpacing: 0.2,
   },
-
   divider: {
     height: 1,
     backgroundColor: Colors.divider,
   },
 
-  // ── Map ──────────────────────────────────────────────────────────
-  mapWrap: {
-    overflow: 'hidden',
-    position: 'relative',
+  // ── Map canvas ────────────────────────────────────────────────────
+  mapArea: {
+    backgroundColor: '#FAFAF8',
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.sm,
   },
 
-  compass: {
-    position: 'absolute',
-    top: 22,
-    right: 10,
-    zIndex: 10,
+  // Building title row (includes compass on the right for the first building)
+  bldTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.85)',
+    marginBottom: 4,
+  },
+  bldTitle: {
+    fontSize: 8.5,
+    fontFamily: Fonts.sansMedium,
+    color: OUTLINE,
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+  },
+
+  // Compass
+  compass: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.9)',
     borderRadius: 5,
     paddingHorizontal: 5,
     paddingVertical: 3,
@@ -230,162 +245,137 @@ const s = StyleSheet.create({
     lineHeight: 10,
   },
 
-  // Street
-  street: {
-    height: 20,
-    backgroundColor: '#CCCAC4',
-    justifyContent: 'center',
-    paddingHorizontal: 8,
-  },
-  streetLabel: {
-    fontSize: 8.5,
-    fontFamily: Fonts.sans,
-    color: '#4A4640',
-    letterSpacing: 0.4,
-  },
-
-  // Main building row: hotel interior + garden side by side
-  mainBldRow: {
+  // ── Main building ─────────────────────────────────────────────────
+  mainBld: {
     flexDirection: 'row',
-    height: 78,
+    height: 114,
+    borderWidth: 1.5,
+    borderColor: OUTLINE,
+    overflow: 'hidden',
   },
-  mainInterior: {
-    flex: 3,
-    backgroundColor: '#BFB4A0',
-    alignItems: 'center',
-    justifyContent: 'space-evenly',
-    paddingVertical: 6,
+  // Left column (Salles des Congrès / Bars & Dining)
+  mainLeft: {
+    flex: 1.3,
+    flexDirection: 'column',
+    borderRightWidth: 0.75,
+    borderRightColor: DIVIDER,
   },
-  // Thin border where the hotel building meets the garden
-  gardenSep: {
-    width: 1.5,
-    backgroundColor: '#4A7040',
-  },
-  gardenSection: {
-    flex: 2,
-    backgroundColor: '#7B9E6E',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
+  // Centre column (Salle des Fêtes / Grand Hall)
+  mainMid: {
+    flex: 2.5,
+    flexDirection: 'column',
+    borderRightWidth: 0.75,
+    borderRightColor: DIVIDER,
   },
 
-  bldLabel: {
-    fontSize: 8,
-    fontFamily: Fonts.sansMedium,
-    color: '#2A2018',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    textAlign: 'center',
-  },
-  roomLabel: {
-    fontSize: 7.5,
-    fontFamily: Fonts.sans,
-    color: '#2A2018',
-    textAlign: 'center',
-    opacity: 0.75,
-  },
-  gardenLabel: {
-    fontSize: 8,
-    fontFamily: Fonts.sansMedium,
-    color: '#182C14',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-
-  // Gap between the two buildings
+  // ── Gap + tunnel ──────────────────────────────────────────────────
   gapRow: {
     flexDirection: 'row',
-    height: 26,
-    backgroundColor: Colors.background,
+    height: 22,
+    backgroundColor: '#FAFAF8',
     alignItems: 'stretch',
   },
   tunnelStrip: {
     flex: 0.18,
-    backgroundColor: '#C8C4BC',
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderColor: '#A8A4A0',
+    backgroundColor: '#D2CEC8',
+    borderLeftWidth: 0.75,
+    borderRightWidth: 0.75,
+    borderColor: DIVIDER,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  tunnelLabel: {
-    fontSize: 7,
+  tunnelText: {
+    fontSize: 6.5,
     fontFamily: Fonts.sans,
-    color: '#555',
-    letterSpacing: 0.5,
+    color: '#4A4540',
+    letterSpacing: 0.3,
   },
 
-  // Petit Palais row — separate building
-  petitRow: {
+  // ── Le Petit Palais ───────────────────────────────────────────────
+  petitRowWrap: {
     flexDirection: 'row',
-    backgroundColor: Colors.background,
   },
-  petitBlock: {
-    flex: 0.55,
+  petitBld: {
+    flexDirection: 'row',
+    height: 96,
+    borderWidth: 1.5,
+    borderColor: OUTLINE,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#A8A4A0',
-    borderRadius: 2,
   },
-  // La Coupole — the main indoor venue room
-  coupoleArea: {
-    height: 52,
-    backgroundColor: '#C8BEB2',
-    alignItems: 'center',
-    justifyContent: 'space-evenly',
-    paddingVertical: 4,
+  petitRight: {
+    flex: 1.5,
+    flexDirection: 'column',
   },
-  // Terrasse du Petit Palais — outdoor terrace facing the lake
-  terrasseArea: {
-    height: 38,
-    backgroundColor: '#9BB888',
-    borderTopWidth: 1,
-    borderTopColor: '#A8A4A0',
+
+  // ── Generic room ──────────────────────────────────────────────────
+  room: {
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 4,
+    padding: 5,
   },
-  terrasseLabel: {
+  roomText: {
     fontSize: 7.5,
     fontFamily: Fonts.sans,
-    color: '#182C14',
+    color: '#4A4540',
     textAlign: 'center',
     lineHeight: 11,
   },
+  // Venue room labels (blue rooms)
+  venueText: {
+    fontSize: 7.5,
+    fontFamily: Fonts.sansMedium,
+    color: '#1A3A58',
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    lineHeight: 11,
+  },
+  // Garden label (green room)
+  gardenText: {
+    fontSize: 7.5,
+    fontFamily: Fonts.sansMedium,
+    color: '#1A3818',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
 
-  // Lake
+  // ── Lake ──────────────────────────────────────────────────────────
   lake: {
-    height: 38,
+    marginTop: 2,
+    height: 36,
     backgroundColor: '#9DC4D8',
+    borderWidth: 0.75,
+    borderColor: '#6A9AB0',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  lakeLabel: {
-    fontSize: 10,
+  lakeText: {
+    fontSize: 9.5,
     fontFamily: Fonts.serifItalic,
     color: '#1A4060',
     letterSpacing: 0.5,
   },
 
-  // ── Pins ─────────────────────────────────────────────────────────
+  // ── Pins ──────────────────────────────────────────────────────────
   pin: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.65)',
+    borderColor: 'rgba(255,255,255,0.7)',
   },
   pinNum: {
-    fontSize: 11,
+    fontSize: 10,
     fontFamily: Fonts.sansMedium,
     color: '#fff',
   },
 
-  // ── Legend ───────────────────────────────────────────────────────
+  // ── Legend ────────────────────────────────────────────────────────
   legend: {
     padding: Spacing.md,
+    paddingTop: Spacing.sm,
     gap: Spacing.sm,
   },
   legendRow: {
@@ -394,15 +384,15 @@ const s = StyleSheet.create({
     gap: Spacing.sm,
   },
   legendPin: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 1,
   },
   legendPinNum: {
-    fontSize: 11,
+    fontSize: 10,
     fontFamily: Fonts.sansMedium,
     color: '#fff',
   },
@@ -432,6 +422,7 @@ const s = StyleSheet.create({
     color: Colors.textMuted,
     textAlign: 'center',
     paddingBottom: Spacing.md,
+    paddingHorizontal: Spacing.md,
     fontStyle: 'italic',
   },
 });

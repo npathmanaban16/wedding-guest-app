@@ -263,11 +263,6 @@ export default function ScheduleScreen() {
         </Text>
       </View>
 
-      {/* Venue map */}
-      <View style={styles.mapSection}>
-        <FairmontMap />
-      </View>
-
       {/* Timeline */}
       <View style={styles.timeline}>
         {visibleEvents.map((event, index) => (
@@ -279,6 +274,11 @@ export default function ScheduleScreen() {
             </View>
           </View>
         ))}
+      </View>
+
+      {/* Venue map */}
+      <View style={styles.mapSection}>
+        <FairmontMap />
       </View>
 
       {/* Footer note */}
