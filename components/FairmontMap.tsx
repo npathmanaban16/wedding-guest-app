@@ -61,57 +61,71 @@ export function FairmontMap() {
           <View style={s.mapArea}>
 
             {/* ── GRAND HÔTEL ───────────────────────────────────────
-                Height ~108px. Left col ≈ 34 % (Salles des Congrès area),
-                right col ≈ 66 % (Stage / Salles des Fêtes / Grand Hall).
+                4 columns left → right:
+                  A  left wing   (Salon Rotary · Bars & Dining)
+                  B  centre-left (Salles des Congrès · L'Atelier)
+                  C  centre      (Stage → Salles des Fêtes ③ → Grand Hall)
+                  D  right       ([Salon Club | Salon Rouge] → Salon Bridge → La Palmeraie)
+                Rows in C & D share the same flex heights.
             ───────────────────────────────────────────────────────── */}
             <Text style={s.bldTitle}>Grand Hôtel · Main Building</Text>
             <View style={s.hotelBld}>
-              {/* Left col: Salles des Congrès / Bars & Dining */}
-              <View style={s.hotelLeft}>
-                <View style={[s.room, { backgroundColor: HIGHLIGHTED, flex: 1.5, borderBottomWidth: 0.75, borderBottomColor: DIVIDER }]}>
-                  <Text style={s.hlText}>Salles des{'\n'}Congrès</Text>
+
+              {/* Col A — left wing */}
+              <View style={[s.col, { flex: 0.65, borderRightWidth: 0.75, borderRightColor: DIVIDER }]}>
+                <View style={[s.room, { flex: 1, backgroundColor: HIGHLIGHTED, borderBottomWidth: 0.75, borderBottomColor: DIVIDER }]}>
+                  <Text style={s.hlText}>Salon{'\n'}Rotary</Text>
                 </View>
-                <View style={[s.room, { backgroundColor: CONTEXT, flex: 1 }]}>
+                <View style={[s.room, { flex: 1, backgroundColor: CONTEXT }]}>
                   <Text style={s.roomText}>Bars &{'\n'}Dining</Text>
                 </View>
               </View>
 
-              {/* Right col: 3 rows */}
-              <View style={s.hotelRight}>
-                {/* Row 1 — Stage / Salon Club / Salon Rouge */}
-                <View style={[s.hotelRow, { flex: 1 }]}>
-                  <View style={[s.room, { backgroundColor: HIGHLIGHTED, flex: 1, borderRightWidth: 0.75, borderRightColor: DIVIDER }]}>
-                    <Text style={s.hlText}>Stage</Text>
-                  </View>
-                  <View style={[s.room, { backgroundColor: HIGHLIGHTED, flex: 1, borderRightWidth: 0.75, borderRightColor: DIVIDER }]}>
+              {/* Col B — Salles des Congrès (tall) + L'Atelier */}
+              <View style={[s.col, { flex: 1.4, borderRightWidth: 0.75, borderRightColor: DIVIDER }]}>
+                <View style={[s.room, { flex: 1.6, backgroundColor: HIGHLIGHTED, borderBottomWidth: 0.75, borderBottomColor: DIVIDER }]}>
+                  <Text style={s.hlText}>Salles des{'\n'}Congrès</Text>
+                </View>
+                <View style={[s.room, { flex: 1, backgroundColor: CONTEXT }]}>
+                  <Text style={s.roomText}>L'Atelier</Text>
+                </View>
+              </View>
+
+              {/* Col C — Stage → Salles des Fêtes ③ → Grand Hall */}
+              <View style={[s.col, { flex: 1.5, borderRightWidth: 0.75, borderRightColor: DIVIDER }]}>
+                <View style={[s.room, { flex: 0.8, backgroundColor: HIGHLIGHTED, borderBottomWidth: 0.75, borderBottomColor: DIVIDER }]}>
+                  <Text style={s.hlText}>Stage</Text>
+                </View>
+                <View style={[s.room, { flex: 1.4, backgroundColor: VENUE_BLUE, borderBottomWidth: 0.75, borderBottomColor: DIVIDER, gap: 4 }]}>
+                  <Text style={s.venueText}>Salles des Fêtes</Text>
+                  <Pin n={3} color={VENUES[2].color} />
+                </View>
+                <View style={[s.room, { flex: 1, backgroundColor: CONTEXT }]}>
+                  <Text style={s.roomText}>Grand Hall{'\n'}(Lobby)</Text>
+                </View>
+              </View>
+
+              {/* Col D — [Salon Club | Salon Rouge] → Salon Bridge → La Palmeraie */}
+              <View style={[s.col, { flex: 1.1 }]}>
+                {/* Top row: Salon Club + Salon Rouge side-by-side */}
+                <View style={{ flex: 0.8, flexDirection: 'row', borderBottomWidth: 0.75, borderBottomColor: DIVIDER }}>
+                  <View style={[s.room, { flex: 1, backgroundColor: HIGHLIGHTED, borderRightWidth: 0.75, borderRightColor: DIVIDER }]}>
                     <Text style={s.hlText}>Salon{'\n'}Club</Text>
                   </View>
-                  <View style={[s.room, { backgroundColor: HIGHLIGHTED, flex: 1 }]}>
+                  <View style={[s.room, { flex: 1, backgroundColor: HIGHLIGHTED }]}>
                     <Text style={s.hlText}>Salon{'\n'}Rouge</Text>
                   </View>
                 </View>
-
-                {/* Row 2 — Salles des Fêtes ③ (larger) + Salon Bridge */}
-                <View style={[s.hotelRow, { flex: 1.6, borderTopWidth: 0.75, borderTopColor: DIVIDER, borderBottomWidth: 0.75, borderBottomColor: DIVIDER }]}>
-                  <View style={[s.room, { backgroundColor: VENUE_BLUE, flex: 2, borderRightWidth: 0.75, borderRightColor: DIVIDER, gap: 4 }]}>
-                    <Text style={s.venueText}>Salles des Fêtes</Text>
-                    <Pin n={3} color={VENUES[2].color} />
-                  </View>
-                  <View style={[s.room, { backgroundColor: CONTEXT, flex: 1 }]}>
-                    <Text style={s.roomText}>Salon{'\n'}Bridge</Text>
-                  </View>
+                {/* Middle: Salon Bridge */}
+                <View style={[s.room, { flex: 1.4, backgroundColor: HIGHLIGHTED, borderBottomWidth: 0.75, borderBottomColor: DIVIDER }]}>
+                  <Text style={s.hlText}>Salon{'\n'}Bridge</Text>
                 </View>
-
-                {/* Row 3 — Grand Hall / La Palmeraie */}
-                <View style={[s.hotelRow, { flex: 1 }]}>
-                  <View style={[s.room, { backgroundColor: CONTEXT, flex: 1, borderRightWidth: 0.75, borderRightColor: DIVIDER }]}>
-                    <Text style={s.roomText}>Grand Hall{'\n'}(Lobby)</Text>
-                  </View>
-                  <View style={[s.room, { backgroundColor: HIGHLIGHTED, flex: 1 }]}>
-                    <Text style={s.hlText}>La{'\n'}Palmeraie</Text>
-                  </View>
+                {/* Bottom: La Palmeraie */}
+                <View style={[s.room, { flex: 1, backgroundColor: HIGHLIGHTED }]}>
+                  <Text style={s.hlText}>La{'\n'}Palmeraie</Text>
                 </View>
               </View>
+
             </View>
 
             {/* ── ROAD ─────────────────────────────────────────────── */}
@@ -232,26 +246,16 @@ const s = StyleSheet.create({
   },
 
   // ── Grand Hôtel ───────────────────────────────────────────────────
-  // Height 108 px. Left col 34 %, right col 66 %.
+  // 4 columns: A (left wing) · B (Congrès) · C (Stage/Fêtes/Hall) · D (Club/Bridge/Palmeraie)
   hotelBld: {
     flexDirection: 'row',
-    height: 108,
+    height: 130,
     borderWidth: 1.5,
     borderColor: OUTLINE,
     overflow: 'hidden',
   },
-  hotelLeft: {
-    flex: 1.3,
+  col: {
     flexDirection: 'column',
-    borderRightWidth: 0.75,
-    borderRightColor: DIVIDER,
-  },
-  hotelRight: {
-    flex: 2.5,
-    flexDirection: 'column',
-  },
-  hotelRow: {
-    flexDirection: 'row',
   },
 
   // ── Road ──────────────────────────────────────────────────────────
