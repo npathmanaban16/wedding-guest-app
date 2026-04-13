@@ -39,6 +39,12 @@ function Pin({ n, color }: { n: number; color: string }) {
 
 export function FairmontMap() {
   const [open, setOpen] = useState(true);
+  // Measure the map canvas width so we can derive heights that preserve the
+  // floor-plan aspect ratios (width:height).  Fallbacks used before layout.
+  const [mapWidth, setMapWidth] = useState(0);
+  const bldW = mapWidth > 32 ? mapWidth - 32 : 0; // subtract 2×Spacing.md padding
+  const hotelH  = bldW > 0 ? Math.round(bldW / 1.91) : 130; // hotel   ≈ 1.91:1
+  const groundsH = bldW > 0 ? Math.round(bldW / 2.15) : 158; // grounds ≈ 2.15:1
 
   const toggle = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -58,7 +64,7 @@ export function FairmontMap() {
       {open && (
         <View>
           <View style={s.divider} />
-          <View style={s.mapArea}>
+          <View style={s.mapArea} onLayout={e => setMapWidth(e.nativeEvent.layout.width)}>
 
             {/* ── GRAND HÔTEL ───────────────────────────────────────
                 4 columns left → right:
@@ -69,7 +75,7 @@ export function FairmontMap() {
                 Rows in C & D share the same flex heights.
             ───────────────────────────────────────────────────────── */}
             <Text style={s.bldTitle}>Grand Hôtel · Main Building</Text>
-            <View style={s.hotelBld}>
+            <View style={[s.hotelBld, { height: hotelH }]}>
 
               {/* Col A — left wing */}
               <View style={[s.col, { flex: 0.65, borderRightWidth: 0.75, borderRightColor: DIVIDER }]}>
@@ -81,9 +87,9 @@ export function FairmontMap() {
                 </View>
               </View>
 
-              {/* Col B — Salles des Congrès (tall) + L'Atelier */}
+              {/* Col B — Salles des Congrès (69% of height) + L'Atelier (31%) */}
               <View style={[s.col, { flex: 1.4, borderRightWidth: 0.75, borderRightColor: DIVIDER }]}>
-                <View style={[s.room, { flex: 1.6, backgroundColor: HIGHLIGHTED, borderBottomWidth: 0.75, borderBottomColor: DIVIDER }]}>
+                <View style={[s.room, { flex: 2.2, backgroundColor: HIGHLIGHTED, borderBottomWidth: 0.75, borderBottomColor: DIVIDER }]}>
                   <Text style={s.hlText}>Salles des{'\n'}Congrès</Text>
                 </View>
                 <View style={[s.room, { flex: 1, backgroundColor: CONTEXT }]}>
@@ -91,24 +97,24 @@ export function FairmontMap() {
                 </View>
               </View>
 
-              {/* Col C — Stage → Salles des Fêtes ③ → Grand Hall */}
+              {/* Col C — Stage (29%) → Salles des Fêtes ③ (40%) → Grand Hall (31%) */}
               <View style={[s.col, { flex: 1.5, borderRightWidth: 0.75, borderRightColor: DIVIDER }]}>
-                <View style={[s.room, { flex: 0.8, backgroundColor: HIGHLIGHTED, borderBottomWidth: 0.75, borderBottomColor: DIVIDER }]}>
+                <View style={[s.room, { flex: 0.75, backgroundColor: HIGHLIGHTED, borderBottomWidth: 0.75, borderBottomColor: DIVIDER }]}>
                   <Text style={s.hlText}>Stage</Text>
                 </View>
-                <View style={[s.room, { flex: 1.4, backgroundColor: VENUE_BLUE, borderBottomWidth: 0.75, borderBottomColor: DIVIDER, gap: 4 }]}>
+                <View style={[s.room, { flex: 1.0, backgroundColor: VENUE_BLUE, borderBottomWidth: 0.75, borderBottomColor: DIVIDER, gap: 4 }]}>
                   <Text style={s.venueText}>Salles des Fêtes</Text>
                   <Pin n={3} color={VENUES[2].color} />
                 </View>
-                <View style={[s.room, { flex: 1, backgroundColor: CONTEXT }]}>
+                <View style={[s.room, { flex: 0.8, backgroundColor: CONTEXT }]}>
                   <Text style={s.roomText}>Grand Hall{'\n'}(Lobby)</Text>
                 </View>
               </View>
 
               {/* Col D — [Salon Club | Salon Rouge] → Salon Bridge → La Palmeraie */}
               <View style={[s.col, { flex: 1.1 }]}>
-                {/* Top row: Salon Club + Salon Rouge side-by-side */}
-                <View style={{ flex: 0.8, flexDirection: 'row', borderBottomWidth: 0.75, borderBottomColor: DIVIDER }}>
+                {/* Top row: Salon Club + Salon Rouge side-by-side (29% of height) */}
+                <View style={{ flex: 0.75, flexDirection: 'row', borderBottomWidth: 0.75, borderBottomColor: DIVIDER }}>
                   <View style={[s.room, { flex: 1, backgroundColor: HIGHLIGHTED, borderRightWidth: 0.75, borderRightColor: DIVIDER }]}>
                     <Text style={s.hlText}>Salon{'\n'}Club</Text>
                   </View>
@@ -116,12 +122,12 @@ export function FairmontMap() {
                     <Text style={s.hlText}>Salon{'\n'}Rouge</Text>
                   </View>
                 </View>
-                {/* Middle: Salon Bridge */}
-                <View style={[s.room, { flex: 1.4, backgroundColor: HIGHLIGHTED, borderBottomWidth: 0.75, borderBottomColor: DIVIDER }]}>
+                {/* Middle: Salon Bridge (40% of height) */}
+                <View style={[s.room, { flex: 1.0, backgroundColor: HIGHLIGHTED, borderBottomWidth: 0.75, borderBottomColor: DIVIDER }]}>
                   <Text style={s.hlText}>Salon{'\n'}Bridge</Text>
                 </View>
-                {/* Bottom: La Palmeraie */}
-                <View style={[s.room, { flex: 1, backgroundColor: HIGHLIGHTED }]}>
+                {/* Bottom: La Palmeraie (31% of height) */}
+                <View style={[s.room, { flex: 0.8, backgroundColor: HIGHLIGHTED }]}>
                   <Text style={s.hlText}>La{'\n'}Palmeraie</Text>
                 </View>
               </View>
@@ -142,7 +148,7 @@ export function FairmontMap() {
                               ~35 % of height) + Terrasse ① (bottom,
                               ~65 % of height, significantly larger).
             ───────────────────────────────────────────────────────── */}
-            <View style={s.grounds}>
+            <View style={[s.grounds, { height: groundsH }]}>
               {/* Garden — Ceremony ② */}
               <View style={[s.room, { backgroundColor: VENUE_GREEN, flex: 1.6, borderRightWidth: 1.5, borderRightColor: OUTLINE, gap: 6 }]}>
                 <Pin n={2} color={VENUES[1].color} />
@@ -246,10 +252,10 @@ const s = StyleSheet.create({
   },
 
   // ── Grand Hôtel ───────────────────────────────────────────────────
+  // Height set dynamically in JSX via hotelH (derived from measured width / 1.91).
   // 4 columns: A (left wing) · B (Congrès) · C (Stage/Fêtes/Hall) · D (Club/Bridge/Palmeraie)
   hotelBld: {
     flexDirection: 'row',
-    height: 130,
     borderWidth: 1.5,
     borderColor: OUTLINE,
     overflow: 'hidden',
@@ -274,11 +280,10 @@ const s = StyleSheet.create({
   },
 
   // ── Grounds ───────────────────────────────────────────────────────
-  // Height 158 px — taller than the hotel to match floor-plan scale.
+  // Height set dynamically in JSX via groundsH (derived from measured width / 2.15).
   // Garden left 57 %, Petit Palais right 43 %.
   grounds: {
     flexDirection: 'row',
-    height: 158,
     borderWidth: 1.5,
     borderColor: OUTLINE,
     overflow: 'hidden',
