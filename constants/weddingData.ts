@@ -581,6 +581,11 @@ export interface PackingItem {
   label: string;
   tip?: string;
   weddingPartyOnly?: boolean;
+  /**
+   * If set, this item is only shown to guests of that gender.
+   * Guests whose gender is unknown see all items regardless.
+   */
+  gender?: 'male' | 'female';
 }
 
 export const PACKING_GUIDE: PackingCategory[] = [
@@ -623,8 +628,15 @@ export const PACKING_GUIDE: PackingCategory[] = [
     items: [
       {
         id: "heels-events",
-        label: "Dressy shoes / heels for Sangeet, Ceremony & Reception",
+        label: "Heels for Sangeet, Ceremony & Reception",
         tip: "All three main events are indoors at the Fairmont — heels are fine. Block heels or kitten heels are great for dancing at the Sangeet.",
+        gender: 'female',
+      },
+      {
+        id: "dress-shoes-events",
+        label: "Dress shoes / loafers for Sangeet, Ceremony & Reception",
+        tip: "Polished leather or suede work for all three events. If you're wearing a sherwani, juttis or mojaris are a great touch.",
+        gender: 'male',
       },
       {
         id: "flats-mehendi",
@@ -675,6 +687,7 @@ export const PACKING_GUIDE: PackingCategory[] = [
         id: "dupatta",
         label: "Dupatta / stole / wrap for each Indian outfit",
         tip: "Handy for cooler evenings outdoors and essential for completing Indian formal looks.",
+        gender: 'female',
       },
       {
         id: "jewellery",
@@ -685,19 +698,64 @@ export const PACKING_GUIDE: PackingCategory[] = [
         id: "safety-pins",
         label: "Safety pins (essential if wearing a saree)",
         tip: "A small pouch of safety pins is a lifesaver for keeping a saree draped all night.",
+        gender: 'female',
       },
       {
         id: "fashion-tape",
         label: "Double-sided fashion tape",
         tip: "Lifesaver for blouses, dupattas, and formal dresses.",
+        gender: 'female',
       },
       {
         id: "bindi",
         label: "Bindis and accessories",
+        gender: 'female',
       },
       {
         id: "clutch",
         label: "Small clutch / evening bag for Sangeet and Reception",
+        gender: 'female',
+      },
+      {
+        id: "sherwani-accessories",
+        label: "Sherwani accessories (stole, kurta studs, cufflinks)",
+        tip: "Easy to forget but essential for completing a formal sherwani look. A pocket square also works well for black-tie Western formal.",
+        gender: 'male',
+      },
+      {
+        id: "mens-formal-accessories",
+        label: "Tie, bow tie & cufflinks for Western formal",
+        tip: "Black-tie Ceremony & Reception — bring your best.",
+        gender: 'male',
+      },
+    ],
+  },
+  {
+    id: "grooming",
+    title: "Grooming & Personal Care",
+    emoji: "💄",
+    items: [
+      {
+        id: "toiletries",
+        label: "Toothbrush, toothpaste, deodorant & basic skincare",
+      },
+      {
+        id: "makeup-kit",
+        label: "Makeup kit + remover wipes",
+        tip: "Pack separate pouches for daytime (Rehearsal Dinner) and evening (Sangeet, Ceremony) looks.",
+        gender: 'female',
+      },
+      {
+        id: "hair-styling",
+        label: "Hair styling tools (curler / straightener)",
+        tip: "Switzerland runs on 230V — check your tools are dual-voltage or bring a converter, not just an adaptor.",
+        gender: 'female',
+      },
+      {
+        id: "shaving-kit",
+        label: "Shaving kit / beard trimmer",
+        tip: "Pack charging cables — Swiss plugs are Type J and may need an adaptor.",
+        gender: 'male',
       },
     ],
   },

@@ -130,6 +130,140 @@ export const GUEST_LIST: string[] = [
 ];
 
 // ============================================================
+// GUEST GENDERS
+// ============================================================
+// Used by the Packing tab to show a tailored list (e.g. heels vs.
+// dress shoes, saree pins vs. sherwani accessories). Guests not listed
+// here fall back to seeing every item regardless of gender.
+
+export type Gender = 'male' | 'female';
+
+export const GUEST_GENDERS: Record<string, Gender> = {
+  // --- Wedding Party ---
+  "Neha Pathmanaban": 'female',
+  "Naveen Nath": 'male',
+  "Pathmanaban Raj": 'male',
+  "Kalpana Pathmanaban": 'female',
+  "Vishnu Pathmanaban": 'male',
+  "Amar Nath": 'male',
+  "Sandhya Nath": 'female',
+  "Neel Nath": 'male',
+  "Aya Nath": 'female',
+  "Olivia Zhu": 'female',
+  "Akanksha Singh": 'female',
+  "Suhail Goyal": 'male',
+  "Sayantanee Das": 'female',
+  "Guhan Muruganandam": 'male',
+  "Ritika Patil": 'female',
+  "Kevin Labagnara": 'male',
+  "Gaurie Mittal": 'female',
+  "Sai Avala": 'male',
+  "Nikila Vasudevan": 'female',
+  "Goutham Subramanian": 'male',
+  "Liz Paulino": 'female',
+  "Andrew Ball": 'male',
+  "Connor Franklin": 'male',
+  "Alec Mirchandani": 'male',
+  "Eleni Karandreas": 'female',
+  "Alex Shih": 'male',
+  "Nancy Kwan": 'female',
+
+  // --- Guests ---
+  "Jedidiah Glass": 'male',
+  "Edel Dhuibheanaigh": 'female',
+  "Elliott Baker": 'male',
+  "Mary Dick": 'female',
+  "Andrew You": 'male',
+  "Jason Luo": 'male',
+  "Grace Mutoko": 'female',
+  "Paul Mas": 'male',
+  "Sankash Shankar": 'male',
+  "Bhavya Varma": 'female',
+  "Leon Mirson": 'male',
+  "Moeko Nagatsuka": 'female',
+  "Rushil Sheth": 'male',
+  "Tithi Raval": 'female',
+  "Karam Tatla": 'male',
+  "Jenna Freedman": 'female',
+  "Ben Biswas": 'male',
+  "Danielle Skelly": 'female',
+  "Subbarao Addaganti": 'male',
+  "Anitha Addaganti": 'female',
+  "Yash Addaganti": 'male',
+  "Trisha Addaganti": 'female',
+  "Prasanna Bekal": 'male',
+  "Vindhya Bekal": 'female',
+  "Pallavi Bekal": 'female',
+  "Tanvi Bekal": 'female',
+  "Ram Sankaran": 'male',
+  "Uma Ramanathan": 'female',
+  "Rahul Ramanathan": 'male',
+  "Abhay Mhatre": 'male',
+  "Archana Mhatre": 'female',
+  "Madhu Somenhalli": 'male',
+  "Shashi Somenhalli": 'female',
+  "Nithin Somenhalli": 'male',
+  "Anand Palani": 'male',
+  "Sujatha Palani": 'female',
+  "Arthi Palani": 'female',
+  "Sainath Palani": 'male',
+  "Vivek Seth": 'male',
+  "Ashvani Vivek": 'female',
+  "Saravanan Kandaswamy": 'male',
+  "Chrisvin Jabamani": 'male',
+  "Howard Li": 'male',
+  "Lingesh Radjou": 'male',
+  "Rajesh Radjou": 'male',
+  "Prabakaran Vasan": 'male',
+  "Kannagi Prabakaran": 'female',
+  "Neha Dubey": 'female',
+  "Pooja Dubey": 'female',
+  "Rakesh Dubey": 'male',
+  "Neelu Dubey": 'female',
+  "Vijay Kumar": 'male',
+  "Sadhana Kumar": 'female',
+  "Vikas Kumar": 'male',
+  "Riva Kumar": 'female',
+  "Vivek Kumar": 'male',
+  "Jaya Kumar": 'female',
+  "Sanjay Mishra": 'male',
+  "Seema Verma": 'female',
+  "Shaan Mishra": 'male',
+  "Maya Mishra": 'female',
+  "Anand Tewari": 'male',
+  "Sangita Tewari": 'female',
+  "Jeevan Tewari": 'male',
+  "Lauren Bordeaux": 'female',
+  "Ravi Tewari": 'male',
+  "Tali Tudryn": 'female',
+  "Sanjiv Upadhyay": 'male',
+  "Meena Upadhyay": 'female',
+  "Archana Upadhyay": 'female',
+  "Kirin Upadhyay": 'male',
+  "Serena Upadhyay": 'female',
+  "Matt Uthupan": 'male',
+  "Tushita Shrivastav": 'female',
+  "Gugu Chohan": 'female',
+  "Dennis Porto": 'male',
+  "Jan Porto": 'female',
+  "Diane Hedden": 'female',
+  "Mary Kay Buchsbaum": 'female',
+  "Bruce Buchsbaum": 'male',
+  "Bruce Baker": 'male',
+  "Kelli Baker": 'female',
+  "Roshan Ram": 'male',
+  "Bhavika Patel": 'female',
+  "Jinesh Patel": 'male',
+  "Radhika Kirpalani": 'female',
+  "Tarun Kirpalani": 'male',
+  "Nitya Srikishen": 'female',
+  "Puneet Lakhi": 'male',
+  "Marwan Bayoumy": 'male',
+  "Asokan Selvaraj": 'male',
+  "Sujatha Asokan": 'female',
+};
+
+// ============================================================
 // WEDDING PARTY
 // ============================================================
 // Guests in this list see the Rehearsal Dinner on the schedule.
@@ -185,4 +319,12 @@ export function getCanonicalName(name: string): string | null {
 export function isWeddingParty(name: string): boolean {
   const normalized = normalizeName(name);
   return WEDDING_PARTY.some((guest) => normalizeName(guest) === normalized);
+}
+
+export function getGuestGender(name: string): Gender | null {
+  const normalized = normalizeName(name);
+  for (const [guest, gender] of Object.entries(GUEST_GENDERS)) {
+    if (normalizeName(guest) === normalized) return gender;
+  }
+  return null;
 }

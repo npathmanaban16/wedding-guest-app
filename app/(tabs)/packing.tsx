@@ -13,7 +13,7 @@ import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { PACKING_GUIDE, PackingCategory, PackingItem } from '@/constants/weddingData';
 import { getCheckedItems, togglePackingItem } from '@/services/storage';
 import { useAuth } from '@/context/AuthContext';
-import { isWeddingParty } from '@/constants/guests';
+import { isWeddingParty, getGuestGender } from '@/constants/guests';
 
 function PackingItemRow({
   item,
@@ -120,10 +120,17 @@ export default function PackingScreen() {
   const [loading, setLoading] = useState(true);
   const { guestName } = useAuth();
   const inWeddingParty = isWeddingParty(guestName ?? '');
+  const gender = getGuestGender(guestName ?? '');
 
   const filteredGuide = PACKING_GUIDE.map((cat) => ({
     ...cat,
-    items: cat.items.filter((item) => !item.weddingPartyOnly || inWeddingParty),
+    items: cat.items.filter((item) => {
+      if (item.weddingPartyOnly && !inWeddingParty) return false;
+      // If gender is unknown, show everything. Otherwise only show items
+      // that match the guest's gender (or have no gender tag).
+      if (item.gender && gender && item.gender !== gender) return false;
+      return true;
+    }),
   })).filter((cat) => cat.items.length > 0);
 
   useEffect(() => {
