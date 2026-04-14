@@ -89,7 +89,14 @@ function SubsectionBlock({ subsection }: { subsection: GuideSubsection }) {
   return (
     <View style={styles.subsectionBlock}>
       <TouchableOpacity style={styles.subsectionHeader} onPress={toggle} activeOpacity={0.7}>
-        <Text style={styles.subsectionTitle}>{subsection.title}</Text>
+        <View style={styles.itemHeaderText}>
+          {subsection.category && (
+            <View style={styles.categoryBadge}>
+              <Text style={styles.categoryText}>{subsection.category}</Text>
+            </View>
+          )}
+          <Text style={styles.subsectionTitle}>{subsection.title}</Text>
+        </View>
         <Ionicons
           name={expanded ? 'chevron-up' : 'chevron-down'}
           size={15}

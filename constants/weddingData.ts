@@ -195,6 +195,7 @@ export interface GuideSubsection {
   id: string;
   title: string;
   emoji: string;
+  category?: string;
   items: GuideItem[];
 }
 
@@ -286,6 +287,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         id: "walks-hikes",
         title: "Walks & Hikes",
         emoji: "🥾",
+        category: "Sightseeing",
         items: [
           {
             id: "lake-promenade",
@@ -325,6 +327,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         id: "castles",
         title: "Castles",
         emoji: "🏰",
+        category: "Sightseeing",
         items: [
           {
             id: "chillon",
@@ -352,6 +355,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         id: "lavaux",
         title: "Lavaux & Wine",
         emoji: "🍇",
+        category: "Sightseeing",
         items: [
           {
             id: "lavaux-vineyards",
@@ -384,25 +388,6 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         emoji: "✨",
         items: [
           {
-            id: "lausanne",
-            name: "Day Trip to Lausanne",
-            category: "Sightseeing",
-            description:
-              "A vibrant Swiss city just 30 minutes by train. Highlights: Gothic cathedral, Olympic Museum, the charming Old Town, and the lakefront at Ouchy.",
-            tip: "The Olympic Museum is world-class and right on the lake — worth a few hours.",
-          },
-          {
-            id: "golden-pass",
-            name: "GoldenPass Panoramic Train",
-            category: "Activity",
-            description:
-              "One of Switzerland's most iconic train journeys — starting in Montreux and winding through the Alps toward Gstaad. Panoramic windows and plush seating with breathtaking mountain views.",
-            tip: "Book panoramic seats in advance. The stretch from Montreux to Zweisimmen is especially dramatic.",
-            links: [
-              { label: "Book on SBB", url: "https://www.sbb.ch/en" },
-            ],
-          },
-          {
             id: "tennis",
             name: "Montreux Tennis Club",
             category: "Activity",
@@ -429,6 +414,25 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             tip: "Book spa treatments in advance — they fill up quickly.",
             links: [
               { label: "Fairmont Wellness", url: "https://www.fairmont.com/en/hotels/montreux/fairmont-le-montreux-palace/wellness.html" },
+            ],
+          },
+          {
+            id: "lausanne",
+            name: "Day Trip to Lausanne",
+            category: "Sightseeing",
+            description:
+              "A vibrant Swiss city just 30 minutes by train. Highlights: Gothic cathedral, Olympic Museum, the charming Old Town, and the lakefront at Ouchy.",
+            tip: "The Olympic Museum is world-class and right on the lake — worth a few hours.",
+          },
+          {
+            id: "golden-pass",
+            name: "GoldenPass Panoramic Train",
+            category: "Sightseeing",
+            description:
+              "One of Switzerland's most iconic train journeys — starting in Montreux and winding through the Alps toward Gstaad. Panoramic windows and plush seating with breathtaking mountain views.",
+            tip: "Book panoramic seats in advance. The stretch from Montreux to Zweisimmen is especially dramatic.",
+            links: [
+              { label: "Book on SBB", url: "https://www.sbb.ch/en" },
             ],
           },
         ],
