@@ -300,10 +300,10 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
       },
       {
         id: "lake-promenade",
-        name: "Montreux Lake Promenade",
+        name: "Montreux Riviera Promenade",
         category: "Sightseeing",
         description:
-          "A gorgeous flower-lined lakeside walkway stretching for several kilometres. In May the roses are in full bloom. The famous Freddie Mercury statue is on the promenade.",
+          "Just steps from the Fairmont, this lakeside path is lined with vibrant flowers and palm trees, offering sweeping views of Lake Geneva and the Alps. Stretches several kilometres from Clarens to Villeneuve — perfect for a morning jog, leisurely walk, or sunset stroll. The famous Freddie Mercury statue is along the way.",
         tip: "May is peak blooming season — perfect for photos with the Alps reflecting on the lake.",
       },
       {
@@ -311,8 +311,24 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         name: "Rochers de Naye",
         category: "Activity",
         description:
-          "Take the GoldenPass cogwheel railway from Montreux station up to 2,042m for panoramic views over Lake Geneva and the Alps. There are marmots at the summit!",
-        tip: "The train journey itself is half the attraction — sit on the right side going up for lake views. About 55 minutes from Montreux.",
+          "Take the cogwheel train from Montreux station up to 2,042m for panoramic views over Lake Geneva and the Alps. At the top you'll find hiking trails, alpine gardens, and marmots!",
+        tip: "Sit on the right side going up for the best lake views. About 55 minutes from Montreux.",
+      },
+      {
+        id: "narcissus-hikes",
+        name: "Narcissus Hikes",
+        category: "Activity",
+        description:
+          "From late May to early June, the hills above Montreux are blanketed in blooming narcissus flowers — a local phenomenon known as \"May Snow.\" Beautiful trails at Les Pléiades and Les Avants offer some of the best views of this fleeting sight.",
+        tip: "Trail conditions vary — ask the Fairmont concierge for up-to-date route recommendations during your stay.",
+      },
+      {
+        id: "glacier-3000",
+        name: "Glacier 3000",
+        category: "Activity",
+        description:
+          "For a high-altitude adventure, head to Glacier 3000 near Les Diablerets — about 1.5 hours from Montreux. Reachable by cable car, the glacier offers spectacular views including Mont Blanc and the Matterhorn, year-round snow, and the Peak Walk by Tissot — the world's first suspension bridge connecting two mountain peaks.",
+        tip: "Dress warmly even in summer — it's a glacier! Short hikes and snow activities available year-round.",
       },
       {
         id: "lavaux",
