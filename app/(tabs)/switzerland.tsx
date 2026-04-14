@@ -176,14 +176,18 @@ export default function SwitzerlandScreen() {
         contentContainerStyle={styles.photoStrip}
       >
         {[
-          require('@/assets/images/promenade.png'),
-          require('@/assets/images/lauvaux.png'),
-          require('@/assets/images/narcissus_hike.png'),
-          require('@/assets/images/rochers_de_naye.png'),
-          require('@/assets/images/narcissus.png'),
-          require('@/assets/images/boat.png'),
-        ].map((src, i) => (
-          <Image key={i} source={src} style={styles.photoItem} resizeMode="cover" />
+          { src: require('@/assets/images/promenade.png'), label: 'Montreux promenade' },
+          { src: require('@/assets/images/lauvaux.png'), label: 'Lavaux vineyards' },
+          { src: require('@/assets/images/narcissus_hike.png'), label: 'Narcissus hike' },
+          { src: require('@/assets/images/rochers_de_naye.png'), label: 'Rochers de Naye' },
+          { src: require('@/assets/images/narcissus.png'), label: 'May narcissus fields' },
+          { src: require('@/assets/images/boat.png'), label: 'Lake Geneva' },
+        ].map((photo, i) => (
+          <View key={i} style={styles.photoItem}>
+            <Image source={photo.src} style={StyleSheet.absoluteFill} resizeMode="cover" />
+            <View style={styles.photoLabelBg} />
+            <Text style={styles.photoLabel}>{photo.label}</Text>
+          </View>
         ))}
       </ScrollView>
 
@@ -261,6 +265,21 @@ const styles = StyleSheet.create({
     width: 220,
     height: 160,
     borderRadius: Radius.md,
+    overflow: 'hidden',
+    justifyContent: 'flex-end',
+  },
+  photoLabelBg: {
+    ...StyleSheet.absoluteFillObject,
+    top: '50%',
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  photoLabel: {
+    color: '#fff',
+    fontFamily: Fonts.sansMedium,
+    fontSize: 11,
+    letterSpacing: 0.4,
+    paddingHorizontal: Spacing.sm,
+    paddingBottom: Spacing.sm,
   },
 
   pageHeader: {
