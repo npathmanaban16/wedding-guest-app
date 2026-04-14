@@ -77,6 +77,7 @@ export default function HomeScreen() {
       <ImageBackground
         source={require('@/assets/images/montreux.png')}
         style={[styles.heroImage, { paddingTop: insets.top + Spacing.xl }]}
+        imageStyle={styles.heroImageStyle}
         resizeMode="cover"
       >
         <View style={styles.heroOverlay} />
@@ -192,6 +193,9 @@ const styles = StyleSheet.create({
     height: 380,
     justifyContent: 'flex-end',
     marginBottom: Spacing.lg,
+  },
+  heroImageStyle: {
+    top: -70,
   },
   heroOverlay: {
     ...StyleSheet.absoluteFillObject,
