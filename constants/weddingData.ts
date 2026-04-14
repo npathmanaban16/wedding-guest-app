@@ -209,24 +209,24 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         name: "Fly into Geneva (GVA) — recommended",
         category: "Transport",
         description:
-          "Geneva Airport is the closest major hub. Montreux is about 1 hour from Geneva by train or car — a scenic journey along the shores of Lake Geneva.",
-        tip: "Direct flights to Geneva from London, Paris, Amsterdam, Dubai, and many other cities. Book trains in advance at sbb.ch.",
+          "Geneva Airport is the closest major hub with direct flights from London, Paris, Amsterdam, Dubai, and many other cities. From the airport, Montreux is about 1 hour 30 minutes by train or 1 hour by car along the shores of Lake Geneva.",
+        tip: "Book flights and trains in advance — Geneva is a popular hub and trains fill up quickly during peak season.",
       },
       {
         id: "zurich-flight",
         name: "Fly into Zurich (ZRH)",
         category: "Transport",
         description:
-          "Zurich is Switzerland's main hub if you can't get a direct flight to Geneva. Train from Zurich to Montreux takes about 2 hours.",
-        tip: "Zurich to Montreux is a beautiful ride through Central Switzerland.",
+          "Zurich is Switzerland's main hub if you can't get a direct flight to Geneva. Train from Zurich to Montreux takes about 2 hours through the heart of Switzerland.",
+        tip: "Zurich to Montreux is a beautiful ride through Central Switzerland — worth the extra time.",
       },
       {
         id: "train-montreux",
-        name: "Train: Geneva Airport → Montreux",
+        name: "By Train",
         category: "Transport",
         description:
-          "Trains run several times every hour from Geneva Airport directly to Montreux. Journey time is about 1 hour. The Fairmont Le Montreux Palace is a 5-minute walk from Montreux train station.",
-        tip: "Book tickets in advance or use the SBB Mobile app for easy booking and real-time timetables. A Swiss Travel Pass gives unlimited train travel — great value if you're exploring Switzerland before or after the wedding.",
+          "Switzerland's trains are the best way to reach Montreux — punctual, scenic, and stress-free. From Geneva Airport, take a direct train to Montreux (no transfers needed). Journey time is about 1 hour 30 minutes with beautiful views of the lake and vineyards along the way. The Fairmont is a 5-minute walk from Montreux station.\n\nImportant: tickets must be purchased before boarding — buy in the SBB app or at station ticket counters.",
+        tip: "A Swiss Travel Pass gives unlimited train travel — great value if you're exploring Switzerland before or after the wedding.",
         links: [
           { label: "SBB website", url: "https://www.sbb.ch/en" },
           { label: "SBB app — iOS", url: "https://apps.apple.com/us/app/sbb-mobile/id294855237" },
@@ -234,12 +234,54 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         ],
       },
       {
-        id: "taxi-uber",
-        name: "Taxi or Uber",
+        id: "by-car",
+        name: "By Car or Uber",
         category: "Transport",
         description:
-          "Montreux is fully accessible by car. Uber operates in the Geneva/Lausanne region.",
+          "It's approximately a 1 hour drive from Geneva Airport to Montreux, following the A1 and A9 highways along the lake. Rental cars are available at the airport. Uber also operates in Geneva and Montreux if you'd prefer not to drive.",
         tip: "Uber is usually cheaper than traditional taxis from the airport.",
+      },
+      {
+        id: "by-boat",
+        name: "By Boat",
+        category: "Transport",
+        description:
+          "For a more scenic route, travel to or from Montreux by boat. The CGN (Compagnie Générale de Navigation) offers elegant cruises on Lake Geneva with a stop in Montreux — a beautiful way to arrive.",
+        tip: "Perfect for a leisurely day trip or a memorable arrival on the lake.",
+        links: [
+          { label: "CGN Lake Geneva cruises", url: "https://www.cgn.ch/en/" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "getting-around",
+    title: "Getting Around Montreux",
+    emoji: "🚶",
+    items: [
+      {
+        id: "walking",
+        name: "On Foot",
+        category: "Practical",
+        description:
+          "Montreux is very walkable. The lake promenade, Old Town, and most hotels are within easy walking distance of each other and the train station.",
+        tip: "Wear comfortable shoes — some parts of the town are hilly.",
+      },
+      {
+        id: "riviera-card",
+        name: "Montreux Riviera Card",
+        category: "Practical",
+        description:
+          "Many hotels provide guests with a Montreux Riviera Card, which includes free or discounted travel on local buses, boats, and mountain railways throughout the region.",
+        tip: "Ask your hotel at check-in whether they provide the card — it can save you a lot on local transport.",
+      },
+      {
+        id: "uber-local",
+        name: "Uber & Local Taxis",
+        category: "Practical",
+        description:
+          "Uber operates in Montreux and nearby cities including Lausanne. Traditional taxis are also available but tend to be more expensive.",
+        tip: "Uber works well for late-night returns after the wedding celebrations.",
       },
     ],
   },
@@ -290,11 +332,14 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
       },
       {
         id: "golden-pass",
-        name: "GoldenPass Express Train",
+        name: "GoldenPass Panoramic Train",
         category: "Activity",
         description:
-          "One of Switzerland's most scenic train journeys starts in Montreux and winds through the mountains toward Interlaken and Lucerne. Even a short section is spectacular.",
-        tip: "Book panoramic seats at sbb.ch. The stretch from Montreux to Zweisimmen is especially dramatic.",
+          "One of Switzerland's most iconic train journeys starts right in Montreux and winds through the Swiss Alps to the charming resort town of Gstaad and beyond. The train features large panoramic windows and plush seating, offering breathtaking views of mountain peaks, alpine villages, and lush valleys.",
+        tip: "Book panoramic seats in advance at sbb.ch. The stretch from Montreux to Zweisimmen is especially dramatic — even a short section is worth it.",
+        links: [
+          { label: "Book on SBB", url: "https://www.sbb.ch/en" },
+        ],
       },
     ],
   },
