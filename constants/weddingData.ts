@@ -191,11 +191,19 @@ export interface GuideItem {
   links?: GuideLink[];
 }
 
-export interface GuideSection {
+export interface GuideSubsection {
   id: string;
   title: string;
   emoji: string;
   items: GuideItem[];
+}
+
+export interface GuideSection {
+  id: string;
+  title: string;
+  emoji: string;
+  items?: GuideItem[];
+  subsections?: GuideSubsection[];
 }
 
 export const SWITZERLAND_GUIDE: GuideSection[] = [
@@ -270,152 +278,159 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
     ],
   },
   {
-    id: "walks-hikes",
-    title: "Walks & Hikes",
-    emoji: "🥾",
-    items: [
-      {
-        id: "lake-promenade",
-        name: "Montreux Riviera Promenade",
-        category: "Activity",
-        description:
-          "Just steps from the Fairmont, this lakeside path is lined with vibrant flowers and palm trees, offering sweeping views of Lake Geneva and the Alps. Stretches several kilometres from Clarens to Villeneuve — perfect for a morning jog, leisurely walk, or sunset stroll. The famous Freddie Mercury statue is along the way.",
-        tip: "May is peak blooming season — perfect for photos with the Alps reflecting on the lake.",
-      },
-      {
-        id: "rochers-de-naye",
-        name: "Rochers de Naye",
-        category: "Activity",
-        description:
-          "Take the cogwheel train from Montreux station up to 2,042m for panoramic views over Lake Geneva and the Alps. At the top you'll find hiking trails, alpine gardens, and marmots!",
-        tip: "Sit on the right side going up for the best lake views. About 55 minutes from Montreux.",
-      },
-      {
-        id: "narcissus-hikes",
-        name: "Narcissus Hikes",
-        category: "Activity",
-        description:
-          "From late May to early June, the hills above Montreux are blanketed in blooming narcissus flowers — a local phenomenon known as \"May Snow.\" Beautiful trails at Les Pléiades and Les Avants offer some of the best views of this fleeting sight.",
-        tip: "Trail conditions vary — ask the Fairmont concierge for up-to-date route recommendations.",
-      },
-      {
-        id: "glacier-3000",
-        name: "Glacier 3000",
-        category: "Activity",
-        description:
-          "Head to Glacier 3000 near Les Diablerets — about 1.5 hours from Montreux. Reachable by cable car, with spectacular views of Mont Blanc and the Matterhorn, year-round snow, and the Peak Walk by Tissot — the world's first suspension bridge connecting two mountain peaks.",
-        tip: "Dress warmly even in summer. Short hikes and snow activities available year-round.",
-      },
-    ],
-  },
-  {
-    id: "castles",
-    title: "Castles",
-    emoji: "🏰",
-    items: [
-      {
-        id: "chillon",
-        name: "Château de Chillon",
-        category: "Sightseeing",
-        description:
-          "Switzerland's most visited castle, right on the edge of Lake Geneva. Medieval architecture, historic rooms, dungeons, and picturesque courtyards — immortalised by Lord Byron.\n\n🚶 Walk: ~45 min from the Fairmont along the promenade\n🚆 Train: Montreux → Veytaux-Chillon (2 min, ~15 min total)\n🕘 Daily 9am–7pm (last entry 6pm) · 🎟 CHF 13",
-        links: [
-          { label: "Château de Chillon", url: "https://www.chillon.ch/" },
-        ],
-      },
-      {
-        id: "chateau-aigle",
-        name: "Château d'Aigle",
-        category: "Sightseeing",
-        description:
-          "A medieval castle housing a fascinating wine museum — a great pairing with a Lavaux wine tour.\n\n🚆 Train: Montreux → Aigle (10 min, ~30 min total)\n🕘 Tue–Sun 10am–5pm, closed Mon · 🎟 CHF 12",
-        links: [
-          { label: "Château d'Aigle", url: "https://www.chateau-aigle.ch/" },
-        ],
-      },
-    ],
-  },
-  {
-    id: "lavaux",
-    title: "Lavaux & Wine",
-    emoji: "🍇",
-    items: [
-      {
-        id: "lavaux-vineyards",
-        name: "Lavaux Vineyards (UNESCO)",
-        category: "Activity",
-        description:
-          "Terraced vineyards along the hillsides above Lake Geneva — a UNESCO World Heritage Site. Accessible by train, car, or on foot between the villages of Cully, Epesses, and Saint-Saphorin.",
-        tip: "Hop aboard the Lavaux Express or Lavaux Panoramic — tourist trains winding through the vineyards with stops for tastings.",
-      },
-      {
-        id: "lavaux-wine",
-        name: "Wine Tasting",
-        category: "Activity",
-        description:
-          "Family-run domaines specialising in Chasselas — a crisp, mineral-rich white wine native to the area. Most require reservations, especially on weekends.",
-        tip: "Book ahead — same-day tastings are rarely available at the best estates.",
-        links: [
-          { label: "Domaine Bovy (Chexbres)", url: "https://www.domainebovy.ch/" },
-          { label: "Domaine Croix Duplex (Grandvaux)", url: "https://www.croixduplex.ch/" },
-          { label: "Domaine Louis Bovard (Cully)", url: "https://www.louisbovard.ch/" },
-          { label: "Domaine Blaise Duboux (Epesses)", url: "https://www.blaiseduboux.ch/" },
-          { label: "Les Frères Dubois (Dézaley)", url: "https://www.lesfreresdubois.ch/" },
-        ],
-      },
-    ],
-  },
-  {
-    id: "more-to-explore",
-    title: "More to Explore",
+    id: "things-to-do",
+    title: "Things to Do",
     emoji: "🗺️",
-    items: [
+    subsections: [
       {
-        id: "lausanne",
-        name: "Day Trip to Lausanne",
-        category: "Sightseeing",
-        description:
-          "A vibrant Swiss city just 30 minutes by train. Highlights: Gothic cathedral, Olympic Museum, the charming Old Town, and the lakefront at Ouchy.",
-        tip: "The Olympic Museum is world-class and right on the lake — worth a few hours.",
-      },
-      {
-        id: "golden-pass",
-        name: "GoldenPass Panoramic Train",
-        category: "Activity",
-        description:
-          "One of Switzerland's most iconic train journeys — starting in Montreux and winding through the Alps toward Gstaad. Panoramic windows and plush seating with breathtaking mountain views.",
-        tip: "Book panoramic seats in advance. The stretch from Montreux to Zweisimmen is especially dramatic.",
-        links: [
-          { label: "Book on SBB", url: "https://www.sbb.ch/en" },
+        id: "walks-hikes",
+        title: "Walks & Hikes",
+        emoji: "🥾",
+        items: [
+          {
+            id: "lake-promenade",
+            name: "Montreux Riviera Promenade",
+            category: "Activity",
+            description:
+              "Just steps from the Fairmont, this lakeside path is lined with vibrant flowers and palm trees, offering sweeping views of Lake Geneva and the Alps. Stretches several kilometres from Clarens to Villeneuve — perfect for a morning jog, leisurely walk, or sunset stroll. The famous Freddie Mercury statue is along the way.",
+            tip: "May is peak blooming season — perfect for photos with the Alps reflecting on the lake.",
+          },
+          {
+            id: "rochers-de-naye",
+            name: "Rochers de Naye",
+            category: "Activity",
+            description:
+              "Take the cogwheel train from Montreux station up to 2,042m for panoramic views over Lake Geneva and the Alps. At the top you'll find hiking trails, alpine gardens, and marmots!",
+            tip: "Sit on the right side going up for the best lake views. About 55 minutes from Montreux.",
+          },
+          {
+            id: "narcissus-hikes",
+            name: "Narcissus Hikes",
+            category: "Activity",
+            description:
+              "From late May to early June, the hills above Montreux are blanketed in blooming narcissus flowers — a local phenomenon known as \"May Snow.\" Beautiful trails at Les Pléiades and Les Avants offer some of the best views of this fleeting sight.",
+            tip: "Trail conditions vary — ask the Fairmont concierge for up-to-date route recommendations.",
+          },
+          {
+            id: "glacier-3000",
+            name: "Glacier 3000",
+            category: "Activity",
+            description:
+              "Head to Glacier 3000 near Les Diablerets — about 1.5 hours from Montreux. Reachable by cable car, with spectacular views of Mont Blanc and the Matterhorn, year-round snow, and the Peak Walk by Tissot — the world's first suspension bridge connecting two mountain peaks.",
+            tip: "Dress warmly even in summer. Short hikes and snow activities available year-round.",
+          },
         ],
       },
       {
-        id: "tennis",
-        name: "Montreux Tennis Club",
-        category: "Activity",
-        description:
-          "Outdoor red clay courts with lake views, open to visitors of all levels.\n\n🎾 Court rental: CHF 60/hr · Coaching: CHF 100/hr\n🚶 30 min walk along the promenade · 🚆 Montreux → Territet (2 min)",
-        links: [
-          { label: "Montreux Tennis Club", url: "https://montreux-tennis-club.ch/" },
+        id: "castles",
+        title: "Castles",
+        emoji: "🏰",
+        items: [
+          {
+            id: "chillon",
+            name: "Château de Chillon",
+            category: "Sightseeing",
+            description:
+              "Switzerland's most visited castle, right on the edge of Lake Geneva. Medieval architecture, historic rooms, dungeons, and picturesque courtyards — immortalised by Lord Byron.\n\n🚶 Walk: ~45 min from the Fairmont along the promenade\n🚆 Train: Montreux → Veytaux-Chillon (2 min, ~15 min total)\n🕘 Daily 9am–7pm (last entry 6pm) · 🎟 CHF 13",
+            links: [
+              { label: "Château de Chillon", url: "https://www.chillon.ch/" },
+            ],
+          },
+          {
+            id: "chateau-aigle",
+            name: "Château d'Aigle",
+            category: "Sightseeing",
+            description:
+              "A medieval castle housing a fascinating wine museum — a great pairing with a Lavaux wine tour.\n\n🚆 Train: Montreux → Aigle (10 min, ~30 min total)\n🕘 Tue–Sun 10am–5pm, closed Mon · 🎟 CHF 12",
+            links: [
+              { label: "Château d'Aigle", url: "https://www.chateau-aigle.ch/" },
+            ],
+          },
         ],
       },
       {
-        id: "fairmont-pools",
-        name: "Fairmont — Pools & Hot Tub",
-        category: "Activity",
-        description:
-          "Outdoor and heated indoor pool plus a hot tub, all with panoramic mountain views. Located on floor -1 of the Fairmont.",
-        tip: "A perfect way to unwind between wedding events.",
+        id: "lavaux",
+        title: "Lavaux & Wine",
+        emoji: "🍇",
+        items: [
+          {
+            id: "lavaux-vineyards",
+            name: "Lavaux Vineyards (UNESCO)",
+            category: "Activity",
+            description:
+              "Terraced vineyards along the hillsides above Lake Geneva — a UNESCO World Heritage Site. Accessible by train, car, or on foot between the villages of Cully, Epesses, and Saint-Saphorin.",
+            tip: "Hop aboard the Lavaux Express or Lavaux Panoramic — tourist trains winding through the vineyards with stops for tastings.",
+          },
+          {
+            id: "lavaux-wine",
+            name: "Wine Tasting",
+            category: "Activity",
+            description:
+              "Family-run domaines specialising in Chasselas — a crisp, mineral-rich white wine native to the area. Most require reservations, especially on weekends.",
+            tip: "Book ahead — same-day tastings are rarely available at the best estates.",
+            links: [
+              { label: "Domaine Bovy (Chexbres)", url: "https://www.domainebovy.ch/" },
+              { label: "Domaine Croix Duplex (Grandvaux)", url: "https://www.croixduplex.ch/" },
+              { label: "Domaine Louis Bovard (Cully)", url: "https://www.louisbovard.ch/" },
+              { label: "Domaine Blaise Duboux (Epesses)", url: "https://www.blaiseduboux.ch/" },
+              { label: "Les Frères Dubois (Dézaley)", url: "https://www.lesfreresdubois.ch/" },
+            ],
+          },
+        ],
       },
       {
-        id: "fairmont-spa",
-        name: "Fairmont — Spa & Gym",
-        category: "Activity",
-        description:
-          "Sauna, steam room, jacuzzi, spa treatments, and a fully equipped gym with fitness classes. Located on floor -1 of the Fairmont.",
-        tip: "Book spa treatments in advance — they fill up quickly.",
-        links: [
-          { label: "Fairmont Wellness", url: "https://www.fairmont.com/en/hotels/montreux/fairmont-le-montreux-palace/wellness.html" },
+        id: "more-to-explore",
+        title: "More to Explore",
+        emoji: "✨",
+        items: [
+          {
+            id: "lausanne",
+            name: "Day Trip to Lausanne",
+            category: "Sightseeing",
+            description:
+              "A vibrant Swiss city just 30 minutes by train. Highlights: Gothic cathedral, Olympic Museum, the charming Old Town, and the lakefront at Ouchy.",
+            tip: "The Olympic Museum is world-class and right on the lake — worth a few hours.",
+          },
+          {
+            id: "golden-pass",
+            name: "GoldenPass Panoramic Train",
+            category: "Activity",
+            description:
+              "One of Switzerland's most iconic train journeys — starting in Montreux and winding through the Alps toward Gstaad. Panoramic windows and plush seating with breathtaking mountain views.",
+            tip: "Book panoramic seats in advance. The stretch from Montreux to Zweisimmen is especially dramatic.",
+            links: [
+              { label: "Book on SBB", url: "https://www.sbb.ch/en" },
+            ],
+          },
+          {
+            id: "tennis",
+            name: "Montreux Tennis Club",
+            category: "Activity",
+            description:
+              "Outdoor red clay courts with lake views, open to visitors of all levels.\n\n🎾 Court rental: CHF 60/hr · Coaching: CHF 100/hr\n🚶 30 min walk along the promenade · 🚆 Montreux → Territet (2 min)",
+            links: [
+              { label: "Montreux Tennis Club", url: "https://montreux-tennis-club.ch/" },
+            ],
+          },
+          {
+            id: "fairmont-pools",
+            name: "Fairmont — Pools & Hot Tub",
+            category: "Activity",
+            description:
+              "Outdoor and heated indoor pool plus a hot tub, all with panoramic mountain views. Located on floor -1 of the Fairmont.",
+            tip: "A perfect way to unwind between wedding events.",
+          },
+          {
+            id: "fairmont-spa",
+            name: "Fairmont — Spa & Gym",
+            category: "Activity",
+            description:
+              "Sauna, steam room, jacuzzi, spa treatments, and a fully equipped gym with fitness classes. Located on floor -1 of the Fairmont.",
+            tip: "Book spa treatments in advance — they fill up quickly.",
+            links: [
+              { label: "Fairmont Wellness", url: "https://www.fairmont.com/en/hotels/montreux/fairmont-le-montreux-palace/wellness.html" },
+            ],
+          },
         ],
       },
     ],
