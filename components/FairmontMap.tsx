@@ -17,9 +17,9 @@ if (Platform.OS === 'android') {
 }
 
 const VENUES = [
-  { n: 1, event: 'Sangeet',   room: 'La Coupole & Terrasse du Petit Palais', when: 'Fri 22 May · 6:30 PM', color: '#B81D56' },
-  { n: 2, event: 'Ceremony',  room: 'Garden', when: 'Sat 23 May · 5:00 PM', color: '#4A7040' },
-  { n: 3, event: 'Reception', room: 'Salle des Fêtes', when: 'Sat 23 May · 7:30 PM', color: Colors.primary },
+  { n: 1, event: 'Sangeet',   room: 'La Coupole & Terrasse du Petit Palais', when: 'Fri 22 May · 6:30 PM', color: '#B81D56', left: '70%', top: '62%' },
+  { n: 2, event: 'Ceremony',  room: 'Garden', when: 'Sat 23 May · 5:00 PM', color: '#4A7040', left: '18%', top: '68%' },
+  { n: 3, event: 'Reception', room: 'Salle des Fêtes', when: 'Sat 23 May · 7:30 PM', color: Colors.primary, left: '52%', top: '27%' },
 ];
 
 export function FairmontMap() {
@@ -45,11 +45,21 @@ export function FairmontMap() {
           <View style={s.divider} />
 
           <View style={s.imageContainer}>
-            <Image
-              source={require('@/assets/images/fairmont_floor_plan.png')}
-              style={s.image}
-              resizeMode="contain"
-            />
+            <View style={s.imageWrapper}>
+              <Image
+                source={require('@/assets/images/fairmont_floor_plan.png')}
+                style={s.image}
+                resizeMode="contain"
+              />
+              {VENUES.map(v => (
+                <View
+                  key={v.n}
+                  style={[s.pin, { backgroundColor: v.color, left: v.left as any, top: v.top as any }]}
+                >
+                  <Text style={s.pinNum}>{v.n}</Text>
+                </View>
+              ))}
+            </View>
           </View>
 
           <View style={s.divider} />
@@ -114,9 +124,34 @@ const s = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     padding: Spacing.md,
   },
+  imageWrapper: {
+    position: 'relative',
+  },
   image: {
     width: '100%',
-    aspectRatio: 0.77, // image is portrait: ~490 wide × ~640 tall
+    aspectRatio: 0.77, // portrait: ~490 wide × ~640 tall
+  },
+  pin: {
+    position: 'absolute',
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    marginLeft: -11,
+    marginTop: -11,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  pinNum: {
+    fontSize: 11,
+    fontFamily: Fonts.sansMedium,
+    color: '#fff',
   },
 
   legend: {
