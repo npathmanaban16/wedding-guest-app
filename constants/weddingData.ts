@@ -603,7 +603,7 @@ export const PACKING_GUIDE: PackingCategory[] = [
       {
         id: "sangeet-outfit",
         label: "Sangeet — Festive Indian or semi-formal Western",
-        tip: "Bright jewel tones and festive hues! Think vibrant lehenga, saree, salwar kameez, sherwani, or a colourful cocktail dress. This is the big dancing night — dress to impress!",
+        tip: "Bright jewel tones and festive hues! Think vibrant lehenga, saree, salwar kameez, or a colourful cocktail dress. This is the big dancing night — dress to impress!",
         gender: 'female',
       },
       {
@@ -615,7 +615,7 @@ export const PACKING_GUIDE: PackingCategory[] = [
       {
         id: "ceremony-outfit",
         label: "Ceremony & Reception — Indian formal or black-tie Western",
-        tip: "Elegant neutrals and muted evening tones. Bridal lehenga, silk saree, sherwani, formal gown, or tuxedo. Please avoid white, ivory, and cream.",
+        tip: "Elegant neutrals and muted evening tones. Lehenga, saree, or floor length gown.",
         gender: 'female',
       },
       {
@@ -655,9 +655,15 @@ export const PACKING_GUIDE: PackingCategory[] = [
         gender: 'female',
       },
       {
-        id: "heels-events",
-        label: "Heels for Sangeet, Ceremony & Reception",
-        tip: "All three main events are indoors at the Fairmont — heels are fine. Block heels or kitten heels are great for dancing at the Sangeet.",
+        id: "heels-sangeet",
+        label: "Flats or heels for Sangeet",
+        tip: "Choose shoes you can dance in all night — block heels or kitten heels work well.",
+        gender: 'female',
+      },
+      {
+        id: "heels-ceremony",
+        label: "Flats or heels for Ceremony & Reception",
+        tip: "All events are indoors at the Fairmont — heels are fine.",
         gender: 'female',
       },
       {
@@ -684,7 +690,7 @@ export const PACKING_GUIDE: PackingCategory[] = [
       },
       {
         id: "walking-shoes-female",
-        label: "Comfortable walking shoes / trainers for sightseeing",
+        label: "Comfortable walking shoes for sightseeing or gym",
         tip: "Essential for the Montreux promenade and Château de Chillon — quite a lot of walking.",
         gender: 'female',
       },
@@ -701,15 +707,8 @@ export const PACKING_GUIDE: PackingCategory[] = [
         tip: "May in Montreux can bring spring showers. A packable rain jacket is perfect.",
       },
       {
-        id: "layers",
-        label: "Light layers / cardigan",
-        tip: "Evenings by the lake can be cool (12–15°C). Bring a wrap or light jacket for outdoor moments.",
-        gender: 'female',
-      },
-      {
         id: "sunglasses",
         label: "Sunglasses",
-        tip: "The lake glare on sunny days is intense.",
       },
       {
         id: "sunscreen",
@@ -721,6 +720,11 @@ export const PACKING_GUIDE: PackingCategory[] = [
         label: "Swim trunks for hotel pools / hot tubs",
         gender: 'male',
       },
+      {
+        id: "swimsuit",
+        label: "Swimsuit for hotel pools / hot tubs",
+        gender: 'female',
+      },
     ],
   },
   {
@@ -728,12 +732,6 @@ export const PACKING_GUIDE: PackingCategory[] = [
     title: "Attire Extras",
     emoji: "✨",
     items: [
-      {
-        id: "dupatta",
-        label: "Dupatta / stole / wrap for each Indian outfit",
-        tip: "Handy for cooler evenings outdoors and essential for completing Indian formal looks.",
-        gender: 'female',
-      },
       {
         id: "jewellery",
         label: "Jewellery for each event",
@@ -803,8 +801,12 @@ export const PACKING_GUIDE: PackingCategory[] = [
       },
       {
         id: "makeup-kit",
-        label: "Makeup kit + remover wipes",
-        tip: "Pack separate pouches for daytime (Rehearsal Dinner) and evening (Sangeet, Ceremony) looks.",
+        label: "Makeup",
+        gender: 'female',
+      },
+      {
+        id: "makeup-remover",
+        label: "Makeup remover wipes",
         gender: 'female',
       },
       {
