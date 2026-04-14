@@ -331,7 +331,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             name: "Château de Chillon",
             category: "Sightseeing",
             description:
-              "Switzerland's most visited castle, right on the edge of Lake Geneva. Medieval architecture, historic rooms, dungeons, and picturesque courtyards — immortalised by Lord Byron.\n\n🚶 Walk: ~45 min from the Fairmont along the promenade\n🚆 Train: Montreux → Veytaux-Chillon (2 min, ~15 min total)\n🕘 Daily 9am–7pm (last entry 6pm) · 🎟 CHF 13",
+              "Switzerland's most visited castle, right on the edge of Lake Geneva. Medieval architecture, historic rooms, dungeons, and picturesque courtyards — immortalised by Lord Byron.\n\nWalk: ~45 min from the Fairmont along the promenade\nTrain: Montreux → Veytaux-Chillon (2 min, ~15 min total)\nOpen daily 9am–7pm (last entry 6pm) · CHF 13",
             links: [
               { label: "Château de Chillon", url: "https://www.chillon.ch/" },
             ],
@@ -341,7 +341,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             name: "Château d'Aigle",
             category: "Sightseeing",
             description:
-              "A medieval castle housing a fascinating wine museum — a great pairing with a Lavaux wine tour.\n\n🚆 Train: Montreux → Aigle (10 min, ~30 min total)\n🕘 Tue–Sun 10am–5pm, closed Mon · 🎟 CHF 12",
+              "A medieval castle housing a fascinating wine museum — a great pairing with a Lavaux wine tour.\n\nTrain: Montreux → Aigle (10 min, ~30 min total)\nTue–Sun 10am–5pm, closed Mon · CHF 12",
             links: [
               { label: "Château d'Aigle", url: "https://www.chateau-aigle.ch/" },
             ],
@@ -407,7 +407,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             name: "Montreux Tennis Club",
             category: "Activity",
             description:
-              "Outdoor red clay courts with lake views, open to visitors of all levels.\n\n🎾 Court rental: CHF 60/hr · Coaching: CHF 100/hr\n🚶 30 min walk along the promenade · 🚆 Montreux → Territet (2 min)",
+              "Outdoor red clay courts with lake views, open to visitors of all levels.\n\nCourt rental: CHF 60/hr · Coaching: CHF 100/hr\n30 min walk along the promenade · Train: Montreux → Territet (2 min)",
             links: [
               { label: "Montreux Tennis Club", url: "https://montreux-tennis-club.ch/" },
             ],

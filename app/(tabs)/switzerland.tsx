@@ -79,13 +79,24 @@ function GuideItemCard({ item }: { item: GuideItem }) {
 }
 
 function SubsectionBlock({ subsection }: { subsection: GuideSubsection }) {
+  const [expanded, setExpanded] = useState(false);
+
+  const toggle = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpanded((v) => !v);
+  };
+
   return (
     <View style={styles.subsectionBlock}>
-      <View style={styles.subsectionHeader}>
-        <Text style={styles.subsectionEmoji}>{subsection.emoji}</Text>
+      <TouchableOpacity style={styles.subsectionHeader} onPress={toggle} activeOpacity={0.7}>
         <Text style={styles.subsectionTitle}>{subsection.title}</Text>
-      </View>
-      {subsection.items.map((item) => (
+        <Ionicons
+          name={expanded ? 'chevron-up' : 'chevron-down'}
+          size={15}
+          color={Colors.textMuted}
+        />
+      </TouchableOpacity>
+      {expanded && subsection.items.map((item) => (
         <GuideItemCard key={item.id} item={item} />
       ))}
     </View>
@@ -290,12 +301,10 @@ const styles = StyleSheet.create({
   subsectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: Spacing.xs,
     marginTop: Spacing.md,
-  },
-  subsectionEmoji: {
-    fontSize: 15,
-    marginRight: Spacing.xs,
+    paddingVertical: Spacing.xs,
   },
   subsectionTitle: {
     fontSize: 11,
