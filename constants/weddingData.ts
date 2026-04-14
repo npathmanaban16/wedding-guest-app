@@ -295,8 +295,20 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         name: "Château de Chillon",
         category: "Sightseeing",
         description:
-          "Switzerland's most visited historic monument — a stunning medieval castle on a rocky island at the edge of Lake Geneva, just 3km from Montreux. Immortalised by Lord Byron.",
-        tip: "Walk or cycle along the lake promenade from Montreux (about 45 minutes). Or take bus 201.",
+          "Switzerland's most visited castle, situated right on the edge of Lake Geneva. Medieval architecture, historic rooms, dungeons, and picturesque courtyards — immortalised by Lord Byron.\n\n🚶 Walk: ~45 min from the Fairmont along the promenade\n🚆 Train: Montreux → Veytaux-Chillon (2 min, ~15 min total)\n🕘 Open daily 9am–7pm (last entry 6pm)\n🎟 CHF 13 adults",
+        links: [
+          { label: "Château de Chillon", url: "https://www.chillon.ch/" },
+        ],
+      },
+      {
+        id: "chateau-aigle",
+        name: "Château d'Aigle",
+        category: "Sightseeing",
+        description:
+          "A medieval castle a short train ride from Montreux, housing a fascinating wine museum with regular exhibitions — a great pairing with a Lavaux wine tour.\n\n🚆 Train: Montreux → Aigle (10 min, ~30 min total)\n🕘 Tue–Sun 10am–5pm, closed Mondays\n🎟 CHF 12 adults",
+        links: [
+          { label: "Château d'Aigle", url: "https://www.chateau-aigle.ch/" },
+        ],
       },
       {
         id: "lake-promenade",
@@ -335,8 +347,23 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         name: "Lavaux Vineyards (UNESCO)",
         category: "Activity",
         description:
-          "The terraced vineyards between Lausanne and Montreux are a UNESCO World Heritage Site. Come for wine tasting and hiking with stunning views over Lake Geneva.",
-        tip: "The Lavaux Vinorama in Rivaz has excellent local wine tasting with stunning views.",
+          "Terraced vineyards stretching along the hillsides above Lake Geneva — a UNESCO World Heritage Site and one of the most breathtaking wine regions in the world. Accessible by train, car, or on foot between the charming villages of Cully, Epesses, and Saint-Saphorin.",
+        tip: "Hop aboard the Lavaux Express or Lavaux Panoramic — tourist trains that wind through the vineyards with stops for tastings and photos.",
+      },
+      {
+        id: "lavaux-wine",
+        name: "Wine Tasting in Lavaux",
+        category: "Activity",
+        description:
+          "The region is home to family-run domaines specialising in Chasselas — a crisp, mineral-rich white wine native to the area. Most require reservations, especially on weekends.",
+        tip: "Book ahead! Same-day tastings are rarely available at the best estates.",
+        links: [
+          { label: "Domaine Bovy (Chexbres)", url: "https://www.domainebovy.ch/" },
+          { label: "Domaine Croix Duplex (Grandvaux)", url: "https://www.croixduplex.ch/" },
+          { label: "Domaine Louis Bovard (Cully)", url: "https://www.louisbovard.ch/" },
+          { label: "Domaine Blaise Duboux (Epesses)", url: "https://www.blaiseduboux.ch/" },
+          { label: "Les Frères Dubois (Dézaley)", url: "https://www.lesfreresdubois.ch/" },
+        ],
       },
       {
         id: "lausanne",
