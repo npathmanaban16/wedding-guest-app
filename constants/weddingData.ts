@@ -619,7 +619,7 @@ export const PACKING_GUIDE: PackingCategory[] = [
       },
       {
         id: "casual-exploring",
-        label: "Casual sightseeing / daytime clothes (2–3 outfits)",
+        label: "Casual sightseeing clothes (2–3 outfits)",
         tip: "Comfortable walking shoes essential — you'll be on the lake promenade and cobblestone streets.",
       },
       {
@@ -640,9 +640,20 @@ export const PACKING_GUIDE: PackingCategory[] = [
         gender: 'female',
       },
       {
-        id: "dress-shoes-events",
-        label: "Dress shoes for Sangeet, Ceremony & Reception",
-        tip: "Polished leather or suede work for all three events. If you're wearing a sherwani, juttis or mojaris are a great touch.",
+        id: "shoes-sangeet-male",
+        label: "Shoes for Sangeet",
+        tip: "If you're wearing a sherwani, juttis or mojaris are a great touch. Otherwise loafers or polished leather work well.",
+        gender: 'male',
+      },
+      {
+        id: "dress-shoes-ceremony-male",
+        label: "Dress Shoes for Ceremony & Reception",
+        tip: "Polished black leather pairs best with a tuxedo or black suit.",
+        gender: 'male',
+      },
+      {
+        id: "socks",
+        label: "Socks",
         gender: 'male',
       },
       {
@@ -661,7 +672,7 @@ export const PACKING_GUIDE: PackingCategory[] = [
       },
       {
         id: "walking-shoes",
-        label: "Comfortable walking shoes for sightseeing and/or gym",
+        label: "Comfortable walking shoes for sightseeing or gym",
         tip: "Essential for the Montreux promenade and Château de Chillon — quite a lot of walking.",
         gender: 'male',
       },
@@ -680,13 +691,14 @@ export const PACKING_GUIDE: PackingCategory[] = [
     items: [
       {
         id: "light-jacket",
-        label: "Light waterproof / windproof jacket",
+        label: "Light waterproof jacket",
         tip: "May in Montreux can bring spring showers. A packable rain jacket is perfect.",
       },
       {
         id: "layers",
         label: "Light layers / cardigan",
         tip: "Evenings by the lake can be cool (12–15°C). Bring a wrap or light jacket for outdoor moments.",
+        gender: 'female',
       },
       {
         id: "sunglasses",
@@ -767,8 +779,16 @@ export const PACKING_GUIDE: PackingCategory[] = [
     emoji: "💄",
     items: [
       {
-        id: "toiletries",
-        label: "Toothbrush, toothpaste, deodorant & basic skincare",
+        id: "toothbrush",
+        label: "Toothbrush",
+      },
+      {
+        id: "toothpaste",
+        label: "Toothpaste",
+      },
+      {
+        id: "deodorant",
+        label: "Deodorant",
       },
       {
         id: "makeup-kit",
