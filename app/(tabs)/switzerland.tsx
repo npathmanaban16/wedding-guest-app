@@ -13,7 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
-import { SWITZERLAND_GUIDE, GuideSection, GuideItem } from '@/constants/weddingData';
+import { SWITZERLAND_GUIDE, GuideSection, GuideSubsection, GuideItem, GuideLink } from '@/constants/weddingData';
 
 if (Platform.OS === 'android') {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
@@ -62,9 +62,33 @@ function GuideItemCard({ item }: { item: GuideItem }) {
               <Ionicons name="arrow-forward" size={13} color={Colors.primary} />
             </TouchableOpacity>
           )}
+          {item.links && item.links.length > 0 && (
+            <View style={styles.linksContainer}>
+              {item.links.map((l: GuideLink) => (
+                <TouchableOpacity key={l.url} onPress={() => Linking.openURL(l.url)} style={styles.linkButton}>
+                  <Text style={styles.linkText}>{l.label}</Text>
+                  <Ionicons name="arrow-forward" size={13} color={Colors.primary} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </View>
       )}
     </TouchableOpacity>
+  );
+}
+
+function SubsectionBlock({ subsection }: { subsection: GuideSubsection }) {
+  return (
+    <View style={styles.subsectionBlock}>
+      <View style={styles.subsectionHeader}>
+        <Text style={styles.subsectionEmoji}>{subsection.emoji}</Text>
+        <Text style={styles.subsectionTitle}>{subsection.title}</Text>
+      </View>
+      {subsection.items.map((item) => (
+        <GuideItemCard key={item.id} item={item} />
+      ))}
+    </View>
   );
 }
 
@@ -74,9 +98,13 @@ function SectionBlock({ section }: { section: GuideSection }) {
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>{section.title}</Text>
       </View>
-      {section.items.map((item) => (
-        <GuideItemCard key={item.id} item={item} />
-      ))}
+      {section.subsections
+        ? section.subsections.map((sub) => (
+            <SubsectionBlock key={sub.id} subsection={sub} />
+          ))
+        : section.items?.map((item) => (
+            <GuideItemCard key={item.id} item={item} />
+          ))}
     </View>
   );
 }
@@ -89,10 +117,23 @@ export default function SwitzerlandScreen() {
 
   const filteredGuide =
     activeFilter && activeFilter !== 'All'
-      ? SWITZERLAND_GUIDE.map((section) => ({
-          ...section,
-          items: section.items.filter((item) => item.category === activeFilter),
-        })).filter((section) => section.items.length > 0)
+      ? SWITZERLAND_GUIDE.map((section) => {
+          if (section.subsections) {
+            const filteredSubs = section.subsections
+              .map((sub) => ({
+                ...sub,
+                items: sub.items.filter((item) => item.category === activeFilter),
+              }))
+              .filter((sub) => sub.items.length > 0);
+            return { ...section, subsections: filteredSubs, items: undefined };
+          }
+          return {
+            ...section,
+            items: section.items?.filter((item) => item.category === activeFilter) ?? [],
+          };
+        }).filter((section) =>
+          section.subsections ? section.subsections.length > 0 : (section.items?.length ?? 0) > 0
+        )
       : SWITZERLAND_GUIDE;
 
   return (
@@ -148,7 +189,7 @@ export default function SwitzerlandScreen() {
         <View style={styles.factDivider} />
         <View style={styles.factRow}>
           <Text style={styles.factKey}>Language</Text>
-          <Text style={styles.factValue}>German (English widely spoken)</Text>
+          <Text style={styles.factValue}>French (English widely spoken)</Text>
         </View>
         <View style={styles.factDivider} />
         <View style={styles.factRow}>
@@ -245,6 +286,25 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
 
+  subsectionBlock: { marginBottom: Spacing.xs },
+  subsectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.xs,
+    marginTop: Spacing.md,
+  },
+  subsectionEmoji: {
+    fontSize: 15,
+    marginRight: Spacing.xs,
+  },
+  subsectionTitle: {
+    fontSize: 11,
+    fontFamily: Fonts.sansMedium,
+    color: Colors.textSecondary,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+  },
+
   itemCard: {
     backgroundColor: Colors.white,
     borderRadius: Radius.md,
@@ -305,6 +365,9 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     lineHeight: 20,
     fontStyle: 'italic',
+  },
+  linksContainer: {
+    gap: 8,
   },
   linkButton: {
     flexDirection: 'row',
