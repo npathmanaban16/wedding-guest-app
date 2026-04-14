@@ -668,7 +668,8 @@ export const PACKING_GUIDE: PackingCategory[] = [
       },
       {
         id: "shoes-sangeet-male",
-        label: "Comfortable shoes for a night of dancing",
+        label: "Shoes for Sangeet",
+        tip: "Comfortable shoes for a night of dancing.",
         gender: 'male',
       },
       {
@@ -678,14 +679,14 @@ export const PACKING_GUIDE: PackingCategory[] = [
         gender: 'male',
       },
       {
-        id: "socks",
-        label: "Socks",
-        gender: 'male',
-      },
-      {
         id: "walking-shoes",
         label: "Comfortable walking shoes for sightseeing or gym",
         tip: "Essential for the Montreux promenade and Château de Chillon — quite a lot of walking.",
+        gender: 'male',
+      },
+      {
+        id: "socks",
+        label: "Socks",
         gender: 'male',
       },
       {
@@ -717,7 +718,7 @@ export const PACKING_GUIDE: PackingCategory[] = [
       },
       {
         id: "swim-trunks",
-        label: "Swim trunks for hotel pools / hot tubs",
+        label: "Swim trunks for hotel pools and hot tubs",
         gender: 'male',
       },
       {
@@ -841,7 +842,7 @@ export const PACKING_GUIDE: PackingCategory[] = [
       },
       {
         id: "meds",
-        label: "Personal medications + basic first aid",
+        label: "Personal medications",
       },
     ],
   },
