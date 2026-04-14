@@ -297,21 +297,22 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
 
-  subsectionBlock: { marginBottom: Spacing.xs },
+  subsectionBlock: { marginBottom: Spacing.sm },
   subsectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: Spacing.xs,
-    marginTop: Spacing.md,
-    paddingVertical: Spacing.xs,
+    backgroundColor: Colors.white,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    ...Shadow.small,
   },
   subsectionTitle: {
-    fontSize: 11,
-    fontFamily: Fonts.sansMedium,
-    color: Colors.textSecondary,
-    letterSpacing: 1.5,
-    textTransform: 'uppercase',
+    fontSize: 13,
+    fontFamily: Fonts.serifMedium,
+    color: Colors.textPrimary,
   },
 
   itemCard: {
