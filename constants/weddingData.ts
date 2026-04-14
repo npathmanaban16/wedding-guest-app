@@ -383,9 +383,10 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         ],
       },
       {
-        id: "more-to-explore",
-        title: "More to Explore",
+        id: "more-activities",
+        title: "More Activities",
         emoji: "✨",
+        category: "Activity",
         items: [
           {
             id: "tennis",
@@ -416,6 +417,14 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
               { label: "Fairmont Wellness", url: "https://www.fairmont.com/en/hotels/montreux/fairmont-le-montreux-palace/wellness.html" },
             ],
           },
+        ],
+      },
+      {
+        id: "beyond-montreux",
+        title: "Beyond Montreux",
+        emoji: "🗺️",
+        category: "Sightseeing",
+        items: [
           {
             id: "lausanne",
             name: "Day Trip to Lausanne",
