@@ -33,13 +33,24 @@ create table public.song_requests (
   submitted_at timestamptz default now()
 );
 
+-- packing_checklist: one row per guest, stores array of checked item IDs
+create table public.packing_checklist (
+  guest_name    text primary key,
+  checked_items text[] not null default '{}',
+  updated_at    timestamptz not null default now()
+);
+
 -- Enable Row Level Security
 alter table public.guest_info enable row level security;
 alter table public.song_requests enable row level security;
+alter table public.packing_checklist enable row level security;
 
 -- Allow full access from the app (guest identity handled in-app, not via Supabase Auth)
 create policy "allow_all_guest_info" on public.guest_info
   for all using (true) with check (true);
 
 create policy "allow_all_song_requests" on public.song_requests
+  for all using (true) with check (true);
+
+create policy "allow_all_packing_checklist" on public.packing_checklist
   for all using (true) with check (true);

@@ -127,14 +127,16 @@ export default function PackingScreen() {
   })).filter((cat) => cat.items.length > 0);
 
   useEffect(() => {
-    getCheckedItems().then((items) => {
+    if (!guestName) { setLoading(false); return; }
+    getCheckedItems(guestName).then((items) => {
       setCheckedItems(items);
       setLoading(false);
     });
-  }, []);
+  }, [guestName]);
 
   const handleToggle = async (id: string) => {
-    const updated = await togglePackingItem(id);
+    if (!guestName) return;
+    const updated = await togglePackingItem(id, guestName);
     setCheckedItems(updated);
   };
 

@@ -9,7 +9,7 @@ import { supabase } from '@/lib/supabase';
 
 const KEYS = {
   myInfo: (name: string) => `@wedding_my_info_${name}`,
-  packingChecklist: '@wedding_packing_checklist',
+  packingChecklist: (name: string) => `@wedding_packing_checklist_${name}`,
   photos: '@wedding_photos',
   onboarding: (name: string) => `@wedding_onboarding_done_${name}`,
 };
@@ -211,20 +211,47 @@ export async function addSongRequest(
   };
 }
 
-// ─── Packing Checklist (local only) ──────────────────────────────────────────
+// ─── Packing Checklist ───────────────────────────────────────────────────────
+// Synced to Supabase per guest, with AsyncStorage as local cache/offline fallback.
 
-export async function getCheckedItems(): Promise<string[]> {
-  const raw = await AsyncStorage.getItem(KEYS.packingChecklist);
+export async function getCheckedItems(guestName: string): Promise<string[]> {
+  try {
+    const { data, error } = await supabase
+      .from('packing_checklist')
+      .select('checked_items')
+      .eq('guest_name', guestName)
+      .maybeSingle();
+    if (!error && data) {
+      const items: string[] = data.checked_items ?? [];
+      await AsyncStorage.setItem(KEYS.packingChecklist(guestName), JSON.stringify(items));
+      return items;
+    }
+  } catch {
+    // Network unavailable — fall through to local cache
+  }
+  const raw = await AsyncStorage.getItem(KEYS.packingChecklist(guestName));
   if (!raw) return [];
   return JSON.parse(raw);
 }
 
-export async function togglePackingItem(itemId: string): Promise<string[]> {
-  const checked = await getCheckedItems();
+export async function togglePackingItem(itemId: string, guestName: string): Promise<string[]> {
+  const checked = await getCheckedItems(guestName);
   const updated = checked.includes(itemId)
     ? checked.filter((id) => id !== itemId)
     : [...checked, itemId];
-  await AsyncStorage.setItem(KEYS.packingChecklist, JSON.stringify(updated));
+  // Write to local cache immediately so the UI feels instant
+  await AsyncStorage.setItem(KEYS.packingChecklist(guestName), JSON.stringify(updated));
+  // Sync to Supabase in the background
+  try {
+    await supabase
+      .from('packing_checklist')
+      .upsert(
+        { guest_name: guestName, checked_items: updated, updated_at: new Date().toISOString() },
+        { onConflict: 'guest_name' },
+      );
+  } catch {
+    // Will reconcile on next load
+  }
   return updated;
 }
 
