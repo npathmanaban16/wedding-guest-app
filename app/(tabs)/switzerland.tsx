@@ -158,7 +158,7 @@ export default function SwitzerlandScreen() {
         <View style={styles.factDivider} />
         <View style={styles.factRow}>
           <Text style={styles.factKey}>Language</Text>
-          <Text style={styles.factValue}>German (English widely spoken)</Text>
+          <Text style={styles.factValue}>French (English widely spoken)</Text>
         </View>
         <View style={styles.factDivider} />
         <View style={styles.factRow}>

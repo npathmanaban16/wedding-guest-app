@@ -205,20 +205,12 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
     emoji: "✈️",
     items: [
       {
-        id: "geneva-flight",
-        name: "Fly into Geneva (GVA) — recommended",
+        id: "flights",
+        name: "Flights",
         category: "Transport",
         description:
-          "Geneva Airport is the closest major hub with direct flights from London, Paris, Amsterdam, Dubai, and many other cities. From the airport, Montreux is about 1 hour 30 minutes by train or 1 hour by car along the shores of Lake Geneva.",
-        tip: "Book flights and trains in advance — Geneva is a popular hub and trains fill up quickly during peak season.",
-      },
-      {
-        id: "zurich-flight",
-        name: "Fly into Zurich (ZRH)",
-        category: "Transport",
-        description:
-          "Zurich is Switzerland's main hub if you can't get a direct flight to Geneva. Train from Zurich to Montreux takes about 2 hours through the heart of Switzerland.",
-        tip: "Zurich to Montreux is a beautiful ride through Central Switzerland — worth the extra time.",
+          "Geneva (GVA) is the recommended airport — direct flights from London, Paris, Amsterdam, Dubai, and many other cities, with Montreux just 1h30 by train or 1 hour by car.\n\nIf you can't get a direct flight to Geneva, Zurich (ZRH) is Switzerland's main hub. Train from Zurich to Montreux takes about 2 hours through the heart of Switzerland.",
+        tip: "Book flights and trains in advance — Geneva fills up quickly during peak season.",
       },
       {
         id: "train-montreux",
@@ -407,38 +399,24 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
           { label: "Montreux Tennis Club", url: "https://montreux-tennis-club.ch/" },
         ],
       },
-    ],
-  },
-  {
-    id: "fairmont",
-    title: "Fairmont Le Montreux Palace",
-    emoji: "🏨",
-    items: [
       {
         id: "fairmont-pools",
-        name: "Pools & Hot Tub",
-        category: "Practical",
+        name: "Fairmont — Pools & Hot Tub",
+        category: "Activity",
         description:
-          "Both an outdoor pool and a heated indoor pool, plus a hot tub — all with panoramic views of the surrounding mountains. Located on floor -1.",
+          "Outdoor and heated indoor pool plus a hot tub, all with panoramic mountain views. Located on floor -1 of the Fairmont.",
         tip: "A perfect way to unwind between wedding events.",
       },
       {
         id: "fairmont-spa",
-        name: "Spa & Gym",
-        category: "Practical",
+        name: "Fairmont — Spa & Gym",
+        category: "Activity",
         description:
-          "Sauna, steam room, jacuzzi, spa treatments, and a fully equipped gym with fitness classes. Located on floor -1.",
+          "Sauna, steam room, jacuzzi, spa treatments, and a fully equipped gym with fitness classes. Located on floor -1 of the Fairmont.",
         tip: "Book spa treatments in advance — they fill up quickly.",
         links: [
           { label: "Fairmont Wellness", url: "https://www.fairmont.com/en/hotels/montreux/fairmont-le-montreux-palace/wellness.html" },
         ],
-      },
-      {
-        id: "fairmont-concierge",
-        name: "Concierge",
-        category: "Practical",
-        description:
-          "Don't hesitate to ask the concierge for personalised dining, sightseeing, and activity recommendations to make the most of your stay.",
       },
     ],
   },
