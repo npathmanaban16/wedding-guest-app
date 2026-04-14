@@ -257,27 +257,19 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
   {
     id: "getting-around",
     title: "Getting Around Montreux",
-    emoji: "🚶",
+    emoji: "🚌",
     items: [
-      {
-        id: "walking",
-        name: "On Foot",
-        category: "Practical",
-        description:
-          "Montreux is very walkable. The lake promenade, Old Town, and most hotels are within easy walking distance of each other and the train station.",
-        tip: "Wear comfortable shoes — some parts of the town are hilly.",
-      },
       {
         id: "riviera-card",
         name: "Montreux Riviera Card",
         category: "Practical",
         description:
           "Many hotels provide guests with a Montreux Riviera Card, which includes free or discounted travel on local buses, boats, and mountain railways throughout the region.",
-        tip: "Ask your hotel at check-in whether they provide the card — it can save you a lot on local transport.",
+        tip: "Ask your hotel at check-in — it can save you a lot on local transport.",
       },
       {
         id: "uber-local",
-        name: "Uber & Local Taxis",
+        name: "Uber & Taxis",
         category: "Practical",
         description:
           "Uber operates in Montreux and nearby cities including Lausanne. Traditional taxis are also available but tend to be more expensive.",
@@ -286,34 +278,14 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
     ],
   },
   {
-    id: "things-to-do",
-    title: "Things to Do",
-    emoji: "🏰",
+    id: "walks-hikes",
+    title: "Walks & Hikes",
+    emoji: "🥾",
     items: [
-      {
-        id: "chillon",
-        name: "Château de Chillon",
-        category: "Sightseeing",
-        description:
-          "Switzerland's most visited castle, situated right on the edge of Lake Geneva. Medieval architecture, historic rooms, dungeons, and picturesque courtyards — immortalised by Lord Byron.\n\n🚶 Walk: ~45 min from the Fairmont along the promenade\n🚆 Train: Montreux → Veytaux-Chillon (2 min, ~15 min total)\n🕘 Open daily 9am–7pm (last entry 6pm)\n🎟 CHF 13 adults",
-        links: [
-          { label: "Château de Chillon", url: "https://www.chillon.ch/" },
-        ],
-      },
-      {
-        id: "chateau-aigle",
-        name: "Château d'Aigle",
-        category: "Sightseeing",
-        description:
-          "A medieval castle a short train ride from Montreux, housing a fascinating wine museum with regular exhibitions — a great pairing with a Lavaux wine tour.\n\n🚆 Train: Montreux → Aigle (10 min, ~30 min total)\n🕘 Tue–Sun 10am–5pm, closed Mondays\n🎟 CHF 12 adults",
-        links: [
-          { label: "Château d'Aigle", url: "https://www.chateau-aigle.ch/" },
-        ],
-      },
       {
         id: "lake-promenade",
         name: "Montreux Riviera Promenade",
-        category: "Sightseeing",
+        category: "Activity",
         description:
           "Just steps from the Fairmont, this lakeside path is lined with vibrant flowers and palm trees, offering sweeping views of Lake Geneva and the Alps. Stretches several kilometres from Clarens to Villeneuve — perfect for a morning jog, leisurely walk, or sunset stroll. The famous Freddie Mercury statue is along the way.",
         tip: "May is peak blooming season — perfect for photos with the Alps reflecting on the lake.",
@@ -332,31 +304,65 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         category: "Activity",
         description:
           "From late May to early June, the hills above Montreux are blanketed in blooming narcissus flowers — a local phenomenon known as \"May Snow.\" Beautiful trails at Les Pléiades and Les Avants offer some of the best views of this fleeting sight.",
-        tip: "Trail conditions vary — ask the Fairmont concierge for up-to-date route recommendations during your stay.",
+        tip: "Trail conditions vary — ask the Fairmont concierge for up-to-date route recommendations.",
       },
       {
         id: "glacier-3000",
         name: "Glacier 3000",
         category: "Activity",
         description:
-          "For a high-altitude adventure, head to Glacier 3000 near Les Diablerets — about 1.5 hours from Montreux. Reachable by cable car, the glacier offers spectacular views including Mont Blanc and the Matterhorn, year-round snow, and the Peak Walk by Tissot — the world's first suspension bridge connecting two mountain peaks.",
-        tip: "Dress warmly even in summer — it's a glacier! Short hikes and snow activities available year-round.",
+          "Head to Glacier 3000 near Les Diablerets — about 1.5 hours from Montreux. Reachable by cable car, with spectacular views of Mont Blanc and the Matterhorn, year-round snow, and the Peak Walk by Tissot — the world's first suspension bridge connecting two mountain peaks.",
+        tip: "Dress warmly even in summer. Short hikes and snow activities available year-round.",
+      },
+    ],
+  },
+  {
+    id: "castles",
+    title: "Castles",
+    emoji: "🏰",
+    items: [
+      {
+        id: "chillon",
+        name: "Château de Chillon",
+        category: "Sightseeing",
+        description:
+          "Switzerland's most visited castle, right on the edge of Lake Geneva. Medieval architecture, historic rooms, dungeons, and picturesque courtyards — immortalised by Lord Byron.\n\n🚶 Walk: ~45 min from the Fairmont along the promenade\n🚆 Train: Montreux → Veytaux-Chillon (2 min, ~15 min total)\n🕘 Daily 9am–7pm (last entry 6pm) · 🎟 CHF 13",
+        links: [
+          { label: "Château de Chillon", url: "https://www.chillon.ch/" },
+        ],
       },
       {
-        id: "lavaux",
+        id: "chateau-aigle",
+        name: "Château d'Aigle",
+        category: "Sightseeing",
+        description:
+          "A medieval castle housing a fascinating wine museum — a great pairing with a Lavaux wine tour.\n\n🚆 Train: Montreux → Aigle (10 min, ~30 min total)\n🕘 Tue–Sun 10am–5pm, closed Mon · 🎟 CHF 12",
+        links: [
+          { label: "Château d'Aigle", url: "https://www.chateau-aigle.ch/" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "lavaux",
+    title: "Lavaux & Wine",
+    emoji: "🍇",
+    items: [
+      {
+        id: "lavaux-vineyards",
         name: "Lavaux Vineyards (UNESCO)",
         category: "Activity",
         description:
-          "Terraced vineyards stretching along the hillsides above Lake Geneva — a UNESCO World Heritage Site and one of the most breathtaking wine regions in the world. Accessible by train, car, or on foot between the charming villages of Cully, Epesses, and Saint-Saphorin.",
-        tip: "Hop aboard the Lavaux Express or Lavaux Panoramic — tourist trains that wind through the vineyards with stops for tastings and photos.",
+          "Terraced vineyards along the hillsides above Lake Geneva — a UNESCO World Heritage Site. Accessible by train, car, or on foot between the villages of Cully, Epesses, and Saint-Saphorin.",
+        tip: "Hop aboard the Lavaux Express or Lavaux Panoramic — tourist trains winding through the vineyards with stops for tastings.",
       },
       {
         id: "lavaux-wine",
-        name: "Wine Tasting in Lavaux",
+        name: "Wine Tasting",
         category: "Activity",
         description:
-          "The region is home to family-run domaines specialising in Chasselas — a crisp, mineral-rich white wine native to the area. Most require reservations, especially on weekends.",
-        tip: "Book ahead! Same-day tastings are rarely available at the best estates.",
+          "Family-run domaines specialising in Chasselas — a crisp, mineral-rich white wine native to the area. Most require reservations, especially on weekends.",
+        tip: "Book ahead — same-day tastings are rarely available at the best estates.",
         links: [
           { label: "Domaine Bovy (Chexbres)", url: "https://www.domainebovy.ch/" },
           { label: "Domaine Croix Duplex (Grandvaux)", url: "https://www.croixduplex.ch/" },
@@ -365,33 +371,40 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
           { label: "Les Frères Dubois (Dézaley)", url: "https://www.lesfreresdubois.ch/" },
         ],
       },
-      {
-        id: "tennis",
-        name: "Montreux Tennis Club",
-        category: "Activity",
-        description:
-          "Multiple outdoor red clay courts with stunning views of Lake Geneva — open to visitors of all levels.\n\n🎾 Court rental: CHF 60/hour\n🎾 Coaching: CHF 100/hour\n☕ On-site café restaurant with terrace views\n\n🚶 30 min walk along the promenade\n🚆 Train: Montreux → Territet (2 min) + 3 min walk",
-        links: [
-          { label: "Montreux Tennis Club", url: "https://montreux-tennis-club.ch/" },
-        ],
-      },
+    ],
+  },
+  {
+    id: "more-to-explore",
+    title: "More to Explore",
+    emoji: "🗺️",
+    items: [
       {
         id: "lausanne",
         name: "Day Trip to Lausanne",
         category: "Sightseeing",
         description:
           "A vibrant Swiss city just 30 minutes by train. Highlights: Gothic cathedral, Olympic Museum, the charming Old Town, and the lakefront at Ouchy.",
-        tip: "The Olympic Museum at Ouchy is world-class and right on the lake — worth a few hours.",
+        tip: "The Olympic Museum is world-class and right on the lake — worth a few hours.",
       },
       {
         id: "golden-pass",
         name: "GoldenPass Panoramic Train",
         category: "Activity",
         description:
-          "One of Switzerland's most iconic train journeys starts right in Montreux and winds through the Swiss Alps to the charming resort town of Gstaad and beyond. The train features large panoramic windows and plush seating, offering breathtaking views of mountain peaks, alpine villages, and lush valleys.",
-        tip: "Book panoramic seats in advance at sbb.ch. The stretch from Montreux to Zweisimmen is especially dramatic — even a short section is worth it.",
+          "One of Switzerland's most iconic train journeys — starting in Montreux and winding through the Alps toward Gstaad. Panoramic windows and plush seating with breathtaking mountain views.",
+        tip: "Book panoramic seats in advance. The stretch from Montreux to Zweisimmen is especially dramatic.",
         links: [
           { label: "Book on SBB", url: "https://www.sbb.ch/en" },
+        ],
+      },
+      {
+        id: "tennis",
+        name: "Montreux Tennis Club",
+        category: "Activity",
+        description:
+          "Outdoor red clay courts with lake views, open to visitors of all levels.\n\n🎾 Court rental: CHF 60/hr · Coaching: CHF 100/hr\n🚶 30 min walk along the promenade · 🚆 Montreux → Territet (2 min)",
+        links: [
+          { label: "Montreux Tennis Club", url: "https://montreux-tennis-club.ch/" },
         ],
       },
     ],
