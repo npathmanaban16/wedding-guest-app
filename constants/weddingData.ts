@@ -353,37 +353,26 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         name: "Pools & Hot Tub",
         category: "Practical",
         description:
-          "The Fairmont has both an outdoor pool and a heated indoor pool, plus a hot tub — all with panoramic views of the surrounding mountains.",
-        tip: "Located on floor -1. A perfect way to unwind between wedding events.",
+          "Both an outdoor pool and a heated indoor pool, plus a hot tub — all with panoramic views of the surrounding mountains. Located on floor -1.",
+        tip: "A perfect way to unwind between wedding events.",
       },
       {
         id: "fairmont-spa",
         name: "Spa & Gym",
         category: "Practical",
         description:
-          "Relax and rejuvenate with access to a sauna, steam room, jacuzzi, spa treatments, and a fully equipped gym that also offers fitness classes.",
-        tip: "Book spa treatments in advance — they fill up quickly, especially during busy periods.",
+          "Sauna, steam room, jacuzzi, spa treatments, and a fully equipped gym with fitness classes. Located on floor -1.",
+        tip: "Book spa treatments in advance — they fill up quickly.",
         links: [
           { label: "Fairmont Wellness", url: "https://www.fairmont.com/en/hotels/montreux/fairmont-le-montreux-palace/wellness.html" },
         ],
       },
       {
-        id: "funky-claudes",
-        name: "Funky Claude's Bar",
-        category: "Bar",
+        id: "fairmont-concierge",
+        name: "Concierge",
+        category: "Practical",
         description:
-          "Savour cocktails and catch live music in a cosy atmosphere at this lively bar, situated at the back of the Montreux Jazz Café on the ground floor.",
-        tip: "Named after legendary Montreux Jazz Festival founder Claude Nobs — a Montreux icon.",
-      },
-      {
-        id: "fairmont-dining-amenity",
-        name: "Dining",
-        category: "Restaurant",
-        description:
-          "The Fairmont has several dining options on site. Ask the concierge for personalised dining, sightseeing, and activity recommendations to make the most of your stay.",
-        links: [
-          { label: "View all dining options", url: "https://www.fairmont.com/en/hotels/montreux/fairmont-le-montreux-palace/dining.html" },
-        ],
+          "Don't hesitate to ask the concierge for personalised dining, sightseeing, and activity recommendations to make the most of your stay.",
       },
     ],
   },
@@ -392,6 +381,24 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
     title: "Eating & Drinking",
     emoji: "🍷",
     items: [
+      {
+        id: "funky-claudes",
+        name: "Funky Claude's Bar",
+        category: "Bar",
+        description:
+          "Cocktails and live music in a cosy atmosphere at the back of the Montreux Jazz Café, on the ground floor of the Fairmont.",
+        tip: "Named after legendary Montreux Jazz Festival founder Claude Nobs — a Montreux icon.",
+      },
+      {
+        id: "fairmont-dining",
+        name: "Fairmont Dining",
+        category: "Restaurant",
+        description:
+          "The Fairmont has several on-site dining options. See the full list on their website.",
+        links: [
+          { label: "View all dining options", url: "https://www.fairmont.com/en/hotels/montreux/fairmont-le-montreux-palace/dining.html" },
+        ],
+      },
       {
         id: "baron-tavernier",
         name: "Le Baron Tavernier",
