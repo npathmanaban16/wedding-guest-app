@@ -29,7 +29,7 @@ const VENUES = [
 
 
 export function FairmontMap() {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   // Measure the rendered width of the image wrapper so we can set explicit
   // pixel dimensions on the Image — avoids percentage/aspectRatio sizing bugs.
   const [imgW, setImgW] = useState(0);
