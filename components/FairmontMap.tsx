@@ -3,6 +3,7 @@ import {
   View,
   Text,
   Image,
+  ScrollView,
   StyleSheet,
   TouchableOpacity,
   LayoutAnimation,
@@ -54,11 +55,18 @@ export function FairmontMap() {
         <View>
           <View style={s.divider} />
 
-          <View style={s.imageContainer}>
-            {/* onLayout gives us the true rendered width after padding */}
-            <View
-              style={s.imageWrapper}
-              onLayout={e => setImgW(Math.floor(e.nativeEvent.layout.width))}
+          <View
+            style={s.imageContainer}
+            onLayout={e => setImgW(Math.floor(e.nativeEvent.layout.width) - Spacing.md * 2)}
+          >
+            <ScrollView
+              style={{ height: imgH > 0 ? Math.min(imgH, 420) : 420 }}
+              minimumZoomScale={1}
+              maximumZoomScale={4}
+              centerContent
+              bouncesZoom
+              showsHorizontalScrollIndicator={false}
+              showsVerticalScrollIndicator={false}
             >
               {imgW > 0 && (
                 <Image
@@ -67,7 +75,8 @@ export function FairmontMap() {
                   resizeMode="stretch"
                 />
               )}
-            </View>
+            </ScrollView>
+            <Text style={s.zoomHint}>Pinch to zoom</Text>
           </View>
 
           <View style={s.divider} />
@@ -132,8 +141,13 @@ const s = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     padding: Spacing.md,
   },
-  imageWrapper: {
-    width: '100%',
+  zoomHint: {
+    fontSize: 10,
+    fontFamily: Fonts.sans,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    marginTop: Spacing.xs,
+    fontStyle: 'italic',
   },
 
   legend: {
