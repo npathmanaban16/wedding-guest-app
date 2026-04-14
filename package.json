@@ -27,6 +27,7 @@
     "expo-notifications": "^55.0.18",
     "expo-router": "~6.0.23",
     "expo-splash-screen": "~31.0.13",
+    "expo-updates": "~0.28.0",
     "expo-status-bar": "~3.0.9",
     "react": "19.1.0",
     "react-native": "0.81.5",
@@ -36,7 +37,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
-    "@types/react": "~19.0.0",
+    "@types/react": "^19.1.0",
     "typescript": "^5.3.0"
   },
   "private": true
