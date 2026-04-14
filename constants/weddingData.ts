@@ -649,14 +649,14 @@ export const PACKING_GUIDE: PackingCategory[] = [
       },
       {
         id: "flats-mehendi",
-        label: "Flats or comfortable shoes for Rehearsal Dinner",
+        label: "Flats or heels for Rehearsal Dinner",
         tip: "Le Baron Tavernier is a vineyard estate — you may be on terraced outdoor terrain.",
         weddingPartyOnly: true,
         gender: 'female',
       },
       {
         id: "heels-sangeet",
-        label: "Flats or heels for Sangeet",
+        label: "Flats, heels, or comfortable shoes for Sangeet",
         tip: "Choose shoes you can dance in all night — block heels or kitten heels work well.",
         gender: 'female',
       },
