@@ -541,7 +541,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         name: "Weather in May",
         category: "Practical",
         description:
-          "May in Montreux is beautiful spring weather: 15–22°C on warm days. Expect occasional rain — pack a light waterproof jacket. The lake acts as a heat buffer making it milder than inland.",
+          "May in Montreux is beautiful spring weather: 59–72°F on warm days. Expect occasional rain — pack a light waterproof jacket. The lake acts as a heat buffer making it milder than inland.",
         tip: "May is peak blooming season — the lake promenade will be stunning with roses and flowers.",
       },
       {
