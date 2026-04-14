@@ -176,12 +176,12 @@ export default function SwitzerlandScreen() {
         contentContainerStyle={styles.photoStrip}
       >
         {[
-          require('@/assets/images/promenade.PNG'),
-          require('@/assets/images/lauvaux.PNG'),
-          require('@/assets/images/narcissus_hike.PNG'),
-          require('@/assets/images/rochers_de_naye.PNG'),
-          require('@/assets/images/narcissus.PNG'),
-          require('@/assets/images/boat.PNG'),
+          require('@/assets/images/promenade.png'),
+          require('@/assets/images/lauvaux.png'),
+          require('@/assets/images/narcissus_hike.png'),
+          require('@/assets/images/rochers_de_naye.png'),
+          require('@/assets/images/narcissus.png'),
+          require('@/assets/images/boat.png'),
         ].map((src, i) => (
           <Image key={i} source={src} style={styles.photoItem} resizeMode="cover" />
         ))}
