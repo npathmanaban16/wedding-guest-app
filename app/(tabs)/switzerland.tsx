@@ -180,8 +180,8 @@ export default function SwitzerlandScreen() {
           { src: require('@/assets/images/lauvaux.png'), label: 'Lavaux vineyards' },
           { src: require('@/assets/images/narcissus_hike.png'), label: 'Narcissus hike' },
           { src: require('@/assets/images/rochers_de_naye.png'), label: 'Rochers de Naye' },
-          { src: require('@/assets/images/narcissus.png'), label: 'May narcissus fields' },
-          { src: require('@/assets/images/boat.png'), label: 'Lake Geneva' },
+          { src: require('@/assets/images/narcissus.png'), label: 'Narcissus fields in May' },
+          { src: require('@/assets/images/boat.png'), label: 'Lake Geneva by boat' },
         ].map((photo, i) => (
           <View key={i} style={styles.photoItem}>
             <Image source={photo.src} style={styles.photoImage} resizeMode="contain" />
@@ -266,7 +266,6 @@ const styles = StyleSheet.create({
     width: 180,
     borderRadius: Radius.md,
     overflow: 'hidden',
-    backgroundColor: Colors.surfaceWarm,
   },
   photoImage: {
     width: 180,
