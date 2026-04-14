@@ -366,6 +366,16 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         ],
       },
       {
+        id: "tennis",
+        name: "Montreux Tennis Club",
+        category: "Activity",
+        description:
+          "Multiple outdoor red clay courts with stunning views of Lake Geneva — open to visitors of all levels.\n\n🎾 Court rental: CHF 60/hour\n🎾 Coaching: CHF 100/hour\n☕ On-site café restaurant with terrace views\n\n🚶 30 min walk along the promenade\n🚆 Train: Montreux → Territet (2 min) + 3 min walk",
+        links: [
+          { label: "Montreux Tennis Club", url: "https://montreux-tennis-club.ch/" },
+        ],
+      },
+      {
         id: "lausanne",
         name: "Day Trip to Lausanne",
         category: "Sightseeing",
