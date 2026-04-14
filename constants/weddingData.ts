@@ -425,22 +425,56 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
     emoji: "🍷",
     items: [
       {
+        id: "sleepy-bear",
+        name: "Sleepy Bear Coffee",
+        category: "Café",
+        description:
+          "Montreux's premier specialty coffee shop — the perfect place to start your day with expertly crafted espresso and a welcoming atmosphere.",
+      },
+      {
+        id: "confiserie-zurcher",
+        name: "Confiserie Zurcher",
+        category: "Café",
+        description:
+          "A traditional Swiss confectionery and café — perfect for breakfast pastries, hot chocolate, and handmade chocolates to take home.",
+        tip: "Pick up a box of Swiss chocolates as a souvenir — made in-house.",
+      },
+      {
+        id: "la-palmeraie",
+        name: "La Palmeraie — Breakfast",
+        category: "Restaurant",
+        description:
+          "Breakfast buffet included with your Fairmont room. Fresh, seasonal dishes in a bright, airy setting — a lovely way to start the day.",
+      },
+      {
+        id: "montreux-jazz-cafe",
+        name: "Montreux Jazz Café",
+        category: "Restaurant",
+        description:
+          "Lively vibes and modern European cuisine inspired by the legendary Montreux Jazz Festival. Located at the Fairmont.",
+      },
+      {
+        id: "la-terrasse",
+        name: "La Terrasse",
+        category: "Restaurant",
+        description:
+          "Elegant Mediterranean-inspired dining at the Fairmont with beautiful views of Lake Geneva — perfect for a romantic dinner.",
+      },
+      {
         id: "funky-claudes",
         name: "Funky Claude's Bar",
         category: "Bar",
         description:
-          "Cocktails and live music in a cosy atmosphere at the back of the Montreux Jazz Café, on the ground floor of the Fairmont.",
+          "Casual cocktails, light bites, and a comfort-food menu with a fun, jazzy atmosphere at the Fairmont. Live music most evenings.",
         tip: "Named after legendary Montreux Jazz Festival founder Claude Nobs — a Montreux icon.",
       },
       {
-        id: "fairmont-dining",
-        name: "Fairmont Dining",
+        id: "la-rouvenaz",
+        name: "La Rouvenaz",
         category: "Restaurant",
         description:
-          "The Fairmont has several on-site dining options. See the full list on their website.",
-        links: [
-          { label: "View all dining options", url: "https://www.fairmont.com/en/hotels/montreux/fairmont-le-montreux-palace/dining.html" },
-        ],
+          "A charming local favourite right on the lakeside — known for fresh seafood and Swiss specialities with beautiful lake views.",
+        tip: "Perch (perche) from Lake Geneva is a local speciality — try the classic meunière style.",
       },
       {
         id: "baron-tavernier",
@@ -451,20 +485,12 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         tip: "The local Chasselas white wine from the Lavaux region is exceptional.",
       },
       {
-        id: "la-rouvenaz",
-        name: "Hôtel & Restaurant La Rouvenaz",
+        id: "lausanne-dining",
+        name: "Michelin Dining in Lausanne",
         category: "Restaurant",
         description:
-          "A Montreux institution right on the lakeside, serving Swiss-Italian cuisine with beautiful lake views. Known for fresh fish from Lake Geneva.",
-        tip: "Perch (perche) from Lake Geneva is a local speciality — try the classic meunière style.",
-      },
-      {
-        id: "confiserie-zurcher",
-        name: "Confiserie Zurcher",
-        category: "Café",
-        description:
-          "A traditional Swiss confectionery and café — perfect for breakfast pastries, hot chocolate, and handmade chocolates to take home.",
-        tip: "Pick up a box of Swiss chocolates as a souvenir — made in-house.",
+          "If you have extra time, a quick 30-minute train ride to Lausanne opens up several world-class Michelin-starred restaurants for a truly special meal.",
+        tip: "Book well in advance — Michelin restaurants in the region fill up weeks ahead.",
       },
     ],
   },
