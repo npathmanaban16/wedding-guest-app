@@ -609,6 +609,13 @@ export const PACKING_GUIDE: PackingCategory[] = [
         id: "ceremony-outfit",
         label: "Ceremony & Reception — Indian formal or black-tie Western",
         tip: "Elegant neutrals and muted evening tones. Bridal lehenga, silk saree, sherwani, formal gown, or tuxedo. Please avoid white, ivory, and cream.",
+        gender: 'female',
+      },
+      {
+        id: "ceremony-outfit-male",
+        label: "Ceremony & Reception — Tuxedo or Black Suit",
+        tip: "Black-tie dress code applies. Please avoid white, ivory, and cream.",
+        gender: 'male',
       },
       {
         id: "casual-exploring",
@@ -634,7 +641,7 @@ export const PACKING_GUIDE: PackingCategory[] = [
       },
       {
         id: "dress-shoes-events",
-        label: "Dress shoes / loafers for Sangeet, Ceremony & Reception",
+        label: "Dress shoes for Sangeet, Ceremony & Reception",
         tip: "Polished leather or suede work for all three events. If you're wearing a sherwani, juttis or mojaris are a great touch.",
         gender: 'male',
       },
@@ -643,11 +650,26 @@ export const PACKING_GUIDE: PackingCategory[] = [
         label: "Flats or comfortable shoes for Rehearsal Dinner",
         tip: "Le Baron Tavernier is a vineyard estate — you may be on terraced outdoor terrain.",
         weddingPartyOnly: true,
+        gender: 'female',
+      },
+      {
+        id: "shoes-mehendi-male",
+        label: "Shoes for Rehearsal Dinner",
+        tip: "Le Baron Tavernier is a vineyard estate — you may be on terraced outdoor terrain.",
+        weddingPartyOnly: true,
+        gender: 'male',
       },
       {
         id: "walking-shoes",
+        label: "Comfortable walking shoes for sightseeing and/or gym",
+        tip: "Essential for the Montreux promenade and Château de Chillon — quite a lot of walking.",
+        gender: 'male',
+      },
+      {
+        id: "walking-shoes-female",
         label: "Comfortable walking shoes / trainers for sightseeing",
         tip: "Essential for the Montreux promenade and Château de Chillon — quite a lot of walking.",
+        gender: 'female',
       },
     ],
   },
@@ -676,11 +698,16 @@ export const PACKING_GUIDE: PackingCategory[] = [
         label: "Sunscreen (SPF 30+)",
         tip: "Especially if you're heading up to Rochers de Naye.",
       },
+      {
+        id: "swim-trunks",
+        label: "Swim trunks for hotel pools / hot tubs",
+        gender: 'male',
+      },
     ],
   },
   {
     id: "indian-attire-extras",
-    title: "Indian Attire Extras",
+    title: "Attire Extras",
     emoji: "✨",
     items: [
       {
@@ -693,6 +720,7 @@ export const PACKING_GUIDE: PackingCategory[] = [
         id: "jewellery",
         label: "Jewellery for each event",
         tip: "Pack pieces in individual pouches to avoid tangling. Sangeet = bold statement jewellery; Ceremony = elegant classics.",
+        gender: 'female',
       },
       {
         id: "safety-pins",
@@ -717,15 +745,18 @@ export const PACKING_GUIDE: PackingCategory[] = [
         gender: 'female',
       },
       {
-        id: "sherwani-accessories",
-        label: "Sherwani accessories (stole, kurta studs, cufflinks)",
-        tip: "Easy to forget but essential for completing a formal sherwani look. A pocket square also works well for black-tie Western formal.",
+        id: "bow-tie",
+        label: "Bow tie",
         gender: 'male',
       },
       {
-        id: "mens-formal-accessories",
-        label: "Tie, bow tie & cufflinks for Western formal",
-        tip: "Black-tie Ceremony & Reception — bring your best.",
+        id: "tie",
+        label: "Tie",
+        gender: 'male',
+      },
+      {
+        id: "cufflinks",
+        label: "Cufflinks",
         gender: 'male',
       },
     ],
@@ -766,12 +797,8 @@ export const PACKING_GUIDE: PackingCategory[] = [
     items: [
       { id: "passport", label: "Passport / ID", tip: "Ensure your passport is valid through at least November 2026." },
       {
-        id: "travel-insurance",
-        label: "Travel insurance documents",
-      },
-      {
         id: "currency",
-        label: "Some Swiss Francs (CHF) cash",
+        label: "Some Swiss Francs (CHF) cash (optional)",
         tip: "Cards widely accepted but some cafés and markets prefer cash.",
       },
       {
@@ -782,16 +809,6 @@ export const PACKING_GUIDE: PackingCategory[] = [
       {
         id: "meds",
         label: "Personal medications + basic first aid",
-      },
-      {
-        id: "reusable-bottle",
-        label: "Reusable water bottle",
-        tip: "Swiss tap water is some of the cleanest in the world.",
-      },
-      {
-        id: "camera",
-        label: "Camera / extra memory cards",
-        tip: "The Fairmont gardens, Lake Geneva, and Alps make for incredible photos.",
       },
     ],
   },
