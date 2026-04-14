@@ -9,6 +9,7 @@ import {
   Platform,
   UIManager,
   Linking,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -279,6 +280,11 @@ export default function ScheduleScreen() {
       {/* Venue map */}
       <View style={styles.mapSection}>
         <FairmontMap />
+        <Image
+          source={require('@/assets/images/fairmont.png')}
+          style={styles.fairmontPhoto}
+          resizeMode="cover"
+        />
       </View>
 
       {/* Footer note */}
@@ -328,6 +334,12 @@ const styles = StyleSheet.create({
   mapSection: {
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.xl,
+  },
+  fairmontPhoto: {
+    width: '100%',
+    height: 200,
+    borderRadius: Radius.md,
+    marginTop: Spacing.md,
   },
   timeline: { paddingLeft: Spacing.xl, paddingRight: Spacing.lg },
   timelineItem: { flexDirection: 'row', marginBottom: Spacing.md, position: 'relative' },
