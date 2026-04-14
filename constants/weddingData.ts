@@ -758,7 +758,7 @@ export const PACKING_GUIDE: PackingCategory[] = [
       },
       {
         id: "clutch",
-        label: "Small clutch / evening bag for Sangeet and Reception",
+        label: "Small clutch or evening bag for Sangeet and Reception",
         gender: 'female',
       },
       {
