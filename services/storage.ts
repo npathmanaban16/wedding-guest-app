@@ -143,9 +143,12 @@ export async function savePushToken(guestName: string, token: string): Promise<v
 
 // ─── Onboarding ──────────────────────────────────────────────────────────────
 
+// Onboarding is considered done only when all required fields are filled.
+// This ensures the prompt re-appears on login if anything is still missing,
+// even if the user previously saved or skipped with incomplete data.
 export async function isOnboardingDone(guestName: string): Promise<boolean> {
-  const val = await AsyncStorage.getItem(KEYS.onboarding(guestName));
-  return val === 'true';
+  const info = await getMyInfo(guestName);
+  return !!(info.hotel && info.checkIn && info.checkOut && info.arrivalTime);
 }
 
 export async function markOnboardingDone(guestName: string): Promise<void> {
