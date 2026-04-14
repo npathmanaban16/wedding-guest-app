@@ -9,6 +9,7 @@ import {
   Platform,
   UIManager,
   Linking,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -79,13 +80,31 @@ function GuideItemCard({ item }: { item: GuideItem }) {
 }
 
 function SubsectionBlock({ subsection }: { subsection: GuideSubsection }) {
+  const [expanded, setExpanded] = useState(false);
+
+  const toggle = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpanded((v) => !v);
+  };
+
   return (
     <View style={styles.subsectionBlock}>
-      <View style={styles.subsectionHeader}>
-        <Text style={styles.subsectionEmoji}>{subsection.emoji}</Text>
-        <Text style={styles.subsectionTitle}>{subsection.title}</Text>
-      </View>
-      {subsection.items.map((item) => (
+      <TouchableOpacity style={styles.subsectionHeader} onPress={toggle} activeOpacity={0.7}>
+        <View style={styles.itemHeaderText}>
+          {subsection.category && (
+            <View style={styles.categoryBadge}>
+              <Text style={styles.categoryText}>{subsection.category}</Text>
+            </View>
+          )}
+          <Text style={styles.subsectionTitle}>{subsection.title}</Text>
+        </View>
+        <Ionicons
+          name={expanded ? 'chevron-up' : 'chevron-down'}
+          size={15}
+          color={Colors.textMuted}
+        />
+      </TouchableOpacity>
+      {expanded && subsection.items.map((item) => (
         <GuideItemCard key={item.id} item={item} />
       ))}
     </View>
@@ -149,6 +168,27 @@ export default function SwitzerlandScreen() {
           Everything you need to know about Montreux and making the most of your trip
         </Text>
       </View>
+
+      {/* Photo strip */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.photoStrip}
+      >
+        {[
+          { src: require('@/assets/images/promenade.png'), label: 'Montreux promenade' },
+          { src: require('@/assets/images/lauvaux.png'), label: 'Lavaux vineyards' },
+          { src: require('@/assets/images/narcissus_hike.png'), label: 'Narcissus hike' },
+          { src: require('@/assets/images/rochers_de_naye.png'), label: 'Rochers de Naye' },
+          { src: require('@/assets/images/narcissus.png'), label: 'Narcissus fields in May' },
+          { src: require('@/assets/images/boat.png'), label: 'Lake Geneva boat ride' },
+        ].map((photo, i) => (
+          <View key={i} style={styles.photoWrapper}>
+            <Image source={photo.src} style={styles.photoItem} resizeMode="cover" />
+            <Text style={styles.photoLabel}>{photo.label}</Text>
+          </View>
+        ))}
+      </ScrollView>
 
       {/* Filter pills */}
       <ScrollView
@@ -215,11 +255,34 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { paddingBottom: Spacing.xxl },
 
+  photoStrip: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  photoWrapper: {
+    width: 220,
+  },
+  photoItem: {
+    width: 220,
+    height: 160,
+    borderRadius: Radius.md,
+    overflow: 'hidden',
+  },
+  photoLabel: {
+    fontFamily: Fonts.sans,
+    fontSize: 11,
+    color: Colors.textSecondary,
+    letterSpacing: 0.2,
+    marginTop: Spacing.xs,
+    textAlign: 'center',
+  },
+
   pageHeader: {
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.lg,
-    paddingBottom: Spacing.xl,
+    paddingBottom: Spacing.md,
   },
   pageTitle: {
     fontSize: 34,
@@ -286,23 +349,23 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
 
-  subsectionBlock: { marginBottom: Spacing.xs },
+  subsectionBlock: { marginBottom: Spacing.sm },
   subsectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Spacing.xs,
-    marginTop: Spacing.md,
-  },
-  subsectionEmoji: {
-    fontSize: 15,
-    marginRight: Spacing.xs,
+    justifyContent: 'space-between',
+    backgroundColor: Colors.white,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+    marginBottom: Spacing.sm,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    ...Shadow.small,
   },
   subsectionTitle: {
-    fontSize: 11,
-    fontFamily: Fonts.sansMedium,
-    color: Colors.textSecondary,
-    letterSpacing: 1.5,
-    textTransform: 'uppercase',
+    fontSize: 15,
+    fontFamily: Fonts.serifMedium,
+    color: Colors.textPrimary,
   },
 
   itemCard: {

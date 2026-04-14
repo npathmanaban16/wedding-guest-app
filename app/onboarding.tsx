@@ -15,7 +15,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
-import { getMyInfo, saveMyInfo, markOnboardingDone } from '@/services/storage';
+import { getMyInfo, saveMyInfo } from '@/services/storage';
 import { HotelPickerField } from '@/components/HotelPickerField';
 import { DateField } from '@/components/DateField';
 
@@ -98,7 +98,7 @@ export default function OnboardingScreen() {
     } catch {
       // silently continue — data will be editable from My Details
     }
-    await markOnboardingDone(guestName);
+    skipOnboarding(); // marks session as done so confirm doesn't loop this session
     router.replace('/(tabs)');
   };
 

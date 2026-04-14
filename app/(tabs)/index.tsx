@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Linking,
+  ImageBackground,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -69,27 +70,34 @@ export default function HomeScreen() {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.lg }]}
+      contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.greeting}>Welcome, {firstName}</Text>
-        <Text style={styles.coupleNames}>{WEDDING.coupleNames}</Text>
-        <View style={styles.ornamentRow}>
-          <View style={styles.ornamentLine} />
-          <Text style={styles.ornamentDiamond}>◆</Text>
-          <View style={styles.ornamentLine} />
+      {/* Hero header */}
+      <ImageBackground
+        source={require('@/assets/images/montreux.png')}
+        style={[styles.heroImage, { paddingTop: insets.top + Spacing.xl }]}
+        resizeMode="cover"
+      >
+        <View style={styles.heroOverlay} />
+        <View style={styles.header}>
+          <Text style={styles.heroGreeting}>Welcome, {firstName}</Text>
+          <Text style={styles.heroCoupleNames}>{WEDDING.coupleNames}</Text>
+          <View style={styles.ornamentRow}>
+            <View style={styles.heroOrnamentLine} />
+            <Text style={styles.heroOrnamentDiamond}>◆</Text>
+            <View style={styles.heroOrnamentLine} />
+          </View>
+          <Text style={styles.heroLocation}>
+            {WEDDING.location.toUpperCase()}
+          </Text>
         </View>
-        <Text style={styles.locationText}>
-          {WEDDING.location.toUpperCase()}
-        </Text>
-      </View>
+      </ImageBackground>
 
       {/* Countdown */}
       <View style={styles.countdownCard}>
         {countdown.isPast ? (
-          <Text style={styles.countdownPast}>The big day is here! 🎉</Text>
+          <Text style={styles.countdownPast}>The big day is here!</Text>
         ) : (
           <>
             <Text style={styles.countdownHeading}>until the wedding</Text>
@@ -179,22 +187,32 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { paddingBottom: 40 },
 
+  heroImage: {
+    width: '100%',
+    height: 380,
+    justifyContent: 'flex-end',
+    marginBottom: Spacing.lg,
+  },
+  heroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.28)',
+  },
   header: {
     alignItems: 'center',
     paddingHorizontal: Spacing.xl,
     paddingBottom: Spacing.xl,
   },
-  greeting: {
+  heroGreeting: {
     fontFamily: Fonts.sans,
     fontSize: Typography.sm,
-    color: Colors.textMuted,
+    color: 'rgba(255,255,255,0.75)',
     marginBottom: Spacing.sm,
     letterSpacing: 0.3,
   },
-  coupleNames: {
+  heroCoupleNames: {
     fontFamily: Fonts.serif,
     fontSize: 54,
-    color: Colors.textPrimary,
+    color: Colors.white,
     textAlign: 'center',
     lineHeight: 58,
     marginBottom: Spacing.md,
@@ -205,13 +223,13 @@ const styles = StyleSheet.create({
     width: '50%',
     marginBottom: Spacing.sm,
   },
-  ornamentLine: { flex: 1, height: 0.5, backgroundColor: Colors.primaryLight },
-  ornamentDiamond: { color: Colors.primaryLight, fontSize: 9, marginHorizontal: Spacing.sm },
-  locationText: {
+  heroOrnamentLine: { flex: 1, height: 0.5, backgroundColor: 'rgba(255,255,255,0.4)' },
+  heroOrnamentDiamond: { color: 'rgba(255,255,255,0.6)', fontSize: 9, marginHorizontal: Spacing.sm },
+  heroLocation: {
     fontFamily: Fonts.sansMedium,
     fontSize: Typography.xs,
     letterSpacing: 2.5,
-    color: Colors.textMuted,
+    color: 'rgba(255,255,255,0.7)',
   },
 
   countdownCard: {

@@ -8,12 +8,16 @@
       "distribution": "store",
       "channel": "preview",
       "ios": {
-        "simulator": false
+        "simulator": false,
+        "image": "sdk-54"
       }
     },
     "production": {
       "channel": "production",
-      "autoIncrement": true
+      "autoIncrement": true,
+      "ios": {
+        "image": "sdk-54"
+      }
     }
   },
   "submit": {

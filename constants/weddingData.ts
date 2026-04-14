@@ -195,6 +195,7 @@ export interface GuideSubsection {
   id: string;
   title: string;
   emoji: string;
+  category?: string;
   items: GuideItem[];
 }
 
@@ -241,17 +242,6 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
           "It's approximately a 1 hour drive from Geneva Airport to Montreux, following the A1 and A9 highways along the lake. Rental cars are available at the airport. Uber also operates in Geneva and Montreux if you'd prefer not to drive.",
         tip: "Uber is usually cheaper than traditional taxis from the airport.",
       },
-      {
-        id: "by-boat",
-        name: "By Boat",
-        category: "Transport",
-        description:
-          "For a more scenic route, travel to or from Montreux by boat. The CGN (Compagnie Générale de Navigation) offers elegant cruises on Lake Geneva with a stop in Montreux — a beautiful way to arrive.",
-        tip: "Perfect for a leisurely day trip or a memorable arrival on the lake.",
-        links: [
-          { label: "CGN Lake Geneva cruises", url: "https://www.cgn.ch/en/" },
-        ],
-      },
     ],
   },
   {
@@ -286,11 +276,12 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         id: "walks-hikes",
         title: "Walks & Hikes",
         emoji: "🥾",
+        category: "Sightseeing",
         items: [
           {
             id: "lake-promenade",
             name: "Montreux Riviera Promenade",
-            category: "Activity",
+            category: "Sightseeing",
             description:
               "Just steps from the Fairmont, this lakeside path is lined with vibrant flowers and palm trees, offering sweeping views of Lake Geneva and the Alps. Stretches several kilometres from Clarens to Villeneuve — perfect for a morning jog, leisurely walk, or sunset stroll. The famous Freddie Mercury statue is along the way.",
             tip: "May is peak blooming season — perfect for photos with the Alps reflecting on the lake.",
@@ -298,7 +289,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
           {
             id: "rochers-de-naye",
             name: "Rochers de Naye",
-            category: "Activity",
+            category: "Sightseeing",
             description:
               "Take the cogwheel train from Montreux station up to 2,042m for panoramic views over Lake Geneva and the Alps. At the top you'll find hiking trails, alpine gardens, and marmots!",
             tip: "Sit on the right side going up for the best lake views. About 55 minutes from Montreux.",
@@ -306,7 +297,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
           {
             id: "narcissus-hikes",
             name: "Narcissus Hikes",
-            category: "Activity",
+            category: "Sightseeing",
             description:
               "From late May to early June, the hills above Montreux are blanketed in blooming narcissus flowers — a local phenomenon known as \"May Snow.\" Beautiful trails at Les Pléiades and Les Avants offer some of the best views of this fleeting sight.",
             tip: "Trail conditions vary — ask the Fairmont concierge for up-to-date route recommendations.",
@@ -314,7 +305,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
           {
             id: "glacier-3000",
             name: "Glacier 3000",
-            category: "Activity",
+            category: "Sightseeing",
             description:
               "Head to Glacier 3000 near Les Diablerets — about 1.5 hours from Montreux. Reachable by cable car, with spectacular views of Mont Blanc and the Matterhorn, year-round snow, and the Peak Walk by Tissot — the world's first suspension bridge connecting two mountain peaks.",
             tip: "Dress warmly even in summer. Short hikes and snow activities available year-round.",
@@ -325,13 +316,14 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         id: "castles",
         title: "Castles",
         emoji: "🏰",
+        category: "Sightseeing",
         items: [
           {
             id: "chillon",
             name: "Château de Chillon",
             category: "Sightseeing",
             description:
-              "Switzerland's most visited castle, right on the edge of Lake Geneva. Medieval architecture, historic rooms, dungeons, and picturesque courtyards — immortalised by Lord Byron.\n\n🚶 Walk: ~45 min from the Fairmont along the promenade\n🚆 Train: Montreux → Veytaux-Chillon (2 min, ~15 min total)\n🕘 Daily 9am–7pm (last entry 6pm) · 🎟 CHF 13",
+              "Switzerland's most visited castle, right on the edge of Lake Geneva. Medieval architecture, historic rooms, dungeons, and picturesque courtyards — immortalised by Lord Byron.\n\nWalk: ~45 min from the Fairmont along the promenade\nTrain: Montreux → Veytaux-Chillon (2 min, ~15 min total)\nOpen daily 9am–7pm (last entry 6pm) · CHF 13",
             links: [
               { label: "Château de Chillon", url: "https://www.chillon.ch/" },
             ],
@@ -341,7 +333,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             name: "Château d'Aigle",
             category: "Sightseeing",
             description:
-              "A medieval castle housing a fascinating wine museum — a great pairing with a Lavaux wine tour.\n\n🚆 Train: Montreux → Aigle (10 min, ~30 min total)\n🕘 Tue–Sun 10am–5pm, closed Mon · 🎟 CHF 12",
+              "A medieval castle housing a fascinating wine museum — a great pairing with a Lavaux wine tour.\n\nTrain: Montreux → Aigle (10 min, ~30 min total)\nTue–Sun 10am–5pm, closed Mon · CHF 12",
             links: [
               { label: "Château d'Aigle", url: "https://www.chateau-aigle.ch/" },
             ],
@@ -352,11 +344,12 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         id: "lavaux",
         title: "Lavaux & Wine",
         emoji: "🍇",
+        category: "Sightseeing",
         items: [
           {
             id: "lavaux-vineyards",
             name: "Lavaux Vineyards (UNESCO)",
-            category: "Activity",
+            category: "Sightseeing",
             description:
               "Terraced vineyards along the hillsides above Lake Geneva — a UNESCO World Heritage Site. Accessible by train, car, or on foot between the villages of Cully, Epesses, and Saint-Saphorin.",
             tip: "Hop aboard the Lavaux Express or Lavaux Panoramic — tourist trains winding through the vineyards with stops for tastings.",
@@ -364,7 +357,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
           {
             id: "lavaux-wine",
             name: "Wine Tasting",
-            category: "Activity",
+            category: "Sightseeing",
             description:
               "Family-run domaines specialising in Chasselas — a crisp, mineral-rich white wine native to the area. Most require reservations, especially on weekends.",
             tip: "Book ahead — same-day tastings are rarely available at the best estates.",
@@ -379,27 +372,20 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         ],
       },
       {
-        id: "more-to-explore",
-        title: "More to Explore",
+        id: "more-activities",
+        title: "More Activities",
         emoji: "✨",
+        category: "Activity",
         items: [
           {
-            id: "lausanne",
-            name: "Day Trip to Lausanne",
-            category: "Sightseeing",
-            description:
-              "A vibrant Swiss city just 30 minutes by train. Highlights: Gothic cathedral, Olympic Museum, the charming Old Town, and the lakefront at Ouchy.",
-            tip: "The Olympic Museum is world-class and right on the lake — worth a few hours.",
-          },
-          {
-            id: "golden-pass",
-            name: "GoldenPass Panoramic Train",
+            id: "by-boat",
+            name: "Lake Geneva by Boat",
             category: "Activity",
             description:
-              "One of Switzerland's most iconic train journeys — starting in Montreux and winding through the Alps toward Gstaad. Panoramic windows and plush seating with breathtaking mountain views.",
-            tip: "Book panoramic seats in advance. The stretch from Montreux to Zweisimmen is especially dramatic.",
+              "The CGN (Compagnie Générale de Navigation) offers elegant cruises on Lake Geneva with a stop in Montreux — a beautiful way to spend an afternoon.",
+            tip: "Perfect for a leisurely day trip or a memorable arrival on the lake.",
             links: [
-              { label: "Book on SBB", url: "https://www.sbb.ch/en" },
+              { label: "CGN Lake Geneva cruises", url: "https://www.cgn.ch/en/" },
             ],
           },
           {
@@ -407,7 +393,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             name: "Montreux Tennis Club",
             category: "Activity",
             description:
-              "Outdoor red clay courts with lake views, open to visitors of all levels.\n\n🎾 Court rental: CHF 60/hr · Coaching: CHF 100/hr\n🚶 30 min walk along the promenade · 🚆 Montreux → Territet (2 min)",
+              "Outdoor red clay courts with lake views, open to visitors of all levels.\n\nCourt rental: CHF 60/hr · Coaching: CHF 100/hr\n30 min walk along the promenade · Train: Montreux → Territet (2 min)",
             links: [
               { label: "Montreux Tennis Club", url: "https://montreux-tennis-club.ch/" },
             ],
@@ -433,6 +419,33 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
           },
         ],
       },
+      {
+        id: "beyond-montreux",
+        title: "Beyond Montreux",
+        emoji: "🗺️",
+        category: "Sightseeing",
+        items: [
+          {
+            id: "lausanne",
+            name: "Day Trip to Lausanne",
+            category: "Sightseeing",
+            description:
+              "A vibrant Swiss city just 30 minutes by train. Highlights: Gothic cathedral, Olympic Museum, the charming Old Town, and the lakefront at Ouchy.",
+            tip: "The Olympic Museum is world-class and right on the lake — worth a few hours.",
+          },
+          {
+            id: "golden-pass",
+            name: "GoldenPass Panoramic Train",
+            category: "Sightseeing",
+            description:
+              "One of Switzerland's most iconic train journeys — starting in Montreux and winding through the Alps toward Gstaad. Panoramic windows and plush seating with breathtaking mountain views.",
+            tip: "Book panoramic seats in advance. The stretch from Montreux to Zweisimmen is especially dramatic.",
+            links: [
+              { label: "Book on SBB", url: "https://www.sbb.ch/en" },
+            ],
+          },
+        ],
+      },
     ],
   },
   {
@@ -454,13 +467,6 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         description:
           "A traditional Swiss confectionery and café — perfect for breakfast pastries, hot chocolate, and handmade chocolates to take home.",
         tip: "Pick up a box of Swiss chocolates as a souvenir — made in-house.",
-      },
-      {
-        id: "la-palmeraie",
-        name: "La Palmeraie — Breakfast",
-        category: "Restaurant",
-        description:
-          "Breakfast buffet included with your Fairmont room. Fresh, seasonal dishes in a bright, airy setting — a lovely way to start the day.",
       },
       {
         id: "montreux-jazz-cafe",
@@ -491,14 +497,6 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         description:
           "A charming local favourite right on the lakeside — known for fresh seafood and Swiss specialities with beautiful lake views.",
         tip: "Perch (perche) from Lake Geneva is a local speciality — try the classic meunière style.",
-      },
-      {
-        id: "baron-tavernier",
-        name: "Le Baron Tavernier",
-        category: "Restaurant",
-        description:
-          "A beautiful estate restaurant in the Lavaux vineyards — this is where the Rehearsal Dinner is being held! The estate also offers wine tasting.",
-        tip: "The local Chasselas white wine from the Lavaux region is exceptional.",
       },
       {
         id: "lausanne-dining",
@@ -537,7 +535,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         name: "Weather in May",
         category: "Practical",
         description:
-          "May in Montreux is beautiful spring weather: 15–22°C on warm days. Expect occasional rain — pack a light waterproof jacket. The lake acts as a heat buffer making it milder than inland.",
+          "May in Montreux is beautiful spring weather: 59–72°F on warm days. Expect occasional rain — pack a light waterproof jacket. The lake acts as a heat buffer making it milder than inland.",
         tip: "May is peak blooming season — the lake promenade will be stunning with roses and flowers.",
       },
       {
