@@ -17,9 +17,9 @@ if (Platform.OS === 'android') {
 }
 
 const VENUES = [
-  { n: 1, event: 'Sangeet',   room: 'La Coupole & Terrasse du Petit Palais', when: 'Fri 22 May · 6:30 PM', color: '#B81D56', left: '70%', top: '62%' },
-  { n: 2, event: 'Ceremony',  room: 'Garden', when: 'Sat 23 May · 5:00 PM', color: '#4A7040', left: '18%', top: '68%' },
-  { n: 3, event: 'Reception', room: 'Salle des Fêtes', when: 'Sat 23 May · 7:30 PM', color: Colors.primary, left: '52%', top: '27%' },
+  { n: 1, event: 'Sangeet',   room: 'La Coupole & Terrasse du Petit Palais', when: 'Fri 22 May · 6:30 PM', color: '#B81D56', left: '70%', top: '57%' },
+  { n: 2, event: 'Ceremony',  room: 'Garden', when: 'Sat 23 May · 5:00 PM', color: '#4A7040', left: '17%', top: '65%' },
+  { n: 3, event: 'Reception', room: 'Salle des Fêtes', when: 'Sat 23 May · 7:30 PM', color: Colors.primary, left: '55%', top: '28%' },
 ];
 
 export function FairmontMap() {
@@ -125,11 +125,12 @@ const s = StyleSheet.create({
     padding: Spacing.md,
   },
   imageWrapper: {
+    width: '100%',
     position: 'relative',
   },
   image: {
     width: '100%',
-    aspectRatio: 0.77, // portrait: ~490 wide × ~640 tall
+    aspectRatio: 888 / 1016, // actual image pixel dimensions
   },
   pin: {
     position: 'absolute',
