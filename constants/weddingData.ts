@@ -242,17 +242,6 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
           "It's approximately a 1 hour drive from Geneva Airport to Montreux, following the A1 and A9 highways along the lake. Rental cars are available at the airport. Uber also operates in Geneva and Montreux if you'd prefer not to drive.",
         tip: "Uber is usually cheaper than traditional taxis from the airport.",
       },
-      {
-        id: "by-boat",
-        name: "By Boat",
-        category: "Transport",
-        description:
-          "For a more scenic route, travel to or from Montreux by boat. The CGN (Compagnie Générale de Navigation) offers elegant cruises on Lake Geneva with a stop in Montreux — a beautiful way to arrive.",
-        tip: "Perfect for a leisurely day trip or a memorable arrival on the lake.",
-        links: [
-          { label: "CGN Lake Geneva cruises", url: "https://www.cgn.ch/en/" },
-        ],
-      },
     ],
   },
   {
@@ -388,6 +377,17 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         emoji: "✨",
         category: "Activity",
         items: [
+          {
+            id: "by-boat",
+            name: "Lake Geneva by Boat",
+            category: "Activity",
+            description:
+              "The CGN (Compagnie Générale de Navigation) offers elegant cruises on Lake Geneva with a stop in Montreux — a beautiful way to spend an afternoon.",
+            tip: "Perfect for a leisurely day trip or a memorable arrival on the lake.",
+            links: [
+              { label: "CGN Lake Geneva cruises", url: "https://www.cgn.ch/en/" },
+            ],
+          },
           {
             id: "tennis",
             name: "Montreux Tennis Club",
