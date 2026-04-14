@@ -13,7 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
-import { SWITZERLAND_GUIDE, GuideSection, GuideItem } from '@/constants/weddingData';
+import { SWITZERLAND_GUIDE, GuideSection, GuideItem, GuideLink } from '@/constants/weddingData';
 
 if (Platform.OS === 'android') {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
@@ -61,6 +61,16 @@ function GuideItemCard({ item }: { item: GuideItem }) {
               <Text style={styles.linkText}>Open in browser</Text>
               <Ionicons name="arrow-forward" size={13} color={Colors.primary} />
             </TouchableOpacity>
+          )}
+          {item.links && item.links.length > 0 && (
+            <View style={styles.linksContainer}>
+              {item.links.map((l: GuideLink) => (
+                <TouchableOpacity key={l.url} onPress={() => Linking.openURL(l.url)} style={styles.linkButton}>
+                  <Text style={styles.linkText}>{l.label}</Text>
+                  <Ionicons name="arrow-forward" size={13} color={Colors.primary} />
+                </TouchableOpacity>
+              ))}
+            </View>
           )}
         </View>
       )}
@@ -305,6 +315,9 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     lineHeight: 20,
     fontStyle: 'italic',
+  },
+  linksContainer: {
+    gap: 8,
   },
   linkButton: {
     flexDirection: 'row',

@@ -176,6 +176,11 @@ export const EVENTS: WeddingEvent[] = [
 // SWITZERLAND GUIDE — Montreux
 // ============================================================
 
+export interface GuideLink {
+  label: string;
+  url: string;
+}
+
 export interface GuideItem {
   id: string;
   name: string;
@@ -183,6 +188,7 @@ export interface GuideItem {
   category: string;
   tip?: string;
   link?: string;
+  links?: GuideLink[];
 }
 
 export interface GuideSection {
@@ -220,8 +226,12 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         category: "Transport",
         description:
           "Trains run several times every hour from Geneva Airport directly to Montreux. Journey time is about 1 hour. The Fairmont Le Montreux Palace is a 5-minute walk from Montreux train station.",
-        tip: "Book tickets at sbb.ch or download the SBB Mobile app for easy booking and real-time timetables. A Swiss Travel Pass gives unlimited train travel — great value if you're exploring Switzerland before or after the wedding.",
-        link: "https://www.sbb.ch/en",
+        tip: "Book tickets in advance or use the SBB Mobile app for easy booking and real-time timetables. A Swiss Travel Pass gives unlimited train travel — great value if you're exploring Switzerland before or after the wedding.",
+        links: [
+          { label: "SBB website", url: "https://www.sbb.ch/en" },
+          { label: "SBB app — iOS", url: "https://apps.apple.com/us/app/sbb-mobile/id294855237" },
+          { label: "SBB app — Android", url: "https://play.google.com/store/apps/details?id=ch.sbb.mobile.android.b2c&feature=search_result&hl=en&pli=1" },
+        ],
       },
       {
         id: "taxi-uber",
