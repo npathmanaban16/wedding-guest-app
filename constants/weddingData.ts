@@ -469,13 +469,6 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         tip: "Pick up a box of Swiss chocolates as a souvenir — made in-house.",
       },
       {
-        id: "la-palmeraie",
-        name: "La Palmeraie — Breakfast",
-        category: "Restaurant",
-        description:
-          "Breakfast buffet included with your Fairmont room. Fresh, seasonal dishes in a bright, airy setting — a lovely way to start the day.",
-      },
-      {
         id: "montreux-jazz-cafe",
         name: "Montreux Jazz Café",
         category: "Restaurant",
