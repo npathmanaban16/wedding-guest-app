@@ -3,6 +3,12 @@
     "name": "Neha & Naveen",
     "slug": "wedding-guest-app",
     "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/FILL_IN_PROJECT_ID"
+    },
     "orientation": "portrait",
     "scheme": "wedding-guest-app",
     "userInterfaceStyle": "light",
