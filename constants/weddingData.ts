@@ -591,7 +591,7 @@ export interface PackingItem {
 export const PACKING_GUIDE: PackingCategory[] = [
   {
     id: "outfits",
-    title: "Outfits for Each Event",
+    title: "Outfits",
     emoji: "👗",
     items: [
       {
@@ -604,6 +604,13 @@ export const PACKING_GUIDE: PackingCategory[] = [
         id: "sangeet-outfit",
         label: "Sangeet — Festive Indian or semi-formal Western",
         tip: "Bright jewel tones and festive hues! Think vibrant lehenga, saree, salwar kameez, sherwani, or a colourful cocktail dress. This is the big dancing night — dress to impress!",
+        gender: 'female',
+      },
+      {
+        id: "sangeet-outfit-male",
+        label: "Sangeet — Festive Indian or semi-formal Western",
+        tip: "Bright jewel tones and festive hues! Think sherwani, kurta, or smart semi-formal attire. This is the big dancing night — dress to impress!",
+        gender: 'male',
       },
       {
         id: "ceremony-outfit",
@@ -614,7 +621,7 @@ export const PACKING_GUIDE: PackingCategory[] = [
       {
         id: "ceremony-outfit-male",
         label: "Ceremony & Reception — Tuxedo or Black Suit",
-        tip: "Black-tie dress code applies. Please avoid white, ivory, and cream.",
+        tip: "Black-tie dress code applies.",
         gender: 'male',
       },
       {
@@ -634,6 +641,20 @@ export const PACKING_GUIDE: PackingCategory[] = [
     emoji: "👠",
     items: [
       {
+        id: "shoes-mehendi-male",
+        label: "Shoes for Rehearsal Dinner",
+        tip: "Le Baron Tavernier is a vineyard estate — you may be on terraced outdoor terrain.",
+        weddingPartyOnly: true,
+        gender: 'male',
+      },
+      {
+        id: "flats-mehendi",
+        label: "Flats or comfortable shoes for Rehearsal Dinner",
+        tip: "Le Baron Tavernier is a vineyard estate — you may be on terraced outdoor terrain.",
+        weddingPartyOnly: true,
+        gender: 'female',
+      },
+      {
         id: "heels-events",
         label: "Heels for Sangeet, Ceremony & Reception",
         tip: "All three main events are indoors at the Fairmont — heels are fine. Block heels or kitten heels are great for dancing at the Sangeet.",
@@ -641,8 +662,7 @@ export const PACKING_GUIDE: PackingCategory[] = [
       },
       {
         id: "shoes-sangeet-male",
-        label: "Shoes for Sangeet",
-        tip: "If you're wearing a sherwani, juttis or mojaris are a great touch. Otherwise loafers or polished leather work well.",
+        label: "Comfortable shoes for a night of dancing",
         gender: 'male',
       },
       {
@@ -654,20 +674,6 @@ export const PACKING_GUIDE: PackingCategory[] = [
       {
         id: "socks",
         label: "Socks",
-        gender: 'male',
-      },
-      {
-        id: "flats-mehendi",
-        label: "Flats or comfortable shoes for Rehearsal Dinner",
-        tip: "Le Baron Tavernier is a vineyard estate — you may be on terraced outdoor terrain.",
-        weddingPartyOnly: true,
-        gender: 'female',
-      },
-      {
-        id: "shoes-mehendi-male",
-        label: "Shoes for Rehearsal Dinner",
-        tip: "Le Baron Tavernier is a vineyard estate — you may be on terraced outdoor terrain.",
-        weddingPartyOnly: true,
         gender: 'male',
       },
       {
@@ -707,7 +713,7 @@ export const PACKING_GUIDE: PackingCategory[] = [
       },
       {
         id: "sunscreen",
-        label: "Sunscreen (SPF 30+)",
+        label: "Sunscreen",
         tip: "Especially if you're heading up to Rochers de Naye.",
       },
       {
@@ -757,6 +763,11 @@ export const PACKING_GUIDE: PackingCategory[] = [
         gender: 'female',
       },
       {
+        id: "belt",
+        label: "Belt",
+        gender: 'male',
+      },
+      {
         id: "bow-tie",
         label: "Bow tie",
         gender: 'male',
@@ -804,7 +815,7 @@ export const PACKING_GUIDE: PackingCategory[] = [
       },
       {
         id: "shaving-kit",
-        label: "Shaving kit / beard trimmer",
+        label: "Shaving kit",
         tip: "Pack charging cables — Swiss plugs are Type J and may need an adaptor.",
         gender: 'male',
       },
