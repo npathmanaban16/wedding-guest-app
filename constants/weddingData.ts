@@ -723,7 +723,7 @@ export const PACKING_GUIDE: PackingCategory[] = [
       },
       {
         id: "swimsuit",
-        label: "Swimsuit for hotel pools / hot tubs",
+        label: "Swimsuit for hotel pools and hot tubs",
         gender: 'female',
       },
     ],
