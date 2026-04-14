@@ -23,9 +23,11 @@ const IMG_H = 1016;
 // Pin positions as fractions of image dimensions (0–1).
 // px = left fraction, py = top fraction.
 const VENUES = [
-  { n: 1, event: 'Sangeet',   room: 'La Coupole & Terrasse du Petit Palais', when: 'Fri 22 May · 6:30 PM', color: '#B81D56', px: 0.70, py: 0.57 },
-  { n: 2, event: 'Ceremony',  room: 'Garden',                                when: 'Sat 23 May · 5:00 PM', color: '#4A7040', px: 0.17, py: 0.65 },
-  { n: 3, event: 'Reception', room: 'Salle des Fêtes',                       when: 'Sat 23 May · 7:30 PM', color: Colors.primary, px: 0.55, py: 0.28 },
+  // px/py = fraction of image width/height (888×1016)
+  // Positioned to avoid covering room-label text
+  { n: 1, event: 'Sangeet',   room: 'La Coupole & Terrasse du Petit Palais', when: 'Fri 22 May · 6:30 PM', color: '#B81D56', px: 0.72, py: 0.61 }, // upper-right of La Coupole
+  { n: 2, event: 'Ceremony',  room: 'Garden',                                when: 'Sat 23 May · 5:00 PM', color: '#4A7040', px: 0.21, py: 0.63 }, // upper portion of Garden, above label
+  { n: 3, event: 'Reception', room: 'Salle des Fêtes',                       when: 'Sat 23 May · 7:30 PM', color: Colors.primary, px: 0.45, py: 0.29 }, // upper area of Salles des Fêtes
 ];
 
 const PIN_R = 11; // pin radius (px)
