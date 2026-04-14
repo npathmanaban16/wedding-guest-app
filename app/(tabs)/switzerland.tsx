@@ -184,9 +184,10 @@ export default function SwitzerlandScreen() {
           { src: require('@/assets/images/boat.png'), label: 'Lake Geneva' },
         ].map((photo, i) => (
           <View key={i} style={styles.photoItem}>
-            <Image source={photo.src} style={StyleSheet.absoluteFill} resizeMode="cover" />
-            <View style={styles.photoLabelBg} />
-            <Text style={styles.photoLabel}>{photo.label}</Text>
+            <Image source={photo.src} style={styles.photoImage} resizeMode="contain" />
+            <View style={styles.photoLabelRow}>
+              <Text style={styles.photoLabel}>{photo.label}</Text>
+            </View>
           </View>
         ))}
       </ScrollView>
@@ -262,24 +263,24 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   photoItem: {
-    width: 220,
-    height: 160,
+    width: 180,
     borderRadius: Radius.md,
     overflow: 'hidden',
-    justifyContent: 'flex-end',
+    backgroundColor: Colors.surfaceWarm,
   },
-  photoLabelBg: {
-    ...StyleSheet.absoluteFillObject,
-    top: '50%',
-    backgroundColor: 'rgba(0,0,0,0.35)',
+  photoImage: {
+    width: 180,
+    height: 180,
+  },
+  photoLabelRow: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
   },
   photoLabel: {
-    color: '#fff',
-    fontFamily: Fonts.sansMedium,
+    fontFamily: Fonts.sans,
     fontSize: 11,
-    letterSpacing: 0.4,
-    paddingHorizontal: Spacing.sm,
-    paddingBottom: Spacing.sm,
+    color: Colors.textSecondary,
+    letterSpacing: 0.2,
   },
 
   pageHeader: {
