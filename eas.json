@@ -9,14 +9,14 @@
       "channel": "preview",
       "ios": {
         "simulator": false,
-        "image": "macos-15-xcode-16"
+        "image": "sdk-54"
       }
     },
     "production": {
       "channel": "production",
       "autoIncrement": true,
       "ios": {
-        "image": "macos-15-xcode-16"
+        "image": "sdk-54"
       }
     }
   },
