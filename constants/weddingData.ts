@@ -499,14 +499,6 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         tip: "Perch (perche) from Lake Geneva is a local speciality — try the classic meunière style.",
       },
       {
-        id: "baron-tavernier",
-        name: "Le Baron Tavernier",
-        category: "Restaurant",
-        description:
-          "A beautiful estate restaurant in the Lavaux vineyards — this is where the Rehearsal Dinner is being held! The estate also offers wine tasting.",
-        tip: "The local Chasselas white wine from the Lavaux region is exceptional.",
-      },
-      {
         id: "lausanne-dining",
         name: "Michelin Dining in Lausanne",
         category: "Restaurant",
