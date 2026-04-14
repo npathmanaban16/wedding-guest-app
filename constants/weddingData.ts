@@ -344,6 +344,50 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
     ],
   },
   {
+    id: "fairmont",
+    title: "Fairmont Le Montreux Palace",
+    emoji: "🏨",
+    items: [
+      {
+        id: "fairmont-pools",
+        name: "Pools & Hot Tub",
+        category: "Practical",
+        description:
+          "The Fairmont has both an outdoor pool and a heated indoor pool, plus a hot tub — all with panoramic views of the surrounding mountains.",
+        tip: "Located on floor -1. A perfect way to unwind between wedding events.",
+      },
+      {
+        id: "fairmont-spa",
+        name: "Spa & Gym",
+        category: "Practical",
+        description:
+          "Relax and rejuvenate with access to a sauna, steam room, jacuzzi, spa treatments, and a fully equipped gym that also offers fitness classes.",
+        tip: "Book spa treatments in advance — they fill up quickly, especially during busy periods.",
+        links: [
+          { label: "Fairmont Wellness", url: "https://www.fairmont.com/en/hotels/montreux/fairmont-le-montreux-palace/wellness.html" },
+        ],
+      },
+      {
+        id: "funky-claudes",
+        name: "Funky Claude's Bar",
+        category: "Bar",
+        description:
+          "Savour cocktails and catch live music in a cosy atmosphere at this lively bar, situated at the back of the Montreux Jazz Café on the ground floor.",
+        tip: "Named after legendary Montreux Jazz Festival founder Claude Nobs — a Montreux icon.",
+      },
+      {
+        id: "fairmont-dining-amenity",
+        name: "Dining",
+        category: "Restaurant",
+        description:
+          "The Fairmont has several dining options on site. Ask the concierge for personalised dining, sightseeing, and activity recommendations to make the most of your stay.",
+        links: [
+          { label: "View all dining options", url: "https://www.fairmont.com/en/hotels/montreux/fairmont-le-montreux-palace/dining.html" },
+        ],
+      },
+    ],
+  },
+  {
     id: "restaurants",
     title: "Eating & Drinking",
     emoji: "🍷",
@@ -355,14 +399,6 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         description:
           "A beautiful estate restaurant in the Lavaux vineyards — this is where the Rehearsal Dinner is being held! The estate also offers wine tasting.",
         tip: "The local Chasselas white wine from the Lavaux region is exceptional.",
-      },
-      {
-        id: "fairmont-dining",
-        name: "Fairmont Le Montreux Palace",
-        category: "Restaurant",
-        description:
-          "The hotel has several dining options: Funky Claude's Bar (Japanese fusion), Le Deck (brasserie with lake views), and afternoon tea in the Salon.",
-        tip: "Funky Claude's Bar is a great spot for pre-dinner drinks — named after legendary Montreux Jazz Festival founder Claude Nobs.",
       },
       {
         id: "la-rouvenaz",
