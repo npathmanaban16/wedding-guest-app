@@ -9,6 +9,7 @@ import {
   Platform,
   UIManager,
   Linking,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -168,6 +169,24 @@ export default function SwitzerlandScreen() {
         </Text>
       </View>
 
+      {/* Photo strip */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.photoStrip}
+      >
+        {[
+          require('../../assets/images/promenade.PNG'),
+          require('../../assets/images/lauvaux.PNG'),
+          require('../../assets/images/narcissus_hike.PNG'),
+          require('../../assets/images/rochers_de_naye.PNG'),
+          require('../../assets/images/narcissus.PNG'),
+          require('../../assets/images/boat.PNG'),
+        ].map((src, i) => (
+          <Image key={i} source={src} style={styles.photoItem} resizeMode="cover" />
+        ))}
+      </ScrollView>
+
       {/* Filter pills */}
       <ScrollView
         horizontal
@@ -233,11 +252,22 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { paddingBottom: Spacing.xxl },
 
+  photoStrip: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  photoItem: {
+    width: 220,
+    height: 160,
+    borderRadius: Radius.md,
+  },
+
   pageHeader: {
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.lg,
-    paddingBottom: Spacing.xl,
+    paddingBottom: Spacing.md,
   },
   pageTitle: {
     fontSize: 34,
