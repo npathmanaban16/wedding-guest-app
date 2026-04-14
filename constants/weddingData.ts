@@ -290,7 +290,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
           {
             id: "lake-promenade",
             name: "Montreux Riviera Promenade",
-            category: "Activity",
+            category: "Sightseeing",
             description:
               "Just steps from the Fairmont, this lakeside path is lined with vibrant flowers and palm trees, offering sweeping views of Lake Geneva and the Alps. Stretches several kilometres from Clarens to Villeneuve — perfect for a morning jog, leisurely walk, or sunset stroll. The famous Freddie Mercury statue is along the way.",
             tip: "May is peak blooming season — perfect for photos with the Alps reflecting on the lake.",
@@ -298,7 +298,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
           {
             id: "rochers-de-naye",
             name: "Rochers de Naye",
-            category: "Activity",
+            category: "Sightseeing",
             description:
               "Take the cogwheel train from Montreux station up to 2,042m for panoramic views over Lake Geneva and the Alps. At the top you'll find hiking trails, alpine gardens, and marmots!",
             tip: "Sit on the right side going up for the best lake views. About 55 minutes from Montreux.",
@@ -306,7 +306,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
           {
             id: "narcissus-hikes",
             name: "Narcissus Hikes",
-            category: "Activity",
+            category: "Sightseeing",
             description:
               "From late May to early June, the hills above Montreux are blanketed in blooming narcissus flowers — a local phenomenon known as \"May Snow.\" Beautiful trails at Les Pléiades and Les Avants offer some of the best views of this fleeting sight.",
             tip: "Trail conditions vary — ask the Fairmont concierge for up-to-date route recommendations.",
@@ -314,7 +314,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
           {
             id: "glacier-3000",
             name: "Glacier 3000",
-            category: "Activity",
+            category: "Sightseeing",
             description:
               "Head to Glacier 3000 near Les Diablerets — about 1.5 hours from Montreux. Reachable by cable car, with spectacular views of Mont Blanc and the Matterhorn, year-round snow, and the Peak Walk by Tissot — the world's first suspension bridge connecting two mountain peaks.",
             tip: "Dress warmly even in summer. Short hikes and snow activities available year-round.",
@@ -356,7 +356,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
           {
             id: "lavaux-vineyards",
             name: "Lavaux Vineyards (UNESCO)",
-            category: "Activity",
+            category: "Sightseeing",
             description:
               "Terraced vineyards along the hillsides above Lake Geneva — a UNESCO World Heritage Site. Accessible by train, car, or on foot between the villages of Cully, Epesses, and Saint-Saphorin.",
             tip: "Hop aboard the Lavaux Express or Lavaux Panoramic — tourist trains winding through the vineyards with stops for tastings.",
@@ -364,7 +364,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
           {
             id: "lavaux-wine",
             name: "Wine Tasting",
-            category: "Activity",
+            category: "Sightseeing",
             description:
               "Family-run domaines specialising in Chasselas — a crisp, mineral-rich white wine native to the area. Most require reservations, especially on weekends.",
             tip: "Book ahead — same-day tastings are rarely available at the best estates.",
