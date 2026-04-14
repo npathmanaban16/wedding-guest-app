@@ -16,14 +16,26 @@ if (Platform.OS === 'android') {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
 }
 
+// Image pixel dimensions (888 × 1016)
+const IMG_W = 888;
+const IMG_H = 1016;
+
+// Pin positions as fractions of image dimensions (0–1).
+// px = left fraction, py = top fraction.
 const VENUES = [
-  { n: 1, event: 'Sangeet',   room: 'La Coupole & Terrasse du Petit Palais', when: 'Fri 22 May · 6:30 PM', color: '#B81D56', left: '70%', top: '57%' },
-  { n: 2, event: 'Ceremony',  room: 'Garden', when: 'Sat 23 May · 5:00 PM', color: '#4A7040', left: '17%', top: '65%' },
-  { n: 3, event: 'Reception', room: 'Salle des Fêtes', when: 'Sat 23 May · 7:30 PM', color: Colors.primary, left: '55%', top: '28%' },
+  { n: 1, event: 'Sangeet',   room: 'La Coupole & Terrasse du Petit Palais', when: 'Fri 22 May · 6:30 PM', color: '#B81D56', px: 0.70, py: 0.57 },
+  { n: 2, event: 'Ceremony',  room: 'Garden',                                when: 'Sat 23 May · 5:00 PM', color: '#4A7040', px: 0.17, py: 0.65 },
+  { n: 3, event: 'Reception', room: 'Salle des Fêtes',                       when: 'Sat 23 May · 7:30 PM', color: Colors.primary, px: 0.55, py: 0.28 },
 ];
+
+const PIN_R = 11; // pin radius (px)
 
 export function FairmontMap() {
   const [open, setOpen] = useState(true);
+  // Measure the rendered width of the image wrapper so we can set explicit
+  // pixel dimensions on the Image — avoids percentage/aspectRatio sizing bugs.
+  const [imgW, setImgW] = useState(0);
+  const imgH = imgW > 0 ? Math.round(imgW * (IMG_H / IMG_W)) : 0;
 
   const toggle = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -45,20 +57,32 @@ export function FairmontMap() {
           <View style={s.divider} />
 
           <View style={s.imageContainer}>
-            <View style={s.imageWrapper}>
-              <Image
-                source={require('@/assets/images/fairmont_floor_plan.png')}
-                style={s.image}
-                resizeMode="contain"
-              />
-              {VENUES.map(v => (
-                <View
-                  key={v.n}
-                  style={[s.pin, { backgroundColor: v.color, left: v.left as any, top: v.top as any }]}
-                >
-                  <Text style={s.pinNum}>{v.n}</Text>
-                </View>
-              ))}
+            {/* onLayout gives us the true rendered width after padding */}
+            <View
+              style={s.imageWrapper}
+              onLayout={e => setImgW(Math.floor(e.nativeEvent.layout.width))}
+            >
+              {imgW > 0 && (
+                <>
+                  <Image
+                    source={require('@/assets/images/fairmont_floor_plan.png')}
+                    style={{ width: imgW, height: imgH }}
+                    resizeMode="stretch"
+                  />
+                  {VENUES.map(v => (
+                    <View
+                      key={v.n}
+                      style={[s.pin, {
+                        backgroundColor: v.color,
+                        left: imgW * v.px - PIN_R,
+                        top:  imgH * v.py - PIN_R,
+                      }]}
+                    >
+                      <Text style={s.pinNum}>{v.n}</Text>
+                    </View>
+                  ))}
+                </>
+              )}
             </View>
           </View>
 
@@ -126,19 +150,13 @@ const s = StyleSheet.create({
   },
   imageWrapper: {
     width: '100%',
-    position: 'relative',
   },
-  image: {
-    width: '100%',
-    aspectRatio: 888 / 1016, // actual image pixel dimensions
-  },
+
   pin: {
     position: 'absolute',
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    marginLeft: -11,
-    marginTop: -11,
+    width:  PIN_R * 2,
+    height: PIN_R * 2,
+    borderRadius: PIN_R,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
