@@ -75,7 +75,7 @@ export const EVENTS: WeddingEvent[] = [
     venue: "Fairmont Le Montreux Palace | La Coupole & La Terrasse du Petit Palais",
     address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
     dressCode:
-      "Festive Indian or semi-formal Western. Bright jewel tones and festive hues — think vibrant lehengas, sarees, sherwanis, or colourful cocktail attire.",
+      "Festive Indian or semi-formal Western. Bright jewel tones and festive hues — think vibrant lehengas, sarees, sherwanis, or colorful cocktail attire.",
     description:
       "Welcome party with dancing, drinks, and dinner. This is the big celebration night — come ready to dance!",
     colorPalette: [
@@ -120,7 +120,7 @@ export const EVENTS: WeddingEvent[] = [
       { name: 'dusty rose', hex: '#C8A0A0' },
       { name: 'champagne', hex: '#EDD9A3' },
       { name: 'sage', hex: '#8FAF88' },
-      { name: 'dove grey', hex: '#A8AFB8' },
+      { name: 'dove gray', hex: '#A8AFB8' },
       { name: 'charcoal', hex: '#3C4043' },
       { name: 'black', hex: '#000000' },
       { name: 'deep taupe', hex: '#6B5A4E' },
@@ -133,7 +133,7 @@ export const EVENTS: WeddingEvent[] = [
       men: "Tuxedos (or a black suit)",
       women: "Floor-length gowns or formal Indian attire such as sarees or lehengas",
     },
-    tuxedoNote: "Renting a tux? Based on The Black Tux rental service: rentals typically arrive ~10 days before the wedding, with standard returns due within 5 days after the event. An extended 12-day return is available for ~$60 extra — useful if you're travelling after the wedding. Timelines and pricing may vary by rental service.",
+    tuxedoNote: "Renting a tux? Based on The Black Tux rental service: rentals typically arrive ~10 days before the wedding, with standard returns due within 5 days after the event. An extended 12-day return is available for ~$60 extra — useful if you're traveling after the wedding. Timelines and pricing may vary by rental service.",
     hairMakeupLinks: [
       { label: "Coiffure du Palace (Hair)", url: "https://salonkee.ch/salon/coiffure-du-palace?lang=en" },
       { label: "Fairmont Spa (Makeup)", url: "https://emea.spatime.com/fhmp1820/5673372/offering/33647422?types=1,0,4,8,16" },
@@ -158,7 +158,7 @@ export const EVENTS: WeddingEvent[] = [
       { name: 'dusty rose', hex: '#C8A0A0' },
       { name: 'champagne', hex: '#EDD9A3' },
       { name: 'sage', hex: '#8FAF88' },
-      { name: 'dove grey', hex: '#A8AFB8' },
+      { name: 'dove gray', hex: '#A8AFB8' },
       { name: 'charcoal', hex: '#3C4043' },
       { name: 'black', hex: '#000000' },
       { name: 'deep taupe', hex: '#6B5A4E' },
@@ -495,8 +495,8 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         name: "La Rouvenaz",
         category: "Restaurant",
         description:
-          "A charming local favourite right on the lakeside — known for fresh seafood and Swiss specialities with beautiful lake views.",
-        tip: "Perch (perche) from Lake Geneva is a local speciality — try the classic meunière style.",
+          "A charming local favorite right on the lakeside — known for fresh seafood and Swiss specialties with beautiful lake views.",
+        tip: "Perch (perche) from Lake Geneva is a local specialty — try the classic meunière style.",
       },
       {
         id: "lausanne-dining",
@@ -543,7 +543,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         name: "Getting Around Montreux",
         category: "Transport",
         description:
-          "Montreux is a normal town — cars, taxis, and Uber all work here. The town centre is walkable. Trains connect to Lausanne (30 min), Geneva (1 hr), and beyond.",
+          "Montreux is a normal town — cars, taxis, and Uber all work here. The town center is walkable. Trains connect to Lausanne (30 min), Geneva (1 hr), and beyond.",
         tip: "The Fairmont is 5 minutes on foot from Montreux train station. Most wedding venues are at or near the hotel.",
       },
       {
@@ -603,7 +603,7 @@ export const PACKING_GUIDE: PackingCategory[] = [
       {
         id: "sangeet-outfit",
         label: "Sangeet — Festive Indian or semi-formal Western",
-        tip: "Bright jewel tones and festive hues! Think vibrant lehenga, saree, salwar kameez, or a colourful cocktail dress. This is the big dancing night — dress to impress!",
+        tip: "Bright jewel tones and festive hues! Think vibrant lehenga, saree, salwar kameez, or a colorful cocktail dress. This is the big dancing night — dress to impress!",
         gender: 'female',
       },
       {
@@ -734,9 +734,9 @@ export const PACKING_GUIDE: PackingCategory[] = [
     emoji: "✨",
     items: [
       {
-        id: "jewellery",
-        label: "Jewellery for each event",
-        tip: "Pack pieces in individual pouches to avoid tangling. Sangeet = bold statement jewellery; Ceremony = elegant classics.",
+        id: "jewelry",
+        label: "Jewelry for each event",
+        tip: "Pack pieces in individual pouches to avoid tangling. Sangeet = bold statement jewelry; Ceremony = elegant classics.",
         gender: 'female',
       },
       {

@@ -27,7 +27,7 @@ export default function PhotosScreen() {
         <Text style={styles.pageTitle}>Photo Gallery</Text>
         <Text style={styles.pageSubtitleTag}>Share Your Moments</Text>
         <Text style={styles.pageSubtitle}>
-          Share your favourite photos and videos from the weekend
+          Share your favorite photos and videos from the weekend
         </Text>
       </View>
 

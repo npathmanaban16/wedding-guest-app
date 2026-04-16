@@ -46,7 +46,7 @@ export default function AdminScreen() {
   if (!isAdminGuest(guestName)) {
     return (
       <View style={styles.guard}>
-        <Text style={styles.guardText}>Not authorised.</Text>
+        <Text style={styles.guardText}>Not authorized.</Text>
       </View>
     );
   }

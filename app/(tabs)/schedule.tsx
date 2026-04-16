@@ -258,7 +258,7 @@ export default function ScheduleScreen() {
       {/* Page header */}
       <View style={styles.pageHeader}>
         <Text style={styles.pageTitle}>Wedding Schedule</Text>
-        <Text style={styles.pageSubtitleTag}>Programme</Text>
+        <Text style={styles.pageSubtitleTag}>Program</Text>
         <Text style={styles.pageSubtitle}>
           Tap each event for full details, venue, dress code, and color palette
         </Text>
@@ -491,7 +491,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 
-  // Colour palette
+  // Color palette
   palette: {
     borderTopWidth: 0.5,
     borderTopColor: Colors.divider,
