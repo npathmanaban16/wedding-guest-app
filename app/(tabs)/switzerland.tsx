@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { SWITZERLAND_GUIDE, GuideSection, GuideSubsection, GuideItem, GuideLink } from '@/constants/weddingData';
+import { haptic } from '@/utils/haptics';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -24,6 +25,17 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 const animateLayout = () => {
   if (Platform.OS !== 'web') LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
 };
+
+function openMaps(address: string) {
+  haptic.light();
+  const encoded = encodeURIComponent(address);
+  const url = Platform.select({
+    ios: `maps:0,0?q=${encoded}`,
+    android: `geo:0,0?q=${encoded}`,
+    default: `https://maps.google.com/maps?q=${encoded}`,
+  });
+  Linking.openURL(url);
+}
 
 type ExchangeRates = { USD: number; GBP: number; EUR: number };
 
@@ -106,6 +118,12 @@ function GuideItemCard({ item }: { item: GuideItem }) {
                 </TouchableOpacity>
               ))}
             </View>
+          )}
+          {item.address && (
+            <TouchableOpacity style={styles.directionsButton} onPress={() => openMaps(item.address!)} activeOpacity={0.8}>
+              <Ionicons name="navigate-outline" size={15} color={Colors.gold} />
+              <Text style={styles.directionsText}>Get Directions</Text>
+            </TouchableOpacity>
           )}
         </View>
       )}
@@ -481,6 +499,23 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: Fonts.sansMedium,
     color: Colors.primary,
+  },
+  directionsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    backgroundColor: Colors.surfaceWarm,
+    borderRadius: Radius.md,
+    paddingVertical: 10,
+    paddingHorizontal: Spacing.md,
+    marginTop: Spacing.xs,
+    borderWidth: 0.5,
+    borderColor: Colors.divider,
+  },
+  directionsText: {
+    fontSize: 13,
+    fontFamily: Fonts.sansMedium,
+    color: Colors.textPrimary,
   },
 
   quickFacts: {

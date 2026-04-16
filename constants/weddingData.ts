@@ -199,6 +199,7 @@ export interface GuideItem {
   tip?: string;
   link?: string;
   links?: GuideLink[];
+  address?: string;
 }
 
 export interface GuideSubsection {
@@ -295,6 +296,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             description:
               "Just steps from the Fairmont, this lakeside path is lined with vibrant flowers and palm trees, offering sweeping views of Lake Geneva and the Alps. Stretches several kilometres from Clarens to Villeneuve — perfect for a morning jog, leisurely walk, or sunset stroll. The famous Freddie Mercury statue is along the way.",
             tip: "May is peak blooming season — perfect for photos with the Alps reflecting on the lake.",
+            address: "Place du Marché, 1820 Montreux, Switzerland",
           },
           {
             id: "rochers-de-naye",
@@ -303,6 +305,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             description:
               "Take the cogwheel train from Montreux station up to 2,042m for panoramic views over Lake Geneva and the Alps. At the top you'll find hiking trails, alpine gardens, and marmots!",
             tip: "Sit on the right side going up for the best lake views. About 55 minutes from Montreux.",
+            address: "Rochers de Naye, 1820 Montreux, Switzerland",
           },
           {
             id: "narcissus-hikes",
@@ -311,6 +314,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             description:
               "From late May to early June, the hills above Montreux are blanketed in blooming narcissus flowers — a local phenomenon known as \"May Snow.\" Beautiful trails at Les Pléiades and Les Avants offer some of the best views of this fleeting sight.",
             tip: "Trail conditions vary — ask the Fairmont concierge for up-to-date route recommendations.",
+            address: "Les Avants, 1833 Montreux, Switzerland",
           },
           {
             id: "glacier-3000",
@@ -319,6 +323,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             description:
               "Head to Glacier 3000 near Les Diablerets — about 1.5 hours from Montreux. Reachable by cable car, with spectacular views of Mont Blanc and the Matterhorn, year-round snow, and the Peak Walk by Tissot — the world's first suspension bridge connecting two mountain peaks.",
             tip: "Dress warmly even in summer. Short hikes and snow activities available year-round.",
+            address: "Col du Pillon, 1865 Les Diablerets, Switzerland",
           },
         ],
       },
@@ -337,6 +342,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             links: [
               { label: "Château de Chillon", url: "https://www.chillon.ch/" },
             ],
+            address: "Avenue de Chillon 21, 1820 Veytaux, Switzerland",
           },
           {
             id: "chateau-aigle",
@@ -347,6 +353,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             links: [
               { label: "Château d'Aigle", url: "https://www.chateau-aigle.ch/" },
             ],
+            address: "Place du Château 1, 1860 Aigle, Switzerland",
           },
         ],
       },
@@ -363,6 +370,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             description:
               "Terraced vineyards along the hillsides above Lake Geneva — a UNESCO World Heritage Site. Accessible by train, car, or on foot between the villages of Cully, Epesses, and Saint-Saphorin.",
             tip: "Hop aboard the Lavaux Express or Lavaux Panoramic — tourist trains winding through the vineyards with stops for tastings.",
+            address: "Lavaux, Cully, Switzerland",
           },
           {
             id: "lavaux-wine",
@@ -397,6 +405,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             links: [
               { label: "CGN Lake Geneva cruises", url: "https://www.cgn.ch/en/" },
             ],
+            address: "Quai du Débarcadère, 1820 Montreux, Switzerland",
           },
           {
             id: "tennis",
@@ -407,6 +416,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             links: [
               { label: "Montreux Tennis Club", url: "https://montreux-tennis-club.ch/" },
             ],
+            address: "Rue du Lac 32, 1820 Montreux, Switzerland",
           },
           {
             id: "fairmont-pools",
@@ -415,6 +425,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             description:
               "Outdoor and heated indoor pool plus a hot tub, all with panoramic mountain views. Located on floor -1 of the Fairmont.",
             tip: "A perfect way to unwind between wedding events.",
+            address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
           },
           {
             id: "fairmont-spa",
@@ -426,6 +437,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             links: [
               { label: "Fairmont Wellness", url: "https://www.fairmont.com/en/hotels/montreux/fairmont-le-montreux-palace/wellness.html" },
             ],
+            address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
           },
         ],
       },
@@ -442,6 +454,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             description:
               "A vibrant Swiss city just 30 minutes by train. Highlights: Gothic cathedral, Olympic Museum, the charming Old Town, and the lakefront at Ouchy.",
             tip: "The Olympic Museum is world-class and right on the lake — worth a few hours.",
+            address: "Lausanne, Switzerland",
           },
           {
             id: "golden-pass",
@@ -469,6 +482,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         category: "Café",
         description:
           "Montreux's premier specialty coffee shop — the perfect place to start your day with expertly crafted espresso and a welcoming atmosphere.",
+        address: "Rue du Marché 1, 1820 Montreux, Switzerland",
       },
       {
         id: "confiserie-zurcher",
@@ -477,6 +491,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         description:
           "A traditional Swiss confectionery and café — perfect for breakfast pastries, hot chocolate, and handmade chocolates to take home.",
         tip: "Pick up a box of Swiss chocolates as a souvenir — made in-house.",
+        address: "Av. du Casino 45, 1820 Montreux, Switzerland",
       },
       {
         id: "montreux-jazz-cafe",
@@ -484,6 +499,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         category: "Restaurant",
         description:
           "Lively vibes and modern European cuisine inspired by the legendary Montreux Jazz Festival. Located at the Fairmont.",
+        address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
       },
       {
         id: "la-terrasse",
@@ -491,6 +507,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         category: "Restaurant",
         description:
           "Elegant Mediterranean-inspired dining at the Fairmont with beautiful views of Lake Geneva — perfect for a romantic dinner.",
+        address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
       },
       {
         id: "funky-claudes",
@@ -499,6 +516,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         description:
           "Casual cocktails, light bites, and a comfort-food menu with a fun, jazzy atmosphere at the Fairmont. Live music most evenings.",
         tip: "Named after legendary Montreux Jazz Festival founder Claude Nobs — a Montreux icon.",
+        address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
       },
       {
         id: "la-rouvenaz",
@@ -507,6 +525,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         description:
           "A charming local favorite right on the lakeside — known for fresh seafood and Swiss specialties with beautiful lake views.",
         tip: "Perch (perche) from Lake Geneva is a local specialty — try the classic meunière style.",
+        address: "Rue du Marché 1, 1820 Montreux, Switzerland",
       },
       {
         id: "lausanne-dining",
