@@ -127,6 +127,7 @@ export const GUEST_LIST: string[] = [
   "Marwan Bayoumy",
   "Asokan Selvaraj",
   "Sujatha Asokan",
+  "Astrid Rolando",
 ];
 
 // ============================================================
@@ -261,6 +262,7 @@ export const GUEST_GENDERS: Record<string, Gender> = {
   "Marwan Bayoumy": 'male',
   "Asokan Selvaraj": 'male',
   "Sujatha Asokan": 'female',
+  "Astrid Rolando": 'female',
 };
 
 // ============================================================

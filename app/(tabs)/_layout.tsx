@@ -91,8 +91,8 @@ export default function TabLayout() {
         },
         tabBarLabelStyle: {
           fontFamily: Fonts.sansMedium,
-          fontSize: 10,
-          letterSpacing: 0.3,
+          fontSize: 9,
+          letterSpacing: 0,
         },
         headerShown: false,
       }}

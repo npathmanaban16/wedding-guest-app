@@ -57,6 +57,7 @@ Deno.serve(async (req) => {
         body: `${message}\n\n— ${sender}`,
         sound: 'default',
         priority: 'high',
+        badge: 1,
       }));
 
       const res = await fetch('https://exp.host/--/api/v2/push/send', {

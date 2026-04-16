@@ -74,8 +74,8 @@ create policy "allow_all_song_requests" on public.song_requests
 create policy "allow_all_packing_checklist" on public.packing_checklist
   for all using (true) with check (true);
 
-create policy "allow_read_notifications" on public.notifications
-  for select using (true);
+create policy "allow_all_notifications" on public.notifications
+  for all using (true) with check (true);
 
 alter table public.notification_reactions enable row level security;
 
