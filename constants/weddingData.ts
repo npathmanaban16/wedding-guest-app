@@ -47,7 +47,7 @@ export const EVENTS: WeddingEvent[] = [
     date: "Thursday, 21 May 2026",
     time: "6:00 PM – 9:00 PM",
     venue: "Lavaux Vineyards | Le Baron Tavernier",
-    address: "Lavaux, Switzerland (transportation provided from hotel)",
+    address: "Route de la Corniche 4, 1070 Puidoux, Vaud, Switzerland",
     dressCode:
       "Smart casual Indian or Western attire. White, soft neutrals, shades of green or rose.",
     description:
