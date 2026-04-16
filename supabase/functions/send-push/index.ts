@@ -76,7 +76,12 @@ Deno.serve(async (req) => {
     }
 
     // Persist the notification so guests can view history in the app
-    await supabase.from('notifications').insert({ message, sender });
+    // Errors here are non-fatal — don't let a missing table break push sending
+    try {
+      await supabase.from('notifications').insert({ message, sender });
+    } catch {
+      // table may not exist yet — pushes were already sent above
+    }
 
     return new Response(
       JSON.stringify({ success: true, sent: totalSent, failed: totalFailed }),
