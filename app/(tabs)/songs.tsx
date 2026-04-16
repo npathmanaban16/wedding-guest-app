@@ -18,16 +18,14 @@ import { useAuth } from '@/context/AuthContext';
 import { getSongRequests, addSongRequest, deleteSongRequest, SongRequest } from '@/services/storage';
 
 const SAMPLE_SUGGESTIONS = [
-  { song: "Can't Help Falling in Love", artist: 'Elvis Presley' },
-  { song: 'Perfect', artist: 'Ed Sheeran' },
-  { song: 'At Last', artist: 'Etta James' },
-  { song: 'Jai Ho', artist: 'A.R. Rahman' },
-  { song: 'Tum Hi Ho', artist: 'Arijit Singh' },
-  { song: 'Thinking Out Loud', artist: 'Ed Sheeran' },
-  { song: 'Shape of You', artist: 'Ed Sheeran' },
-  { song: "I'm Yours", artist: 'Jason Mraz' },
-  { song: 'Galway Girl', artist: 'Ed Sheeran' },
-  { song: 'Senorita', artist: 'Justin Timberlake' },
+  { song: 'Gimme! Gimme! Gimme!', artist: 'ABBA' },
+  { song: 'Despacito', artist: 'Luis Fonsi' },
+  { song: 'We Found Love', artist: 'Rihanna' },
+  { song: 'I Wanna Dance with Somebody', artist: 'Whitney Houston' },
+  { song: 'Just Dance', artist: 'Lady Gaga' },
+  { song: 'Saree Ke Fall Sa', artist: 'Nakash Aziz & Antara Mitra' },
+  { song: 'Desi Girl', artist: 'Shankar Mahadevan, Vishal Dadlani & Sunidhi Chauhan' },
+  { song: 'Amplifier', artist: 'Imran Khan' },
 ];
 
 function SongCard({
