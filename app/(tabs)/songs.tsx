@@ -23,8 +23,8 @@ const SAMPLE_SUGGESTIONS = [
   { song: 'We Found Love', artist: 'Rihanna' },
   { song: 'I Wanna Dance with Somebody', artist: 'Whitney Houston' },
   { song: 'Just Dance', artist: 'Lady Gaga' },
-  { song: 'Saree Ke Fall Sa', artist: 'Nakash Aziz & Antara Mitra' },
-  { song: 'Desi Girl', artist: 'Shankar Mahadevan, Vishal Dadlani & Sunidhi Chauhan' },
+  { song: 'Saree Ke Fall Sa', artist: 'Nakash Aziz' },
+  { song: 'Desi Girl', artist: 'Shankar Mahadevan' },
   { song: 'Amplifier', artist: 'Imran Khan' },
 ];
 
