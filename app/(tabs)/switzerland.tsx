@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   UIManager,
   Linking,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,13 +21,36 @@ if (Platform.OS === 'android') {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
 }
 
+type ExchangeRates = { USD: number; GBP: number; EUR: number };
+
 function GuideItemCard({ item }: { item: GuideItem }) {
   const [expanded, setExpanded] = useState(false);
+  const [rates, setRates] = useState<ExchangeRates | null>(null);
+  const [ratesLoading, setRatesLoading] = useState(false);
+  const fetchedRef = useRef(false);
+
+  const isCurrency = item.id === 'currency';
+
+  useEffect(() => {
+    if (isCurrency && expanded && !fetchedRef.current) {
+      fetchedRef.current = true;
+      setRatesLoading(true);
+      fetch('https://api.frankfurter.app/latest?from=CHF&to=USD,GBP,EUR')
+        .then((r) => r.json())
+        .then((data) => setRates(data.rates))
+        .catch(() => {})
+        .finally(() => setRatesLoading(false));
+    }
+  }, [isCurrency, expanded]);
 
   const toggle = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded((v) => !v);
   };
+
+  const description = isCurrency && rates
+    ? `Switzerland uses Swiss Francs (CHF). 1 CHF = $${rates.USD.toFixed(2)} / €${rates.EUR.toFixed(2)} / £${rates.GBP.toFixed(2)}. Cards are widely accepted but carry some cash for smaller shops.`
+    : item.description;
 
   return (
     <TouchableOpacity
@@ -50,7 +74,13 @@ function GuideItemCard({ item }: { item: GuideItem }) {
 
       {expanded && (
         <View style={styles.itemBody}>
-          <Text style={styles.itemDescription}>{item.description}</Text>
+          <Text style={styles.itemDescription}>{description}</Text>
+          {isCurrency && ratesLoading && (
+            <ActivityIndicator size="small" color={Colors.primary} style={{ marginBottom: Spacing.sm }} />
+          )}
+          {isCurrency && rates && (
+            <Text style={styles.ratesNote}>Live rates · {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</Text>
+          )}
           {item.tip && (
             <View style={styles.tipCard}>
               <Ionicons name="sparkles-outline" size={13} color={Colors.gold} style={{ marginRight: Spacing.xs, marginTop: 1 }} />
@@ -404,6 +434,12 @@ const styles = StyleSheet.create({
   },
 
   itemBody: { marginTop: Spacing.sm },
+  ratesNote: {
+    fontSize: 11,
+    fontFamily: Fonts.sans,
+    color: Colors.textMuted,
+    marginBottom: Spacing.sm,
+  },
   itemDescription: {
     fontSize: 13,
     fontFamily: Fonts.sans,

@@ -518,8 +518,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         name: "Currency",
         category: "Practical",
         description:
-          "Switzerland uses Swiss Francs (CHF). 1 CHF ≈ £0.90 / €1.05 / $1.27. Cards are widely accepted but carry some cash for smaller shops.",
-        tip: "Swiss prices are high — budget CHF 25–40 for a main course at a mid-range restaurant. Check xe.com for the latest exchange rates.",
+          "Switzerland uses Swiss Francs (CHF). Cards are widely accepted but carry some cash for smaller shops.",
         link: "https://www.xe.com/currencyconverter/convert/?Amount=1&From=CHF&To=USD",
       },
       {
