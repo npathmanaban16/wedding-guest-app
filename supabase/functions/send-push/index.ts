@@ -51,8 +51,8 @@ Deno.serve(async (req) => {
       const chunk = tokens.slice(i, i + CHUNK_SIZE);
       const notifications = chunk.map((token) => ({
         to: token,
-        title: sender,
-        body: message,
+        title: 'Neha & Naveen',
+        body: `${message}\n\n— ${sender}`,
         sound: 'default',
         priority: 'high',
       }));
@@ -74,6 +74,9 @@ Deno.serve(async (req) => {
         else totalFailed++;
       });
     }
+
+    // Persist the notification so guests can view history in the app
+    await supabase.from('notifications').insert({ message, sender });
 
     return new Response(
       JSON.stringify({ success: true, sent: totalSent, failed: totalFailed }),

@@ -154,6 +154,35 @@ export async function markOnboardingDone(guestName: string): Promise<void> {
   await AsyncStorage.setItem(KEYS.onboarding(guestName), 'true');
 }
 
+// ─── Notifications ───────────────────────────────────────────────────────────
+
+export interface AppNotification {
+  id: string;
+  message: string;
+  sender: string;
+  sentAt: string;
+}
+
+export async function getNotifications(): Promise<AppNotification[]> {
+  try {
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .order('sent_at', { ascending: false });
+    if (!error && data) {
+      return data.map((n) => ({
+        id: n.id,
+        message: n.message,
+        sender: n.sender,
+        sentAt: n.sent_at,
+      }));
+    }
+  } catch {
+    // offline — no local cache for notifications
+  }
+  return [];
+}
+
 // ─── Song Requests ────────────────────────────────────────────────────────────
 
 export interface SongRequest {
