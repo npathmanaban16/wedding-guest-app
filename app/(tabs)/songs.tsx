@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
-import { getSongRequests, addSongRequest, SongRequest } from '@/services/storage';
+import { getSongRequests, addSongRequest, deleteSongRequest, SongRequest } from '@/services/storage';
 
 const SAMPLE_SUGGESTIONS = [
   { song: "Can't Help Falling in Love", artist: 'Elvis Presley' },
@@ -30,7 +30,16 @@ const SAMPLE_SUGGESTIONS = [
   { song: 'Senorita', artist: 'Justin Timberlake' },
 ];
 
-function SongCard({ request }: { request: SongRequest }) {
+function SongCard({
+  request,
+  currentGuest,
+  onDelete,
+}: {
+  request: SongRequest;
+  currentGuest: string | null;
+  onDelete: (id: string) => void;
+}) {
+  const isOwner = currentGuest && request.requestedBy === currentGuest;
   return (
     <View style={styles.songCard}>
       <View style={styles.musicIcon}>
@@ -41,6 +50,11 @@ function SongCard({ request }: { request: SongRequest }) {
         {request.artist ? <Text style={styles.songArtist}>{request.artist}</Text> : null}
         <Text style={styles.requestedBy}>Requested by {request.requestedBy}</Text>
       </View>
+      {isOwner && (
+        <TouchableOpacity style={styles.deleteButton} onPress={() => onDelete(request.id)}>
+          <Ionicons name="trash-outline" size={16} color={Colors.textMuted} />
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -75,6 +89,25 @@ export default function SongsScreen() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleDelete = (id: string) => {
+    Alert.alert('Remove request', 'Remove this song from the list?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: async () => {
+          setRequests((prev) => prev.filter((r) => r.id !== id));
+          try {
+            await deleteSongRequest(id);
+          } catch {
+            Alert.alert('Error', 'Could not remove the request. Please try again.');
+            getSongRequests().then((data) => setRequests(data.reverse()));
+          }
+        },
+      },
+    ]);
   };
 
   const fillSuggestion = (s: { song: string; artist: string }) => {
@@ -174,7 +207,9 @@ export default function SongsScreen() {
           {loading ? (
             <ActivityIndicator color={Colors.primary} style={styles.loader} />
           ) : (
-            requests.map((r) => <SongCard key={r.id} request={r} />)
+            requests.map((r) => (
+              <SongCard key={r.id} request={r} currentGuest={guestName} onDelete={handleDelete} />
+            ))
           )}
         </View>
       </ScrollView>
@@ -335,6 +370,10 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
   },
   songInfo: { flex: 1 },
+  deleteButton: {
+    padding: Spacing.xs,
+    marginLeft: Spacing.xs,
+  },
   songTitle: {
     fontSize: 15,
     fontFamily: Fonts.sansMedium,

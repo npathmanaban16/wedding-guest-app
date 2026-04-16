@@ -186,6 +186,13 @@ export async function getSongRequests(): Promise<SongRequest[]> {
   return [];
 }
 
+export async function deleteSongRequest(id: string): Promise<void> {
+  const { error } = await supabase.from('song_requests').delete().eq('id', id);
+  if (error) {
+    throw new Error(error.message ?? 'Failed to delete song request');
+  }
+}
+
 export async function addSongRequest(
   song: string,
   artist: string,
