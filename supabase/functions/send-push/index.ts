@@ -32,9 +32,11 @@ Deno.serve(async (req) => {
 
     if (dbError) throw dbError;
 
-    const tokens: string[] = (guests ?? [])
-      .map((g: { push_token: string | null }) => g.push_token)
-      .filter((t): t is string => typeof t === 'string' && t.startsWith('ExponentPushToken'));
+    const tokens: string[] = [...new Set(
+      (guests ?? [])
+        .map((g: { push_token: string | null }) => g.push_token)
+        .filter((t): t is string => typeof t === 'string' && t.startsWith('ExponentPushToken')),
+    )];
 
     if (tokens.length === 0) {
       return new Response(
