@@ -48,7 +48,6 @@ Deno.serve(async (req) => {
     const CHUNK_SIZE = 100;
     let totalSent = 0;
     let totalFailed = 0;
-    const ticketIds: string[] = [];
 
     for (let i = 0; i < tokens.length; i += CHUNK_SIZE) {
       const chunk = tokens.slice(i, i + CHUNK_SIZE);
@@ -72,10 +71,9 @@ Deno.serve(async (req) => {
 
       const result = await res.json();
       const tickets = result.data ?? [];
-      tickets.forEach((ticket: { status: string; id?: string; details?: unknown }) => {
+      tickets.forEach((ticket: { status: string; id?: string; message?: string; details?: unknown }) => {
         if (ticket.status === 'ok') {
           totalSent++;
-          if (ticket.id) ticketIds.push(ticket.id);
         } else {
           totalFailed++;
           console.error('Push ticket error:', JSON.stringify(ticket));
@@ -83,40 +81,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check receipts to confirm APNs/FCM delivery (best-effort, non-fatal)
-    let receiptDetails: unknown = null;
-    if (ticketIds.length > 0) {
-      try {
-        await new Promise((r) => setTimeout(r, 1500)); // receipts take a moment
-        const receiptRes = await fetch('https://exp.host/--/api/v2/push/getReceipts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify({ ids: ticketIds }),
-        });
-        const receiptData = await receiptRes.json();
-        receiptDetails = receiptData.data;
-        // Log any delivery errors
-        for (const [id, receipt] of Object.entries(receiptData.data ?? {})) {
-          const r = receipt as { status: string; message?: string; details?: unknown };
-          if (r.status !== 'ok') {
-            console.error(`Receipt ${id} failed:`, JSON.stringify(r));
-          }
-        }
-      } catch {
-        // Non-fatal — receipts are best-effort
-      }
-    }
-
     // Persist the notification so guests can view history in the app
-    // Errors here are non-fatal — don't let a missing table break push sending
     try {
       await supabase.from('notifications').insert({ message, sender });
     } catch {
-      // table may not exist yet — pushes were already sent above
+      // non-fatal
     }
 
     return new Response(
-      JSON.stringify({ success: true, sent: totalSent, failed: totalFailed, receipts: receiptDetails }),
+      JSON.stringify({ success: true, sent: totalSent, failed: totalFailed }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   } catch (err) {
