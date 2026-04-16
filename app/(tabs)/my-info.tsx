@@ -304,7 +304,7 @@ export default function MyInfoScreen() {
         {/* Logout */}
         <TouchableOpacity style={styles.logoutButton} onPress={logout}>
           <Ionicons name="log-out-outline" size={17} color={Colors.textMuted} />
-          <Text style={styles.logoutText}>Switch guest account</Text>
+          <Text style={styles.logoutText}>Sign out</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>

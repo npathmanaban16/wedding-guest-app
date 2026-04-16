@@ -175,10 +175,6 @@ export default function HomeScreen() {
         </TouchableOpacity>
       )}
 
-      {/* Sign out */}
-      <TouchableOpacity style={styles.signOut} onPress={logout}>
-        <Text style={styles.signOutText}>Sign out</Text>
-      </TouchableOpacity>
     </ScrollView>
   );
 }
