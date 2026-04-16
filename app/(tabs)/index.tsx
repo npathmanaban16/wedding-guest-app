@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Linking,
   ImageBackground,
+  AppState,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -17,7 +18,6 @@ import { WEDDING, EVENTS } from '@/constants/weddingData';
 import { isWeddingParty } from '@/constants/guests';
 import { isAdminGuest } from '@/app/admin';
 import { getNotifications, AppNotification } from '@/services/storage';
-import { supabase } from '@/lib/supabase';
 
 function useCountdown(targetDate: Date) {
   const getTimeLeft = (target: Date) => {
@@ -81,26 +81,23 @@ export default function HomeScreen() {
   const firstEvent = EVENTS.find((e) => !e.weddingPartyOnly || inWeddingParty)!
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
-  useEffect(() => {
+  const refreshNotifications = useCallback(() => {
     getNotifications().then(setNotifications);
-
-    const channel = supabase
-      .channel('notifications-feed')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'notifications' },
-        (payload) => {
-          const n = payload.new as { id: string; message: string; sender: string; sent_at: string };
-          setNotifications((prev) => [
-            { id: n.id, message: n.message, sender: n.sender, sentAt: n.sent_at },
-            ...prev,
-          ]);
-        },
-      )
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
   }, []);
+
+  useEffect(() => {
+    refreshNotifications();
+
+    // Poll every 30 seconds for new notifications
+    const poll = setInterval(refreshNotifications, 30_000);
+
+    // Refresh when the app comes back to the foreground
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') refreshNotifications();
+    });
+
+    return () => { clearInterval(poll); sub.remove(); };
+  }, [refreshNotifications]);
 
   return (
     <ScrollView
