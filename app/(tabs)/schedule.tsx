@@ -134,7 +134,7 @@ function EventCard({ event }: { event: WeddingEvent }) {
               onPress={() => openMaps(event.address)}
               activeOpacity={0.7}
             >
-              <Ionicons name="map-outline" size={14} color={Colors.primary} />
+              <Ionicons name="map-outline" size={14} color={Colors.gold} />
               <Text style={styles.actionBtnText}>Get Directions</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -142,7 +142,7 @@ function EventCard({ event }: { event: WeddingEvent }) {
               onPress={() => addToCalendar(event)}
               activeOpacity={0.7}
             >
-              <Ionicons name="calendar-outline" size={14} color={Colors.primary} />
+              <Ionicons name="calendar-outline" size={14} color={Colors.gold} />
               <Text style={styles.actionBtnText}>Add to Calendar</Text>
             </TouchableOpacity>
           </View>
@@ -482,14 +482,14 @@ const styles = StyleSheet.create({
     gap: 5,
     paddingVertical: 9,
     borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.primary,
-    backgroundColor: Colors.accentLight,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surfaceWarm,
   },
   actionBtnText: {
     fontFamily: Fonts.sansMedium,
     fontSize: 12,
-    color: Colors.primary,
+    color: Colors.textSecondary,
   },
   divider: {
     height: 1,
