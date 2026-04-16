@@ -169,7 +169,7 @@ export default function MyInfoScreen() {
             label="Phone number"
             value={info.phone}
             onChange={update('phone')}
-            placeholder="e.g. +44 7700 900000"
+            placeholder="e.g. +1 (555) 000-0000"
             keyboardType="phone-pad"
             autoCapitalize="none"
           />
