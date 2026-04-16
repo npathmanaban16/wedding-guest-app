@@ -30,6 +30,8 @@ export interface WeddingEvent {
   description: string;
   notes?: string;
   weddingPartyOnly?: boolean;
+  startDate: string; // ISO 8601
+  endDate: string;   // ISO 8601
   colorPalette?: { name: string; hex: string }[];
   outdoorNote?: string;
   outfitInspirationUrl?: string;
@@ -46,6 +48,8 @@ export const EVENTS: WeddingEvent[] = [
     emoji: "🍽️",
     date: "Thursday, 21 May 2026",
     time: "6:00 PM – 9:00 PM",
+    startDate: "2026-05-21T16:00:00Z",
+    endDate: "2026-05-21T19:00:00Z",
     venue: "Lavaux Vineyards | Le Baron Tavernier",
     address: "Route de la Corniche 4, 1070 Puidoux, Vaud, Switzerland",
     dressCode:
@@ -72,6 +76,8 @@ export const EVENTS: WeddingEvent[] = [
     emoji: "💃",
     date: "Friday, 22 May 2026",
     time: "6:30 PM – 11:00 PM",
+    startDate: "2026-05-22T16:30:00Z",
+    endDate: "2026-05-22T21:00:00Z",
     venue: "Fairmont Le Montreux Palace | La Coupole & La Terrasse du Petit Palais",
     address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
     dressCode:
@@ -108,6 +114,8 @@ export const EVENTS: WeddingEvent[] = [
     emoji: "💍",
     date: "Saturday, 23 May 2026",
     time: "5:00 PM",
+    startDate: "2026-05-23T15:00:00Z",
+    endDate: "2026-05-23T16:00:00Z",
     venue: "Fairmont Le Montreux Palace | Garden",
     address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
     dressCode:
@@ -145,6 +153,8 @@ export const EVENTS: WeddingEvent[] = [
     emoji: "🥂",
     date: "Saturday, 23 May 2026",
     time: "7:30 PM – 1:00 AM",
+    startDate: "2026-05-23T17:30:00Z",
+    endDate: "2026-05-23T23:00:00Z",
     venue: "Fairmont Le Montreux Palace | Salle des Fêtes",
     address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
     dressCode:

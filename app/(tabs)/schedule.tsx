@@ -10,14 +10,65 @@ import {
   UIManager,
   Linking,
   Image,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as Calendar from 'expo-calendar';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { EVENTS, WeddingEvent } from '@/constants/weddingData';
 import { useAuth } from '@/context/AuthContext';
 import { isWeddingParty } from '@/constants/guests';
 import { FairmontMap } from '@/components/FairmontMap';
+
+function openMaps(address: string) {
+  const encoded = encodeURIComponent(address);
+  const url = Platform.select({
+    ios: `maps:0,0?q=${encoded}`,
+    android: `geo:0,0?q=${encoded}`,
+    default: `https://maps.google.com/maps?q=${encoded}`,
+  });
+  Linking.openURL(url);
+}
+
+async function addToCalendar(event: WeddingEvent) {
+  if (Platform.OS === 'web') {
+    Alert.alert('Not available', 'Add to Calendar is only available on the mobile app.');
+    return;
+  }
+
+  const { status } = await Calendar.requestCalendarPermissionsAsync();
+  if (status !== 'granted') {
+    Alert.alert('Permission needed', 'Please allow calendar access to add this event.');
+    return;
+  }
+
+  const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
+  const defaultCalendar =
+    Platform.OS === 'ios'
+      ? calendars.find((c) => c.source?.name === 'iCloud') ?? calendars.find((c) => c.allowsModifications)
+      : calendars.find((c) => c.isPrimary) ?? calendars.find((c) => c.allowsModifications);
+
+  if (!defaultCalendar) {
+    Alert.alert('No calendar found', 'Could not find a writable calendar on this device.');
+    return;
+  }
+
+  try {
+    await Calendar.createEventAsync(defaultCalendar.id, {
+      title: `${event.title} — Neha & Naveen's Wedding`,
+      startDate: new Date(event.startDate),
+      endDate: new Date(event.endDate),
+      location: `${event.venue}\n${event.address}`,
+      notes: [event.description, event.dressCode ? `Dress code: ${event.dressCode}` : null, event.notes].filter(Boolean).join('\n\n'),
+      timeZone: 'Europe/Zurich',
+      alarms: [{ relativeOffset: -60 }],
+    });
+    Alert.alert('Added', `"${event.title}" has been added to your calendar.`);
+  } catch {
+    Alert.alert('Error', 'Could not add the event to your calendar.');
+  }
+}
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -75,6 +126,26 @@ function EventCard({ event }: { event: WeddingEvent }) {
 
           <InfoRow icon="location-outline" label="Venue" value={event.venue} />
           <InfoRow icon="navigate-outline" label="Address" value={event.address} />
+
+          {/* Action buttons */}
+          <View style={styles.actionRow}>
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={() => openMaps(event.address)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="map-outline" size={14} color={Colors.primary} />
+              <Text style={styles.actionBtnText}>Get Directions</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={() => addToCalendar(event)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="calendar-outline" size={14} color={Colors.primary} />
+              <Text style={styles.actionBtnText}>Add to Calendar</Text>
+            </TouchableOpacity>
+          </View>
 
           {/* Description */}
           <Text style={styles.description}>{event.description}</Text>
@@ -398,6 +469,28 @@ const styles = StyleSheet.create({
   },
 
   cardBody: { marginTop: Spacing.sm },
+  actionRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  actionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    paddingVertical: 9,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    backgroundColor: Colors.accentLight,
+  },
+  actionBtnText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 12,
+    color: Colors.primary,
+  },
   divider: {
     height: 1,
     backgroundColor: Colors.divider,

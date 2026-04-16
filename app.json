@@ -20,7 +20,8 @@
         "NSPhotoLibraryUsageDescription": "Allow Neha & Naveen Wedding App to access your photos to share memories.",
         "NSCameraUsageDescription": "Allow Neha & Naveen Wedding App to use your camera to capture memories.",
         "NSPhotoLibraryAddUsageDescription": "Allow Neha & Naveen Wedding App to save photos.",
-        "NSUserNotificationsUsageDescription": "Allow Neha & Naveen Wedding App to send you wedding updates and reminders."
+        "NSUserNotificationsUsageDescription": "Allow Neha & Naveen Wedding App to send you wedding updates and reminders.",
+        "NSCalendarsFullAccessUsageDescription": "Allow Neha & Naveen Wedding App to add wedding events to your calendar."
       }
     },
     "android": {
@@ -43,6 +44,7 @@
     "plugins": [
       "expo-router",
       "expo-font",
+      "expo-calendar",
       [
         "expo-image-picker",
         {
