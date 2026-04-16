@@ -41,6 +41,16 @@ create table public.notifications (
   sent_at   timestamptz default now()
 );
 
+-- notification_reactions: one reaction per guest per notification
+create table public.notification_reactions (
+  id              uuid default gen_random_uuid() primary key,
+  notification_id uuid references public.notifications(id) on delete cascade not null,
+  guest_name      text not null,
+  emoji           text not null,
+  created_at      timestamptz default now(),
+  unique(notification_id, guest_name)
+);
+
 -- packing_checklist: one row per guest, stores array of checked item IDs
 create table public.packing_checklist (
   guest_name    text primary key,
@@ -66,3 +76,8 @@ create policy "allow_all_packing_checklist" on public.packing_checklist
 
 create policy "allow_read_notifications" on public.notifications
   for select using (true);
+
+alter table public.notification_reactions enable row level security;
+
+create policy "allow_all_notification_reactions" on public.notification_reactions
+  for all using (true) with check (true);

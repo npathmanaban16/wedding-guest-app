@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Linking,
   ImageBackground,
-  AppState,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -17,7 +16,6 @@ import { Colors, Fonts, Typography, Spacing, Radius, Shadow } from '@/constants/
 import { WEDDING, EVENTS } from '@/constants/weddingData';
 import { isWeddingParty } from '@/constants/guests';
 import { isAdminGuest } from '@/app/admin';
-import { getNotifications, AppNotification } from '@/services/storage';
 
 function useCountdown(targetDate: Date) {
   const getTimeLeft = (target: Date) => {
@@ -59,17 +57,6 @@ function QuickCard({ title, subtitle, onPress }: QuickCardProps) {
   );
 }
 
-function timeAgo(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  return `${days}d ago`;
-}
-
 export default function HomeScreen() {
   const { guestName, logout } = useAuth();
   const router = useRouter();
@@ -79,25 +66,6 @@ export default function HomeScreen() {
   const inWeddingParty = isWeddingParty(guestName ?? '');
   const isAdmin = isAdminGuest(guestName);
   const firstEvent = EVENTS.find((e) => !e.weddingPartyOnly || inWeddingParty)!
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
-
-  const refreshNotifications = useCallback(() => {
-    getNotifications().then(setNotifications);
-  }, []);
-
-  useEffect(() => {
-    refreshNotifications();
-
-    // Poll every 30 seconds for new notifications
-    const poll = setInterval(refreshNotifications, 30_000);
-
-    // Refresh when the app comes back to the foreground
-    const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'active') refreshNotifications();
-    });
-
-    return () => { clearInterval(poll); sub.remove(); };
-  }, [refreshNotifications]);
 
   return (
     <ScrollView
@@ -172,24 +140,6 @@ export default function HomeScreen() {
         <QuickCard title="Song Requests" subtitle="Request a track" onPress={() => router.push('/(tabs)/songs')} />
         <QuickCard title="My Details" subtitle="Hotel & arrival info" onPress={() => router.push('/(tabs)/my-info')} />
       </View>
-
-      {/* Messages */}
-      {notifications.length > 0 && (
-        <View style={styles.messagesSection}>
-          <Text style={styles.sectionTitle}>Messages</Text>
-          {notifications.map((n) => (
-            <View key={n.id} style={styles.messageCard}>
-              <View style={styles.messageIconWrap}>
-                <Ionicons name="notifications" size={14} color={Colors.primary} />
-              </View>
-              <View style={styles.messageBody}>
-                <Text style={styles.messageText}>{n.message}</Text>
-                <Text style={styles.messageMeta}>— {n.sender} · {timeAgo(n.sentAt)}</Text>
-              </View>
-            </View>
-          ))}
-        </View>
-      )}
 
       {/* Hashtag */}
       <View style={styles.hashtagCard}>
@@ -408,45 +358,6 @@ const styles = StyleSheet.create({
     fontSize: Typography.xs,
     color: Colors.textMuted,
     lineHeight: 16,
-  },
-
-  messagesSection: {
-    marginBottom: Spacing.xl,
-  },
-  messageCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginHorizontal: Spacing.lg,
-    marginBottom: Spacing.sm,
-    backgroundColor: Colors.white,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
-    borderWidth: 0.5,
-    borderColor: Colors.border,
-    gap: Spacing.sm,
-    ...Shadow.small,
-  },
-  messageIconWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.accentLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  messageBody: { flex: 1 },
-  messageText: {
-    fontFamily: Fonts.sans,
-    fontSize: Typography.sm,
-    color: Colors.textPrimary,
-    lineHeight: 21,
-    marginBottom: 4,
-  },
-  messageMeta: {
-    fontFamily: Fonts.sans,
-    fontSize: Typography.xs,
-    color: Colors.textMuted,
   },
 
   hashtagCard: {

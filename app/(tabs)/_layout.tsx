@@ -1,10 +1,10 @@
 import { Tabs, Redirect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
-import { Colors, Fonts, Typography } from '@/constants/theme';
-import { ActivityIndicator, View, StyleSheet } from 'react-native';
-import { useEffect, useState } from 'react';
-import { isOnboardingDone } from '@/services/storage';
+import { Colors, Fonts } from '@/constants/theme';
+import { ActivityIndicator, AppState, View, StyleSheet } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { isOnboardingDone, getNotifications, getMessagesLastRead, markMessagesRead } from '@/services/storage';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
@@ -23,6 +23,7 @@ const TABS: TabConfig[] = [
   { name: 'packing',     title: 'Packing',     icon: 'bag-handle-outline',    iconFocused: 'bag-handle' },
   { name: 'photos',      title: 'Photos',      icon: 'camera-outline',        iconFocused: 'camera' },
   { name: 'songs',       title: 'Songs',       icon: 'musical-notes-outline', iconFocused: 'musical-notes' },
+  { name: 'messages',    title: 'Messages',    icon: 'notifications-outline', iconFocused: 'notifications' },
   { name: 'my-info',     title: 'My Details',  icon: 'person-outline',        iconFocused: 'person' },
 ];
 
@@ -30,6 +31,7 @@ export default function TabLayout() {
   const { guestName, isLoading, onboardingSkipped } = useAuth();
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   usePushNotifications(guestName);
 
   useEffect(() => {
@@ -43,6 +45,25 @@ export default function TabLayout() {
       setOnboardingChecked(true);
     });
   }, [guestName, isLoading]);
+
+  const refreshUnread = useCallback(async () => {
+    const [notifs, lastRead] = await Promise.all([getNotifications(), getMessagesLastRead()]);
+    if (!lastRead) {
+      setUnreadCount(notifs.length);
+      return;
+    }
+    const count = notifs.filter((n) => new Date(n.sentAt) > new Date(lastRead)).length;
+    setUnreadCount(count);
+  }, []);
+
+  useEffect(() => {
+    refreshUnread();
+    const poll = setInterval(refreshUnread, 30_000);
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') refreshUnread();
+    });
+    return () => { clearInterval(poll); sub.remove(); };
+  }, [refreshUnread]);
 
   if (isLoading || !onboardingChecked) {
     return (
@@ -89,7 +110,16 @@ export default function TabLayout() {
                 color={color}
               />
             ),
+            ...(tab.name === 'messages' && unreadCount > 0
+              ? { tabBarBadge: unreadCount }
+              : {}),
           }}
+          listeners={tab.name === 'messages' ? {
+            tabPress: () => {
+              markMessagesRead().catch(() => {});
+              setUnreadCount(0);
+            },
+          } : undefined}
         />
       ))}
     </Tabs>

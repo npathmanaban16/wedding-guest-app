@@ -183,6 +183,84 @@ export async function getNotifications(): Promise<AppNotification[]> {
   return [];
 }
 
+export async function deleteNotification(id: string): Promise<void> {
+  const { error } = await supabase.from('notifications').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
+// ─── Notification Reactions ───────────────────────────────────────────────────
+
+export interface ReactionSummary {
+  emoji: string;
+  count: number;
+  guestNames: string[];
+}
+
+export async function getReactions(
+  notificationIds: string[],
+): Promise<Record<string, ReactionSummary[]>> {
+  if (notificationIds.length === 0) return {};
+  try {
+    const { data, error } = await supabase
+      .from('notification_reactions')
+      .select('notification_id, guest_name, emoji')
+      .in('notification_id', notificationIds);
+
+    if (error || !data) return {};
+
+    const map: Record<string, ReactionSummary[]> = {};
+    for (const row of data) {
+      const nid = row.notification_id as string;
+      if (!map[nid]) map[nid] = [];
+      const entry = map[nid].find((r) => r.emoji === row.emoji);
+      if (entry) {
+        entry.count++;
+        entry.guestNames.push(row.guest_name);
+      } else {
+        map[nid].push({ emoji: row.emoji, count: 1, guestNames: [row.guest_name] });
+      }
+    }
+    return map;
+  } catch {
+    return {};
+  }
+}
+
+// Upserts a reaction, or removes it if the guest already has the same emoji
+export async function toggleReaction(
+  notificationId: string,
+  guestName: string,
+  emoji: string,
+  currentEmoji: string | null,
+): Promise<void> {
+  if (currentEmoji === emoji) {
+    await supabase
+      .from('notification_reactions')
+      .delete()
+      .eq('notification_id', notificationId)
+      .eq('guest_name', guestName);
+  } else {
+    await supabase
+      .from('notification_reactions')
+      .upsert(
+        { notification_id: notificationId, guest_name: guestName, emoji },
+        { onConflict: 'notification_id,guest_name' },
+      );
+  }
+}
+
+// ─── Unread message tracking ──────────────────────────────────────────────────
+
+const MESSAGES_LAST_READ_KEY = '@wedding_messages_last_read';
+
+export async function getMessagesLastRead(): Promise<string | null> {
+  return AsyncStorage.getItem(MESSAGES_LAST_READ_KEY);
+}
+
+export async function markMessagesRead(): Promise<void> {
+  await AsyncStorage.setItem(MESSAGES_LAST_READ_KEY, new Date().toISOString());
+}
+
 // ─── Song Requests ────────────────────────────────────────────────────────────
 
 export interface SongRequest {
