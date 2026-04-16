@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,23 +10,63 @@ import {
   UIManager,
   Linking,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { SWITZERLAND_GUIDE, GuideSection, GuideSubsection, GuideItem, GuideLink } from '@/constants/weddingData';
+import { haptic } from '@/utils/haptics';
 
-if (Platform.OS === 'android') {
-  UIManager.setLayoutAnimationEnabledExperimental?.(true);
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
 }
+
+const animateLayout = () => {
+  if (Platform.OS !== 'web') LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+};
+
+function openMaps(address: string) {
+  haptic.light();
+  const encoded = encodeURIComponent(address);
+  const url = Platform.select({
+    ios: `maps:0,0?q=${encoded}`,
+    android: `geo:0,0?q=${encoded}`,
+    default: `https://maps.google.com/maps?q=${encoded}`,
+  });
+  Linking.openURL(url);
+}
+
+type ExchangeRates = { USD: number; GBP: number; EUR: number };
 
 function GuideItemCard({ item }: { item: GuideItem }) {
   const [expanded, setExpanded] = useState(false);
+  const [rates, setRates] = useState<ExchangeRates | null>(null);
+  const [ratesLoading, setRatesLoading] = useState(false);
+  const fetchedRef = useRef(false);
+
+  const isCurrency = item.id === 'currency';
+
+  useEffect(() => {
+    if (isCurrency && expanded && !fetchedRef.current) {
+      fetchedRef.current = true;
+      setRatesLoading(true);
+      fetch('https://api.frankfurter.app/latest?from=CHF&to=USD,GBP,EUR')
+        .then((r) => r.json())
+        .then((data) => setRates(data.rates))
+        .catch(() => {})
+        .finally(() => setRatesLoading(false));
+    }
+  }, [isCurrency, expanded]);
 
   const toggle = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    animateLayout();
     setExpanded((v) => !v);
   };
+
+  const description = isCurrency && rates
+    ? `Switzerland uses Swiss Francs (CHF). 1 CHF = $${rates.USD.toFixed(2)} / €${rates.EUR.toFixed(2)} / £${rates.GBP.toFixed(2)}.`
+    : item.description;
 
   return (
     <TouchableOpacity
@@ -50,7 +90,13 @@ function GuideItemCard({ item }: { item: GuideItem }) {
 
       {expanded && (
         <View style={styles.itemBody}>
-          <Text style={styles.itemDescription}>{item.description}</Text>
+          <Text style={styles.itemDescription}>{description}</Text>
+          {isCurrency && ratesLoading && (
+            <ActivityIndicator size="small" color={Colors.primary} style={{ marginBottom: Spacing.sm }} />
+          )}
+          {isCurrency && rates && (
+            <Text style={styles.ratesNote}>Live rates · {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</Text>
+          )}
           {item.tip && (
             <View style={styles.tipCard}>
               <Ionicons name="sparkles-outline" size={13} color={Colors.gold} style={{ marginRight: Spacing.xs, marginTop: 1 }} />
@@ -73,6 +119,12 @@ function GuideItemCard({ item }: { item: GuideItem }) {
               ))}
             </View>
           )}
+          {item.address && (
+            <TouchableOpacity style={styles.directionsButton} onPress={() => openMaps(item.address!)} activeOpacity={0.8}>
+              <Ionicons name="navigate-outline" size={15} color={Colors.gold} />
+              <Text style={styles.directionsText}>Get Directions</Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
     </TouchableOpacity>
@@ -83,7 +135,7 @@ function SubsectionBlock({ subsection }: { subsection: GuideSubsection }) {
   const [expanded, setExpanded] = useState(false);
 
   const toggle = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    animateLayout();
     setExpanded((v) => !v);
   };
 
@@ -404,6 +456,12 @@ const styles = StyleSheet.create({
   },
 
   itemBody: { marginTop: Spacing.sm },
+  ratesNote: {
+    fontSize: 11,
+    fontFamily: Fonts.sans,
+    color: Colors.textMuted,
+    marginBottom: Spacing.sm,
+  },
   itemDescription: {
     fontSize: 13,
     fontFamily: Fonts.sans,
@@ -441,6 +499,23 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: Fonts.sansMedium,
     color: Colors.primary,
+  },
+  directionsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    backgroundColor: Colors.surfaceWarm,
+    borderRadius: Radius.md,
+    paddingVertical: 10,
+    paddingHorizontal: Spacing.md,
+    marginTop: Spacing.xs,
+    borderWidth: 0.5,
+    borderColor: Colors.divider,
+  },
+  directionsText: {
+    fontSize: 13,
+    fontFamily: Fonts.sansMedium,
+    color: Colors.textPrimary,
   },
 
   quickFacts: {

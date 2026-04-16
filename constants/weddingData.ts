@@ -30,6 +30,8 @@ export interface WeddingEvent {
   description: string;
   notes?: string;
   weddingPartyOnly?: boolean;
+  startDate: string; // ISO 8601
+  endDate: string;   // ISO 8601
   colorPalette?: { name: string; hex: string }[];
   outdoorNote?: string;
   outfitInspirationUrl?: string;
@@ -46,8 +48,10 @@ export const EVENTS: WeddingEvent[] = [
     emoji: "🍽️",
     date: "Thursday, 21 May 2026",
     time: "6:00 PM – 9:00 PM",
+    startDate: "2026-05-21T16:00:00Z",
+    endDate: "2026-05-21T19:00:00Z",
     venue: "Lavaux Vineyards | Le Baron Tavernier",
-    address: "Lavaux, Switzerland (transportation provided from hotel)",
+    address: "Route de la Corniche 4, 1070 Puidoux, Vaud, Switzerland",
     dressCode:
       "Smart casual Indian or Western attire. White, soft neutrals, shades of green or rose.",
     description:
@@ -72,10 +76,12 @@ export const EVENTS: WeddingEvent[] = [
     emoji: "💃",
     date: "Friday, 22 May 2026",
     time: "6:30 PM – 11:00 PM",
+    startDate: "2026-05-22T16:30:00Z",
+    endDate: "2026-05-22T21:00:00Z",
     venue: "Fairmont Le Montreux Palace | La Coupole & La Terrasse du Petit Palais",
     address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
     dressCode:
-      "Festive Indian or semi-formal Western. Bright jewel tones and festive hues — think vibrant lehengas, sarees, sherwanis, or colourful cocktail attire.",
+      "Festive Indian or semi-formal Western. Bright jewel tones and festive hues — think vibrant lehengas, sarees, sherwanis, or colorful cocktail attire.",
     description:
       "Welcome party with dancing, drinks, and dinner. This is the big celebration night — come ready to dance!",
     colorPalette: [
@@ -108,6 +114,8 @@ export const EVENTS: WeddingEvent[] = [
     emoji: "💍",
     date: "Saturday, 23 May 2026",
     time: "5:00 PM",
+    startDate: "2026-05-23T15:00:00Z",
+    endDate: "2026-05-23T16:00:00Z",
     venue: "Fairmont Le Montreux Palace | Garden",
     address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
     dressCode:
@@ -120,7 +128,7 @@ export const EVENTS: WeddingEvent[] = [
       { name: 'dusty rose', hex: '#C8A0A0' },
       { name: 'champagne', hex: '#EDD9A3' },
       { name: 'sage', hex: '#8FAF88' },
-      { name: 'dove grey', hex: '#A8AFB8' },
+      { name: 'dove gray', hex: '#A8AFB8' },
       { name: 'charcoal', hex: '#3C4043' },
       { name: 'black', hex: '#000000' },
       { name: 'deep taupe', hex: '#6B5A4E' },
@@ -133,7 +141,7 @@ export const EVENTS: WeddingEvent[] = [
       men: "Tuxedos (or a black suit)",
       women: "Floor-length gowns or formal Indian attire such as sarees or lehengas",
     },
-    tuxedoNote: "Renting a tux? Based on The Black Tux rental service: rentals typically arrive ~10 days before the wedding, with standard returns due within 5 days after the event. An extended 12-day return is available for ~$60 extra — useful if you're travelling after the wedding. Timelines and pricing may vary by rental service.",
+    tuxedoNote: "Renting a tux? Based on The Black Tux rental service: rentals typically arrive ~10 days before the wedding, with standard returns due within 5 days after the event. An extended 12-day return is available for ~$60 extra — useful if you're traveling after the wedding. Timelines and pricing may vary by rental service.",
     hairMakeupLinks: [
       { label: "Coiffure du Palace (Hair)", url: "https://salonkee.ch/salon/coiffure-du-palace?lang=en" },
       { label: "Fairmont Spa (Makeup)", url: "https://emea.spatime.com/fhmp1820/5673372/offering/33647422?types=1,0,4,8,16" },
@@ -145,6 +153,8 @@ export const EVENTS: WeddingEvent[] = [
     emoji: "🥂",
     date: "Saturday, 23 May 2026",
     time: "7:30 PM – 1:00 AM",
+    startDate: "2026-05-23T17:30:00Z",
+    endDate: "2026-05-23T23:00:00Z",
     venue: "Fairmont Le Montreux Palace | Salle des Fêtes",
     address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
     dressCode:
@@ -158,7 +168,7 @@ export const EVENTS: WeddingEvent[] = [
       { name: 'dusty rose', hex: '#C8A0A0' },
       { name: 'champagne', hex: '#EDD9A3' },
       { name: 'sage', hex: '#8FAF88' },
-      { name: 'dove grey', hex: '#A8AFB8' },
+      { name: 'dove gray', hex: '#A8AFB8' },
       { name: 'charcoal', hex: '#3C4043' },
       { name: 'black', hex: '#000000' },
       { name: 'deep taupe', hex: '#6B5A4E' },
@@ -189,6 +199,7 @@ export interface GuideItem {
   tip?: string;
   link?: string;
   links?: GuideLink[];
+  address?: string;
 }
 
 export interface GuideSubsection {
@@ -285,6 +296,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             description:
               "Just steps from the Fairmont, this lakeside path is lined with vibrant flowers and palm trees, offering sweeping views of Lake Geneva and the Alps. Stretches several kilometres from Clarens to Villeneuve — perfect for a morning jog, leisurely walk, or sunset stroll. The famous Freddie Mercury statue is along the way.",
             tip: "May is peak blooming season — perfect for photos with the Alps reflecting on the lake.",
+            address: "Place du Marché, 1820 Montreux, Switzerland",
           },
           {
             id: "rochers-de-naye",
@@ -293,6 +305,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             description:
               "Take the cogwheel train from Montreux station up to 2,042m for panoramic views over Lake Geneva and the Alps. At the top you'll find hiking trails, alpine gardens, and marmots!",
             tip: "Sit on the right side going up for the best lake views. About 55 minutes from Montreux.",
+            address: "Rochers de Naye, 1820 Montreux, Switzerland",
           },
           {
             id: "narcissus-hikes",
@@ -301,6 +314,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             description:
               "From late May to early June, the hills above Montreux are blanketed in blooming narcissus flowers — a local phenomenon known as \"May Snow.\" Beautiful trails at Les Pléiades and Les Avants offer some of the best views of this fleeting sight.",
             tip: "Trail conditions vary — ask the Fairmont concierge for up-to-date route recommendations.",
+            address: "Les Avants, 1833 Montreux, Switzerland",
           },
           {
             id: "glacier-3000",
@@ -309,6 +323,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             description:
               "Head to Glacier 3000 near Les Diablerets — about 1.5 hours from Montreux. Reachable by cable car, with spectacular views of Mont Blanc and the Matterhorn, year-round snow, and the Peak Walk by Tissot — the world's first suspension bridge connecting two mountain peaks.",
             tip: "Dress warmly even in summer. Short hikes and snow activities available year-round.",
+            address: "Col du Pillon, 1865 Les Diablerets, Switzerland",
           },
         ],
       },
@@ -327,6 +342,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             links: [
               { label: "Château de Chillon", url: "https://www.chillon.ch/" },
             ],
+            address: "Avenue de Chillon 21, 1820 Veytaux, Switzerland",
           },
           {
             id: "chateau-aigle",
@@ -337,6 +353,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             links: [
               { label: "Château d'Aigle", url: "https://www.chateau-aigle.ch/" },
             ],
+            address: "Place du Château 1, 1860 Aigle, Switzerland",
           },
         ],
       },
@@ -353,6 +370,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             description:
               "Terraced vineyards along the hillsides above Lake Geneva — a UNESCO World Heritage Site. Accessible by train, car, or on foot between the villages of Cully, Epesses, and Saint-Saphorin.",
             tip: "Hop aboard the Lavaux Express or Lavaux Panoramic — tourist trains winding through the vineyards with stops for tastings.",
+            address: "Lavaux, Cully, Switzerland",
           },
           {
             id: "lavaux-wine",
@@ -387,6 +405,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             links: [
               { label: "CGN Lake Geneva cruises", url: "https://www.cgn.ch/en/" },
             ],
+            address: "Quai du Débarcadère, 1820 Montreux, Switzerland",
           },
           {
             id: "tennis",
@@ -397,6 +416,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             links: [
               { label: "Montreux Tennis Club", url: "https://montreux-tennis-club.ch/" },
             ],
+            address: "Rue du Lac 32, 1820 Montreux, Switzerland",
           },
           {
             id: "fairmont-pools",
@@ -405,6 +425,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             description:
               "Outdoor and heated indoor pool plus a hot tub, all with panoramic mountain views. Located on floor -1 of the Fairmont.",
             tip: "A perfect way to unwind between wedding events.",
+            address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
           },
           {
             id: "fairmont-spa",
@@ -416,6 +437,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             links: [
               { label: "Fairmont Wellness", url: "https://www.fairmont.com/en/hotels/montreux/fairmont-le-montreux-palace/wellness.html" },
             ],
+            address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
           },
         ],
       },
@@ -432,6 +454,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             description:
               "A vibrant Swiss city just 30 minutes by train. Highlights: Gothic cathedral, Olympic Museum, the charming Old Town, and the lakefront at Ouchy.",
             tip: "The Olympic Museum is world-class and right on the lake — worth a few hours.",
+            address: "Lausanne, Switzerland",
           },
           {
             id: "golden-pass",
@@ -459,6 +482,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         category: "Café",
         description:
           "Montreux's premier specialty coffee shop — the perfect place to start your day with expertly crafted espresso and a welcoming atmosphere.",
+        address: "Rue du Marché 1, 1820 Montreux, Switzerland",
       },
       {
         id: "confiserie-zurcher",
@@ -467,6 +491,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         description:
           "A traditional Swiss confectionery and café — perfect for breakfast pastries, hot chocolate, and handmade chocolates to take home.",
         tip: "Pick up a box of Swiss chocolates as a souvenir — made in-house.",
+        address: "Av. du Casino 45, 1820 Montreux, Switzerland",
       },
       {
         id: "montreux-jazz-cafe",
@@ -474,6 +499,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         category: "Restaurant",
         description:
           "Lively vibes and modern European cuisine inspired by the legendary Montreux Jazz Festival. Located at the Fairmont.",
+        address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
       },
       {
         id: "la-terrasse",
@@ -481,6 +507,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         category: "Restaurant",
         description:
           "Elegant Mediterranean-inspired dining at the Fairmont with beautiful views of Lake Geneva — perfect for a romantic dinner.",
+        address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
       },
       {
         id: "funky-claudes",
@@ -489,14 +516,16 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         description:
           "Casual cocktails, light bites, and a comfort-food menu with a fun, jazzy atmosphere at the Fairmont. Live music most evenings.",
         tip: "Named after legendary Montreux Jazz Festival founder Claude Nobs — a Montreux icon.",
+        address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
       },
       {
         id: "la-rouvenaz",
         name: "La Rouvenaz",
         category: "Restaurant",
         description:
-          "A charming local favourite right on the lakeside — known for fresh seafood and Swiss specialities with beautiful lake views.",
-        tip: "Perch (perche) from Lake Geneva is a local speciality — try the classic meunière style.",
+          "A charming local favorite right on the lakeside — known for fresh seafood and Swiss specialties with beautiful lake views.",
+        tip: "Perch (perche) from Lake Geneva is a local specialty — try the classic meunière style.",
+        address: "Rue du Marché 1, 1820 Montreux, Switzerland",
       },
       {
         id: "lausanne-dining",
@@ -518,8 +547,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         name: "Currency",
         category: "Practical",
         description:
-          "Switzerland uses Swiss Francs (CHF). 1 CHF ≈ £0.90 / €1.05 / $1.27. Cards are widely accepted but carry some cash for smaller shops.",
-        tip: "Swiss prices are high — budget CHF 25–40 for a main course at a mid-range restaurant. Check xe.com for the latest exchange rates.",
+          "Switzerland uses Swiss Francs (CHF).",
         link: "https://www.xe.com/currencyconverter/convert/?Amount=1&From=CHF&To=USD",
       },
       {
@@ -535,7 +563,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         name: "Weather in May",
         category: "Practical",
         description:
-          "May in Montreux is beautiful spring weather: 59–72°F on warm days. Expect occasional rain — pack a light waterproof jacket. The lake acts as a heat buffer making it milder than inland.",
+          "May in Montreux is beautiful spring weather: 59–72°F on warm days. Expect occasional rain — pack a light waterproof jacket.",
         tip: "May is peak blooming season — the lake promenade will be stunning with roses and flowers.",
       },
       {
@@ -543,7 +571,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         name: "Getting Around Montreux",
         category: "Transport",
         description:
-          "Montreux is a normal town — cars, taxis, and Uber all work here. The town centre is walkable. Trains connect to Lausanne (30 min), Geneva (1 hr), and beyond.",
+          "Montreux is a normal town — cars, taxis, and Uber all work here. The town center is walkable. Trains connect to Lausanne (30 min), Geneva (1 hr), and beyond.",
         tip: "The Fairmont is 5 minutes on foot from Montreux train station. Most wedding venues are at or near the hotel.",
       },
       {
@@ -596,31 +624,31 @@ export const PACKING_GUIDE: PackingCategory[] = [
     items: [
       {
         id: "mehendi-outfit",
-        label: "Rehearsal Dinner — Smart casual Indian or Western",
-        tip: "White, soft neutrals, shades of green or rose. The venue is a vineyard estate — comfortable yet elegant.",
+        label: "Rehearsal Dinner outfit",
+        tip: "Smart casual Indian or Western. White, soft neutrals, shades of green or rose. The venue is a vineyard estate — comfortable yet elegant.",
         weddingPartyOnly: true,
       },
       {
         id: "sangeet-outfit",
-        label: "Sangeet — Festive Indian or semi-formal Western",
-        tip: "Bright jewel tones and festive hues! Think vibrant lehenga, saree, salwar kameez, or a colourful cocktail dress. This is the big dancing night — dress to impress!",
+        label: "Sangeet outfit",
+        tip: "Festive Indian or semi-formal Western. Bright jewel tones and festive hues! Think vibrant lehenga, saree, salwar kameez, or a colorful cocktail dress. This is the big dancing night — dress to impress!",
         gender: 'female',
       },
       {
         id: "sangeet-outfit-male",
-        label: "Sangeet — Festive Indian or semi-formal Western",
-        tip: "Bright jewel tones and festive hues! Think sherwani, kurta, or smart semi-formal attire. This is the big dancing night — dress to impress!",
+        label: "Sangeet outfit",
+        tip: "Festive Indian or semi-formal Western. Bright jewel tones and festive hues! Think sherwani, kurta, or smart semi-formal attire. This is the big dancing night — dress to impress!",
         gender: 'male',
       },
       {
         id: "ceremony-outfit",
-        label: "Ceremony & Reception — Indian formal or black-tie Western",
-        tip: "Elegant neutrals and muted evening tones. Lehenga, saree, or floor length gown.",
+        label: "Ceremony & Reception outfit",
+        tip: "Indian formal or black-tie Western. Elegant neutrals and muted evening tones. Lehenga, saree, or floor length gown.",
         gender: 'female',
       },
       {
         id: "ceremony-outfit-male",
-        label: "Ceremony & Reception — Tuxedo or Black Suit",
+        label: "Tuxedo or Black Suit",
         tip: "Black-tie dress code applies.",
         gender: 'male',
       },
@@ -734,9 +762,9 @@ export const PACKING_GUIDE: PackingCategory[] = [
     emoji: "✨",
     items: [
       {
-        id: "jewellery",
-        label: "Jewellery for each event",
-        tip: "Pack pieces in individual pouches to avoid tangling. Sangeet = bold statement jewellery; Ceremony = elegant classics.",
+        id: "jewelry",
+        label: "Jewelry for each event",
+        tip: "Pack pieces in individual pouches to avoid tangling. Sangeet = bold statement jewelry; Ceremony = elegant classics.",
         gender: 'female',
       },
       {
