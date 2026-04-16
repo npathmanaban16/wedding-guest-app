@@ -249,6 +249,76 @@ export async function toggleReaction(
   }
 }
 
+// ─── Notification Replies ────────────────────────────────────────────────────
+
+export interface NotificationReply {
+  id: string;
+  notificationId: string;
+  guestName: string;
+  message: string;
+  createdAt: string;
+}
+
+export async function getReplies(
+  notificationIds: string[],
+): Promise<Record<string, NotificationReply[]>> {
+  if (notificationIds.length === 0) return {};
+  try {
+    const { data, error } = await supabase
+      .from('notification_replies')
+      .select('*')
+      .in('notification_id', notificationIds)
+      .order('created_at', { ascending: true });
+
+    if (error || !data) return {};
+
+    const map: Record<string, NotificationReply[]> = {};
+    for (const row of data) {
+      const nid = row.notification_id as string;
+      if (!map[nid]) map[nid] = [];
+      map[nid].push({
+        id: row.id,
+        notificationId: nid,
+        guestName: row.guest_name,
+        message: row.message,
+        createdAt: row.created_at,
+      });
+    }
+    return map;
+  } catch {
+    return {};
+  }
+}
+
+export async function addReply(
+  notificationId: string,
+  guestName: string,
+  message: string,
+): Promise<NotificationReply> {
+  const { data, error } = await supabase
+    .from('notification_replies')
+    .insert({ notification_id: notificationId, guest_name: guestName, message })
+    .select()
+    .single();
+
+  if (error || !data) {
+    throw new Error(error?.message ?? 'Failed to post reply');
+  }
+
+  return {
+    id: data.id,
+    notificationId: data.notification_id,
+    guestName: data.guest_name,
+    message: data.message,
+    createdAt: data.created_at,
+  };
+}
+
+export async function deleteReply(id: string): Promise<void> {
+  const { error } = await supabase.from('notification_replies').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
 // ─── Unread message tracking ──────────────────────────────────────────────────
 
 const MESSAGES_LAST_READ_KEY = '@wedding_messages_last_read';

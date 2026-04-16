@@ -51,6 +51,15 @@ create table public.notification_reactions (
   unique(notification_id, guest_name)
 );
 
+-- notification_replies: public guest replies to notifications
+create table public.notification_replies (
+  id              uuid default gen_random_uuid() primary key,
+  notification_id uuid references public.notifications(id) on delete cascade not null,
+  guest_name      text not null,
+  message         text not null,
+  created_at      timestamptz default now()
+);
+
 -- packing_checklist: one row per guest, stores array of checked item IDs
 create table public.packing_checklist (
   guest_name    text primary key,
@@ -80,4 +89,9 @@ create policy "allow_all_notifications" on public.notifications
 alter table public.notification_reactions enable row level security;
 
 create policy "allow_all_notification_reactions" on public.notification_reactions
+  for all using (true) with check (true);
+
+alter table public.notification_replies enable row level security;
+
+create policy "allow_all_notification_replies" on public.notification_replies
   for all using (true) with check (true);

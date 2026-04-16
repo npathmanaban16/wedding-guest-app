@@ -1,13 +1,16 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
+  TextInput,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
   Alert,
   AppState,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,8 +24,12 @@ import {
   toggleReaction,
   deleteNotification,
   markMessagesRead,
+  getReplies,
+  addReply,
+  deleteReply,
   AppNotification,
   ReactionSummary,
+  NotificationReply,
 } from '@/services/storage';
 
 const REACTION_EMOJIS = ['❤️', '🎉', '😂', '👏', '🙌'];
@@ -41,21 +48,41 @@ function timeAgo(iso: string): string {
 function MessageCard({
   notification,
   reactions,
+  replies,
   guestName,
   isAdmin,
   onReact,
   onDelete,
+  onReply,
+  onDeleteReply,
 }: {
   notification: AppNotification;
   reactions: ReactionSummary[];
+  replies: NotificationReply[];
   guestName: string | null;
   isAdmin: boolean;
   onReact: (emoji: string) => void;
   onDelete: () => void;
+  onReply: (message: string) => void;
+  onDeleteReply: (replyId: string) => void;
 }) {
   const myReaction = guestName
     ? (reactions.find((r) => r.guestNames.includes(guestName))?.emoji ?? null)
     : null;
+
+  const [replyOpen, setReplyOpen] = useState(false);
+  const [replyText, setReplyText] = useState('');
+  const [sending, setSending] = useState(false);
+
+  const handleSend = async () => {
+    const text = replyText.trim();
+    if (!text) return;
+    setSending(true);
+    onReply(text);
+    setReplyText('');
+    setReplyOpen(false);
+    setSending(false);
+  };
 
   return (
     <View style={styles.card}>
@@ -93,6 +120,62 @@ function MessageCard({
           );
         })}
       </View>
+
+      {/* Replies */}
+      {replies.length > 0 && (
+        <View style={styles.repliesSection}>
+          {replies.map((r) => (
+            <View key={r.id} style={styles.replyRow}>
+              <View style={styles.replyContent}>
+                <Text style={styles.replyAuthor}>{r.guestName}</Text>
+                <Text style={styles.replyText}>{r.message}</Text>
+                <Text style={styles.replyTime}>{timeAgo(r.createdAt)}</Text>
+              </View>
+              {(r.guestName === guestName || isAdmin) && (
+                <TouchableOpacity
+                  onPress={() => onDeleteReply(r.id)}
+                  style={styles.replyDeleteBtn}
+                  hitSlop={8}
+                >
+                  <Ionicons name="close" size={14} color={Colors.textMuted} />
+                </TouchableOpacity>
+              )}
+            </View>
+          ))}
+        </View>
+      )}
+
+      {/* Reply input */}
+      {replyOpen ? (
+        <View style={styles.replyInputRow}>
+          <TextInput
+            style={styles.replyInput}
+            placeholder="Write a reply..."
+            placeholderTextColor={Colors.textMuted}
+            value={replyText}
+            onChangeText={setReplyText}
+            multiline
+            maxLength={280}
+            autoFocus
+          />
+          <TouchableOpacity
+            onPress={handleSend}
+            disabled={!replyText.trim() || sending}
+            style={[styles.sendBtn, (!replyText.trim() || sending) && styles.sendBtnDisabled]}
+          >
+            <Ionicons name="send" size={16} color={Colors.white} />
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <TouchableOpacity
+          style={styles.replyToggle}
+          onPress={() => setReplyOpen(true)}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="chatbubble-outline" size={13} color={Colors.textMuted} />
+          <Text style={styles.replyToggleText}>Reply</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -104,14 +187,17 @@ export default function MessagesScreen() {
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [reactions, setReactions] = useState<Record<string, ReactionSummary[]>>({});
+  const [allReplies, setAllReplies] = useState<Record<string, NotificationReply[]>>({});
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
     const notifs = await getNotifications();
     setNotifications(notifs);
     if (notifs.length > 0) {
-      const r = await getReactions(notifs.map((n) => n.id));
+      const ids = notifs.map((n) => n.id);
+      const [r, rep] = await Promise.all([getReactions(ids), getReplies(ids)]);
       setReactions(r);
+      setAllReplies(rep);
     }
     setLoading(false);
   }, []);
@@ -143,7 +229,6 @@ export default function MessagesScreen() {
     setReactions((prev) => {
       const current = (prev[notificationId] ?? []).map((r) => ({ ...r, guestNames: [...r.guestNames] }));
 
-      // Remove old reaction
       if (myCurrentReaction) {
         const idx = current.findIndex((r) => r.emoji === myCurrentReaction);
         if (idx >= 0) {
@@ -155,7 +240,6 @@ export default function MessagesScreen() {
         }
       }
 
-      // Add new reaction (if different)
       if (myCurrentReaction !== emoji) {
         const idx = current.findIndex((r) => r.emoji === emoji);
         if (idx >= 0) {
@@ -172,9 +256,56 @@ export default function MessagesScreen() {
     try {
       await toggleReaction(notificationId, guestName, emoji, myCurrentReaction);
     } catch {
-      loadData(); // revert on failure
+      loadData();
     }
   }, [guestName, reactions, loadData]);
+
+  const handleReply = useCallback(async (notificationId: string, message: string) => {
+    if (!guestName) return;
+
+    // Optimistic update
+    const optimistic: NotificationReply = {
+      id: `temp-${Date.now()}`,
+      notificationId,
+      guestName,
+      message,
+      createdAt: new Date().toISOString(),
+    };
+    setAllReplies((prev) => ({
+      ...prev,
+      [notificationId]: [...(prev[notificationId] ?? []), optimistic],
+    }));
+
+    try {
+      await addReply(notificationId, guestName, message);
+      loadData();
+    } catch {
+      loadData();
+      Alert.alert('Error', 'Could not post your reply.');
+    }
+  }, [guestName, loadData]);
+
+  const handleDeleteReply = useCallback((notificationId: string, replyId: string) => {
+    Alert.alert('Delete reply?', '', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          setAllReplies((prev) => ({
+            ...prev,
+            [notificationId]: (prev[notificationId] ?? []).filter((r) => r.id !== replyId),
+          }));
+          try {
+            await deleteReply(replyId);
+          } catch {
+            loadData();
+            Alert.alert('Error', 'Could not delete the reply.');
+          }
+        },
+      },
+    ]);
+  }, [loadData]);
 
   const handleDelete = useCallback((id: string, message: string) => {
     Alert.alert(
@@ -200,42 +331,52 @@ export default function MessagesScreen() {
   }, [loadData]);
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.md }]}
-      showsVerticalScrollIndicator={false}
+    <KeyboardAvoidingView
+      style={styles.flex}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.pageHeader}>
-        <Text style={styles.pageTitle}>Messages</Text>
-        <Text style={styles.pageSubtitleTag}>From the couple</Text>
-      </View>
-
-      {loading ? (
-        <ActivityIndicator color={Colors.primary} style={styles.loader} />
-      ) : notifications.length === 0 ? (
-        <View style={styles.empty}>
-          <Ionicons name="notifications-outline" size={40} color={Colors.textMuted} />
-          <Text style={styles.emptyText}>No messages yet</Text>
-          <Text style={styles.emptySubtext}>Updates from Neha & Naveen will appear here</Text>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.md }]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.pageHeader}>
+          <Text style={styles.pageTitle}>Messages</Text>
+          <Text style={styles.pageSubtitleTag}>From the couple</Text>
         </View>
-      ) : (
-        notifications.map((n) => (
-          <MessageCard
-            key={n.id}
-            notification={n}
-            reactions={reactions[n.id] ?? []}
-            guestName={guestName}
-            isAdmin={isAdmin}
-            onReact={(emoji) => handleReact(n.id, emoji)}
-            onDelete={() => handleDelete(n.id, n.message)}
-          />
-        ))
-      )}
-    </ScrollView>
+
+        {loading ? (
+          <ActivityIndicator color={Colors.primary} style={styles.loader} />
+        ) : notifications.length === 0 ? (
+          <View style={styles.empty}>
+            <Ionicons name="notifications-outline" size={40} color={Colors.textMuted} />
+            <Text style={styles.emptyText}>No messages yet</Text>
+            <Text style={styles.emptySubtext}>Updates from Neha & Naveen will appear here</Text>
+          </View>
+        ) : (
+          notifications.map((n) => (
+            <MessageCard
+              key={n.id}
+              notification={n}
+              reactions={reactions[n.id] ?? []}
+              replies={allReplies[n.id] ?? []}
+              guestName={guestName}
+              isAdmin={isAdmin}
+              onReact={(emoji) => handleReact(n.id, emoji)}
+              onDelete={() => handleDelete(n.id, n.message)}
+              onReply={(msg) => handleReply(n.id, msg)}
+              onDeleteReply={(replyId) => handleDeleteReply(n.id, replyId)}
+            />
+          ))
+        )}
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   container: { flex: 1, backgroundColor: Colors.background },
   content: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.xxl },
   loader: { marginTop: Spacing.xxl },
@@ -352,5 +493,85 @@ const styles = StyleSheet.create({
   },
   reactionCountSelected: {
     color: Colors.primary,
+  },
+
+  // Replies
+  repliesSection: {
+    marginTop: Spacing.md,
+    borderTopWidth: 0.5,
+    borderTopColor: Colors.border,
+    paddingTop: Spacing.sm,
+  },
+  replyRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingVertical: Spacing.xs,
+  },
+  replyContent: { flex: 1 },
+  replyAuthor: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 12,
+    color: Colors.textPrimary,
+  },
+  replyText: {
+    fontFamily: Fonts.sans,
+    fontSize: 14,
+    color: Colors.textPrimary,
+    lineHeight: 20,
+    marginTop: 1,
+  },
+  replyTime: {
+    fontFamily: Fonts.sans,
+    fontSize: 10,
+    color: Colors.textMuted,
+    marginTop: 2,
+  },
+  replyDeleteBtn: {
+    padding: Spacing.xs,
+    marginLeft: Spacing.xs,
+  },
+
+  // Reply input
+  replyToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: Spacing.sm,
+    paddingTop: Spacing.xs,
+  },
+  replyToggleText: {
+    fontFamily: Fonts.sans,
+    fontSize: 13,
+    color: Colors.textMuted,
+  },
+  replyInputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginTop: Spacing.sm,
+    gap: Spacing.xs,
+  },
+  replyInput: {
+    flex: 1,
+    fontFamily: Fonts.sans,
+    fontSize: 14,
+    color: Colors.textPrimary,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    maxHeight: 80,
+    backgroundColor: Colors.background,
+  },
+  sendBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.full,
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sendBtnDisabled: {
+    opacity: 0.4,
   },
 });

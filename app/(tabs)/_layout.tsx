@@ -24,7 +24,7 @@ const TABS: TabConfig[] = [
   { name: 'photos',      title: 'Photos',      icon: 'camera-outline',        iconFocused: 'camera' },
   { name: 'songs',       title: 'Songs',       icon: 'musical-notes-outline', iconFocused: 'musical-notes' },
   { name: 'messages',    title: 'Messages',    icon: 'notifications-outline', iconFocused: 'notifications' },
-  { name: 'my-info',     title: 'My Details',  icon: 'person-outline',        iconFocused: 'person' },
+  { name: 'my-info',     title: 'Details',     icon: 'person-outline',        iconFocused: 'person' },
 ];
 
 export default function TabLayout() {
