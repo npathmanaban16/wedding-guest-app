@@ -17,6 +17,7 @@ import { WEDDING, EVENTS } from '@/constants/weddingData';
 import { isWeddingParty } from '@/constants/guests';
 import { isAdminGuest } from '@/app/admin';
 import { getNotifications, AppNotification } from '@/services/storage';
+import { supabase } from '@/lib/supabase';
 
 function useCountdown(targetDate: Date) {
   const getTimeLeft = (target: Date) => {
@@ -82,6 +83,23 @@ export default function HomeScreen() {
 
   useEffect(() => {
     getNotifications().then(setNotifications);
+
+    const channel = supabase
+      .channel('notifications-feed')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications' },
+        (payload) => {
+          const n = payload.new as { id: string; message: string; sender: string; sent_at: string };
+          setNotifications((prev) => [
+            { id: n.id, message: n.message, sender: n.sender, sentAt: n.sent_at },
+            ...prev,
+          ]);
+        },
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   return (
