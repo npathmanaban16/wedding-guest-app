@@ -128,9 +128,9 @@ export default function SongsScreen() {
         {/* Page header */}
         <View style={styles.pageHeader}>
           <Text style={styles.pageTitle}>Song Requests</Text>
-          <Text style={styles.pageSubtitleTag}>Reception Playlist</Text>
+          <Text style={styles.pageSubtitleTag}>Sangeet & Reception Playlist</Text>
           <Text style={styles.pageSubtitle}>
-            What songs do you want to dance to? Request your favourites for the reception!
+            What songs do you want to dance to? Request your favorites for the reception!
           </Text>
         </View>
 
