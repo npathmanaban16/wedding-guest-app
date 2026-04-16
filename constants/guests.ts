@@ -298,6 +298,7 @@ export const WEDDING_PARTY: string[] = [
   "Eleni Karandreas",
   "Alex Shih",
   "Nancy Kwan",
+  "Astrid Rolando",
 ];
 
 // ============================================================
