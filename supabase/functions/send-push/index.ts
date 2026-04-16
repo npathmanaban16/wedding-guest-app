@@ -1,4 +1,3 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
@@ -6,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -21,7 +20,6 @@ serve(async (req) => {
       });
     }
 
-    // Fetch all push tokens from the guests table
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
@@ -45,7 +43,6 @@ serve(async (req) => {
       );
     }
 
-    // Expo Push API accepts up to 100 notifications per request
     const CHUNK_SIZE = 100;
     let totalSent = 0;
     let totalFailed = 0;

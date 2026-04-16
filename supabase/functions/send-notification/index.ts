@@ -1,10 +1,8 @@
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? '';
 const TO_EMAIL = 'nehanaveen2026@gmail.com';
 const FROM_EMAIL = 'onboarding@resend.dev';
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, {
@@ -37,7 +35,7 @@ serve(async (req) => {
         html: `
           <div style="font-family: Georgia, serif; max-width: 480px; margin: 0 auto; padding: 32px; color: #1C1810;">
             <h2 style="color: #7A6A55; margin-bottom: 4px;">Travel details update</h2>
-            <p style="color: #9A8A78; font-size: 13px; margin-top: 0;">${new Date().toLocaleString('en-GB', { dateStyle: 'full', timeStyle: 'short' })}</p>
+            <p style="color: #9A8A78; font-size: 13px; margin-top: 0;">${new Date().toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'short' })}</p>
             <hr style="border: none; border-top: 1px solid #E4D9CC; margin: 20px 0;" />
             <pre style="font-family: Georgia, serif; font-size: 15px; line-height: 1.8; white-space: pre-wrap; color: #1C1810;">${details}</pre>
             <hr style="border: none; border-top: 1px solid #E4D9CC; margin: 20px 0;" />
