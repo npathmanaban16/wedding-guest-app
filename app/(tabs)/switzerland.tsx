@@ -49,7 +49,7 @@ function GuideItemCard({ item }: { item: GuideItem }) {
   };
 
   const description = isCurrency && rates
-    ? `Switzerland uses Swiss Francs (CHF). 1 CHF = $${rates.USD.toFixed(2)} / €${rates.EUR.toFixed(2)} / £${rates.GBP.toFixed(2)}. Cards are widely accepted but carry some cash for smaller shops.`
+    ? `Switzerland uses Swiss Francs (CHF). 1 CHF = $${rates.USD.toFixed(2)} / €${rates.EUR.toFixed(2)} / £${rates.GBP.toFixed(2)}.`
     : item.description;
 
   return (

@@ -518,7 +518,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         name: "Currency",
         category: "Practical",
         description:
-          "Switzerland uses Swiss Francs (CHF). Cards are widely accepted but carry some cash for smaller shops.",
+          "Switzerland uses Swiss Francs (CHF).",
         link: "https://www.xe.com/currencyconverter/convert/?Amount=1&From=CHF&To=USD",
       },
       {
@@ -534,7 +534,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         name: "Weather in May",
         category: "Practical",
         description:
-          "May in Montreux is beautiful spring weather: 59–72°F on warm days. Expect occasional rain — pack a light waterproof jacket. The lake acts as a heat buffer making it milder than inland.",
+          "May in Montreux is beautiful spring weather: 59–72°F on warm days. Expect occasional rain — pack a light waterproof jacket.",
         tip: "May is peak blooming season — the lake promenade will be stunning with roses and flowers.",
       },
       {
