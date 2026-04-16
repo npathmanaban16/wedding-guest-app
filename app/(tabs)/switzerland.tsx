@@ -15,6 +15,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
+import MapView, { Marker } from 'react-native-maps';
 import { SWITZERLAND_GUIDE, GuideSection, GuideSubsection, GuideItem, GuideLink } from '@/constants/weddingData';
 import { haptic } from '@/utils/haptics';
 
@@ -179,6 +180,81 @@ function SectionBlock({ section }: { section: GuideSection }) {
   );
 }
 
+const PIN_COLORS: Record<string, string> = {
+  Sightseeing: '#8B5E6B',
+  Activity: '#4A7C6F',
+  Restaurant: '#C9853A',
+  Bar: '#C9853A',
+  Café: '#C9853A',
+};
+
+function allPins(): (GuideItem & { coordinate: { latitude: number; longitude: number } })[] {
+  const pins: (GuideItem & { coordinate: { latitude: number; longitude: number } })[] = [];
+  for (const section of SWITZERLAND_GUIDE) {
+    const items = section.subsections
+      ? section.subsections.flatMap((s) => s.items)
+      : (section.items ?? []);
+    for (const item of items) {
+      if (item.coordinate) pins.push(item as typeof pins[0]);
+    }
+  }
+  return pins;
+}
+
+const MAP_PINS = allPins();
+
+function GuideMap() {
+  const [selected, setSelected] = useState<string | null>(null);
+
+  return (
+    <View style={styles.mapContainer}>
+      <MapView
+        style={styles.map}
+        initialRegion={{
+          latitude: 46.4314,
+          longitude: 6.9108,
+          latitudeDelta: 0.25,
+          longitudeDelta: 0.35,
+        }}
+        showsUserLocation={false}
+        showsPointsOfInterest={false}
+        mapType="standard"
+      >
+        {MAP_PINS.map((pin) => (
+          <Marker
+            key={pin.id}
+            coordinate={pin.coordinate}
+            title={pin.name}
+            pinColor={PIN_COLORS[pin.category] ?? '#8B5E6B'}
+            onPress={() => setSelected(pin.id === selected ? null : pin.id)}
+          />
+        ))}
+      </MapView>
+      {selected && (() => {
+        const pin = MAP_PINS.find((p) => p.id === selected);
+        return pin ? (
+          <View style={styles.mapCallout}>
+            <View style={styles.mapCalloutInner}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.mapCalloutName}>{pin.name}</Text>
+                <Text style={styles.mapCalloutCategory}>{pin.category}</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.mapCalloutBtn}
+                onPress={() => openMaps(pin.address!)}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="map-outline" size={13} color={Colors.gold} />
+                <Text style={styles.mapCalloutBtnText}>Directions</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : null;
+      })()}
+    </View>
+  );
+}
+
 export default function SwitzerlandScreen() {
   const insets = useSafeAreaInsets();
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
@@ -240,6 +316,9 @@ export default function SwitzerlandScreen() {
           </View>
         ))}
       </ScrollView>
+
+      {/* Map */}
+      {Platform.OS === 'ios' && <GuideMap />}
 
       {/* Filter pills */}
       <ScrollView
@@ -356,6 +435,62 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
+  },
+
+  mapContainer: {
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+    borderRadius: Radius.lg,
+    overflow: 'hidden',
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    ...Shadow.small,
+  },
+  map: {
+    width: '100%',
+    height: 220,
+  },
+  mapCallout: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: Colors.white,
+    borderTopWidth: 0.5,
+    borderTopColor: Colors.border,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+  mapCalloutInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  mapCalloutName: {
+    fontFamily: Fonts.serifMedium,
+    fontSize: 14,
+    color: Colors.textPrimary,
+  },
+  mapCalloutCategory: {
+    fontFamily: Fonts.sans,
+    fontSize: 11,
+    color: Colors.textMuted,
+    marginTop: 1,
+  },
+  mapCalloutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: Colors.surfaceWarm,
+    borderRadius: Radius.md,
+    paddingVertical: 7,
+    paddingHorizontal: Spacing.sm,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+  },
+  mapCalloutBtnText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 12,
+    color: Colors.textSecondary,
   },
 
   filters: {
