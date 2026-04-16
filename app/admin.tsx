@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
+import { haptic } from '@/utils/haptics';
 
 const SENDERS = [
   { id: 'couple', label: 'Neha & Naveen', icon: 'heart' as const },
@@ -56,6 +57,7 @@ export default function AdminScreen() {
   const handleSend = async () => {
     const trimmed = message.trim();
     if (!trimmed) return;
+    haptic.medium();
 
     Alert.alert(
       'Send notification?',

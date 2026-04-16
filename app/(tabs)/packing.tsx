@@ -14,6 +14,7 @@ import { PACKING_GUIDE, PackingCategory, PackingItem } from '@/constants/wedding
 import { getCheckedItems, togglePackingItem } from '@/services/storage';
 import { useAuth } from '@/context/AuthContext';
 import { isWeddingParty, getGuestGender } from '@/constants/guests';
+import { haptic } from '@/utils/haptics';
 
 function PackingItemRow({
   item,
@@ -30,7 +31,7 @@ function PackingItemRow({
     <View style={styles.itemRow}>
       <TouchableOpacity
         style={styles.checkRow}
-        onPress={onToggle}
+        onPress={() => { haptic.light(); onToggle(); }}
         activeOpacity={0.7}
       >
         <View style={[styles.checkbox, checked && styles.checkboxChecked]}>

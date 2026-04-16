@@ -20,6 +20,7 @@ import { EVENTS, WeddingEvent } from '@/constants/weddingData';
 import { useAuth } from '@/context/AuthContext';
 import { isWeddingParty } from '@/constants/guests';
 import { FairmontMap } from '@/components/FairmontMap';
+import { haptic } from '@/utils/haptics';
 
 function openMaps(address: string) {
   const encoded = encodeURIComponent(address);
@@ -92,11 +93,13 @@ function EventCard({ event }: { event: WeddingEvent }) {
   const [dressExpanded, setDressExpanded] = useState(false);
 
   const toggle = () => {
+    haptic.selection();
     animateLayout();
     setExpanded((v) => !v);
   };
 
   const toggleDress = () => {
+    haptic.selection();
     animateLayout();
     setDressExpanded((v) => !v);
   };
@@ -131,7 +134,7 @@ function EventCard({ event }: { event: WeddingEvent }) {
           <View style={styles.actionRow}>
             <TouchableOpacity
               style={styles.actionBtn}
-              onPress={() => openMaps(event.address)}
+              onPress={() => { haptic.medium(); openMaps(event.address); }}
               activeOpacity={0.7}
             >
               <Ionicons name="map-outline" size={14} color={Colors.gold} />
@@ -139,7 +142,7 @@ function EventCard({ event }: { event: WeddingEvent }) {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.actionBtn}
-              onPress={() => addToCalendar(event)}
+              onPress={() => { haptic.medium(); addToCalendar(event); }}
               activeOpacity={0.7}
             >
               <Ionicons name="calendar-outline" size={14} color={Colors.gold} />

@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { isAdminGuest } from '@/app/admin';
+import { haptic } from '@/utils/haptics';
 import {
   getNotifications,
   getReactions,
@@ -76,6 +77,7 @@ function MessageCard({
   const handleSend = async () => {
     const text = replyText.trim();
     if (!text) return;
+    haptic.medium();
     setSending(true);
     onReply(text);
     setReplyText('');
@@ -94,7 +96,7 @@ function MessageCard({
           <Text style={styles.timeAgo}>{timeAgo(notification.sentAt)}</Text>
         </View>
         {isAdmin && (
-          <TouchableOpacity onPress={onDelete} style={styles.deleteBtn} hitSlop={8}>
+          <TouchableOpacity onPress={() => { haptic.warning(); onDelete(); }} style={styles.deleteBtn} hitSlop={8}>
             <Ionicons name="trash-outline" size={16} color={Colors.textMuted} />
           </TouchableOpacity>
         )}
@@ -110,7 +112,7 @@ function MessageCard({
             <TouchableOpacity
               key={emoji}
               style={[styles.reactionBtn, selected && styles.reactionBtnSelected]}
-              onPress={() => onReact(emoji)}
+              onPress={() => { haptic.light(); onReact(emoji); }}
               activeOpacity={0.7}
             >
               <Text style={styles.reactionEmoji}>{emoji}</Text>

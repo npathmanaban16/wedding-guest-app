@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { getSongRequests, addSongRequest, deleteSongRequest, SongRequest } from '@/services/storage';
+import { haptic } from '@/utils/haptics';
 
 const SAMPLE_SUGGESTIONS = [
   { song: 'Gimme! Gimme! Gimme!', artist: 'ABBA' },
@@ -49,7 +50,7 @@ function SongCard({
         <Text style={styles.requestedBy}>Requested by {request.requestedBy}</Text>
       </View>
       {isOwner && (
-        <TouchableOpacity style={styles.deleteButton} onPress={() => onDelete(request.id)}>
+        <TouchableOpacity style={styles.deleteButton} onPress={() => { haptic.warning(); onDelete(request.id); }}>
           <Ionicons name="trash-outline" size={16} color={Colors.textMuted} />
         </TouchableOpacity>
       )}
@@ -75,6 +76,7 @@ export default function SongsScreen() {
 
   const handleSubmit = async () => {
     if (!song.trim() || !guestName) return;
+    haptic.success();
     setSubmitting(true);
     try {
       const newRequest = await addSongRequest(song, artist, guestName);
