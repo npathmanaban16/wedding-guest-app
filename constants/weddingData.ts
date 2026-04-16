@@ -295,7 +295,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             description:
               "Just steps from the Fairmont, this lakeside path is lined with vibrant flowers and palm trees, offering sweeping views of Lake Geneva and the Alps. Stretches several kilometres from Clarens to Villeneuve — perfect for a morning jog, leisurely walk, or sunset stroll. The famous Freddie Mercury statue is along the way.",
             tip: "May is peak blooming season — perfect for photos with the Alps reflecting on the lake.",
-            address: "Place du Marché, 1820 Montreux, Switzerland",
+            address: "Quai Edouard-Jaccoud, 1820 Montreux, Switzerland",
           },
           {
             id: "rochers-de-naye",
