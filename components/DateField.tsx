@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   StyleSheet,
   Platform,
 } from 'react-native';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius } from '@/constants/theme';
 
@@ -27,7 +27,7 @@ function formatDisplay(value: string): string {
   if (!value) return '';
   const d = parseLocalDate(value);
   if (!d) return value;
-  return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' });
+  return d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' });
 }
 
 interface Props {
@@ -39,11 +39,14 @@ interface Props {
   maximumDate?: Date;
 }
 
-export function DateField({ label, value, onChange, placeholder, minimumDate, maximumDate }: Props) {
+function NativeDateField({ label, value, onChange, placeholder, minimumDate, maximumDate }: Props) {
   const [show, setShow] = useState(false);
   const date = parseDate(value);
 
-  const handleChange = (_: DateTimePickerEvent, selected?: Date) => {
+  // Lazy-load DateTimePicker only on native
+  const DateTimePicker = require('@react-native-community/datetimepicker').default;
+
+  const handleChange = (_: any, selected?: Date) => {
     if (Platform.OS === 'android') setShow(false);
     if (selected) {
       const y = selected.getFullYear();
@@ -92,6 +95,55 @@ export function DateField({ label, value, onChange, placeholder, minimumDate, ma
       )}
     </View>
   );
+}
+
+function WebDateField({ label, value, onChange, placeholder, minimumDate, maximumDate }: Props) {
+  const formatDateAttr = (d?: Date) => {
+    if (!d) return undefined;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
+  return (
+    <View style={styles.wrapper}>
+      <Text style={styles.label}>{label}</Text>
+      <View style={styles.trigger}>
+        <Ionicons name="calendar-outline" size={16} color={Colors.textMuted} style={styles.icon} />
+        <TextInput
+          style={[styles.triggerText, !value && { color: Colors.textMuted }]}
+          value={value ? formatDisplay(value) : ''}
+          placeholder={placeholder || 'Select date...'}
+          placeholderTextColor={Colors.textMuted}
+          onFocus={(e) => {
+            // On web, swap to a date input type
+            const input = e.target as unknown as HTMLInputElement;
+            if (input) {
+              input.type = 'date';
+              if (minimumDate) input.min = formatDateAttr(minimumDate) ?? '';
+              if (maximumDate) input.max = formatDateAttr(maximumDate) ?? '';
+              if (value) input.value = value;
+            }
+          }}
+          onBlur={(e) => {
+            const input = e.target as unknown as HTMLInputElement;
+            if (input) input.type = 'text';
+          }}
+          onChange={(e) => {
+            const nativeValue = (e.nativeEvent as any).text || (e.target as unknown as HTMLInputElement)?.value;
+            if (nativeValue && /^\d{4}-\d{2}-\d{2}$/.test(nativeValue)) {
+              onChange(nativeValue);
+            }
+          }}
+        />
+      </View>
+    </View>
+  );
+}
+
+export function DateField(props: Props) {
+  if (Platform.OS === 'web') {
+    return <WebDateField {...props} />;
+  }
+  return <NativeDateField {...props} />;
 }
 
 const styles = StyleSheet.create({

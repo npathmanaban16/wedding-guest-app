@@ -33,7 +33,12 @@
     },
     "web": {
       "bundler": "metro",
-      "output": "static"
+      "output": "static",
+      "favicon": "./public/favicon.png",
+      "name": "Neha & Naveen's Wedding",
+      "shortName": "N & N Wedding",
+      "themeColor": "#8B5E6B",
+      "backgroundColor": "#FAF7F4"
     },
     "plugins": [
       "expo-router",

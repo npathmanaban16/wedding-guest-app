@@ -19,9 +19,13 @@ import { useAuth } from '@/context/AuthContext';
 import { isWeddingParty } from '@/constants/guests';
 import { FairmontMap } from '@/components/FairmontMap';
 
-if (Platform.OS === 'android') {
-  UIManager.setLayoutAnimationEnabledExperimental?.(true);
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
 }
+
+const animateLayout = () => {
+  if (Platform.OS !== 'web') LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+};
 
 function BulletRow({ text }: { text: string }) {
   return (
@@ -37,12 +41,12 @@ function EventCard({ event }: { event: WeddingEvent }) {
   const [dressExpanded, setDressExpanded] = useState(false);
 
   const toggle = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    animateLayout();
     setExpanded((v) => !v);
   };
 
   const toggleDress = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    animateLayout();
     setDressExpanded((v) => !v);
   };
 

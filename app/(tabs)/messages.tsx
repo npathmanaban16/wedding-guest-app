@@ -14,7 +14,6 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as Notifications from 'expo-notifications';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { isAdminGuest } from '@/app/admin';
@@ -205,14 +204,18 @@ export default function MessagesScreen() {
   useEffect(() => {
     loadData();
     if (guestName) markMessagesRead(guestName).catch(() => {});
-    Notifications.setBadgeCountAsync(0).catch(() => {});
+    if (Platform.OS !== 'web') {
+      import('expo-notifications').then((mod) => mod.setBadgeCountAsync(0)).catch(() => {});
+    }
 
     const poll = setInterval(loadData, 30_000);
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
         loadData();
         if (guestName) markMessagesRead(guestName).catch(() => {});
-        Notifications.setBadgeCountAsync(0).catch(() => {});
+        if (Platform.OS !== 'web') {
+          import('expo-notifications').then((mod) => mod.setBadgeCountAsync(0)).catch(() => {});
+        }
       }
     });
 

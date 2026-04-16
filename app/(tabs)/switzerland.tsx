@@ -17,9 +17,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { SWITZERLAND_GUIDE, GuideSection, GuideSubsection, GuideItem, GuideLink } from '@/constants/weddingData';
 
-if (Platform.OS === 'android') {
-  UIManager.setLayoutAnimationEnabledExperimental?.(true);
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
 }
+
+const animateLayout = () => {
+  if (Platform.OS !== 'web') LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+};
 
 type ExchangeRates = { USD: number; GBP: number; EUR: number };
 
@@ -44,7 +48,7 @@ function GuideItemCard({ item }: { item: GuideItem }) {
   }, [isCurrency, expanded]);
 
   const toggle = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    animateLayout();
     setExpanded((v) => !v);
   };
 
@@ -113,7 +117,7 @@ function SubsectionBlock({ subsection }: { subsection: GuideSubsection }) {
   const [expanded, setExpanded] = useState(false);
 
   const toggle = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    animateLayout();
     setExpanded((v) => !v);
   };
 

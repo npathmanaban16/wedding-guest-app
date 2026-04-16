@@ -6,17 +6,19 @@ import { Platform } from 'react-native';
 import { savePushToken } from '@/services/storage';
 
 // Show notifications as banners even when the app is in the foreground
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+if (Platform.OS !== 'web') {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
+}
 
 export function usePushNotifications(guestName: string | null) {
   useEffect(() => {
-    if (!guestName) return;
+    if (!guestName || Platform.OS === 'web') return;
     registerForPushNotifications(guestName);
   }, [guestName]);
 }
