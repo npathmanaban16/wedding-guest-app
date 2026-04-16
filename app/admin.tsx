@@ -68,11 +68,14 @@ export default function AdminScreen() {
           onPress: async () => {
             setSending(true);
             try {
-              const { error } = await supabase.functions.invoke('send-push', {
+              const { data, error } = await supabase.functions.invoke('send-push', {
                 body: { message: trimmed, sender: senderLabel },
               });
               if (error) throw error;
-              Alert.alert('Sent!', 'Your notification has been sent to all guests.');
+              const sent = data?.sent ?? 0;
+              const failed = data?.failed ?? 0;
+              const detail = data?.message ?? `Delivered to ${sent} device${sent !== 1 ? 's' : ''}${failed ? `, ${failed} failed` : ''}`;
+              Alert.alert('Sent!', detail);
               setMessage('');
             } catch (e: unknown) {
               let msg = e instanceof Error ? e.message : 'Unknown error';
