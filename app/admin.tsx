@@ -75,7 +75,14 @@ export default function AdminScreen() {
               Alert.alert('Sent!', 'Your notification has been sent to all guests.');
               setMessage('');
             } catch (e: unknown) {
-              const msg = e instanceof Error ? e.message : 'Unknown error';
+              let msg = e instanceof Error ? e.message : 'Unknown error';
+              // Try to extract the actual error body from a FunctionsHttpError
+              if (e != null && typeof e === 'object' && 'context' in e && e.context instanceof Response) {
+                try {
+                  const body = await (e.context as Response).json();
+                  if (body?.error) msg = body.error;
+                } catch {}
+              }
               Alert.alert('Error', `Could not send notification: ${msg}`);
             } finally {
               setSending(false);
