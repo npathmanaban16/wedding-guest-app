@@ -27,7 +27,6 @@ const animateLayout = () => {
 };
 
 function openMaps(address: string) {
-  haptic.light();
   const encoded = encodeURIComponent(address);
   const url = Platform.select({
     ios: `maps:0,0?q=${encoded}`,
@@ -120,8 +119,8 @@ function GuideItemCard({ item }: { item: GuideItem }) {
             </View>
           )}
           {item.address && (
-            <TouchableOpacity style={styles.directionsButton} onPress={() => openMaps(item.address!)} activeOpacity={0.8}>
-              <Ionicons name="navigate-outline" size={15} color={Colors.gold} />
+            <TouchableOpacity style={styles.directionsButton} onPress={() => { haptic.medium(); openMaps(item.address!); }} activeOpacity={0.8}>
+              <Ionicons name="map-outline" size={14} color={Colors.gold} />
               <Text style={styles.directionsText}>Get Directions</Text>
             </TouchableOpacity>
           )}
@@ -503,19 +502,19 @@ const styles = StyleSheet.create({
   directionsButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.xs,
-    backgroundColor: Colors.surfaceWarm,
+    justifyContent: 'center',
+    gap: 5,
+    paddingVertical: 9,
     borderRadius: Radius.md,
-    paddingVertical: 10,
-    paddingHorizontal: Spacing.md,
-    marginTop: Spacing.xs,
     borderWidth: 0.5,
-    borderColor: Colors.divider,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surfaceWarm,
+    marginTop: Spacing.xs,
   },
   directionsText: {
-    fontSize: 13,
     fontFamily: Fonts.sansMedium,
-    color: Colors.textPrimary,
+    fontSize: 12,
+    color: Colors.textSecondary,
   },
 
   quickFacts: {

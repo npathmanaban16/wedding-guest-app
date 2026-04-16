@@ -251,7 +251,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         category: "Transport",
         description:
           "It's approximately a 1 hour drive from Geneva Airport to Montreux, following the A1 and A9 highways along the lake. Rental cars are available at the airport. Uber also operates in Geneva and Montreux if you'd prefer not to drive.",
-        tip: "Uber is usually cheaper than traditional taxis from the airport.",
+        tip: "Rental cars give you flexibility to explore Lavaux and the surrounding region at your own pace.",
       },
     ],
   },
@@ -273,8 +273,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         name: "Uber & Taxis",
         category: "Practical",
         description:
-          "Uber operates in Montreux and nearby cities including Lausanne. Traditional taxis are also available but tend to be more expensive.",
-        tip: "Uber works well for late-night returns after the wedding celebrations.",
+          "Uber and taxis also operate in Geneva, Montreux, Lausanne, and surrounding areas.",
       },
     ],
   },
@@ -416,7 +415,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             links: [
               { label: "Montreux Tennis Club", url: "https://montreux-tennis-club.ch/" },
             ],
-            address: "Rue du Lac 32, 1820 Montreux, Switzerland",
+            address: "Quai Ami Chessex 11, 1820 Montreux, Switzerland",
           },
           {
             id: "fairmont-pools",
