@@ -51,12 +51,10 @@ async function registerForPushNotifications(guestName: string) {
   try {
     const projectId =
       Constants.expoConfig?.extra?.eas?.projectId ??
-      Constants.easConfig?.projectId;
+      Constants.easConfig?.projectId ??
+      'ae93c50e-f645-405a-818e-2737f5560e96';
 
-    const tokenData = projectId
-      ? await Notifications.getExpoPushTokenAsync({ projectId })
-      : await Notifications.getExpoPushTokenAsync();
-
+    const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
     await savePushToken(guestName, tokenData.data);
   } catch {
     // Token fetch failed (e.g. no network) — will retry on next launch
