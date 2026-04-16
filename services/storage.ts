@@ -321,14 +321,14 @@ export async function deleteReply(id: string): Promise<void> {
 
 // ─── Unread message tracking ──────────────────────────────────────────────────
 
-const MESSAGES_LAST_READ_KEY = '@wedding_messages_last_read';
+const messagesLastReadKey = (guestName: string) => `@wedding_messages_last_read_${guestName}`;
 
-export async function getMessagesLastRead(): Promise<string | null> {
-  return AsyncStorage.getItem(MESSAGES_LAST_READ_KEY);
+export async function getMessagesLastRead(guestName: string): Promise<string | null> {
+  return AsyncStorage.getItem(messagesLastReadKey(guestName));
 }
 
-export async function markMessagesRead(): Promise<void> {
-  await AsyncStorage.setItem(MESSAGES_LAST_READ_KEY, new Date().toISOString());
+export async function markMessagesRead(guestName: string): Promise<void> {
+  await AsyncStorage.setItem(messagesLastReadKey(guestName), new Date().toISOString());
 }
 
 // ─── Song Requests ────────────────────────────────────────────────────────────

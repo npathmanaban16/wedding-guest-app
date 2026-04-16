@@ -47,14 +47,15 @@ export default function TabLayout() {
   }, [guestName, isLoading]);
 
   const refreshUnread = useCallback(async () => {
-    const [notifs, lastRead] = await Promise.all([getNotifications(), getMessagesLastRead()]);
+    if (!guestName) return;
+    const [notifs, lastRead] = await Promise.all([getNotifications(), getMessagesLastRead(guestName)]);
     if (!lastRead) {
       setUnreadCount(notifs.length);
       return;
     }
     const count = notifs.filter((n) => new Date(n.sentAt) > new Date(lastRead)).length;
     setUnreadCount(count);
-  }, []);
+  }, [guestName]);
 
   useEffect(() => {
     refreshUnread();
@@ -116,7 +117,7 @@ export default function TabLayout() {
           }}
           listeners={tab.name === 'messages' ? {
             tabPress: () => {
-              markMessagesRead().catch(() => {});
+              if (guestName) markMessagesRead(guestName).catch(() => {});
               setUnreadCount(0);
             },
           } : undefined}

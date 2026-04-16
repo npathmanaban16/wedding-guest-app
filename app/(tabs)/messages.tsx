@@ -204,20 +204,20 @@ export default function MessagesScreen() {
 
   useEffect(() => {
     loadData();
-    markMessagesRead().catch(() => {});
+    if (guestName) markMessagesRead(guestName).catch(() => {});
     Notifications.setBadgeCountAsync(0).catch(() => {});
 
     const poll = setInterval(loadData, 30_000);
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
         loadData();
-        markMessagesRead().catch(() => {});
+        if (guestName) markMessagesRead(guestName).catch(() => {});
         Notifications.setBadgeCountAsync(0).catch(() => {});
       }
     });
 
     return () => { clearInterval(poll); sub.remove(); };
-  }, [loadData]);
+  }, [loadData, guestName]);
 
   const handleReact = useCallback(async (notificationId: string, emoji: string) => {
     if (!guestName) return;
