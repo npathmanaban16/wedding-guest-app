@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+
+let MapView: any = null;
+let Marker: any = null;
+try {
+  const maps = require('react-native-maps');
+  MapView = maps.default;
+  Marker = maps.Marker;
+} catch {}
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { SWITZERLAND_GUIDE, GuideItem } from '@/constants/weddingData';
@@ -47,6 +54,14 @@ const MAP_PINS = allPins();
 export default function GuideMap() {
   const [selected, setSelected] = useState<string | null>(null);
   const selectedPin = MAP_PINS.find((p) => p.id === selected) ?? null;
+
+  if (!MapView) {
+    return (
+      <View style={styles.placeholder}>
+        <Text style={styles.placeholderText}>Map available in the full app build</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.mapContainer}>
@@ -149,5 +164,21 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sansMedium,
     fontSize: 12,
     color: Colors.textSecondary,
+  },
+  placeholder: {
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+    height: 60,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.white,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  placeholderText: {
+    fontFamily: Fonts.sans,
+    fontSize: 12,
+    color: Colors.textMuted,
   },
 });
