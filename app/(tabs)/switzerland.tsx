@@ -15,7 +15,6 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
-import GuideMap from '@/components/GuideMap';
 import { SWITZERLAND_GUIDE, GuideSection, GuideSubsection, GuideItem, GuideLink } from '@/constants/weddingData';
 import { haptic } from '@/utils/haptics';
 
@@ -241,9 +240,6 @@ export default function SwitzerlandScreen() {
           </View>
         ))}
       </ScrollView>
-
-      {/* Map */}
-      <GuideMap />
 
       {/* Filter pills */}
       <ScrollView
