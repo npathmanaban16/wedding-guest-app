@@ -10,7 +10,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
-import { PACKING_GUIDE, PackingCategory, PackingItem } from '@/constants/weddingData';
+import { PACKING_GUIDE, PACKING_TIP_FOOTER, PackingCategory, PackingItem } from '@/constants/weddingData';
 import { getCheckedItems, togglePackingItem } from '@/services/storage';
 import { useAuth } from '@/context/AuthContext';
 import { isWeddingParty, getGuestGender } from '@/constants/guests';
@@ -203,10 +203,8 @@ export default function PackingScreen() {
 
       {/* Tips footer */}
       <View style={styles.tipsFooter}>
-        <Text style={styles.tipsTitle}>Tip: Pack for the Lake & the Mountains</Text>
-        <Text style={styles.tipsText}>
-          May in Montreux can bring spring showers and cool evenings by the lake. Bring layers and a packable rain jacket alongside your event outfits.
-        </Text>
+        <Text style={styles.tipsTitle}>{PACKING_TIP_FOOTER.title}</Text>
+        <Text style={styles.tipsText}>{PACKING_TIP_FOOTER.text}</Text>
       </View>
     </ScrollView>
   );

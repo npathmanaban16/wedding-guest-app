@@ -12,8 +12,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { WEDDING } from '@/constants/weddingData';
 
-const ALBUM_URL = 'https://photos.app.goo.gl/YCMxM6i7XRNzKERd6';
-
 export default function PhotosScreen() {
   const insets = useSafeAreaInsets();
 
@@ -36,13 +34,13 @@ export default function PhotosScreen() {
         <View style={styles.albumIconWrap}>
           <Ionicons name="images" size={40} color={Colors.primary} />
         </View>
-        <Text style={styles.albumTitle}>Neha & Naveen's Shared Album</Text>
+        <Text style={styles.albumTitle}>{WEDDING.coupleNames}'s Shared Album</Text>
         <Text style={styles.albumBody}>
           All photos and videos from the wedding weekend live here. Add yours and see what everyone else captured.
         </Text>
         <TouchableOpacity
           style={styles.albumButton}
-          onPress={() => Linking.openURL(ALBUM_URL)}
+          onPress={() => Linking.openURL(WEDDING.albumUrl)}
           activeOpacity={0.85}
         >
           <Ionicons name="logo-google" size={18} color={Colors.white} style={{ marginRight: Spacing.xs }} />

@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Calendar from 'expo-calendar';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
-import { EVENTS, WeddingEvent } from '@/constants/weddingData';
+import { EVENTS, WEDDING, WeddingEvent } from '@/constants/weddingData';
 import { useAuth } from '@/context/AuthContext';
 import { isWeddingParty } from '@/constants/guests';
 import { FairmontMap } from '@/components/FairmontMap';
@@ -57,7 +57,7 @@ async function addToCalendar(event: WeddingEvent) {
 
   try {
     await Calendar.createEventAsync(defaultCalendar.id, {
-      title: `${event.title} — Neha & Naveen's Wedding`,
+      title: `${event.title} — ${WEDDING.coupleNames}'s Wedding`,
       startDate: new Date(event.startDate),
       endDate: new Date(event.endDate),
       location: `${event.venue}\n${event.address}`,

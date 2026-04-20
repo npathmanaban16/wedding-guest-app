@@ -17,6 +17,7 @@ import { useAuth } from '@/context/AuthContext';
 import { getMyInfo, saveMyInfo, MyInfo } from '@/services/storage';
 import { HotelPickerField } from '@/components/HotelPickerField';
 import { DateField } from '@/components/DateField';
+import { WEDDING } from '@/constants/weddingData';
 
 const MIN_DATE = new Date('2026-05-18');
 const MAX_DATE = new Date('2026-06-01');
@@ -213,9 +214,9 @@ export default function MyInfoScreen() {
         {/* Arrival section */}
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTag}>Arrival</Text>
-          <Text style={styles.sectionTitle}>Getting to Montreux</Text>
+          <Text style={styles.sectionTitle}>Getting to {WEDDING.destinationCity}</Text>
           <Field
-            label="Estimated arrival time in Montreux"
+            label={`Estimated arrival time in ${WEDDING.destinationCity}`}
             value={info.arrivalTime}
             onChange={update('arrivalTime')}
             placeholder="e.g. Thursday 3:00 PM"
@@ -272,7 +273,7 @@ export default function MyInfoScreen() {
             Accessibility needs, special requests, or just a message for the couple?
           </Text>
           <Field
-            label="Notes for Neha & Naveen"
+            label={`Notes for ${WEDDING.coupleNames}`}
             value={info.extraNotes}
             onChange={update('extraNotes')}
             placeholder="Type your message here..."
@@ -298,7 +299,7 @@ export default function MyInfoScreen() {
         )}
 
         <Text style={styles.privacyNote}>
-          Your details are shared with Neha & Naveen to help with planning.
+          Your details are shared with {WEDDING.coupleNames} to help with planning.
         </Text>
 
         {/* Logout */}
