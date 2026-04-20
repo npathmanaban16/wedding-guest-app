@@ -18,18 +18,11 @@ import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { haptic } from '@/utils/haptics';
-
-const SENDERS = [
-  { id: 'couple', label: 'Neha & Naveen', icon: 'heart' as const },
-  { id: 'planner', label: 'Astrid', subtitle: 'Wedding Planner', icon: 'star' as const },
-];
-
-// Names that have access to this screen
-const ADMIN_PREFIXES = ['Neha', 'Naveen', 'Astrid'];
+import { WEDDING, SENDERS, SenderId } from '@/constants/weddingData';
 
 export function isAdminGuest(guestName: string | null): boolean {
   if (!guestName) return false;
-  return ADMIN_PREFIXES.some((prefix) =>
+  return WEDDING.adminNamePrefixes.some((prefix) =>
     guestName.toLowerCase().startsWith(prefix.toLowerCase()),
   );
 }
@@ -39,7 +32,7 @@ export default function AdminScreen() {
   const router = useRouter();
   const { guestName } = useAuth();
 
-  const [sender, setSender] = useState<'couple' | 'planner'>('couple');
+  const [sender, setSender] = useState<SenderId>('couple');
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
 
@@ -52,7 +45,7 @@ export default function AdminScreen() {
     );
   }
 
-  const senderLabel = SENDERS.find((s) => s.id === sender)?.label ?? 'Neha & Naveen';
+  const senderLabel = SENDERS.find((s) => s.id === sender)?.label ?? WEDDING.coupleNames;
 
   const handleSend = async () => {
     const trimmed = message.trim();

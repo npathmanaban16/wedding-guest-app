@@ -18,6 +18,7 @@ import { useAuth } from '@/context/AuthContext';
 import { getMyInfo, saveMyInfo } from '@/services/storage';
 import { HotelPickerField } from '@/components/HotelPickerField';
 import { DateField } from '@/components/DateField';
+import { WEDDING } from '@/constants/weddingData';
 
 const MIN_DATE = new Date('2026-05-18');
 const MAX_DATE = new Date('2026-06-01');
@@ -176,7 +177,7 @@ export default function OnboardingScreen() {
             <Text style={styles.cardTitle}>How are you arriving?</Text>
           </View>
           <Field
-            label="Arrival time in Montreux"
+            label={`Arrival time in ${WEDDING.destinationCity}`}
             placeholder="e.g. 2:30 PM on 21 May"
             value={arrivalTime}
             onChangeText={setArrivalTime}

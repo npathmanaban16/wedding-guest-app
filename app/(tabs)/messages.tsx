@@ -18,6 +18,7 @@ import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { isAdminGuest } from '@/app/admin';
 import { haptic } from '@/utils/haptics';
+import { WEDDING } from '@/constants/weddingData';
 import {
   getNotifications,
   getReactions,
@@ -357,7 +358,7 @@ export default function MessagesScreen() {
           <View style={styles.empty}>
             <Ionicons name="notifications-outline" size={40} color={Colors.textMuted} />
             <Text style={styles.emptyText}>No messages yet</Text>
-            <Text style={styles.emptySubtext}>Updates from Neha & Naveen will appear here</Text>
+            <Text style={styles.emptySubtext}>Updates from {WEDDING.coupleNames} will appear here</Text>
           </View>
         ) : (
           notifications.map((n) => (

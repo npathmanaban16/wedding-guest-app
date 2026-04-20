@@ -75,7 +75,7 @@ export default function HomeScreen() {
     >
       {/* Hero header */}
       <ImageBackground
-        source={require('@/assets/images/montreux.png')}
+        source={WEDDING.heroImage}
         style={[styles.heroImage, { paddingTop: insets.top + Spacing.xl }]}
         resizeMode="cover"
       >
@@ -134,7 +134,7 @@ export default function HomeScreen() {
       <Text style={styles.sectionTitle}>Explore</Text>
       <View style={styles.quickGrid}>
         <QuickCard title="Schedule" subtitle="All events & dress codes" onPress={() => router.push('/(tabs)/schedule')} />
-        <QuickCard title="Montreux Guide" subtitle="Things to do & eat" onPress={() => router.push('/(tabs)/switzerland')} />
+        <QuickCard title={`${WEDDING.destinationCity} Guide`} subtitle="Things to do & eat" onPress={() => router.push('/(tabs)/switzerland')} />
         <QuickCard title="Packing List" subtitle="Outfits & essentials" onPress={() => router.push('/(tabs)/packing')} />
         <QuickCard title="Share Photos" subtitle="Upload memories" onPress={() => router.push('/(tabs)/photos')} />
         <QuickCard title="Song Requests" subtitle="Request a track" onPress={() => router.push('/(tabs)/songs')} />
@@ -163,7 +163,7 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Admin: send notification (only visible to Neha, Naveen, Astrid) */}
+      {/* Admin: send notification (only visible to admins) */}
       {isAdmin && (
         <TouchableOpacity
           style={styles.adminButton}
