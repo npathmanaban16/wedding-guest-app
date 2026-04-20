@@ -1,8 +1,167 @@
 -- ============================================================
 -- Wedding Guest App — Seed Data
 -- Run this AFTER schema.sql in Database → SQL Editor
--- Run only ONCE — re-running will update existing rows but not duplicate song requests
 -- ============================================================
+
+
+-- ─── Weddings ─────────────────────────────────────────────────────────────────
+-- Seed the "Neha & Naveen" demo wedding. The fixed UUID matches the default
+-- `wedding_id` on every data table; once all app queries pass wedding_id
+-- explicitly (PR 3) those defaults come off.
+
+insert into public.weddings (
+  id, invite_code, couple_names, wedding_date, location, destination_city,
+  hashtag, website, contact_email, registry_url, theme_color
+) values (
+  '00000000-0000-0000-0000-000000000001',
+  'NEHANAVEEN2026',
+  'Neha & Naveen',
+  '2026-05-23T15:00:00Z',
+  'Montreux, Switzerland',
+  'Montreux',
+  '#NehaNaveen2026',
+  'https://www.neha-naveen.com',
+  'nehanaveen2026@gmail.com',
+  'https://blissandbone.sendbirdie.com/r/neha-naveen',
+  '#8B5E6B'
+);
+
+
+-- ─── Guests ───────────────────────────────────────────────────────────────────
+-- Per-wedding guest list. Login validates the typed name against this table.
+
+insert into public.guests (wedding_id, canonical_name, is_wedding_party, gender) values
+  ('00000000-0000-0000-0000-000000000001', 'Neha Pathmanaban', true, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Naveen Nath', true, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Pathmanaban Raj', true, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Kalpana Pathmanaban', true, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Vishnu Pathmanaban', true, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Amar Nath', true, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Sandhya Nath', true, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Neel Nath', true, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Aya Nath', true, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Olivia Zhu', true, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Akanksha Singh', true, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Suhail Goyal', true, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Sayantanee Das', true, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Guhan Muruganandam', true, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Ritika Patil', true, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Kevin Labagnara', true, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Gaurie Mittal', true, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Sai Avala', true, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Nikila Vasudevan', true, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Goutham Subramanian', true, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Liz Paulino', true, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Andrew Ball', true, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Connor Franklin', true, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Alec Mirchandani', true, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Eleni Karandreas', true, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Alex Shih', true, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Nancy Kwan', true, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Jedidiah Glass', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Edel Dhuibheanaigh', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Elliott Baker', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Mary Dick', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Andrew You', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Jason Luo', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Grace Mutoko', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Paul Mas', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Sankash Shankar', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Bhavya Varma', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Leon Mirson', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Moeko Nagatsuka', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Rushil Sheth', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Tithi Raval', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Karam Tatla', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Jenna Freedman', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Ben Biswas', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Danielle Skelly', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Subbarao Addaganti', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Anitha Addaganti', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Yash Addaganti', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Trisha Addaganti', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Prasanna Bekal', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Vindhya Bekal', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Pallavi Bekal', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Tanvi Bekal', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Ram Sankaran', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Uma Ramanathan', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Rahul Ramanathan', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Abhay Mhatre', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Archana Mhatre', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Madhu Somenhalli', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Shashi Somenhalli', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Nithin Somenhalli', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Anand Palani', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Sujatha Palani', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Arthi Palani', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Sainath Palani', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Vivek Seth', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Ashvani Vivek', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Saravanan Kandaswamy', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Chrisvin Jabamani', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Howard Li', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Lingesh Radjou', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Rajesh Radjou', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Prabakaran Vasan', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Kannagi Prabakaran', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Neha Dubey', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Pooja Dubey', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Rakesh Dubey', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Neelu Dubey', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Vijay Kumar', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Sadhana Kumar', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Vikas Kumar', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Riva Kumar', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Vivek Kumar', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Jaya Kumar', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Sanjay Mishra', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Seema Verma', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Shaan Mishra', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Maya Mishra', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Anand Tewari', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Sangita Tewari', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Jeevan Tewari', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Lauren Bordeaux', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Ravi Tewari', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Tali Tudryn', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Sanjiv Upadhyay', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Meena Upadhyay', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Archana Upadhyay', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Kirin Upadhyay', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Serena Upadhyay', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Matt Uthupan', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Tushita Shrivastav', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Gugu Chohan', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Dennis Porto', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Jan Porto', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Diane Hedden', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Mary Kay Buchsbaum', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Bruce Buchsbaum', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Bruce Baker', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Kelli Baker', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Roshan Ram', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Bhavika Patel', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Jinesh Patel', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Radhika Kirpalani', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Tarun Kirpalani', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Nitya Srikishen', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Puneet Lakhi', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Marwan Bayoumy', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Asokan Selvaraj', false, 'male'),
+  ('00000000-0000-0000-0000-000000000001', 'Sujatha Asokan', false, 'female'),
+  ('00000000-0000-0000-0000-000000000001', 'Astrid Rolando', true, 'female');
+
+
+
+-- ─── Wedding Admins ───────────────────────────────────────────────────────────
+-- Guests with admin access (send notifications, delete messages).
+
+insert into public.wedding_admins (wedding_id, guest_name) values
+  ('00000000-0000-0000-0000-000000000001', 'Neha Pathmanaban'),
+  ('00000000-0000-0000-0000-000000000001', 'Naveen Nath'),
+  ('00000000-0000-0000-0000-000000000001', 'Astrid Rolando');
+
 
 -- ─── Guest Info ───────────────────────────────────────────────────────────────
 -- Pre-populate dietary, meal choices, and rehearsal dinner attendance.
