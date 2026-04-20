@@ -13,7 +13,7 @@ import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { PACKING_GUIDE, PACKING_TIP_FOOTER, PackingCategory, PackingItem } from '@/constants/weddingData';
 import { getCheckedItems, togglePackingItem } from '@/services/storage';
 import { useAuth } from '@/context/AuthContext';
-import { isWeddingParty, getGuestGender } from '@/constants/guests';
+import { useWedding } from '@/context/WeddingContext';
 import { haptic } from '@/utils/haptics';
 
 function PackingItemRow({
@@ -120,6 +120,7 @@ export default function PackingScreen() {
   const [checkedItems, setCheckedItems] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const { guestName } = useAuth();
+  const { isWeddingParty, getGuestGender } = useWedding();
   const inWeddingParty = isWeddingParty(guestName ?? '');
   const gender = getGuestGender(guestName ?? '');
 

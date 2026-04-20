@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
-import { isAdminGuest } from '@/app/admin';
+import { useWedding } from '@/context/WeddingContext';
 import { haptic } from '@/utils/haptics';
 import { WEDDING } from '@/constants/weddingData';
 import {
@@ -185,7 +185,8 @@ function MessageCard({
 export default function MessagesScreen() {
   const insets = useSafeAreaInsets();
   const { guestName } = useAuth();
-  const isAdmin = isAdminGuest(guestName);
+  const { isAdmin: isAdminCheck } = useWedding();
+  const isAdmin = !!guestName && isAdminCheck(guestName);
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [reactions, setReactions] = useState<Record<string, ReactionSummary[]>>({});

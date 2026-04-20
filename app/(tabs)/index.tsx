@@ -12,10 +12,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
+import { useWedding } from '@/context/WeddingContext';
 import { Colors, Fonts, Typography, Spacing, Radius, Shadow } from '@/constants/theme';
 import { WEDDING, EVENTS } from '@/constants/weddingData';
-import { isWeddingParty } from '@/constants/guests';
-import { isAdminGuest } from '@/app/admin';
 
 function useCountdown(targetDate: Date) {
   const getTimeLeft = (target: Date) => {
@@ -59,12 +58,13 @@ function QuickCard({ title, subtitle, onPress }: QuickCardProps) {
 
 export default function HomeScreen() {
   const { guestName, logout } = useAuth();
+  const { isWeddingParty, isAdmin } = useWedding();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const countdown = useCountdown(WEDDING.weddingDate);
   const firstName = guestName?.split(' ')[0] ?? 'Guest';
   const inWeddingParty = isWeddingParty(guestName ?? '');
-  const isAdmin = isAdminGuest(guestName);
+  const isAdminUser = !!guestName && isAdmin(guestName);
   const firstEvent = EVENTS.find((e) => !e.weddingPartyOnly || inWeddingParty)!
 
   return (
@@ -164,7 +164,7 @@ export default function HomeScreen() {
       </View>
 
       {/* Admin: send notification (only visible to admins) */}
-      {isAdmin && (
+      {isAdminUser && (
         <TouchableOpacity
           style={styles.adminButton}
           onPress={() => router.push('/admin')}

@@ -2,6 +2,11 @@
 // WEDDING DATA
 // ============================================================
 
+// The wedding this build of the app is hard-wired to show. Points at the
+// seeded Neha & Naveen row in the `weddings` table. Future multi-tenant
+// builds will discover this from an invite code at login time.
+export const DEFAULT_WEDDING_ID = '00000000-0000-0000-0000-000000000001';
+
 export const WEDDING = {
   bride: "Neha",
   groom: "Naveen",
@@ -17,9 +22,6 @@ export const WEDDING = {
   albumUrl: "https://photos.app.goo.gl/YCMxM6i7XRNzKERd6",
   plannerName: "Astrid",
   plannerSubtitle: "Wedding Planner",
-  // Names granted admin access. Matched as a case-insensitive prefix of the
-  // guest's full name. Temporary until a role-based admin model lands.
-  adminNamePrefixes: ["Neha", "Naveen", "Astrid"],
 };
 
 export const SENDERS = [

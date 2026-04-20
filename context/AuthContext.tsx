@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getCanonicalName, isValidGuest } from '@/constants/guests';
+import { useWedding } from '@/context/WeddingContext';
 
 const AUTH_STORAGE_KEY = '@wedding_guest_name';
 
@@ -16,6 +16,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const { isValidGuestOrAdmin, getCanonicalName } = useWedding();
   const [guestName, setGuestName] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [onboardingSkipped, setOnboardingSkipped] = useState(false);
@@ -39,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!trimmed) {
       return { success: false, error: 'Please enter your name.' };
     }
-    if (!isValidGuest(trimmed)) {
+    if (!isValidGuestOrAdmin(trimmed)) {
       return {
         success: false,
         error:
