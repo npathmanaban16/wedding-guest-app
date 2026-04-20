@@ -6,6 +6,12 @@
 -- ⚠ DESTRUCTIVE: the `drop table` block below will erase existing data.
 -- Only run this on a fresh project, or one where you're OK reseeding
 -- from seed.sql afterwards.
+--
+-- ⚠ DO NOT run this against the live Neha & Naveen Supabase project.
+-- That project holds real RSVP / hotel / flight data guests have entered
+-- and must stay on its current (pre-multi-tenant) schema through the
+-- wedding. This schema is for a new Supabase project that will back the
+-- generalized/SaaS build, where N&N is reseeded as a demo wedding.
 -- ============================================================
 
 drop table if exists public.notification_replies   cascade;
