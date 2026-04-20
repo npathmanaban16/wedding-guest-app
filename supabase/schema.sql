@@ -1,11 +1,92 @@
 -- ============================================================
--- Wedding Guest App — Supabase Schema
+-- Wedding Guest App — Supabase Schema (multi-tenant)
 -- Run this FIRST in Database → SQL Editor
 -- ============================================================
+--
+-- ⚠ DESTRUCTIVE: the `drop table` block below will erase existing data.
+-- Only run this on a fresh project, or one where you're OK reseeding
+-- from seed.sql afterwards.
+--
+-- ⚠ DO NOT run this against the live Neha & Naveen Supabase project.
+-- That project holds real RSVP / hotel / flight data guests have entered
+-- and must stay on its current (pre-multi-tenant) schema through the
+-- wedding. This schema is for a new Supabase project that will back the
+-- generalized/SaaS build, where N&N is reseeded as a demo wedding.
+-- ============================================================
 
--- guest_info: one row per guest with pre-collected and editable data
+drop table if exists public.notification_replies   cascade;
+drop table if exists public.notification_reactions cascade;
+drop table if exists public.notifications         cascade;
+drop table if exists public.packing_checklist     cascade;
+drop table if exists public.song_requests         cascade;
+drop table if exists public.guest_info            cascade;
+drop table if exists public.wedding_admins        cascade;
+drop table if exists public.guests                cascade;
+drop table if exists public.weddings              cascade;
+
+
+-- ─── weddings ────────────────────────────────────────────────────────────────
+-- One row per wedding. Each tenant in the app is a wedding.
+-- The "Neha & Naveen" demo wedding has a fixed UUID so that existing
+-- `wedding_id` defaults below point at it during the rollout. Once PR 3
+-- updates all app queries to pass `wedding_id` explicitly, those defaults
+-- can be dropped.
+create table public.weddings (
+  id               uuid primary key default gen_random_uuid(),
+  invite_code      text unique not null,
+  couple_names     text not null,
+  wedding_date     timestamptz not null,
+  location         text not null,
+  destination_city text not null,
+  hashtag          text,
+  website          text,
+  contact_email    text,
+  registry_url     text,
+  hero_image_url   text,
+  theme_color      text default '#8B5E6B',
+  created_at       timestamptz default now(),
+  updated_at       timestamptz default now()
+);
+
+
+-- ─── guests ──────────────────────────────────────────────────────────────────
+-- The per-wedding guest list. Replaces constants/guests.ts at runtime.
+-- Login validates the typed name against this table for the selected wedding.
+create table public.guests (
+  id                uuid primary key default gen_random_uuid(),
+  wedding_id        uuid not null references public.weddings(id) on delete cascade,
+  canonical_name    text not null,
+  is_wedding_party  boolean not null default false,
+  gender            text check (gender in ('male', 'female')),
+  created_at        timestamptz default now(),
+  unique (wedding_id, canonical_name)
+);
+
+
+-- ─── wedding_admins ──────────────────────────────────────────────────────────
+-- Users with admin access (send notifications, delete messages, etc.) for a
+-- given wedding. Replaces the hardcoded adminNamePrefixes check. Admins are
+-- independent of the guest list — e.g. a wedding planner is an admin but
+-- typically not a guest, so login validates the typed name against
+-- (guests ∪ wedding_admins) for the selected wedding.
+create table public.wedding_admins (
+  id         uuid primary key default gen_random_uuid(),
+  wedding_id uuid not null references public.weddings(id) on delete cascade,
+  guest_name text not null,
+  created_at timestamptz default now(),
+  unique (wedding_id, guest_name)
+);
+
+
+-- ─── guest_info ──────────────────────────────────────────────────────────────
+-- Per-guest RSVP + travel info.
+-- `guest_name` stays globally unique for now so existing app upserts keyed on
+-- `guest_name` keep working. PR 3 will drop that constraint and replace it
+-- with a (wedding_id, guest_name) composite once every query passes wedding_id.
 create table public.guest_info (
-  id               uuid default gen_random_uuid() primary key,
+  id               uuid primary key default gen_random_uuid(),
+  wedding_id       uuid not null references public.weddings(id) on delete cascade
+                   default '00000000-0000-0000-0000-000000000001',
   guest_name       text unique not null,
   -- Pre-collected (read-only in app, set by seed.sql)
   dietary          text default '',
@@ -20,78 +101,95 @@ create table public.guest_info (
   arrival_time     text default '',
   flight_number    text default '',
   extra_notes      text default '',
+  phone            text default '',
+  email            text default '',
+  push_token       text,
   created_at       timestamptz default now(),
   updated_at       timestamptz default now()
 );
 
--- song_requests: one row per request, visible to all guests
+
+-- ─── song_requests ───────────────────────────────────────────────────────────
 create table public.song_requests (
-  id           uuid default gen_random_uuid() primary key,
+  id           uuid primary key default gen_random_uuid(),
+  wedding_id   uuid not null references public.weddings(id) on delete cascade
+               default '00000000-0000-0000-0000-000000000001',
   song         text not null,
   artist       text default '',
   requested_by text not null,
   submitted_at timestamptz default now()
 );
 
--- notifications: log of push notifications sent to all guests
+
+-- ─── notifications ───────────────────────────────────────────────────────────
 create table public.notifications (
-  id        uuid default gen_random_uuid() primary key,
-  message   text not null,
-  sender    text not null,
-  sent_at   timestamptz default now()
+  id         uuid primary key default gen_random_uuid(),
+  wedding_id uuid not null references public.weddings(id) on delete cascade
+             default '00000000-0000-0000-0000-000000000001',
+  message    text not null,
+  sender     text not null,
+  sent_at    timestamptz default now()
 );
 
--- notification_reactions: one reaction per guest per notification
+
+-- ─── notification_reactions ──────────────────────────────────────────────────
 create table public.notification_reactions (
-  id              uuid default gen_random_uuid() primary key,
-  notification_id uuid references public.notifications(id) on delete cascade not null,
+  id              uuid primary key default gen_random_uuid(),
+  wedding_id      uuid not null references public.weddings(id) on delete cascade
+                  default '00000000-0000-0000-0000-000000000001',
+  notification_id uuid not null references public.notifications(id) on delete cascade,
   guest_name      text not null,
   emoji           text not null,
   created_at      timestamptz default now(),
-  unique(notification_id, guest_name)
+  unique (notification_id, guest_name)
 );
 
--- notification_replies: public guest replies to notifications
+
+-- ─── notification_replies ────────────────────────────────────────────────────
 create table public.notification_replies (
-  id              uuid default gen_random_uuid() primary key,
-  notification_id uuid references public.notifications(id) on delete cascade not null,
+  id              uuid primary key default gen_random_uuid(),
+  wedding_id      uuid not null references public.weddings(id) on delete cascade
+                  default '00000000-0000-0000-0000-000000000001',
+  notification_id uuid not null references public.notifications(id) on delete cascade,
   guest_name      text not null,
   message         text not null,
   created_at      timestamptz default now()
 );
 
--- packing_checklist: one row per guest, stores array of checked item IDs
+
+-- ─── packing_checklist ───────────────────────────────────────────────────────
+-- `guest_name` stays as the primary key for now so existing upserts keyed on
+-- it keep working. PR 3 will migrate this to a (wedding_id, guest_name) PK.
 create table public.packing_checklist (
   guest_name    text primary key,
+  wedding_id    uuid not null references public.weddings(id) on delete cascade
+                default '00000000-0000-0000-0000-000000000001',
   checked_items text[] not null default '{}',
   updated_at    timestamptz not null default now()
 );
 
--- Enable Row Level Security
-alter table public.guest_info enable row level security;
-alter table public.song_requests enable row level security;
-alter table public.packing_checklist enable row level security;
-alter table public.notifications enable row level security;
 
--- Allow full access from the app (guest identity handled in-app, not via Supabase Auth)
-create policy "allow_all_guest_info" on public.guest_info
-  for all using (true) with check (true);
+-- ─── Row Level Security ──────────────────────────────────────────────────────
+-- Guest identity is handled at the application layer (AsyncStorage-backed
+-- guest name). Policies stay permissive until PR 3 introduces Supabase Auth;
+-- at that point they'll be scoped per wedding.
 
-create policy "allow_all_song_requests" on public.song_requests
-  for all using (true) with check (true);
-
-create policy "allow_all_packing_checklist" on public.packing_checklist
-  for all using (true) with check (true);
-
-create policy "allow_all_notifications" on public.notifications
-  for all using (true) with check (true);
-
+alter table public.weddings               enable row level security;
+alter table public.guests                 enable row level security;
+alter table public.wedding_admins         enable row level security;
+alter table public.guest_info             enable row level security;
+alter table public.song_requests          enable row level security;
+alter table public.notifications          enable row level security;
 alter table public.notification_reactions enable row level security;
+alter table public.notification_replies   enable row level security;
+alter table public.packing_checklist      enable row level security;
 
-create policy "allow_all_notification_reactions" on public.notification_reactions
-  for all using (true) with check (true);
-
-alter table public.notification_replies enable row level security;
-
-create policy "allow_all_notification_replies" on public.notification_replies
-  for all using (true) with check (true);
+create policy "allow_all_weddings"               on public.weddings               for all using (true) with check (true);
+create policy "allow_all_guests"                 on public.guests                 for all using (true) with check (true);
+create policy "allow_all_wedding_admins"         on public.wedding_admins         for all using (true) with check (true);
+create policy "allow_all_guest_info"             on public.guest_info             for all using (true) with check (true);
+create policy "allow_all_song_requests"          on public.song_requests          for all using (true) with check (true);
+create policy "allow_all_notifications"          on public.notifications          for all using (true) with check (true);
+create policy "allow_all_notification_reactions" on public.notification_reactions for all using (true) with check (true);
+create policy "allow_all_notification_replies"   on public.notification_replies   for all using (true) with check (true);
+create policy "allow_all_packing_checklist"      on public.packing_checklist      for all using (true) with check (true);
