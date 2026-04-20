@@ -58,8 +58,11 @@ create table public.guests (
 
 
 -- ─── wedding_admins ──────────────────────────────────────────────────────────
--- Guests with admin access (send notifications, delete messages, etc.) for
--- a given wedding. Replaces the hardcoded adminNamePrefixes check.
+-- Users with admin access (send notifications, delete messages, etc.) for a
+-- given wedding. Replaces the hardcoded adminNamePrefixes check. Admins are
+-- independent of the guest list — e.g. a wedding planner is an admin but
+-- typically not a guest, so login validates the typed name against
+-- (guests ∪ wedding_admins) for the selected wedding.
 create table public.wedding_admins (
   id         uuid primary key default gen_random_uuid(),
   wedding_id uuid not null references public.weddings(id) on delete cascade,

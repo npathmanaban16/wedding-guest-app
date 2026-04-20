@@ -28,7 +28,8 @@ insert into public.weddings (
 
 
 -- ─── Guests ───────────────────────────────────────────────────────────────────
--- Per-wedding guest list. Login validates the typed name against this table.
+-- Per-wedding guest list. Login validates the typed name against this table
+-- (or against wedding_admins, for planners and other non-guest admins).
 
 insert into public.guests (wedding_id, canonical_name, is_wedding_party, gender) values
   ('00000000-0000-0000-0000-000000000001', 'Neha Pathmanaban', true, 'female'),
@@ -149,13 +150,14 @@ insert into public.guests (wedding_id, canonical_name, is_wedding_party, gender)
   ('00000000-0000-0000-0000-000000000001', 'Puneet Lakhi', false, 'male'),
   ('00000000-0000-0000-0000-000000000001', 'Marwan Bayoumy', false, 'male'),
   ('00000000-0000-0000-0000-000000000001', 'Asokan Selvaraj', false, 'male'),
-  ('00000000-0000-0000-0000-000000000001', 'Sujatha Asokan', false, 'female'),
-  ('00000000-0000-0000-0000-000000000001', 'Astrid Rolando', true, 'female');
+  ('00000000-0000-0000-0000-000000000001', 'Sujatha Asokan', false, 'female');
 
 
 
 -- ─── Wedding Admins ───────────────────────────────────────────────────────────
--- Guests with admin access (send notifications, delete messages).
+-- Users with admin access (send notifications, delete messages). May or may
+-- not be in the guest list — e.g. the wedding planner is an admin but not a
+-- guest.
 
 insert into public.wedding_admins (wedding_id, guest_name) values
   ('00000000-0000-0000-0000-000000000001', 'Neha Pathmanaban'),
