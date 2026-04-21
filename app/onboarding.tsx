@@ -15,10 +15,10 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
+import { useWedding } from '@/context/WeddingContext';
 import { getMyInfo, saveMyInfo } from '@/services/storage';
 import { HotelPickerField } from '@/components/HotelPickerField';
 import { DateField } from '@/components/DateField';
-import { WEDDING } from '@/constants/weddingData';
 
 const MIN_DATE = new Date('2026-05-18');
 const MAX_DATE = new Date('2026-06-01');
@@ -57,6 +57,7 @@ function Field({ label, placeholder, value, onChangeText, icon, keyboardType, au
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const { guestName, skipOnboarding } = useAuth();
+  const { wedding } = useWedding();
 
   const [hotel, setHotel] = useState('');
   const [checkIn, setCheckIn] = useState('');
@@ -177,7 +178,7 @@ export default function OnboardingScreen() {
             <Text style={styles.cardTitle}>How are you arriving?</Text>
           </View>
           <Field
-            label={`Arrival time in ${WEDDING.destinationCity}`}
+            label={`Arrival time in ${wedding.destination_city}`}
             placeholder="e.g. 2:30 PM on 21 May"
             value={arrivalTime}
             onChangeText={setArrivalTime}

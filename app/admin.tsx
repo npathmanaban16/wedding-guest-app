@@ -19,13 +19,20 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
 import { haptic } from '@/utils/haptics';
-import { WEDDING, SENDERS, SenderId } from '@/constants/weddingData';
+import { WEDDING, SenderId } from '@/constants/weddingData';
+
+type SenderOption = {
+  id: SenderId;
+  label: string;
+  subtitle?: string;
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+};
 
 export default function AdminScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { guestName } = useAuth();
-  const { isAdmin } = useWedding();
+  const { isAdmin, wedding } = useWedding();
 
   const [sender, setSender] = useState<SenderId>('couple');
   const [message, setMessage] = useState('');
@@ -40,7 +47,11 @@ export default function AdminScreen() {
     );
   }
 
-  const senderLabel = SENDERS.find((s) => s.id === sender)?.label ?? WEDDING.coupleNames;
+  const senders: SenderOption[] = [
+    { id: 'couple', label: wedding.couple_names, icon: 'heart' },
+    { id: 'planner', label: WEDDING.plannerName, subtitle: WEDDING.plannerSubtitle, icon: 'star' },
+  ];
+  const senderLabel = senders.find((s) => s.id === sender)?.label ?? wedding.couple_names;
 
   const handleSend = async () => {
     const trimmed = message.trim();
@@ -110,7 +121,7 @@ export default function AdminScreen() {
         <View style={styles.card}>
           <Text style={styles.cardLabel}>Sending as</Text>
           <View style={styles.senderRow}>
-            {SENDERS.map((s) => (
+            {senders.map((s) => (
               <TouchableOpacity
                 key={s.id}
                 style={[

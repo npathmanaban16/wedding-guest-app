@@ -14,11 +14,12 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
+import { useWedding } from '@/context/WeddingContext';
 import { Colors, Fonts, Typography, Spacing, Radius } from '@/constants/theme';
-import { WEDDING } from '@/constants/weddingData';
 
 export default function LoginScreen() {
   const { login } = useAuth();
+  const { wedding } = useWedding();
   const router = useRouter();
 
   const [name, setName] = useState('');
@@ -70,11 +71,11 @@ export default function LoginScreen() {
 
           {/* Location & date */}
           <Text style={styles.locationText}>
-            {WEDDING.location.toUpperCase()}
+            {wedding.location.toUpperCase()}
           </Text>
 
           {/* Couple names — large serif */}
-          <Text style={styles.coupleNames}>{WEDDING.coupleNames}</Text>
+          <Text style={styles.coupleNames}>{wedding.couple_names}</Text>
 
           {/* Date */}
           <Text style={styles.dateText}>
@@ -133,7 +134,11 @@ export default function LoginScreen() {
             Can't find your name?{' '}
             <Text
               style={styles.hintLink}
-              onPress={() => Linking.openURL(`mailto:${WEDDING.contactEmail}`)}
+              onPress={() => {
+                if (wedding.contact_email) {
+                  Linking.openURL(`mailto:${wedding.contact_email}`);
+                }
+              }}
             >
               Contact the couple
             </Text>

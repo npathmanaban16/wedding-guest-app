@@ -11,9 +11,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { WEDDING } from '@/constants/weddingData';
+import { useWedding } from '@/context/WeddingContext';
 
 export default function PhotosScreen() {
   const insets = useSafeAreaInsets();
+  const { wedding } = useWedding();
 
   return (
     <ScrollView
@@ -34,7 +36,7 @@ export default function PhotosScreen() {
         <View style={styles.albumIconWrap}>
           <Ionicons name="images" size={40} color={Colors.primary} />
         </View>
-        <Text style={styles.albumTitle}>{WEDDING.coupleNames}'s Shared Album</Text>
+        <Text style={styles.albumTitle}>{wedding.couple_names}'s Shared Album</Text>
         <Text style={styles.albumBody}>
           All photos and videos from the wedding weekend live here. Add yours and see what everyone else captured.
         </Text>
@@ -71,7 +73,7 @@ export default function PhotosScreen() {
         <Ionicons name="rose-outline" size={16} color={Colors.gold} style={{ marginRight: Spacing.xs, marginTop: 1 }} />
         <Text style={styles.hashtagText}>
           Also tag your posts{' '}
-          <Text style={styles.hashtag}>{WEDDING.hashtag}</Text>
+          <Text style={styles.hashtag}>{wedding.hashtag}</Text>
           {' '}so we can find them!
         </Text>
       </View>

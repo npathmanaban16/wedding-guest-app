@@ -18,7 +18,6 @@ import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
 import { haptic } from '@/utils/haptics';
-import { WEDDING } from '@/constants/weddingData';
 import {
   getNotifications,
   getReactions,
@@ -185,7 +184,7 @@ function MessageCard({
 export default function MessagesScreen() {
   const insets = useSafeAreaInsets();
   const { guestName } = useAuth();
-  const { isAdmin: isAdminCheck } = useWedding();
+  const { isAdmin: isAdminCheck, wedding } = useWedding();
   const isAdmin = !!guestName && isAdminCheck(guestName);
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -359,7 +358,7 @@ export default function MessagesScreen() {
           <View style={styles.empty}>
             <Ionicons name="notifications-outline" size={40} color={Colors.textMuted} />
             <Text style={styles.emptyText}>No messages yet</Text>
-            <Text style={styles.emptySubtext}>Updates from {WEDDING.coupleNames} will appear here</Text>
+            <Text style={styles.emptySubtext}>Updates from {wedding.couple_names} will appear here</Text>
           </View>
         ) : (
           notifications.map((n) => (

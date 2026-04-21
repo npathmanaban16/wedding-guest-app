@@ -15,7 +15,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
-import { SWITZERLAND_GUIDE, WEDDING, GuideSection, GuideSubsection, GuideItem, GuideLink } from '@/constants/weddingData';
+import { SWITZERLAND_GUIDE, GuideSection, GuideSubsection, GuideItem, GuideLink } from '@/constants/weddingData';
+import { useWedding } from '@/context/WeddingContext';
 import { haptic } from '@/utils/haptics';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -181,6 +182,7 @@ function SectionBlock({ section }: { section: GuideSection }) {
 
 export default function SwitzerlandScreen() {
   const insets = useSafeAreaInsets();
+  const { wedding } = useWedding();
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
   const filters = ['All', 'Transport', 'Sightseeing', 'Activity', 'Restaurant', 'Bar', 'Practical'];
@@ -214,9 +216,9 @@ export default function SwitzerlandScreen() {
       {/* Page header */}
       <View style={styles.pageHeader}>
         <Text style={styles.pageTitle}>Switzerland Guide</Text>
-        <Text style={styles.pageSubtitleTag}>{WEDDING.destinationCity} & Beyond</Text>
+        <Text style={styles.pageSubtitleTag}>{wedding.destination_city} & Beyond</Text>
         <Text style={styles.pageSubtitle}>
-          Everything you need to know about {WEDDING.destinationCity} and making the most of your trip
+          Everything you need to know about {wedding.destination_city} and making the most of your trip
         </Text>
       </View>
 
