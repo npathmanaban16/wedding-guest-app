@@ -20,6 +20,7 @@ interface VariantConfig {
   bundleIdentifier: string;
   androidPackage: string;
   icon: string;
+  favicon: string;
   scheme: string;
   webName: string;
   webShortName: string;
@@ -41,6 +42,7 @@ const variants: Record<Variant, VariantConfig> = {
     bundleIdentifier: 'com.nehanaveen.weddingapp',
     androidPackage: 'com.nehanaveen.weddingapp',
     icon: './assets/images/icon.png',
+    favicon: './public/favicon.png',
     scheme: 'wedding-guest-app',
     webName: "Neha & Naveen's Wedding",
     webShortName: 'N & N Wedding',
@@ -57,6 +59,7 @@ const variants: Record<Variant, VariantConfig> = {
     bundleIdentifier: 'com.npathmanaban.weddingcompanion',
     androidPackage: 'com.npathmanaban.weddingcompanion',
     icon: './assets/images/wedding_companion_icon.png',
+    favicon: './assets/images/wedding_companion_icon.png',
     scheme: 'wedding-companion',
     webName: 'Wedding Companion',
     webShortName: 'Wedding Companion',
@@ -111,7 +114,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     web: {
       bundler: 'metro',
       output: 'static',
-      favicon: './public/favicon.png',
+      favicon: v.favicon,
       name: v.webName,
       shortName: v.webShortName,
       themeColor: '#8B5E6B',
