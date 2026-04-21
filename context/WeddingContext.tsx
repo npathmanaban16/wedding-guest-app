@@ -49,6 +49,16 @@ const WeddingContext = createContext<WeddingContextType | null>(null);
 // always uses DEFAULT_WEDDING_ID from app.config.ts.
 const WEDDING_ID_STORAGE_KEY = '@wedding_id';
 
+// Kept in sync with AuthContext's AUTH_STORAGE_KEY. Cleared when a new invite
+// code is accepted so a stale cached login doesn't auto-auth the user past
+// /login into another wedding's tenant.
+const AUTH_STORAGE_KEY = '@wedding_guest_name';
+
+// Guards against a poisoned AsyncStorage value (e.g. a prior dev build that
+// setItem'd an object, which AsyncStorage coerces to the literal string
+// "[object Object]"). Feeding that into Supabase gives a 22P02 uuid error.
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function normalizeName(name: string): string {
   return name.toLowerCase().trim().replace(/\s+/g, ' ');
 }
@@ -70,7 +80,15 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
     // Only runs on SaaS builds — N&N initialized sessionReady=true above.
     if (DEFAULT_WEDDING_ID) return;
     AsyncStorage.getItem(WEDDING_ID_STORAGE_KEY)
-      .then((stored) => { if (stored) setWeddingId(stored); })
+      .then(async (stored) => {
+        if (!stored) return;
+        if (UUID_REGEX.test(stored)) {
+          setWeddingId(stored);
+        } else {
+          console.warn('[WeddingProvider] cached wedding_id is not a uuid; clearing', stored);
+          await AsyncStorage.removeItem(WEDDING_ID_STORAGE_KEY);
+        }
+      })
       .finally(() => setSessionReady(true));
   }, []);
 
@@ -80,6 +98,24 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       setWedding(null);
       setGuests([]);
       setAdminNames([]);
+      return;
+    }
+    // Defensive: if weddingId somehow isn't a uuid-shaped string, clear it.
+    // Catches any path (stale bundle, object coerced to string, etc.) that
+    // slipped past the AsyncStorage restore guard.
+    if (typeof weddingId !== 'string' || !UUID_REGEX.test(weddingId)) {
+      console.warn(
+        '[WeddingProvider] weddingId is not a uuid; clearing session',
+        { value: weddingId, type: typeof weddingId },
+      );
+      AsyncStorage.removeItem(WEDDING_ID_STORAGE_KEY).finally(() => setWeddingId(null));
+      return;
+    }
+    // The invite-code path pre-loads all three slices before setting
+    // weddingId. If they already match, skip re-fetching — otherwise we'd
+    // flip loadState back to 'loading' for a render, unmount the tree, and
+    // eat router.replace('/login').
+    if (wedding?.id === weddingId && loadState === 'ready') {
       return;
     }
     setLoadState('loading');
@@ -110,13 +146,28 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       }
     })();
     return () => { cancelled = true; };
-  }, [weddingId]);
+  }, [weddingId, wedding, loadState]);
 
   const setWeddingIdFromInviteCode = useCallback(
     async (inviteCode: string): Promise<WeddingRow | null> => {
+      // Pre-fetch wedding + guests + admins before flipping weddingId. React
+      // batches the state setters below into one render, so the provider
+      // goes straight from "no weddingId (children rendered via session
+      // provider)" to "loadState=ready (children rendered via both
+      // providers)". Without pre-fetching, the load-effect below would
+      // flip loadState to 'loading' for a render, unmounting the Stack and
+      // eating the router.replace('/login') fired from invite.tsx.
       const w = await fetchWeddingByInviteCode(inviteCode);
       if (!w) return null;
+      const [g, a] = await Promise.all([fetchGuests(w.id), fetchAdmins(w.id)]);
       await AsyncStorage.setItem(WEDDING_ID_STORAGE_KEY, w.id);
+      // New invite means a new tenant — discard any cached login from a
+      // prior wedding so AuthContext doesn't auto-auth past /login.
+      await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
+      setWedding(w);
+      setGuests(g);
+      setAdminNames(a.map((row) => row.guest_name));
+      setLoadState('ready');
       setWeddingId(w.id);
       return w;
     },
