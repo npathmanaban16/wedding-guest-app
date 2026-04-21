@@ -56,8 +56,7 @@ const variants: Record<Variant, VariantConfig> = {
     slug: 'wedding-companion',
     bundleIdentifier: 'com.npathmanaban.weddingcompanion',
     androidPackage: 'com.npathmanaban.weddingcompanion',
-    // TODO: replace with the pink-rings icon asset once added.
-    icon: './assets/images/icon.png',
+    icon: './assets/images/wedding_companion_icon.png',
     scheme: 'wedding-companion',
     webName: 'Wedding Companion',
     webShortName: 'Wedding Companion',
