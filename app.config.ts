@@ -65,9 +65,8 @@ const variants: Record<Variant, VariantConfig> = {
     supabaseUrl: 'https://anezjniflzoxfzxyctja.supabase.co',
     supabaseKey: 'sb_publishable_4uSK3ecrM5RBce-3aDh_cw_2YjutNTQ',
     defaultWeddingId: null,
-    // Filled in after running `eas init` against the new bundle identifier.
-    easProjectId: undefined,
-    updatesUrl: undefined,
+    easProjectId: '7f666639-9601-41fb-a753-98836ac47f73',
+    updatesUrl: 'https://u.expo.dev/7f666639-9601-41fb-a753-98836ac47f73',
   },
 };
 
