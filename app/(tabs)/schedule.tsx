@@ -18,7 +18,7 @@ import * as Calendar from 'expo-calendar';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { EVENTS, WEDDING, WeddingEvent } from '@/constants/weddingData';
 import { useAuth } from '@/context/AuthContext';
-import { isWeddingParty } from '@/constants/guests';
+import { useWedding } from '@/context/WeddingContext';
 import { FairmontMap } from '@/components/FairmontMap';
 import { haptic } from '@/utils/haptics';
 
@@ -325,6 +325,7 @@ function InfoRow({ icon, label, value }: InfoRowProps) {
 export default function ScheduleScreen() {
   const insets = useSafeAreaInsets();
   const { guestName } = useAuth();
+  const { isWeddingParty } = useWedding();
   const inWeddingParty = isWeddingParty(guestName ?? '');
   const visibleEvents = EVENTS.filter((e) => !e.weddingPartyOnly || inWeddingParty);
 

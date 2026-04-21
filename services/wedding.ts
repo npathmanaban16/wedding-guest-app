@@ -1,0 +1,58 @@
+import { supabase } from '@/lib/supabase';
+
+export type Gender = 'male' | 'female';
+
+export interface WeddingRow {
+  id: string;
+  invite_code: string;
+  couple_names: string;
+  wedding_date: string;
+  location: string;
+  destination_city: string;
+  hashtag: string | null;
+  website: string | null;
+  contact_email: string | null;
+  registry_url: string | null;
+  hero_image_url: string | null;
+  theme_color: string | null;
+}
+
+export interface GuestRow {
+  canonical_name: string;
+  is_wedding_party: boolean;
+  gender: Gender | null;
+}
+
+export interface AdminRow {
+  guest_name: string;
+}
+
+export async function fetchWedding(weddingId: string): Promise<WeddingRow | null> {
+  const { data, error } = await supabase
+    .from('weddings')
+    .select(
+      'id, invite_code, couple_names, wedding_date, location, destination_city, hashtag, website, contact_email, registry_url, hero_image_url, theme_color'
+    )
+    .eq('id', weddingId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function fetchGuests(weddingId: string): Promise<GuestRow[]> {
+  const { data, error } = await supabase
+    .from('guests')
+    .select('canonical_name, is_wedding_party, gender')
+    .eq('wedding_id', weddingId);
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function fetchAdmins(weddingId: string): Promise<AdminRow[]> {
+  const { data, error } = await supabase
+    .from('wedding_admins')
+    .select('guest_name')
+    .eq('wedding_id', weddingId);
+  if (error) throw error;
+  return data ?? [];
+}

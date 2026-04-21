@@ -17,27 +17,22 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
+import { useWedding } from '@/context/WeddingContext';
 import { haptic } from '@/utils/haptics';
 import { WEDDING, SENDERS, SenderId } from '@/constants/weddingData';
-
-export function isAdminGuest(guestName: string | null): boolean {
-  if (!guestName) return false;
-  return WEDDING.adminNamePrefixes.some((prefix) =>
-    guestName.toLowerCase().startsWith(prefix.toLowerCase()),
-  );
-}
 
 export default function AdminScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { guestName } = useAuth();
+  const { isAdmin } = useWedding();
 
   const [sender, setSender] = useState<SenderId>('couple');
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
 
   // Guard — should not be reachable via normal navigation, but just in case
-  if (!isAdminGuest(guestName)) {
+  if (!guestName || !isAdmin(guestName)) {
     return (
       <View style={styles.guard}>
         <Text style={styles.guardText}>Not authorized.</Text>
