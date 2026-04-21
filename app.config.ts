@@ -88,11 +88,21 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         NSPhotoLibraryAddUsageDescription:    `Allow ${v.usageDescriptionSubject} to save photos.`,
         NSUserNotificationsUsageDescription:  `Allow ${v.usageDescriptionSubject} to send you wedding updates and reminders.`,
         NSCalendarsFullAccessUsageDescription: `Allow ${v.usageDescriptionSubject} to add wedding events to your calendar.`,
+        // Declares the app does not use non-exempt encryption, so App Store
+        // submissions don't prompt the export-compliance questionnaire.
+        ITSAppUsesNonExemptEncryption: false,
       },
     },
     android: {
       package: v.androidPackage,
-      permissions: ['READ_EXTERNAL_STORAGE', 'WRITE_EXTERNAL_STORAGE', 'CAMERA'],
+      permissions: [
+        'android.permission.READ_EXTERNAL_STORAGE',
+        'android.permission.WRITE_EXTERNAL_STORAGE',
+        'android.permission.CAMERA',
+        'android.permission.READ_CALENDAR',
+        'android.permission.WRITE_CALENDAR',
+        'android.permission.RECORD_AUDIO',
+      ],
     },
     web: {
       bundler: 'metro',
@@ -129,6 +139,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       supabaseUrl: v.supabaseUrl,
       supabaseKey: v.supabaseKey,
       defaultWeddingId: v.defaultWeddingId,
+      router: {},
       ...(v.easProjectId ? { eas: { projectId: v.easProjectId } } : {}),
     },
   };
