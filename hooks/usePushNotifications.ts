@@ -16,14 +16,14 @@ if (Platform.OS !== 'web') {
   });
 }
 
-export function usePushNotifications(guestName: string | null) {
+export function usePushNotifications(weddingId: string, guestName: string | null) {
   useEffect(() => {
     if (!guestName || Platform.OS === 'web') return;
-    registerForPushNotifications(guestName);
-  }, [guestName]);
+    registerForPushNotifications(weddingId, guestName);
+  }, [weddingId, guestName]);
 }
 
-async function registerForPushNotifications(guestName: string) {
+async function registerForPushNotifications(weddingId: string, guestName: string) {
   if (!Device.isDevice) {
     // Push notifications don't work on simulators — skip silently
     return;
@@ -53,11 +53,14 @@ async function registerForPushNotifications(guestName: string) {
   try {
     const projectId =
       Constants.expoConfig?.extra?.eas?.projectId ??
-      Constants.easConfig?.projectId ??
-      'ae93c50e-f645-405a-818e-2737f5560e96';
+      Constants.easConfig?.projectId;
+    if (!projectId) {
+      // SaaS builds without an EAS project id can't fetch a push token yet.
+      return;
+    }
 
     const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
-    await savePushToken(guestName, tokenData.data);
+    await savePushToken(weddingId, guestName, tokenData.data);
   } catch {
     // Token fetch failed (e.g. no network) — will retry on next launch
   }

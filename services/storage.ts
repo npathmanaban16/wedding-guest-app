@@ -2,16 +2,26 @@
  * Storage service — persists guest data to Supabase with AsyncStorage as a
  * local cache/fallback for offline use.
  *
- * Run supabase/schema.sql then supabase/seed.sql before using the app.
+ * Every Supabase call is scoped to a wedding_id. Callers pass the active
+ * wedding_id in from WeddingContext; AsyncStorage cache keys are also
+ * namespaced by wedding_id so the same device can safely attach to a
+ * different wedding later without mixing data.
+ *
+ * Run supabase/schema.sql (or schema_saas.sql for the SaaS variant) then
+ * the migrations in supabase/migrations/ before using the app.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
 
 const KEYS = {
-  myInfo: (name: string) => `@wedding_my_info_${name}`,
-  packingChecklist: (name: string) => `@wedding_packing_checklist_${name}`,
-  photos: '@wedding_photos',
-  onboarding: (name: string) => `@wedding_onboarding_done_${name}`,
+  myInfo: (weddingId: string, name: string) => `@wedding_my_info_${weddingId}_${name}`,
+  packingChecklist: (weddingId: string, name: string) =>
+    `@wedding_packing_checklist_${weddingId}_${name}`,
+  photos: (weddingId: string) => `@wedding_photos_${weddingId}`,
+  onboarding: (weddingId: string, name: string) =>
+    `@wedding_onboarding_done_${weddingId}_${name}`,
+  messagesLastRead: (weddingId: string, name: string) =>
+    `@wedding_messages_last_read_${weddingId}_${name}`,
 };
 
 // ─── My Info ─────────────────────────────────────────────────────────────────
@@ -48,11 +58,12 @@ const DEFAULT_MY_INFO: MyInfo = {
   meal3: '',
 };
 
-export async function getMyInfo(guestName: string): Promise<MyInfo> {
+export async function getMyInfo(weddingId: string, guestName: string): Promise<MyInfo> {
   try {
     const { data, error } = await supabase
       .from('guest_info')
       .select('*')
+      .eq('wedding_id', weddingId)
       .eq('guest_name', guestName)
       .maybeSingle();
 
@@ -71,22 +82,27 @@ export async function getMyInfo(guestName: string): Promise<MyInfo> {
         meal2: data.meal_2 ?? '',
         meal3: data.meal_3 ?? '',
       };
-      await AsyncStorage.setItem(KEYS.myInfo(guestName), JSON.stringify(info));
+      await AsyncStorage.setItem(KEYS.myInfo(weddingId, guestName), JSON.stringify(info));
       return info;
     }
   } catch {
     // Network unavailable — fall through to local cache
   }
 
-  const raw = await AsyncStorage.getItem(KEYS.myInfo(guestName));
+  const raw = await AsyncStorage.getItem(KEYS.myInfo(weddingId, guestName));
   if (!raw) return DEFAULT_MY_INFO;
   return { ...DEFAULT_MY_INFO, ...JSON.parse(raw) };
 }
 
-export async function saveMyInfo(guestName: string, info: MyInfo): Promise<void> {
+export async function saveMyInfo(
+  weddingId: string,
+  guestName: string,
+  info: MyInfo,
+): Promise<void> {
   // Only update editable fields — dietary and meal choices are set by seed SQL
   await supabase.from('guest_info').upsert(
     {
+      wedding_id: weddingId,
       guest_name: guestName,
       hotel: info.hotel,
       check_in: info.checkIn,
@@ -98,16 +114,16 @@ export async function saveMyInfo(guestName: string, info: MyInfo): Promise<void>
       email: info.email,
       updated_at: new Date().toISOString(),
     },
-    { onConflict: 'guest_name' },
+    { onConflict: 'wedding_id,guest_name' },
   );
 
-  await AsyncStorage.setItem(KEYS.myInfo(guestName), JSON.stringify(info));
+  await AsyncStorage.setItem(KEYS.myInfo(weddingId, guestName), JSON.stringify(info));
 
   // Fire-and-forget email notification — silently ignore errors
-  notifyCouple(guestName, info).catch(() => {});
+  notifyCouple(weddingId, guestName, info).catch(() => {});
 }
 
-async function notifyCouple(guestName: string, info: MyInfo): Promise<void> {
+async function notifyCouple(weddingId: string, guestName: string, info: MyInfo): Promise<void> {
   const lines = [
     `Guest: ${guestName}`,
     info.phone       ? `Phone: ${info.phone}`              : null,
@@ -122,19 +138,28 @@ async function notifyCouple(guestName: string, info: MyInfo): Promise<void> {
   ].filter(Boolean).join('\n');
 
   await supabase.functions.invoke('send-notification', {
-    body: { guestName, details: lines },
+    body: { weddingId, guestName, details: lines },
   });
 }
 
 // ─── Push Tokens ─────────────────────────────────────────────────────────────
 
-export async function savePushToken(guestName: string, token: string): Promise<void> {
+export async function savePushToken(
+  weddingId: string,
+  guestName: string,
+  token: string,
+): Promise<void> {
   try {
     await supabase
       .from('guest_info')
       .upsert(
-        { guest_name: guestName, push_token: token, updated_at: new Date().toISOString() },
-        { onConflict: 'guest_name' },
+        {
+          wedding_id: weddingId,
+          guest_name: guestName,
+          push_token: token,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'wedding_id,guest_name' },
       );
   } catch {
     // Silently fail — token will be saved on next launch
@@ -144,13 +169,13 @@ export async function savePushToken(guestName: string, token: string): Promise<v
 // ─── Onboarding ──────────────────────────────────────────────────────────────
 
 // Onboarding is considered done once accommodation info is filled in.
-export async function isOnboardingDone(guestName: string): Promise<boolean> {
-  const info = await getMyInfo(guestName);
+export async function isOnboardingDone(weddingId: string, guestName: string): Promise<boolean> {
+  const info = await getMyInfo(weddingId, guestName);
   return !!(info.hotel && info.checkIn && info.checkOut);
 }
 
-export async function markOnboardingDone(guestName: string): Promise<void> {
-  await AsyncStorage.setItem(KEYS.onboarding(guestName), 'true');
+export async function markOnboardingDone(weddingId: string, guestName: string): Promise<void> {
+  await AsyncStorage.setItem(KEYS.onboarding(weddingId, guestName), 'true');
 }
 
 // ─── Notifications ───────────────────────────────────────────────────────────
@@ -162,11 +187,12 @@ export interface AppNotification {
   sentAt: string;
 }
 
-export async function getNotifications(): Promise<AppNotification[]> {
+export async function getNotifications(weddingId: string): Promise<AppNotification[]> {
   try {
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
+      .eq('wedding_id', weddingId)
       .order('sent_at', { ascending: false });
     if (!error && data) {
       return data.map((n) => ({
@@ -182,8 +208,12 @@ export async function getNotifications(): Promise<AppNotification[]> {
   return [];
 }
 
-export async function deleteNotification(id: string): Promise<void> {
-  const { error } = await supabase.from('notifications').delete().eq('id', id);
+export async function deleteNotification(weddingId: string, id: string): Promise<void> {
+  const { error } = await supabase
+    .from('notifications')
+    .delete()
+    .eq('wedding_id', weddingId)
+    .eq('id', id);
   if (error) throw new Error(error.message);
 }
 
@@ -196,6 +226,7 @@ export interface ReactionSummary {
 }
 
 export async function getReactions(
+  weddingId: string,
   notificationIds: string[],
 ): Promise<Record<string, ReactionSummary[]>> {
   if (notificationIds.length === 0) return {};
@@ -203,6 +234,7 @@ export async function getReactions(
     const { data, error } = await supabase
       .from('notification_reactions')
       .select('notification_id, guest_name, emoji')
+      .eq('wedding_id', weddingId)
       .in('notification_id', notificationIds);
 
     if (error || !data) return {};
@@ -227,6 +259,7 @@ export async function getReactions(
 
 // Upserts a reaction, or removes it if the guest already has the same emoji
 export async function toggleReaction(
+  weddingId: string,
   notificationId: string,
   guestName: string,
   emoji: string,
@@ -236,14 +269,20 @@ export async function toggleReaction(
     await supabase
       .from('notification_reactions')
       .delete()
+      .eq('wedding_id', weddingId)
       .eq('notification_id', notificationId)
       .eq('guest_name', guestName);
   } else {
     await supabase
       .from('notification_reactions')
       .upsert(
-        { notification_id: notificationId, guest_name: guestName, emoji },
-        { onConflict: 'notification_id,guest_name' },
+        {
+          wedding_id: weddingId,
+          notification_id: notificationId,
+          guest_name: guestName,
+          emoji,
+        },
+        { onConflict: 'wedding_id,notification_id,guest_name' },
       );
   }
 }
@@ -259,6 +298,7 @@ export interface NotificationReply {
 }
 
 export async function getReplies(
+  weddingId: string,
   notificationIds: string[],
 ): Promise<Record<string, NotificationReply[]>> {
   if (notificationIds.length === 0) return {};
@@ -266,6 +306,7 @@ export async function getReplies(
     const { data, error } = await supabase
       .from('notification_replies')
       .select('*')
+      .eq('wedding_id', weddingId)
       .in('notification_id', notificationIds)
       .order('created_at', { ascending: true });
 
@@ -290,13 +331,19 @@ export async function getReplies(
 }
 
 export async function addReply(
+  weddingId: string,
   notificationId: string,
   guestName: string,
   message: string,
 ): Promise<NotificationReply> {
   const { data, error } = await supabase
     .from('notification_replies')
-    .insert({ notification_id: notificationId, guest_name: guestName, message })
+    .insert({
+      wedding_id: weddingId,
+      notification_id: notificationId,
+      guest_name: guestName,
+      message,
+    })
     .select()
     .single();
 
@@ -313,21 +360,26 @@ export async function addReply(
   };
 }
 
-export async function deleteReply(id: string): Promise<void> {
-  const { error } = await supabase.from('notification_replies').delete().eq('id', id);
+export async function deleteReply(weddingId: string, id: string): Promise<void> {
+  const { error } = await supabase
+    .from('notification_replies')
+    .delete()
+    .eq('wedding_id', weddingId)
+    .eq('id', id);
   if (error) throw new Error(error.message);
 }
 
 // ─── Unread message tracking ──────────────────────────────────────────────────
 
-const messagesLastReadKey = (guestName: string) => `@wedding_messages_last_read_${guestName}`;
-
-export async function getMessagesLastRead(guestName: string): Promise<string | null> {
-  return AsyncStorage.getItem(messagesLastReadKey(guestName));
+export async function getMessagesLastRead(
+  weddingId: string,
+  guestName: string,
+): Promise<string | null> {
+  return AsyncStorage.getItem(KEYS.messagesLastRead(weddingId, guestName));
 }
 
-export async function markMessagesRead(guestName: string): Promise<void> {
-  await AsyncStorage.setItem(messagesLastReadKey(guestName), new Date().toISOString());
+export async function markMessagesRead(weddingId: string, guestName: string): Promise<void> {
+  await AsyncStorage.setItem(KEYS.messagesLastRead(weddingId, guestName), new Date().toISOString());
 }
 
 // ─── Song Requests ────────────────────────────────────────────────────────────
@@ -340,11 +392,12 @@ export interface SongRequest {
   submittedAt: string;
 }
 
-export async function getSongRequests(): Promise<SongRequest[]> {
+export async function getSongRequests(weddingId: string): Promise<SongRequest[]> {
   try {
     const { data, error } = await supabase
       .from('song_requests')
       .select('*')
+      .eq('wedding_id', weddingId)
       .order('submitted_at', { ascending: true });
 
     if (!error && data) {
@@ -362,21 +415,31 @@ export async function getSongRequests(): Promise<SongRequest[]> {
   return [];
 }
 
-export async function deleteSongRequest(id: string): Promise<void> {
-  const { error } = await supabase.from('song_requests').delete().eq('id', id);
+export async function deleteSongRequest(weddingId: string, id: string): Promise<void> {
+  const { error } = await supabase
+    .from('song_requests')
+    .delete()
+    .eq('wedding_id', weddingId)
+    .eq('id', id);
   if (error) {
     throw new Error(error.message ?? 'Failed to delete song request');
   }
 }
 
 export async function addSongRequest(
+  weddingId: string,
   song: string,
   artist: string,
   requestedBy: string,
 ): Promise<SongRequest> {
   const { data, error } = await supabase
     .from('song_requests')
-    .insert({ song: song.trim(), artist: artist.trim(), requested_by: requestedBy })
+    .insert({
+      wedding_id: weddingId,
+      song: song.trim(),
+      artist: artist.trim(),
+      requested_by: requestedBy,
+    })
     .select()
     .single();
 
@@ -396,40 +459,53 @@ export async function addSongRequest(
 // ─── Packing Checklist ───────────────────────────────────────────────────────
 // Synced to Supabase per guest, with AsyncStorage as local cache/offline fallback.
 
-export async function getCheckedItems(guestName: string): Promise<string[]> {
+export async function getCheckedItems(
+  weddingId: string,
+  guestName: string,
+): Promise<string[]> {
   try {
     const { data, error } = await supabase
       .from('packing_checklist')
       .select('checked_items')
+      .eq('wedding_id', weddingId)
       .eq('guest_name', guestName)
       .maybeSingle();
     if (!error && data) {
       const items: string[] = data.checked_items ?? [];
-      await AsyncStorage.setItem(KEYS.packingChecklist(guestName), JSON.stringify(items));
+      await AsyncStorage.setItem(KEYS.packingChecklist(weddingId, guestName), JSON.stringify(items));
       return items;
     }
   } catch {
     // Network unavailable — fall through to local cache
   }
-  const raw = await AsyncStorage.getItem(KEYS.packingChecklist(guestName));
+  const raw = await AsyncStorage.getItem(KEYS.packingChecklist(weddingId, guestName));
   if (!raw) return [];
   return JSON.parse(raw);
 }
 
-export async function togglePackingItem(itemId: string, guestName: string): Promise<string[]> {
-  const checked = await getCheckedItems(guestName);
+export async function togglePackingItem(
+  weddingId: string,
+  itemId: string,
+  guestName: string,
+): Promise<string[]> {
+  const checked = await getCheckedItems(weddingId, guestName);
   const updated = checked.includes(itemId)
     ? checked.filter((id) => id !== itemId)
     : [...checked, itemId];
   // Write to local cache immediately so the UI feels instant
-  await AsyncStorage.setItem(KEYS.packingChecklist(guestName), JSON.stringify(updated));
+  await AsyncStorage.setItem(KEYS.packingChecklist(weddingId, guestName), JSON.stringify(updated));
   // Sync to Supabase in the background
   try {
     await supabase
       .from('packing_checklist')
       .upsert(
-        { guest_name: guestName, checked_items: updated, updated_at: new Date().toISOString() },
-        { onConflict: 'guest_name' },
+        {
+          wedding_id: weddingId,
+          guest_name: guestName,
+          checked_items: updated,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'wedding_id,guest_name' },
       );
   } catch {
     // Will reconcile on next load
@@ -448,19 +524,22 @@ export interface PhotoRecord {
   type: 'photo' | 'video';
 }
 
-export async function getPhotos(): Promise<PhotoRecord[]> {
-  const raw = await AsyncStorage.getItem(KEYS.photos);
+export async function getPhotos(weddingId: string): Promise<PhotoRecord[]> {
+  const raw = await AsyncStorage.getItem(KEYS.photos(weddingId));
   if (!raw) return [];
   return JSON.parse(raw);
 }
 
-export async function addPhoto(record: Omit<PhotoRecord, 'id' | 'submittedAt'>): Promise<PhotoRecord> {
-  const existing = await getPhotos();
+export async function addPhoto(
+  weddingId: string,
+  record: Omit<PhotoRecord, 'id' | 'submittedAt'>,
+): Promise<PhotoRecord> {
+  const existing = await getPhotos(weddingId);
   const newRecord: PhotoRecord = {
     ...record,
     id: Date.now().toString(),
     submittedAt: new Date().toISOString(),
   };
-  await AsyncStorage.setItem(KEYS.photos, JSON.stringify([...existing, newRecord]));
+  await AsyncStorage.setItem(KEYS.photos(weddingId), JSON.stringify([...existing, newRecord]));
   return newRecord;
 }

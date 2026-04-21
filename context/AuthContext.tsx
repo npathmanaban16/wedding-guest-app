@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useWedding } from '@/context/WeddingContext';
 
 const AUTH_STORAGE_KEY = '@wedding_guest_name';
 
@@ -8,7 +7,9 @@ interface AuthContextType {
   guestName: string | null;
   isLoading: boolean;
   onboardingSkipped: boolean;
-  login: (name: string) => Promise<{ success: boolean; error?: string }>;
+  // Persists the already-validated canonical name. Guest-list validation is
+  // done in the login screen against WeddingContext before this is called.
+  login: (canonicalName: string) => Promise<void>;
   logout: () => Promise<void>;
   skipOnboarding: () => void;
 }
@@ -16,7 +17,6 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { isValidGuestOrAdmin, getCanonicalName } = useWedding();
   const [guestName, setGuestName] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [onboardingSkipped, setOnboardingSkipped] = useState(false);
@@ -35,22 +35,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Reset skip flag whenever the logged-in guest changes
   useEffect(() => { setOnboardingSkipped(false); }, [guestName]);
 
-  const login = async (name: string): Promise<{ success: boolean; error?: string }> => {
-    const trimmed = name.trim();
-    if (!trimmed) {
-      return { success: false, error: 'Please enter your name.' };
-    }
-    if (!isValidGuestOrAdmin(trimmed)) {
-      return {
-        success: false,
-        error:
-          "We couldn't find your name on the guest list. Please check the spelling or contact the couple.",
-      };
-    }
-    const canonical = getCanonicalName(trimmed) ?? trimmed;
-    await AsyncStorage.setItem(AUTH_STORAGE_KEY, canonical);
-    setGuestName(canonical);
-    return { success: true };
+  const login = async (canonicalName: string): Promise<void> => {
+    await AsyncStorage.setItem(AUTH_STORAGE_KEY, canonicalName);
+    setGuestName(canonicalName);
   };
 
   const logout = async () => {

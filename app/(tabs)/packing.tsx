@@ -120,7 +120,7 @@ export default function PackingScreen() {
   const [checkedItems, setCheckedItems] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const { guestName } = useAuth();
-  const { isWeddingParty, getGuestGender, wedding } = useWedding();
+  const { weddingId, isWeddingParty, getGuestGender, wedding } = useWedding();
   const inWeddingParty = isWeddingParty(guestName ?? '');
   const gender = getGuestGender(guestName ?? '');
 
@@ -137,15 +137,15 @@ export default function PackingScreen() {
 
   useEffect(() => {
     if (!guestName) { setLoading(false); return; }
-    getCheckedItems(guestName).then((items) => {
+    getCheckedItems(weddingId, guestName).then((items) => {
       setCheckedItems(items);
       setLoading(false);
     });
-  }, [guestName]);
+  }, [weddingId, guestName]);
 
   const handleToggle = async (id: string) => {
     if (!guestName) return;
-    const updated = await togglePackingItem(id, guestName);
+    const updated = await togglePackingItem(weddingId, id, guestName);
     setCheckedItems(updated);
   };
 
