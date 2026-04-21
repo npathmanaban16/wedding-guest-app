@@ -4,6 +4,24 @@
     "appVersionSource": "remote"
   },
   "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": { "APP_VARIANT": "nn" },
+      "ios": {
+        "simulator": false,
+        "image": "sdk-54"
+      }
+    },
+    "saas-development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": { "APP_VARIANT": "saas" },
+      "ios": {
+        "simulator": false,
+        "image": "sdk-54"
+      }
+    },
     "preview": {
       "distribution": "store",
       "channel": "preview",
