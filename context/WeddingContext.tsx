@@ -14,8 +14,8 @@ import {
 export type { Gender };
 
 interface WeddingContextType {
-  weddingId: string;
-  wedding: WeddingRow | null;
+  weddingId: string | null;
+  wedding: WeddingRow;
   isValidGuest: (name: string) => boolean;
   isValidGuestOrAdmin: (name: string) => boolean;
   getCanonicalName: (name: string) => string | null;
@@ -38,6 +38,13 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
 
   useEffect(() => {
+    // SaaS build ships without a baked-in wedding id and is expected to
+    // resolve one from an invite code (not yet wired up). Until that lands,
+    // surface an error so the app doesn't hang on the splash.
+    if (!weddingId) {
+      setLoadState('error');
+      return;
+    }
     let cancelled = false;
     (async () => {
       try {
@@ -47,6 +54,11 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
           fetchAdmins(weddingId),
         ]);
         if (cancelled) return;
+        if (!w) {
+          console.error('[WeddingProvider] wedding not found', weddingId);
+          setLoadState('error');
+          return;
+        }
         setWedding(w);
         setGuests(g);
         setAdminNames(a.map((row) => row.guest_name));
@@ -59,7 +71,8 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
     return () => { cancelled = true; };
   }, [weddingId]);
 
-  const value = useMemo<WeddingContextType>(() => {
+  const value = useMemo<WeddingContextType | null>(() => {
+    if (!wedding) return null;
     const guestByNormalized = new Map(guests.map((g) => [normalizeName(g.canonical_name), g]));
     const adminNormalized = new Set(adminNames.map(normalizeName));
 
@@ -92,19 +105,19 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
     };
   }, [weddingId, wedding, guests, adminNames]);
 
-  if (loadState === 'loading') {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
-    );
-  }
-
   if (loadState === 'error') {
     return (
       <View style={styles.center}>
         <Text style={styles.errorText}>Couldn't reach the server.</Text>
         <Text style={styles.errorText}>Please check your connection and restart the app.</Text>
+      </View>
+    );
+  }
+
+  if (loadState === 'loading' || !value) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color={Colors.primary} />
       </View>
     );
   }

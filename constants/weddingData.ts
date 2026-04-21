@@ -2,37 +2,31 @@
 // WEDDING DATA
 // ============================================================
 
-// The wedding this build of the app is hard-wired to show. Points at the
-// seeded Neha & Naveen row in the `weddings` table. Future multi-tenant
-// builds will discover this from an invite code at login time.
-export const DEFAULT_WEDDING_ID = '00000000-0000-0000-0000-000000000001';
+import Constants from 'expo-constants';
 
+// The wedding this build of the app is hard-wired to show. Comes from
+// app.config.ts per-variant config: the N&N build bakes in the seeded
+// Neha & Naveen UUID; the SaaS build leaves this null and will resolve
+// the wedding from an invite code at login time.
+export const DEFAULT_WEDDING_ID: string | null =
+  (Constants.expoConfig?.extra?.defaultWeddingId as string | null | undefined) ?? null;
+
+// Fields that aren't yet modeled in the `weddings` table. Display strings
+// like coupleNames, location, destinationCity, weddingDate, hashtag, website,
+// contactEmail, and registry URL now come from WeddingContext.
 export const WEDDING = {
-  bride: "Neha",
-  groom: "Naveen",
-  coupleNames: "Neha & Naveen",
-  weddingDate: new Date("2026-05-23T15:00:00Z"), // Saturday 23 May 2026, 5:00 PM CEST (UTC+2)
-  location: "Montreux, Switzerland",
-  destinationCity: "Montreux",
-  hashtag: "#NehaNaveen2026",       // TODO: Update with your actual hashtag
-  website: "https://www.neha-naveen.com",
-  contactEmail: "nehanaveen2026@gmail.com",
-  registry: "https://blissandbone.sendbirdie.com/r/neha-naveen",
   heroImage: require("@/assets/images/montreux.png"),
   albumUrl: "https://photos.app.goo.gl/YCMxM6i7XRNzKERd6",
   plannerName: "Astrid",
   plannerSubtitle: "Wedding Planner",
 };
 
-export const SENDERS = [
-  { id: "couple" as const, label: WEDDING.coupleNames, icon: "heart" as const },
-  { id: "planner" as const, label: WEDDING.plannerName, subtitle: WEDDING.plannerSubtitle, icon: "star" as const },
-];
-export type SenderId = (typeof SENDERS)[number]["id"];
+export type SenderId = "couple" | "planner";
 
 export const PACKING_TIP_FOOTER = {
   title: "Tip: Pack for the Lake & the Mountains",
-  text: `May in ${WEDDING.destinationCity} can bring spring showers and cool evenings by the lake. Bring layers and a packable rain jacket alongside your event outfits.`,
+  text: (city: string) =>
+    `May in ${city} can bring spring showers and cool evenings by the lake. Bring layers and a packable rain jacket alongside your event outfits.`,
 };
 
 // ============================================================

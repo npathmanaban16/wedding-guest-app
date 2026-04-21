@@ -1,9 +1,17 @@
 import { createClient } from '@supabase/supabase-js';
+import Constants from 'expo-constants';
 
-const SUPABASE_URL = 'https://suranxrcuqguwzwfowye.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_xrZgt_EivSAAdUoKAf6BmQ_Hg-2T1bw';
+const extra = Constants.expoConfig?.extra ?? {};
+const supabaseUrl = extra.supabaseUrl as string | undefined;
+const supabaseKey = extra.supabaseKey as string | undefined;
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error(
+    '[supabase] Missing supabaseUrl/supabaseKey in expo extra. Check app.config.ts.',
+  );
+}
+
+export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     persistSession: false,
     autoRefreshToken: false,

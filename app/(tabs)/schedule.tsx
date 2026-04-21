@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Calendar from 'expo-calendar';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
-import { EVENTS, WEDDING, WeddingEvent } from '@/constants/weddingData';
+import { EVENTS, WeddingEvent } from '@/constants/weddingData';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
 import { FairmontMap } from '@/components/FairmontMap';
@@ -32,7 +32,7 @@ function openMaps(address: string) {
   Linking.openURL(url);
 }
 
-async function addToCalendar(event: WeddingEvent) {
+async function addToCalendar(event: WeddingEvent, coupleNames: string) {
   if (Platform.OS === 'web') {
     Alert.alert('Not available', 'Add to Calendar is only available on the mobile app.');
     return;
@@ -57,7 +57,7 @@ async function addToCalendar(event: WeddingEvent) {
 
   try {
     await Calendar.createEventAsync(defaultCalendar.id, {
-      title: `${event.title} — ${WEDDING.coupleNames}'s Wedding`,
+      title: `${event.title} — ${coupleNames}'s Wedding`,
       startDate: new Date(event.startDate),
       endDate: new Date(event.endDate),
       location: `${event.venue}\n${event.address}`,
@@ -88,7 +88,7 @@ function BulletRow({ text }: { text: string }) {
   );
 }
 
-function EventCard({ event }: { event: WeddingEvent }) {
+function EventCard({ event, coupleNames }: { event: WeddingEvent; coupleNames: string }) {
   const [expanded, setExpanded] = useState(false);
   const [dressExpanded, setDressExpanded] = useState(false);
 
@@ -142,7 +142,7 @@ function EventCard({ event }: { event: WeddingEvent }) {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.actionBtn}
-              onPress={() => { haptic.medium(); addToCalendar(event); }}
+              onPress={() => { haptic.medium(); addToCalendar(event, coupleNames); }}
               activeOpacity={0.7}
             >
               <Ionicons name="calendar-outline" size={14} color={Colors.gold} />
@@ -325,7 +325,7 @@ function InfoRow({ icon, label, value }: InfoRowProps) {
 export default function ScheduleScreen() {
   const insets = useSafeAreaInsets();
   const { guestName } = useAuth();
-  const { isWeddingParty } = useWedding();
+  const { isWeddingParty, wedding } = useWedding();
   const inWeddingParty = isWeddingParty(guestName ?? '');
   const visibleEvents = EVENTS.filter((e) => !e.weddingPartyOnly || inWeddingParty);
 
@@ -350,7 +350,7 @@ export default function ScheduleScreen() {
             {index < visibleEvents.length - 1 && <View style={styles.connector} />}
             <View style={styles.dot} />
             <View style={styles.timelineContent}>
-              <EventCard event={event} />
+              <EventCard event={event} coupleNames={wedding.couple_names} />
             </View>
           </View>
         ))}
