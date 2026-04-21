@@ -85,19 +85,20 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors.white,
-        tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.6)',
+        tabBarActiveTintColor: Colors.primary,
+        tabBarInactiveTintColor: Colors.textMuted,
         tabBarStyle: {
-          backgroundColor: Colors.primary,
-          borderTopWidth: 0,
+          backgroundColor: Colors.white,
+          borderTopWidth: 0.5,
+          borderTopColor: Colors.border,
           height: 84,
           paddingBottom: 22,
           paddingTop: 10,
           shadowColor: '#1C1810',
           shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.12,
-          shadowRadius: 8,
-          elevation: 8,
+          shadowOpacity: 0.08,
+          shadowRadius: 6,
+          elevation: 6,
         },
         tabBarLabelStyle: {
           fontFamily: Fonts.sansMedium,
