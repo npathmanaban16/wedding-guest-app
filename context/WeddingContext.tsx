@@ -95,6 +95,17 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       setAdminNames([]);
       return;
     }
+    // Defensive: if weddingId somehow isn't a uuid-shaped string, clear it.
+    // Catches any path (stale bundle, object coerced to string, etc.) that
+    // slipped past the AsyncStorage restore guard.
+    if (typeof weddingId !== 'string' || !UUID_REGEX.test(weddingId)) {
+      console.warn(
+        '[WeddingProvider] weddingId is not a uuid; clearing session',
+        { value: weddingId, type: typeof weddingId },
+      );
+      AsyncStorage.removeItem(WEDDING_ID_STORAGE_KEY).finally(() => setWeddingId(null));
+      return;
+    }
     setLoadState('loading');
     let cancelled = false;
     (async () => {
