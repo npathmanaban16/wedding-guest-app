@@ -120,7 +120,7 @@ export default function PackingScreen() {
   const [checkedItems, setCheckedItems] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const { guestName } = useAuth();
-  const { isWeddingParty, getGuestGender } = useWedding();
+  const { isWeddingParty, getGuestGender, wedding } = useWedding();
   const inWeddingParty = isWeddingParty(guestName ?? '');
   const gender = getGuestGender(guestName ?? '');
 
@@ -205,7 +205,7 @@ export default function PackingScreen() {
       {/* Tips footer */}
       <View style={styles.tipsFooter}>
         <Text style={styles.tipsTitle}>{PACKING_TIP_FOOTER.title}</Text>
-        <Text style={styles.tipsText}>{PACKING_TIP_FOOTER.text}</Text>
+        <Text style={styles.tipsText}>{PACKING_TIP_FOOTER.text(wedding.destination_city)}</Text>
       </View>
     </ScrollView>
   );

@@ -1,10 +1,10 @@
 import { Tabs, Redirect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
+import { useWedding } from '@/context/WeddingContext';
 import { Colors, Fonts } from '@/constants/theme';
-import { WEDDING } from '@/constants/weddingData';
 import { ActivityIndicator, AppState, View, StyleSheet } from 'react-native';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { isOnboardingDone, getNotifications, getMessagesLastRead, markMessagesRead } from '@/services/storage';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 
@@ -17,23 +17,24 @@ interface TabConfig {
   iconFocused: IoniconsName;
 }
 
-const TABS: TabConfig[] = [
-  { name: 'index',       title: 'Home',        icon: 'heart-outline',         iconFocused: 'heart' },
-  { name: 'schedule',    title: 'Schedule',    icon: 'calendar-outline',      iconFocused: 'calendar' },
-  { name: 'switzerland', title: WEDDING.destinationCity, icon: 'map-outline',           iconFocused: 'map' },
-  { name: 'packing',     title: 'Packing',     icon: 'bag-handle-outline',    iconFocused: 'bag-handle' },
-  { name: 'photos',      title: 'Photos',      icon: 'camera-outline',        iconFocused: 'camera' },
-  { name: 'songs',       title: 'Songs',       icon: 'musical-notes-outline', iconFocused: 'musical-notes' },
-  { name: 'messages',    title: 'Messages',    icon: 'notifications-outline', iconFocused: 'notifications' },
-  { name: 'my-info',     title: 'Details',     icon: 'person-outline',        iconFocused: 'person' },
-];
-
 export default function TabLayout() {
   const { guestName, isLoading, onboardingSkipped } = useAuth();
+  const { wedding } = useWedding();
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   usePushNotifications(guestName);
+
+  const tabs: TabConfig[] = useMemo(() => [
+    { name: 'index',       title: 'Home',        icon: 'heart-outline',         iconFocused: 'heart' },
+    { name: 'schedule',    title: 'Schedule',    icon: 'calendar-outline',      iconFocused: 'calendar' },
+    { name: 'switzerland', title: wedding.destination_city, icon: 'map-outline', iconFocused: 'map' },
+    { name: 'packing',     title: 'Packing',     icon: 'bag-handle-outline',    iconFocused: 'bag-handle' },
+    { name: 'photos',      title: 'Photos',      icon: 'camera-outline',        iconFocused: 'camera' },
+    { name: 'songs',       title: 'Songs',       icon: 'musical-notes-outline', iconFocused: 'musical-notes' },
+    { name: 'messages',    title: 'Messages',    icon: 'notifications-outline', iconFocused: 'notifications' },
+    { name: 'my-info',     title: 'Details',     icon: 'person-outline',        iconFocused: 'person' },
+  ], [wedding.destination_city]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -99,7 +100,7 @@ export default function TabLayout() {
         headerShown: false,
       }}
     >
-      {TABS.map((tab) => (
+      {tabs.map((tab) => (
         <Tabs.Screen
           key={tab.name}
           name={tab.name}

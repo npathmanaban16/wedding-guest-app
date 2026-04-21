@@ -58,10 +58,11 @@ function QuickCard({ title, subtitle, onPress }: QuickCardProps) {
 
 export default function HomeScreen() {
   const { guestName, logout } = useAuth();
-  const { isWeddingParty, isAdmin } = useWedding();
+  const { isWeddingParty, isAdmin, wedding } = useWedding();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const countdown = useCountdown(WEDDING.weddingDate);
+  const weddingDate = React.useMemo(() => new Date(wedding.wedding_date), [wedding.wedding_date]);
+  const countdown = useCountdown(weddingDate);
   const firstName = guestName?.split(' ')[0] ?? 'Guest';
   const inWeddingParty = isWeddingParty(guestName ?? '');
   const isAdminUser = !!guestName && isAdmin(guestName);
@@ -82,14 +83,14 @@ export default function HomeScreen() {
         <View style={styles.heroOverlay} />
         <View style={styles.header}>
           <Text style={styles.heroGreeting}>Welcome, {firstName}</Text>
-          <Text style={styles.heroCoupleNames}>{WEDDING.coupleNames}</Text>
+          <Text style={styles.heroCoupleNames}>{wedding.couple_names}</Text>
           <View style={styles.ornamentRow}>
             <View style={styles.heroOrnamentLine} />
             <Text style={styles.heroOrnamentDiamond}>◆</Text>
             <View style={styles.heroOrnamentLine} />
           </View>
           <Text style={styles.heroLocation}>
-            {WEDDING.location.toUpperCase()}
+            {wedding.location.toUpperCase()}
           </Text>
         </View>
       </ImageBackground>
@@ -111,7 +112,7 @@ export default function HomeScreen() {
               <CountdownUnit value={countdown.seconds} label="sec" />
             </View>
             <Text style={styles.countdownDate}>
-              {WEDDING.weddingDate.toLocaleDateString('en-GB', {
+              {weddingDate.toLocaleDateString('en-GB', {
                 weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
               })}
             </Text>
@@ -134,7 +135,7 @@ export default function HomeScreen() {
       <Text style={styles.sectionTitle}>Explore</Text>
       <View style={styles.quickGrid}>
         <QuickCard title="Schedule" subtitle="All events & dress codes" onPress={() => router.push('/(tabs)/schedule')} />
-        <QuickCard title={`${WEDDING.destinationCity} Guide`} subtitle="Things to do & eat" onPress={() => router.push('/(tabs)/switzerland')} />
+        <QuickCard title={`${wedding.destination_city} Guide`} subtitle="Things to do & eat" onPress={() => router.push('/(tabs)/switzerland')} />
         <QuickCard title="Packing List" subtitle="Outfits & essentials" onPress={() => router.push('/(tabs)/packing')} />
         <QuickCard title="Share Photos" subtitle="Upload memories" onPress={() => router.push('/(tabs)/photos')} />
         <QuickCard title="Song Requests" subtitle="Request a track" onPress={() => router.push('/(tabs)/songs')} />
@@ -144,7 +145,7 @@ export default function HomeScreen() {
       {/* Hashtag */}
       <View style={styles.hashtagCard}>
         <Text style={styles.hashtagLabel}>SHARE YOUR MOMENTS</Text>
-        <Text style={styles.hashtag}>{WEDDING.hashtag}</Text>
+        <Text style={styles.hashtag}>{wedding.hashtag}</Text>
       </View>
 
       {/* Registry */}
@@ -156,7 +157,9 @@ export default function HomeScreen() {
         </Text>
         <TouchableOpacity
           style={styles.registryButton}
-          onPress={() => Linking.openURL(WEDDING.registry)}
+          onPress={() => {
+            if (wedding.registry_url) Linking.openURL(wedding.registry_url);
+          }}
           activeOpacity={0.85}
         >
           <Text style={styles.registryButtonText}>View Registry</Text>
