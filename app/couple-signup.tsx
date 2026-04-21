@@ -1,0 +1,416 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
+import { DateField } from '@/components/DateField';
+import { supabase } from '@/lib/supabase';
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export default function CoupleSignupScreen() {
+  const router = useRouter();
+
+  const [coupleName, setCoupleName] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [isMultiDay, setIsMultiDay] = useState(false);
+  const [email, setEmail] = useState('');
+  const [city, setCity] = useState('');
+  const [notes, setNotes] = useState('');
+
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const validate = (): string | null => {
+    if (!coupleName.trim()) return 'Please enter the couple name.';
+    if (!startDate) return 'Please enter your wedding date.';
+    if (isMultiDay && !endDate) return 'Please enter the end date, or turn off multi-day.';
+    if (isMultiDay && endDate && endDate < startDate) return 'End date must be after the start date.';
+    if (!email.trim()) return 'Please enter your email.';
+    if (!EMAIL_REGEX.test(email.trim())) return 'That email doesn’t look right.';
+    return null;
+  };
+
+  const handleSubmit = async () => {
+    setError('');
+    const msg = validate();
+    if (msg) {
+      setError(msg);
+      return;
+    }
+
+    setLoading(true);
+    const payload = {
+      couple_name: coupleName.trim(),
+      wedding_date_start: startDate,
+      wedding_date_end: isMultiDay && endDate ? endDate : null,
+      email: email.trim(),
+      city: city.trim() || null,
+      notes: notes.trim() || null,
+    };
+
+    const { error: dbError } = await supabase.from('wedding_requests').insert(payload);
+    if (dbError) {
+      setError('Something went wrong saving your request. Please try again.');
+      setLoading(false);
+      return;
+    }
+
+    // Fire-and-forget email notification. If it fails, the request row is
+    // still saved and the admin will see it in the Supabase dashboard —
+    // we don't want to block the user's UX on email delivery.
+    supabase.functions.invoke('send-wedding-request', {
+      body: {
+        coupleName: payload.couple_name,
+        weddingDateStart: payload.wedding_date_start,
+        weddingDateEnd: payload.wedding_date_end,
+        email: payload.email,
+        city: payload.city,
+        notes: payload.notes,
+      },
+    }).catch((e) => console.warn('send-wedding-request invoke failed:', e));
+
+    setLoading(false);
+    setSubmitted(true);
+  };
+
+  if (submitted) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.confirmWrap}>
+          <View style={styles.ornament}>
+            <View style={styles.ornamentLine} />
+            <Text style={styles.ornamentDiamond}>◆</Text>
+            <View style={styles.ornamentLine} />
+          </View>
+          <Text style={styles.confirmTitle}>Thank you!</Text>
+          <Text style={styles.confirmBody}>
+            We received your request and sent a confirmation to{' '}
+            <Text style={styles.confirmEmail}>{email.trim()}</Text>. We’ll be in touch within a
+            few days to get your wedding set up.
+          </Text>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => router.replace('/invite')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.primaryButtonText}>BACK TO INVITE CODE</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.kav}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="chevron-back" size={20} color={Colors.textSecondary} />
+            <Text style={styles.backText}>Back</Text>
+          </TouchableOpacity>
+
+          <View style={styles.ornament}>
+            <View style={styles.ornamentLine} />
+            <Text style={styles.ornamentDiamond}>◆</Text>
+            <View style={styles.ornamentLine} />
+          </View>
+
+          <Text style={styles.title}>Set up your wedding</Text>
+          <Text style={styles.subtitle}>
+            Tell us a little about your wedding and we’ll reach out to get your Wedding Companion
+            app set up.
+          </Text>
+
+          <Text style={styles.label}>Couple</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Emma & James"
+            placeholderTextColor={Colors.textMuted}
+            value={coupleName}
+            onChangeText={(t) => { setCoupleName(t); if (error) setError(''); }}
+            autoCapitalize="words"
+            returnKeyType="next"
+          />
+
+          <DateField
+            label="Wedding date"
+            value={startDate}
+            onChange={(v) => { setStartDate(v); if (error) setError(''); }}
+            placeholder="Select a date..."
+          />
+
+          <TouchableOpacity
+            style={styles.toggleRow}
+            onPress={() => setIsMultiDay((v) => !v)}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.checkbox, isMultiDay && styles.checkboxActive]}>
+              {isMultiDay && <Ionicons name="checkmark" size={14} color={Colors.white} />}
+            </View>
+            <Text style={styles.toggleLabel}>It’s a multi-day celebration</Text>
+          </TouchableOpacity>
+
+          {isMultiDay && (
+            <DateField
+              label="End date"
+              value={endDate}
+              onChange={(v) => { setEndDate(v); if (error) setError(''); }}
+              placeholder="Select end date..."
+              minimumDate={startDate ? new Date(startDate + 'T00:00:00') : undefined}
+            />
+          )}
+
+          <Text style={styles.helperNote}>Dates can be changed later.</Text>
+
+          <Text style={styles.label}>Email</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="you@example.com"
+            placeholderTextColor={Colors.textMuted}
+            value={email}
+            onChangeText={(t) => { setEmail(t); if (error) setError(''); }}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="email-address"
+            returnKeyType="next"
+          />
+
+          <Text style={styles.label}>City or venue <Text style={styles.optional}>(optional)</Text></Text>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. Montreux, Switzerland"
+            placeholderTextColor={Colors.textMuted}
+            value={city}
+            onChangeText={setCity}
+            returnKeyType="next"
+          />
+
+          <Text style={styles.label}>Notes <Text style={styles.optional}>(optional)</Text></Text>
+          <TextInput
+            style={[styles.input, styles.textarea]}
+            placeholder="Tell us anything else about your wedding..."
+            placeholderTextColor={Colors.textMuted}
+            value={notes}
+            onChangeText={setNotes}
+            multiline
+            numberOfLines={4}
+            textAlignVertical="top"
+          />
+
+          {!!error && <Text style={styles.errorText}>{error}</Text>}
+
+          <TouchableOpacity
+            style={[styles.primaryButton, loading && styles.primaryButtonDisabled]}
+            onPress={handleSubmit}
+            disabled={loading}
+            activeOpacity={0.8}
+          >
+            {loading ? (
+              <ActivityIndicator color={Colors.white} size="small" />
+            ) : (
+              <Text style={styles.primaryButtonText}>REQUEST ACCESS</Text>
+            )}
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: Colors.background },
+  kav: { flex: 1 },
+  scroll: {
+    flexGrow: 1,
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.xxl,
+  },
+
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingVertical: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  backText: {
+    fontFamily: Fonts.sans,
+    fontSize: Typography.sm,
+    color: Colors.textSecondary,
+    marginLeft: 2,
+  },
+
+  ornament: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'center',
+    width: '40%',
+    marginBottom: Spacing.md,
+  },
+  ornamentLine: { flex: 1, height: 0.5, backgroundColor: Colors.primaryLight },
+  ornamentDiamond: {
+    color: Colors.primaryLight,
+    fontSize: Typography.xs,
+    marginHorizontal: Spacing.sm,
+  },
+
+  title: {
+    fontFamily: Fonts.serifSemiBold,
+    fontSize: 34,
+    color: Colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: Spacing.sm,
+  },
+  subtitle: {
+    fontFamily: Fonts.sans,
+    fontSize: Typography.sm,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: Spacing.xl,
+  },
+
+  label: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 10,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    color: Colors.textMuted,
+    marginBottom: Spacing.xs,
+    marginTop: Spacing.sm,
+  },
+  optional: {
+    fontFamily: Fonts.sans,
+    fontSize: 9,
+    letterSpacing: 0.5,
+    textTransform: 'none',
+    color: Colors.textMuted,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 12,
+    fontSize: 15,
+    fontFamily: Fonts.sans,
+    color: Colors.textPrimary,
+    backgroundColor: Colors.background,
+    marginBottom: Spacing.md,
+  },
+  textarea: {
+    minHeight: 90,
+    paddingTop: 12,
+  },
+
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.sm,
+  },
+  checkboxActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  toggleLabel: {
+    fontFamily: Fonts.sans,
+    fontSize: Typography.sm,
+    color: Colors.textSecondary,
+  },
+
+  helperNote: {
+    fontFamily: Fonts.sans,
+    fontStyle: 'italic',
+    fontSize: Typography.xs,
+    color: Colors.textMuted,
+    marginBottom: Spacing.lg,
+  },
+
+  errorText: {
+    fontFamily: Fonts.sans,
+    fontSize: Typography.xs,
+    color: Colors.error,
+    textAlign: 'center',
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+
+  primaryButton: {
+    paddingHorizontal: Spacing.xxl,
+    paddingVertical: 14,
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    marginTop: Spacing.lg,
+  },
+  primaryButtonDisabled: {
+    opacity: 0.6,
+  },
+  primaryButtonText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: Typography.xs,
+    letterSpacing: 3,
+    color: Colors.white,
+  },
+
+  confirmWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.xl,
+  },
+  confirmTitle: {
+    fontFamily: Fonts.serifSemiBold,
+    fontSize: 34,
+    color: Colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: Spacing.md,
+  },
+  confirmBody: {
+    fontFamily: Fonts.sans,
+    fontSize: Typography.base,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: Spacing.xl,
+  },
+  confirmEmail: {
+    fontFamily: Fonts.sansMedium,
+    color: Colors.textPrimary,
+  },
+});

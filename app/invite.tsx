@@ -120,6 +120,22 @@ export default function InviteScreen() {
               <Text style={styles.buttonText}>CONTINUE</Text>
             )}
           </TouchableOpacity>
+
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          <TouchableOpacity
+            style={styles.secondaryCta}
+            onPress={() => router.push('/couple-signup')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.secondaryCtaText}>
+              Getting married? Set up your wedding →
+            </Text>
+          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -217,5 +233,34 @@ const styles = StyleSheet.create({
     fontSize: Typography.xs,
     letterSpacing: 3,
     color: Colors.primary,
+  },
+
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '60%',
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.md,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 0.5,
+    backgroundColor: Colors.border,
+  },
+  dividerText: {
+    fontFamily: Fonts.sans,
+    fontSize: Typography.xs,
+    color: Colors.textMuted,
+    marginHorizontal: Spacing.sm,
+  },
+  secondaryCta: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+  },
+  secondaryCtaText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: Typography.sm,
+    color: Colors.textSecondary,
+    textAlign: 'center',
   },
 });
