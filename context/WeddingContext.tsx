@@ -14,7 +14,7 @@ import {
 export type { Gender };
 
 interface WeddingContextType {
-  weddingId: string;
+  weddingId: string | null;
   wedding: WeddingRow;
   isValidGuest: (name: string) => boolean;
   isValidGuestOrAdmin: (name: string) => boolean;
@@ -38,6 +38,13 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
 
   useEffect(() => {
+    // SaaS build ships without a baked-in wedding id and is expected to
+    // resolve one from an invite code (not yet wired up). Until that lands,
+    // surface an error so the app doesn't hang on the splash.
+    if (!weddingId) {
+      setLoadState('error');
+      return;
+    }
     let cancelled = false;
     (async () => {
       try {

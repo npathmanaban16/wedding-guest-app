@@ -2,10 +2,14 @@
 // WEDDING DATA
 // ============================================================
 
-// The wedding this build of the app is hard-wired to show. Points at the
-// seeded Neha & Naveen row in the `weddings` table. Future multi-tenant
-// builds will discover this from an invite code at login time.
-export const DEFAULT_WEDDING_ID = '00000000-0000-0000-0000-000000000001';
+import Constants from 'expo-constants';
+
+// The wedding this build of the app is hard-wired to show. Comes from
+// app.config.ts per-variant config: the N&N build bakes in the seeded
+// Neha & Naveen UUID; the SaaS build leaves this null and will resolve
+// the wedding from an invite code at login time.
+export const DEFAULT_WEDDING_ID: string | null =
+  (Constants.expoConfig?.extra?.defaultWeddingId as string | null | undefined) ?? null;
 
 // Fields that aren't yet modeled in the `weddings` table. Display strings
 // like coupleNames, location, destinationCity, weddingDate, hashtag, website,

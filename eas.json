@@ -8,6 +8,7 @@
       "distribution": "store",
       "channel": "preview",
       "autoIncrement": true,
+      "env": { "APP_VARIANT": "nn" },
       "ios": {
         "simulator": false,
         "image": "sdk-54"
@@ -16,6 +17,25 @@
     "production": {
       "channel": "production",
       "autoIncrement": true,
+      "env": { "APP_VARIANT": "nn" },
+      "ios": {
+        "image": "sdk-54"
+      }
+    },
+    "saas-preview": {
+      "distribution": "store",
+      "channel": "saas-preview",
+      "autoIncrement": true,
+      "env": { "APP_VARIANT": "saas" },
+      "ios": {
+        "simulator": false,
+        "image": "sdk-54"
+      }
+    },
+    "saas-production": {
+      "channel": "saas-production",
+      "autoIncrement": true,
+      "env": { "APP_VARIANT": "saas" },
       "ios": {
         "image": "sdk-54"
       }
@@ -26,6 +46,12 @@
       "ios": {
         "appleId": "neha.pathmanaban@gmail.com",
         "ascAppId": "6762175655",
+        "appleTeamId": "CS4LY75C25"
+      }
+    },
+    "saas-production": {
+      "ios": {
+        "appleId": "neha.pathmanaban@gmail.com",
         "appleTeamId": "CS4LY75C25"
       }
     }
