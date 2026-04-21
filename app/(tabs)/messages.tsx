@@ -184,7 +184,7 @@ function MessageCard({
 export default function MessagesScreen() {
   const insets = useSafeAreaInsets();
   const { guestName } = useAuth();
-  const { isAdmin: isAdminCheck, wedding } = useWedding();
+  const { weddingId, isAdmin: isAdminCheck, wedding } = useWedding();
   const isAdmin = !!guestName && isAdminCheck(guestName);
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -193,20 +193,23 @@ export default function MessagesScreen() {
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
-    const notifs = await getNotifications();
+    const notifs = await getNotifications(weddingId);
     setNotifications(notifs);
     if (notifs.length > 0) {
       const ids = notifs.map((n) => n.id);
-      const [r, rep] = await Promise.all([getReactions(ids), getReplies(ids)]);
+      const [r, rep] = await Promise.all([
+        getReactions(weddingId, ids),
+        getReplies(weddingId, ids),
+      ]);
       setReactions(r);
       setAllReplies(rep);
     }
     setLoading(false);
-  }, []);
+  }, [weddingId]);
 
   useEffect(() => {
     loadData();
-    if (guestName) markMessagesRead(guestName).catch(() => {});
+    if (guestName) markMessagesRead(weddingId, guestName).catch(() => {});
     if (Platform.OS !== 'web') {
       import('expo-notifications').then((mod) => mod.setBadgeCountAsync(0)).catch(() => {});
     }
@@ -215,7 +218,7 @@ export default function MessagesScreen() {
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
         loadData();
-        if (guestName) markMessagesRead(guestName).catch(() => {});
+        if (guestName) markMessagesRead(weddingId, guestName).catch(() => {});
         if (Platform.OS !== 'web') {
           import('expo-notifications').then((mod) => mod.setBadgeCountAsync(0)).catch(() => {});
         }
@@ -223,7 +226,7 @@ export default function MessagesScreen() {
     });
 
     return () => { clearInterval(poll); sub.remove(); };
-  }, [loadData, guestName]);
+  }, [loadData, weddingId, guestName]);
 
   const handleReact = useCallback(async (notificationId: string, emoji: string) => {
     if (!guestName) return;
@@ -260,11 +263,11 @@ export default function MessagesScreen() {
     });
 
     try {
-      await toggleReaction(notificationId, guestName, emoji, myCurrentReaction);
+      await toggleReaction(weddingId, notificationId, guestName, emoji, myCurrentReaction);
     } catch {
       loadData();
     }
-  }, [guestName, reactions, loadData]);
+  }, [weddingId, guestName, reactions, loadData]);
 
   const handleReply = useCallback(async (notificationId: string, message: string) => {
     if (!guestName) return;
@@ -283,13 +286,13 @@ export default function MessagesScreen() {
     }));
 
     try {
-      await addReply(notificationId, guestName, message);
+      await addReply(weddingId, notificationId, guestName, message);
       loadData();
     } catch {
       loadData();
       Alert.alert('Error', 'Could not post your reply.');
     }
-  }, [guestName, loadData]);
+  }, [weddingId, guestName, loadData]);
 
   const handleDeleteReply = useCallback((notificationId: string, replyId: string) => {
     Alert.alert('Delete reply?', '', [
@@ -303,7 +306,7 @@ export default function MessagesScreen() {
             [notificationId]: (prev[notificationId] ?? []).filter((r) => r.id !== replyId),
           }));
           try {
-            await deleteReply(replyId);
+            await deleteReply(weddingId, replyId);
           } catch {
             loadData();
             Alert.alert('Error', 'Could not delete the reply.');
@@ -311,7 +314,7 @@ export default function MessagesScreen() {
         },
       },
     ]);
-  }, [loadData]);
+  }, [weddingId, loadData]);
 
   const handleDelete = useCallback((id: string, message: string) => {
     Alert.alert(
@@ -325,7 +328,7 @@ export default function MessagesScreen() {
           onPress: async () => {
             setNotifications((prev) => prev.filter((n) => n.id !== id));
             try {
-              await deleteNotification(id);
+              await deleteNotification(weddingId, id);
             } catch {
               loadData();
               Alert.alert('Error', 'Could not delete the message.');
@@ -334,7 +337,7 @@ export default function MessagesScreen() {
         },
       ],
     );
-  }, [loadData]);
+  }, [weddingId, loadData]);
 
   return (
     <KeyboardAvoidingView

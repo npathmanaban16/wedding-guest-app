@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { getSongRequests, addSongRequest, deleteSongRequest, SongRequest } from '@/services/storage';
+import { useWedding } from '@/context/WeddingContext';
 import { haptic } from '@/utils/haptics';
 
 const SAMPLE_SUGGESTIONS = [
@@ -61,6 +62,7 @@ function SongCard({
 export default function SongsScreen() {
   const insets = useSafeAreaInsets();
   const { guestName } = useAuth();
+  const { weddingId } = useWedding();
   const [requests, setRequests] = useState<SongRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -68,18 +70,18 @@ export default function SongsScreen() {
   const [artist, setArtist] = useState('');
 
   useEffect(() => {
-    getSongRequests().then((data) => {
+    getSongRequests(weddingId).then((data) => {
       setRequests(data.reverse());
       setLoading(false);
     });
-  }, []);
+  }, [weddingId]);
 
   const handleSubmit = async () => {
     if (!song.trim() || !guestName) return;
     haptic.success();
     setSubmitting(true);
     try {
-      const newRequest = await addSongRequest(song, artist, guestName);
+      const newRequest = await addSongRequest(weddingId, song, artist, guestName);
       setRequests((prev) => [newRequest, ...prev]);
       setSong('');
       setArtist('');
@@ -100,10 +102,10 @@ export default function SongsScreen() {
         onPress: async () => {
           setRequests((prev) => prev.filter((r) => r.id !== id));
           try {
-            await deleteSongRequest(id);
+            await deleteSongRequest(weddingId, id);
           } catch {
             Alert.alert('Error', 'Could not remove the request. Please try again.');
-            getSongRequests().then((data) => setRequests(data.reverse()));
+            getSongRequests(weddingId).then((data) => setRequests(data.reverse()));
           }
         },
       },

@@ -19,11 +19,11 @@ interface TabConfig {
 
 export default function TabLayout() {
   const { guestName, isLoading, onboardingSkipped } = useAuth();
-  const { wedding } = useWedding();
+  const { weddingId, wedding } = useWedding();
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  usePushNotifications(guestName);
+  usePushNotifications(weddingId, guestName);
 
   const tabs: TabConfig[] = useMemo(() => [
     { name: 'index',       title: 'Home',        icon: 'heart-outline',         iconFocused: 'heart' },
@@ -42,22 +42,25 @@ export default function TabLayout() {
       setOnboardingChecked(true);
       return;
     }
-    isOnboardingDone(guestName).then((done) => {
+    isOnboardingDone(weddingId, guestName).then((done) => {
       setNeedsOnboarding(!done);
       setOnboardingChecked(true);
     });
-  }, [guestName, isLoading]);
+  }, [weddingId, guestName, isLoading]);
 
   const refreshUnread = useCallback(async () => {
     if (!guestName) return;
-    const [notifs, lastRead] = await Promise.all([getNotifications(), getMessagesLastRead(guestName)]);
+    const [notifs, lastRead] = await Promise.all([
+      getNotifications(weddingId),
+      getMessagesLastRead(weddingId, guestName),
+    ]);
     if (!lastRead) {
       setUnreadCount(notifs.length);
       return;
     }
     const count = notifs.filter((n) => new Date(n.sentAt) > new Date(lastRead)).length;
     setUnreadCount(count);
-  }, [guestName]);
+  }, [weddingId, guestName]);
 
   useEffect(() => {
     refreshUnread();
@@ -119,7 +122,7 @@ export default function TabLayout() {
           }}
           listeners={tab.name === 'messages' ? {
             tabPress: () => {
-              if (guestName) markMessagesRead(guestName).catch(() => {});
+              if (guestName) markMessagesRead(weddingId, guestName).catch(() => {});
               setUnreadCount(0);
             },
           } : undefined}

@@ -1,28 +1,25 @@
-import React, { useState, useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
+  ActivityIndicator,
+  Animated,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  ActivityIndicator,
-  Animated,
-  Linking,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from '@/context/AuthContext';
-import { useWedding } from '@/context/WeddingContext';
-import { Colors, Fonts, Typography, Spacing, Radius } from '@/constants/theme';
+import { useWeddingSession } from '@/context/WeddingContext';
+import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 
-export default function LoginScreen() {
-  const { login } = useAuth();
-  const { wedding, isValidGuestOrAdmin, getCanonicalName } = useWedding();
+export default function InviteScreen() {
+  const { setWeddingIdFromInviteCode } = useWeddingSession();
   const router = useRouter();
 
-  const [name, setName] = useState('');
+  const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const shakeAnim = useRef(new Animated.Value(0)).current;
@@ -37,24 +34,29 @@ export default function LoginScreen() {
     ]).start();
   };
 
-  const handleLogin = async () => {
+  const handleSubmit = async () => {
     setError('');
-    const trimmed = name.trim();
+    const trimmed = code.trim();
     if (!trimmed) {
-      setError('Please enter your name.');
-      shake();
-      return;
-    }
-    if (!isValidGuestOrAdmin(trimmed)) {
-      setError("We couldn't find your name on the guest list. Please check the spelling or contact the couple.");
+      setError('Please enter your invite code.');
       shake();
       return;
     }
     setLoading(true);
-    const canonical = getCanonicalName(trimmed) ?? trimmed;
-    await login(canonical);
-    setLoading(false);
-    router.replace('/(tabs)');
+    try {
+      const wedding = await setWeddingIdFromInviteCode(trimmed);
+      if (!wedding) {
+        setError("We couldn't find a wedding with that code. Please check with the couple.");
+        shake();
+        return;
+      }
+      router.replace('/login');
+    } catch {
+      setError("Couldn't reach the server. Please check your connection and try again.");
+      shake();
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -69,87 +71,55 @@ export default function LoginScreen() {
           bounces={false}
           showsVerticalScrollIndicator={false}
         >
-          {/* Top ornament */}
-          <View style={styles.ornamentTop}>
+          <View style={styles.ornament}>
             <View style={styles.ornamentLine} />
             <Text style={styles.ornamentDiamond}>◆</Text>
             <View style={styles.ornamentLine} />
           </View>
 
-          {/* Location & date */}
-          <Text style={styles.locationText}>
-            {wedding.location.toUpperCase()}
-          </Text>
+          <Text style={styles.title}>Wedding Companion</Text>
 
-          {/* Couple names — large serif */}
-          <Text style={styles.coupleNames}>{wedding.couple_names}</Text>
-
-          {/* Date */}
-          <Text style={styles.dateText}>
-            MAY 22 – 23, 2026
-          </Text>
-
-          {/* Bottom ornament */}
-          <View style={styles.ornamentBottom}>
+          <View style={styles.ornament}>
             <View style={styles.ornamentLine} />
             <Text style={styles.ornamentDiamond}>◆</Text>
             <View style={styles.ornamentLine} />
           </View>
 
-          {/* Welcome message */}
-          <Text style={styles.welcomeText}>
-            Welcome to our wedding companion
-          </Text>
-          <Text style={styles.instructionText}>
-            Enter your full name to access your invitation
+          <Text style={styles.welcome}>Enter your invite code</Text>
+          <Text style={styles.instruction}>
+            The couple shared a code with their invitation. It unlocks your wedding's app.
           </Text>
 
-          {/* Input */}
           <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
             <TextInput
               style={[styles.input, error ? styles.inputError : null]}
-              placeholder="Your full name"
+              placeholder="Invite code"
               placeholderTextColor={Colors.textMuted}
-              value={name}
+              value={code}
               onChangeText={(t) => {
-                setName(t);
+                setCode(t);
                 if (error) setError('');
               }}
-              autoCapitalize="words"
+              autoCapitalize="characters"
               autoCorrect={false}
               returnKeyType="go"
-              onSubmitEditing={handleLogin}
+              onSubmitEditing={handleSubmit}
             />
             {!!error && <Text style={styles.errorText}>{error}</Text>}
           </Animated.View>
 
-          {/* Enter button */}
           <TouchableOpacity
-            style={[styles.button, (!name.trim() || loading) && styles.buttonDisabled]}
-            onPress={handleLogin}
-            disabled={!name.trim() || loading}
+            style={[styles.button, (!code.trim() || loading) && styles.buttonDisabled]}
+            onPress={handleSubmit}
+            disabled={!code.trim() || loading}
             activeOpacity={0.75}
           >
             {loading ? (
               <ActivityIndicator color={Colors.white} size="small" />
             ) : (
-              <Text style={styles.buttonText}>ENTER</Text>
+              <Text style={styles.buttonText}>CONTINUE</Text>
             )}
           </TouchableOpacity>
-
-          <Text style={styles.hint}>
-            Can't find your name?{' '}
-            <Text
-              style={styles.hintLink}
-              onPress={() => {
-                if (wedding.contact_email) {
-                  Linking.openURL(`mailto:${wedding.contact_email}`);
-                }
-              }}
-            >
-              Contact the couple
-            </Text>
-          </Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -167,18 +137,11 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xxl,
   },
 
-  ornamentTop: {
+  ornament: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '60%',
-    marginBottom: Spacing.xl,
-  },
-  ornamentBottom: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '60%',
-    marginTop: Spacing.lg,
-    marginBottom: Spacing.xl,
+    marginVertical: Spacing.lg,
   },
   ornamentLine: { flex: 1, height: 0.5, backgroundColor: Colors.primaryLight },
   ornamentDiamond: {
@@ -187,37 +150,21 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.sm,
   },
 
-  locationText: {
-    fontFamily: Fonts.sans,
-    fontSize: Typography.xs,
-    letterSpacing: 3,
-    color: Colors.textMuted,
-    marginBottom: Spacing.md,
-  },
-  coupleNames: {
+  title: {
     fontFamily: Fonts.serif,
-    fontSize: 64,
+    fontSize: 44,
     color: Colors.textPrimary,
     textAlign: 'center',
-    lineHeight: 70,
-    marginBottom: Spacing.sm,
+    lineHeight: 50,
   },
-  dateText: {
-    fontFamily: Fonts.sansMedium,
-    fontSize: Typography.sm,
-    letterSpacing: 2.5,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-  },
-
-  welcomeText: {
+  welcome: {
     fontFamily: Fonts.serifItalic,
     fontSize: Typography.lg,
     color: Colors.textSecondary,
     textAlign: 'center',
     marginBottom: Spacing.xs,
   },
-  instructionText: {
+  instruction: {
     fontFamily: Fonts.sans,
     fontSize: Typography.sm,
     color: Colors.textMuted,
@@ -239,6 +186,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: Spacing.sm,
     backgroundColor: 'transparent',
+    letterSpacing: 2,
   },
   inputError: {
     borderBottomColor: Colors.error,
@@ -259,7 +207,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.full,
     alignItems: 'center',
     marginTop: Spacing.lg,
-    marginBottom: Spacing.lg,
     minWidth: 180,
   },
   buttonDisabled: {
@@ -270,15 +217,5 @@ const styles = StyleSheet.create({
     fontSize: Typography.xs,
     letterSpacing: 3,
     color: Colors.primary,
-  },
-  hint: {
-    fontFamily: Fonts.sans,
-    fontSize: Typography.xs,
-    color: Colors.textMuted,
-    textAlign: 'center',
-  },
-  hintLink: {
-    color: Colors.primary,
-    textDecorationLine: 'underline',
   },
 });

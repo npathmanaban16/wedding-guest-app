@@ -32,7 +32,7 @@ export default function AdminScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { guestName } = useAuth();
-  const { isAdmin, wedding } = useWedding();
+  const { weddingId, isAdmin, wedding } = useWedding();
 
   const [sender, setSender] = useState<SenderId>('couple');
   const [message, setMessage] = useState('');
@@ -70,7 +70,7 @@ export default function AdminScreen() {
             setSending(true);
             try {
               const { data, error } = await supabase.functions.invoke('send-push', {
-                body: { message: trimmed, sender: senderLabel },
+                body: { weddingId, message: trimmed, sender: senderLabel },
               });
               if (error) throw error;
               const sent = data?.sent ?? 0;

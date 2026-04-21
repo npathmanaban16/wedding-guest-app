@@ -66,7 +66,7 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
 export default function MyInfoScreen() {
   const insets = useSafeAreaInsets();
   const { guestName, logout } = useAuth();
-  const { wedding } = useWedding();
+  const { weddingId, wedding } = useWedding();
   const [info, setInfo] = useState<MyInfo>({
     hotel: '',
     checkIn: '',
@@ -87,21 +87,21 @@ export default function MyInfoScreen() {
 
   useEffect(() => {
     if (guestName) {
-      getMyInfo(guestName).then((data) => {
+      getMyInfo(weddingId, guestName).then((data) => {
         setInfo(data);
         setLoading(false);
       });
     }
-  }, [guestName]);
+  }, [weddingId, guestName]);
 
   useEffect(() => () => clearTimeout(saveTimer.current), []);
 
   const persist = useCallback(async (updated: MyInfo) => {
     if (!guestName) return;
     setSaveStatus('saving');
-    await saveMyInfo(guestName, updated);
+    await saveMyInfo(weddingId, guestName, updated);
     setSaveStatus('saved');
-  }, [guestName]);
+  }, [weddingId, guestName]);
 
   // For text fields: debounce 1 second after typing stops
   const update = (key: keyof MyInfo) => (value: string) => {

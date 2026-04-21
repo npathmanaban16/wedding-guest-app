@@ -57,7 +57,7 @@ function Field({ label, placeholder, value, onChangeText, icon, keyboardType, au
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const { guestName, skipOnboarding } = useAuth();
-  const { wedding } = useWedding();
+  const { weddingId, wedding } = useWedding();
 
   const [hotel, setHotel] = useState('');
   const [checkIn, setCheckIn] = useState('');
@@ -72,7 +72,7 @@ export default function OnboardingScreen() {
 
   useEffect(() => {
     if (!guestName) { setLoading(false); return; }
-    getMyInfo(guestName).then((data) => {
+    getMyInfo(weddingId, guestName).then((data) => {
       const prefilled = !!(data.hotel || data.arrivalTime || data.checkIn);
       setHasPrefilled(prefilled);
       setHotel(data.hotel);
@@ -82,14 +82,14 @@ export default function OnboardingScreen() {
       setFlightNumber(data.flightNumber);
       setLoading(false);
     });
-  }, [guestName]);
+  }, [weddingId, guestName]);
 
   const handleSave = async () => {
     if (!guestName) return;
     setSaving(true);
     try {
-      const existing = await getMyInfo(guestName);
-      await saveMyInfo(guestName, {
+      const existing = await getMyInfo(weddingId, guestName);
+      await saveMyInfo(weddingId, guestName, {
         ...existing,
         hotel: hotel.trim(),
         checkIn,
