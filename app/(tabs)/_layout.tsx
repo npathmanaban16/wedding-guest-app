@@ -85,20 +85,24 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors.primary,
+        tabBarActiveTintColor: Colors.background,
         tabBarInactiveTintColor: Colors.textMuted,
         tabBarStyle: {
-          backgroundColor: Colors.white,
-          borderTopWidth: 0.5,
-          borderTopColor: Colors.border,
-          height: 84,
-          paddingBottom: 22,
-          paddingTop: 10,
+          backgroundColor: Colors.textPrimary,
+          borderTopWidth: 0,
+          height: 92,
+          paddingBottom: 24,
+          paddingTop: 12,
+          shadowColor: '#1C1810',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.12,
+          shadowRadius: 8,
+          elevation: 8,
         },
         tabBarLabelStyle: {
           fontFamily: Fonts.sansMedium,
-          fontSize: 9,
-          letterSpacing: 0,
+          fontSize: 11,
+          letterSpacing: 0.2,
         },
         headerShown: false,
       }}
@@ -112,7 +116,7 @@ export default function TabLayout() {
             tabBarIcon: ({ focused, color }) => (
               <Ionicons
                 name={focused ? tab.iconFocused : tab.icon}
-                size={22}
+                size={26}
                 color={color}
               />
             ),
