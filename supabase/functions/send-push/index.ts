@@ -11,13 +11,16 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { message, sender } = await req.json();
+    const { weddingId, message, sender } = await req.json();
 
-    if (!message || !sender) {
-      return new Response(JSON.stringify({ error: 'message and sender are required' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    if (!weddingId || !message || !sender) {
+      return new Response(
+        JSON.stringify({ error: 'weddingId, message and sender are required' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      );
     }
 
     const supabase = createClient(
@@ -25,9 +28,20 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
+    // Push title uses the wedding's couple_names so SaaS tenants get the right
+    // branding. Falls back to a neutral label if the wedding row is missing.
+    const { data: wedding } = await supabase
+      .from('weddings')
+      .select('couple_names')
+      .eq('id', weddingId)
+      .maybeSingle();
+    const title = wedding?.couple_names?.trim() || 'Wedding Update';
+
+    // Scope push tokens by wedding_id so we don't blast pushes across tenants.
     const { data: guests, error: dbError } = await supabase
       .from('guest_info')
       .select('push_token')
+      .eq('wedding_id', weddingId)
       .not('push_token', 'is', null);
 
     if (dbError) throw dbError;
@@ -37,6 +51,18 @@ Deno.serve(async (req) => {
         .map((g: { push_token: string | null }) => g.push_token)
         .filter((t): t is string => typeof t === 'string' && t.startsWith('ExponentPushToken')),
     )];
+
+    // Persist notification history for the in-app feed regardless of whether
+    // any devices are registered for push yet.
+    try {
+      await supabase.from('notifications').insert({
+        wedding_id: weddingId,
+        message,
+        sender,
+      });
+    } catch (e) {
+      console.error('notifications insert failed:', e);
+    }
 
     if (tokens.length === 0) {
       return new Response(
@@ -53,7 +79,7 @@ Deno.serve(async (req) => {
       const chunk = tokens.slice(i, i + CHUNK_SIZE);
       const notifications = chunk.map((token) => ({
         to: token,
-        title: 'Neha & Naveen',
+        title,
         body: `${message}\n\n— ${sender}`,
         sound: 'default',
         priority: 'high',
@@ -80,13 +106,6 @@ Deno.serve(async (req) => {
           console.error('Push ticket error:', JSON.stringify(ticket));
         }
       });
-    }
-
-    // Persist the notification so guests can view history in the app
-    try {
-      await supabase.from('notifications').insert({ message, sender });
-    } catch {
-      // non-fatal
     }
 
     return new Response(
