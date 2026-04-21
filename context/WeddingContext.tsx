@@ -49,6 +49,11 @@ const WeddingContext = createContext<WeddingContextType | null>(null);
 // always uses DEFAULT_WEDDING_ID from app.config.ts.
 const WEDDING_ID_STORAGE_KEY = '@wedding_id';
 
+// Guards against a poisoned AsyncStorage value (e.g. a prior dev build that
+// setItem'd an object, which AsyncStorage coerces to the literal string
+// "[object Object]"). Feeding that into Supabase gives a 22P02 uuid error.
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function normalizeName(name: string): string {
   return name.toLowerCase().trim().replace(/\s+/g, ' ');
 }
@@ -70,7 +75,15 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
     // Only runs on SaaS builds — N&N initialized sessionReady=true above.
     if (DEFAULT_WEDDING_ID) return;
     AsyncStorage.getItem(WEDDING_ID_STORAGE_KEY)
-      .then((stored) => { if (stored) setWeddingId(stored); })
+      .then(async (stored) => {
+        if (!stored) return;
+        if (UUID_REGEX.test(stored)) {
+          setWeddingId(stored);
+        } else {
+          console.warn('[WeddingProvider] cached wedding_id is not a uuid; clearing', stored);
+          await AsyncStorage.removeItem(WEDDING_ID_STORAGE_KEY);
+        }
+      })
       .finally(() => setSessionReady(true));
   }, []);
 
