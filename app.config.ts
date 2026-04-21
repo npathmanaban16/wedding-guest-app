@@ -13,6 +13,10 @@ const variant: Variant = (process.env.APP_VARIANT === 'saas' ? 'saas' : 'nn');
 
 interface VariantConfig {
   name: string;
+  // Expo slug. Must be unique per EAS project — if both variants share a
+  // slug, `eas init` matches the existing project and you can't create a
+  // separate one for SaaS.
+  slug: string;
   bundleIdentifier: string;
   androidPackage: string;
   icon: string;
@@ -33,6 +37,7 @@ interface VariantConfig {
 const variants: Record<Variant, VariantConfig> = {
   nn: {
     name: 'Neha & Naveen',
+    slug: 'wedding-guest-app',
     bundleIdentifier: 'com.nehanaveen.weddingapp',
     androidPackage: 'com.nehanaveen.weddingapp',
     icon: './assets/images/icon.png',
@@ -48,6 +53,7 @@ const variants: Record<Variant, VariantConfig> = {
   },
   saas: {
     name: 'Wedding Companion',
+    slug: 'wedding-companion',
     bundleIdentifier: 'com.npathmanaban.weddingcompanion',
     androidPackage: 'com.npathmanaban.weddingcompanion',
     // TODO: replace with the pink-rings icon asset once added.
@@ -71,7 +77,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   return {
     ...config,
     name: v.name,
-    slug: 'wedding-guest-app',
+    slug: v.slug,
     version: '2.0.0',
     runtimeVersion: { policy: 'appVersion' },
     ...(v.updatesUrl ? { updates: { url: v.updatesUrl } } : {}),
