@@ -94,6 +94,11 @@ export default function TabLayout() {
           height: 84,
           paddingBottom: 22,
           paddingTop: 10,
+          shadowColor: '#1C1810',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.18,
+          shadowRadius: 12,
+          elevation: 12,
         },
         tabBarLabelStyle: {
           fontFamily: Fonts.sansMedium,
