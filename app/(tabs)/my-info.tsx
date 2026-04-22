@@ -11,10 +11,12 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
-import { useWedding } from '@/context/WeddingContext';
+import { useWedding, useWeddingSession } from '@/context/WeddingContext';
+import { DEFAULT_WEDDING_ID } from '@/constants/weddingData';
 import { getMyInfo, saveMyInfo, MyInfo } from '@/services/storage';
 import { HotelPickerField } from '@/components/HotelPickerField';
 import { DateField } from '@/components/DateField';
@@ -65,8 +67,30 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
 
 export default function MyInfoScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { guestName, logout } = useAuth();
   const { weddingId, wedding } = useWedding();
+  const { clearWeddingId } = useWeddingSession();
+
+  // On SaaS builds (no pinned wedding), signing out should fully detach
+  // the device from the current wedding so the user lands back on the
+  // invite-code screen and can enter a different wedding. On N&N, keep
+  // the old behavior — just clear the name, stay attached to the wedding
+  // (the tabs layout redirects to /login automatically via its !guestName
+  // guard).
+  //
+  // For SaaS, we navigate to /invite FIRST. That unmounts /(tabs) — which
+  // calls useWedding() — before we clear the wedding context, so the hook
+  // doesn't throw on the tab layout's final render.
+  const handleSignOut = async () => {
+    if (DEFAULT_WEDDING_ID === null) {
+      router.replace('/invite');
+      await logout();
+      await clearWeddingId();
+    } else {
+      await logout();
+    }
+  };
   const [info, setInfo] = useState<MyInfo>({
     hotel: '',
     checkIn: '',
@@ -304,7 +328,7 @@ export default function MyInfoScreen() {
         </Text>
 
         {/* Logout */}
-        <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
           <Ionicons name="log-out-outline" size={17} color={Colors.textMuted} />
           <Text style={styles.logoutText}>Sign out</Text>
         </TouchableOpacity>
