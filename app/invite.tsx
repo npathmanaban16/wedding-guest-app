@@ -408,12 +408,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   tertiaryCta: {
-    paddingVertical: Spacing.xs,
+    paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
   },
   tertiaryCtaText: {
-    fontFamily: Fonts.sans,
-    fontSize: Typography.xs,
+    fontFamily: Fonts.sansMedium,
+    fontSize: Typography.sm,
     color: Colors.textMuted,
     textAlign: 'center',
   },
