@@ -24,7 +24,10 @@ const PLAYLIST_TAG = DEFAULT_WEDDING_ID === null
   ? 'Welcome Party & Reception Playlist'
   : 'Sangeet & Reception Playlist';
 
-const SAMPLE_SUGGESTIONS = [
+// Inspiration chips shown above the "Request a song" form. The last three
+// Bollywood picks only make sense for the N&N sangeet; swap them for a few
+// broadly known dance hits on the SaaS variant so the demo reads generic.
+const SAMPLE_SUGGESTIONS_NN = [
   { song: 'Gimme! Gimme! Gimme!', artist: 'ABBA' },
   { song: 'Despacito', artist: 'Luis Fonsi' },
   { song: 'We Found Love', artist: 'Rihanna' },
@@ -34,6 +37,20 @@ const SAMPLE_SUGGESTIONS = [
   { song: 'Desi Girl', artist: 'Shankar Mahadevan' },
   { song: 'Amplifier', artist: 'Imran Khan' },
 ];
+
+const SAMPLE_SUGGESTIONS_DEMO = [
+  { song: 'Gimme! Gimme! Gimme!', artist: 'ABBA' },
+  { song: 'Despacito', artist: 'Luis Fonsi' },
+  { song: 'We Found Love', artist: 'Rihanna' },
+  { song: 'I Wanna Dance with Somebody', artist: 'Whitney Houston' },
+  { song: 'Just Dance', artist: 'Lady Gaga' },
+  { song: 'Uptown Funk', artist: 'Mark Ronson ft. Bruno Mars' },
+  { song: 'Shut Up and Dance', artist: 'Walk the Moon' },
+  { song: 'Shake It Off', artist: 'Taylor Swift' },
+];
+
+const SAMPLE_SUGGESTIONS =
+  DEFAULT_WEDDING_ID === null ? SAMPLE_SUGGESTIONS_DEMO : SAMPLE_SUGGESTIONS_NN;
 
 function SongCard({
   request,

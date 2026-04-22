@@ -3,11 +3,20 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
 import { DEFAULT_WEDDING_ID } from '@/constants/weddingData';
-import { Colors, Fonts } from '@/constants/theme';
-import { ActivityIndicator, AppState, View, StyleSheet } from 'react-native';
+import { Colors, Fonts, Spacing } from '@/constants/theme';
+import { ActivityIndicator, AppState, Pressable, Text, View, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { isOnboardingDone, getNotifications, getMessagesLastRead, markMessagesRead } from '@/services/storage';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+
+// Guest name used by the public "Try the demo" link on /invite. Only this
+// name triggers the preview-mode affordances below; Apple reviewers signing
+// in as "Taylor Reviewer" get the normal sign-out flow.
+const PREVIEW_GUEST_NAME = 'Preview Guest';
+// Kept in sync with WeddingContext's WEDDING_ID_STORAGE_KEY.
+const WEDDING_ID_STORAGE_KEY = '@wedding_id';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -19,12 +28,24 @@ interface TabConfig {
 }
 
 export default function TabLayout() {
-  const { guestName, isLoading, onboardingSkipped } = useAuth();
+  const { guestName, isLoading, logout, onboardingSkipped } = useAuth();
   const { weddingId, wedding } = useWedding();
+  const insets = useSafeAreaInsets();
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   usePushNotifications(weddingId, guestName);
+
+  const isPreviewMode =
+    DEFAULT_WEDDING_ID === null && guestName === PREVIEW_GUEST_NAME;
+
+  const exitPreview = useCallback(async () => {
+    // Same detach flow as my-info.tsx sign-out on SaaS: drop the persisted
+    // wedding id so cold launches route to /invite, then clear the auth
+    // name. The guard below catches the null guestName and redirects.
+    await AsyncStorage.removeItem(WEDDING_ID_STORAGE_KEY);
+    await logout();
+  }, [logout]);
 
   const tabs: TabConfig[] = useMemo(() => [
     { name: 'index',       title: 'Home',        icon: 'heart-outline',         iconFocused: 'heart' },
@@ -89,60 +110,97 @@ export default function TabLayout() {
   if (needsOnboarding && !onboardingSkipped) return <Redirect href="/onboarding" />;
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.textMuted,
-        tabBarStyle: {
-          backgroundColor: Colors.white,
-          borderTopWidth: 0.5,
-          borderTopColor: Colors.border,
-          height: 84,
-          paddingBottom: 22,
-          paddingTop: 10,
-          shadowColor: '#1C1810',
-          shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.18,
-          shadowRadius: 12,
-          elevation: 12,
-        },
-        tabBarLabelStyle: {
-          fontFamily: Fonts.sansMedium,
-          fontSize: 9,
-          letterSpacing: 0,
-        },
-        headerShown: false,
-      }}
-    >
-      {tabs.map((tab) => (
-        <Tabs.Screen
-          key={tab.name}
-          name={tab.name}
-          options={{
-            title: tab.title,
-            tabBarIcon: ({ focused, color }) => (
-              <Ionicons
-                name={focused ? tab.iconFocused : tab.icon}
-                size={22}
-                color={color}
-              />
-            ),
-            ...(tab.name === 'messages' && unreadCount > 0
-              ? { tabBarBadge: unreadCount }
-              : {}),
-          }}
-          listeners={tab.name === 'messages' ? {
-            tabPress: () => {
-              if (guestName) markMessagesRead(weddingId, guestName).catch(() => {});
-              setUnreadCount(0);
-            },
-          } : undefined}
-        />
-      ))}
-    </Tabs>
+    <View style={styles.root}>
+      {isPreviewMode && (
+        <Pressable
+          onPress={exitPreview}
+          style={({ pressed }) => [
+            styles.previewBanner,
+            { paddingTop: insets.top + 6 },
+            pressed && styles.previewBannerPressed,
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel="Exit preview mode and return to the invite screen"
+        >
+          <Text style={styles.previewBannerText}>
+            Preview mode · Tap to exit →
+          </Text>
+        </Pressable>
+      )}
+      <Tabs
+        screenOptions={{
+          tabBarActiveTintColor: Colors.primary,
+          tabBarInactiveTintColor: Colors.textMuted,
+          tabBarStyle: {
+            backgroundColor: Colors.white,
+            borderTopWidth: 0.5,
+            borderTopColor: Colors.border,
+            height: 84,
+            paddingBottom: 22,
+            paddingTop: 10,
+            shadowColor: '#1C1810',
+            shadowOffset: { width: 0, height: -4 },
+            shadowOpacity: 0.18,
+            shadowRadius: 12,
+            elevation: 12,
+          },
+          tabBarLabelStyle: {
+            fontFamily: Fonts.sansMedium,
+            fontSize: 9,
+            letterSpacing: 0,
+          },
+          headerShown: false,
+        }}
+      >
+        {tabs.map((tab) => (
+          <Tabs.Screen
+            key={tab.name}
+            name={tab.name}
+            options={{
+              title: tab.title,
+              tabBarIcon: ({ focused, color }) => (
+                <Ionicons
+                  name={focused ? tab.iconFocused : tab.icon}
+                  size={22}
+                  color={color}
+                />
+              ),
+              ...(tab.name === 'messages' && unreadCount > 0
+                ? { tabBarBadge: unreadCount }
+                : {}),
+            }}
+            listeners={tab.name === 'messages' ? {
+              tabPress: () => {
+                if (guestName) markMessagesRead(weddingId, guestName).catch(() => {});
+                setUnreadCount(0);
+              },
+            } : undefined}
+          />
+        ))}
+      </Tabs>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: Colors.background },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.background },
+  previewBanner: {
+    backgroundColor: Colors.primaryLight,
+    paddingBottom: 8,
+    paddingHorizontal: Spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.border,
+  },
+  previewBannerPressed: {
+    opacity: 0.75,
+  },
+  previewBannerText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 12,
+    letterSpacing: 0.5,
+    color: Colors.textPrimary,
+  },
 });
