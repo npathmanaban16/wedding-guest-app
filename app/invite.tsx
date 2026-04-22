@@ -98,7 +98,10 @@ export default function InviteScreen() {
     }
   };
 
-  const canSubmit = !!code.trim() && !!name.trim() && !loading;
+  // Button stays tappable while fields are incomplete so handleSubmit can
+  // show the "please enter your name" / "please enter your code" error.
+  // `dimButton` is only for visual affordance.
+  const dimButton = !code.trim() || !name.trim() || loading;
 
   return (
     <View style={styles.container}>
@@ -161,9 +164,9 @@ export default function InviteScreen() {
           </Animated.View>
 
           <TouchableOpacity
-            style={[styles.button, !canSubmit && styles.buttonDisabled]}
+            style={[styles.button, dimButton && styles.buttonDisabled]}
             onPress={handleSubmit}
-            disabled={!canSubmit}
+            disabled={loading}
             activeOpacity={0.75}
           >
             {loading ? (
