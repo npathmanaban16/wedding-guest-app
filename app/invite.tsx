@@ -22,6 +22,12 @@ import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 // agrees with the validation the provider applies after login.
 const normalize = (s: string) => s.toLowerCase().trim().replace(/\s+/g, ' ');
 
+// Public demo credentials surfaced via the "Try the demo" link. Kept in
+// sync with supabase/seed_demo_wedding.sql on the SaaS project — change
+// one and change the other.
+const DEMO_INVITE_CODE = 'DEMO2027';
+const DEMO_GUEST_NAME = 'Preview Guest';
+
 export default function InviteScreen() {
   const { resolveWeddingByInviteCode, applyResolvedWedding } = useWeddingSession();
   const { login } = useAuth();
@@ -53,11 +59,14 @@ export default function InviteScreen() {
     if (nameNotFoundFor) setNameNotFoundFor(null);
   };
 
-  const handleSubmit = async () => {
+  // Shared login path used both by the ENTER button (reads from state) and
+  // by the "Try the demo" shortcut (passes literal values so the call
+  // doesn't need to wait for React to flush state setters first).
+  const runLogin = async (inputCode: string, inputName: string) => {
     setError('');
     setNameNotFoundFor(null);
-    const trimmedCode = code.trim();
-    const trimmedName = name.trim();
+    const trimmedCode = inputCode.trim();
+    const trimmedName = inputName.trim();
     if (!trimmedCode) {
       setError('Please enter your invite code.');
       shake();
@@ -96,6 +105,16 @@ export default function InviteScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = () => runLogin(code, name);
+
+  const handleTryDemo = () => {
+    // Prefill the form so users can see what they submitted, but pass the
+    // literal values to runLogin so we don't race React's state batching.
+    setCode(DEMO_INVITE_CODE);
+    setName(DEMO_GUEST_NAME);
+    runLogin(DEMO_INVITE_CODE, DEMO_GUEST_NAME);
   };
 
   // Button stays tappable while fields are incomplete so handleSubmit can
@@ -208,6 +227,17 @@ export default function InviteScreen() {
           >
             <Text style={styles.secondaryCtaText}>
               Getting married? Set up your wedding →
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.tertiaryCta}
+            onPress={handleTryDemo}
+            disabled={loading}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.tertiaryCtaText}>
+              Just curious? Try the demo →
             </Text>
           </TouchableOpacity>
         </ScrollView>
@@ -363,6 +393,16 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sansMedium,
     fontSize: Typography.sm,
     color: Colors.textSecondary,
+    textAlign: 'center',
+  },
+  tertiaryCta: {
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+  },
+  tertiaryCtaText: {
+    fontFamily: Fonts.sans,
+    fontSize: Typography.xs,
+    color: Colors.textMuted,
     textAlign: 'center',
   },
 });

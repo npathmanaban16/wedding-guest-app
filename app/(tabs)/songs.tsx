@@ -17,7 +17,12 @@ import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { getSongRequests, addSongRequest, deleteSongRequest, SongRequest } from '@/services/storage';
 import { useWedding } from '@/context/WeddingContext';
+import { DEFAULT_WEDDING_ID } from '@/constants/weddingData';
 import { haptic } from '@/utils/haptics';
+
+const PLAYLIST_TAG = DEFAULT_WEDDING_ID === null
+  ? 'Welcome Party & Reception Playlist'
+  : 'Sangeet & Reception Playlist';
 
 const SAMPLE_SUGGESTIONS = [
   { song: 'Gimme! Gimme! Gimme!', artist: 'ABBA' },
@@ -130,7 +135,7 @@ export default function SongsScreen() {
         {/* Page header */}
         <View style={styles.pageHeader}>
           <Text style={styles.pageTitle}>Song Requests</Text>
-          <Text style={styles.pageSubtitleTag}>Sangeet & Reception Playlist</Text>
+          <Text style={styles.pageSubtitleTag}>{PLAYLIST_TAG}</Text>
           <Text style={styles.pageSubtitle}>
             What songs do you want to dance to? Request your favorites for the reception!
           </Text>
