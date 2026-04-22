@@ -6,9 +6,15 @@
 -- second, independent wedding row with fake data so reviewers
 -- can exercise the full app without touching real guest data.
 --
--- Credentials for App Store Connect → App Review Information:
---   Invite code: DEMO2026
+-- Credentials for App Store Connect → App Review Information (admin path):
+--   Invite code: DEMO2027
 --   Guest name:  Taylor Reviewer   (also an admin for this demo)
+--
+-- Public-facing "Try the demo" path surfaced on the invite screen
+-- (app/invite.tsx) for curious couples who haven't signed up yet.
+-- Non-admin so they don't see admin-only features by accident:
+--   Invite code: DEMO2027
+--   Guest name:  Preview Guest
 --
 -- The SaaS build of the app also swaps out N&N-specific content for
 -- generic equivalents via constants/weddingData.ts (Sangeet → Welcome
@@ -40,7 +46,7 @@ insert into public.weddings (
   hashtag, website, contact_email, registry_url, theme_color
 ) values (
   'a0000000-0000-0000-0000-000000000002',
-  'DEMO2026',
+  'DEMO2027',
   'Emma & James',
   '2027-05-22T15:00:00Z',
   'Montreux, Switzerland',
@@ -64,11 +70,14 @@ insert into public.weddings (
 
 
 -- ─── Guests ──────────────────────────────────────────────────────────────────
--- Five generic names. Taylor Reviewer is doubled up as an admin below so a
--- reviewer logging in as Taylor can see both guest and admin features.
+-- Taylor Reviewer is doubled up as an admin (wedding_admins below) so an
+-- App Store reviewer logging in as Taylor sees guest + admin features.
+-- Preview Guest is the public-facing demo login surfaced on the invite
+-- screen — non-admin so curious couples see only the guest experience.
 
 insert into public.guests (wedding_id, canonical_name, is_wedding_party, gender) values
   ('a0000000-0000-0000-0000-000000000002', 'Taylor Reviewer', true,  'female'),
+  ('a0000000-0000-0000-0000-000000000002', 'Preview Guest',   false, 'female'),
   ('a0000000-0000-0000-0000-000000000002', 'Jordan Guest',    true,  'male'),
   ('a0000000-0000-0000-0000-000000000002', 'Sam Morgan',      false, 'female'),
   ('a0000000-0000-0000-0000-000000000002', 'Alex Chen',       false, 'male'),
@@ -93,6 +102,9 @@ values
   ('a0000000-0000-0000-0000-000000000002', 'Taylor Reviewer', '',
     'Burrata & Watermelon (Vegetarian)', 'Zucchini Risotto (Vegetarian)',
     'Spinach & Ricotta Ravioli (Vegetarian)', true,  'demo@weddingcompanion.app'),
+  ('a0000000-0000-0000-0000-000000000002', 'Preview Guest',   '',
+    'Tuna Tataki', 'Zucchini Risotto (Vegetarian)', 'Roasted Lamb', false,
+    'preview@weddingcompanion.app'),
   ('a0000000-0000-0000-0000-000000000002', 'Jordan Guest',    '',
     'Tuna Tataki', 'Roasted Prawn & Peach Tartare', 'Roasted Lamb', true,
     'jordan.demo@weddingcompanion.app')
