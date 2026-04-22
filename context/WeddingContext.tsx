@@ -7,9 +7,11 @@ import {
   fetchAdmins,
   fetchGuests,
   fetchWedding,
-  fetchWeddingByInviteCode,
+  resolveWeddingByInviteCode,
+  type AdminRow,
   type Gender,
   type GuestRow,
+  type ResolvedWedding,
   type WeddingRow,
 } from '@/services/wedding';
 
@@ -22,7 +24,11 @@ export type { Gender };
 
 interface WeddingSessionContextType {
   weddingId: string | null;
-  setWeddingIdFromInviteCode: (inviteCode: string) => Promise<WeddingRow | null>;
+  // Fetches wedding + guests + admins for a code without mutating session
+  // state. Callers use this to preview/validate before committing.
+  resolveWeddingByInviteCode: (inviteCode: string) => Promise<ResolvedWedding | null>;
+  // Commits a pre-resolved wedding into the provider state + AsyncStorage.
+  applyResolvedWedding: (resolved: ResolvedWedding) => Promise<void>;
   clearWeddingId: () => Promise<void>;
 }
 
@@ -148,18 +154,15 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
     return () => { cancelled = true; };
   }, [weddingId, wedding, loadState]);
 
-  const setWeddingIdFromInviteCode = useCallback(
-    async (inviteCode: string): Promise<WeddingRow | null> => {
-      // Pre-fetch wedding + guests + admins before flipping weddingId. React
+  const applyResolvedWedding = useCallback(
+    async ({ wedding: w, guests: g, admins: a }: ResolvedWedding): Promise<void> => {
+      // Pre-populate all three slices before flipping weddingId. React
       // batches the state setters below into one render, so the provider
       // goes straight from "no weddingId (children rendered via session
       // provider)" to "loadState=ready (children rendered via both
-      // providers)". Without pre-fetching, the load-effect below would
+      // providers)". Without pre-populating, the load-effect below would
       // flip loadState to 'loading' for a render, unmounting the Stack and
-      // eating the router.replace('/login') fired from invite.tsx.
-      const w = await fetchWeddingByInviteCode(inviteCode);
-      if (!w) return null;
-      const [g, a] = await Promise.all([fetchGuests(w.id), fetchAdmins(w.id)]);
+      // eating any router.replace() fired by the caller.
       await AsyncStorage.setItem(WEDDING_ID_STORAGE_KEY, w.id);
       // New invite means a new tenant — discard any cached login from a
       // prior wedding so AuthContext doesn't auto-auth past /login.
@@ -169,7 +172,6 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       setAdminNames(a.map((row) => row.guest_name));
       setLoadState('ready');
       setWeddingId(w.id);
-      return w;
     },
     [],
   );
@@ -180,8 +182,13 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const sessionValue = useMemo<WeddingSessionContextType>(
-    () => ({ weddingId, setWeddingIdFromInviteCode, clearWeddingId }),
-    [weddingId, setWeddingIdFromInviteCode, clearWeddingId],
+    () => ({
+      weddingId,
+      resolveWeddingByInviteCode,
+      applyResolvedWedding,
+      clearWeddingId,
+    }),
+    [weddingId, applyResolvedWedding, clearWeddingId],
   );
 
   const weddingValue = useMemo<WeddingContextType | null>(() => {

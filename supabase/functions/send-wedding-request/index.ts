@@ -8,8 +8,17 @@
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? '';
 const ADMIN_EMAIL = 'neha.pathmanaban.2016@gmail.com';
+// Resend requires a verified sender. Until we own a domain, use Resend's
+// shared onboarding address for the From header and set Reply-To so
+// replies land in the real inbox.
 const FROM_EMAIL = 'onboarding@resend.dev';
+const REPLY_TO = 'neha.pathmanaban.2016@gmail.com';
 const APP_NAME = 'Wedding Companion';
+
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 interface Payload {
   coupleName: string;
@@ -28,39 +37,57 @@ const formatRange = (start: string, end?: string | null): string => {
   return end && end !== start ? `${fmt(start)} – ${fmt(end)}` : fmt(start);
 };
 
-const sendEmail = async (to: string, subject: string, html: string, text: string) => {
+const sendEmail = async (
+  to: string,
+  subject: string,
+  html: string,
+  text: string,
+  replyTo?: string,
+) => {
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${RESEND_API_KEY}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ from: FROM_EMAIL, to: [to], subject, html, text }),
+    body: JSON.stringify({
+      from: FROM_EMAIL,
+      to: [to],
+      subject,
+      html,
+      text,
+      ...(replyTo ? { reply_to: replyTo } : {}),
+    }),
   });
   if (!res.ok) {
     const err = await res.text();
-    console.error(`Resend error sending to ${to}:`, err);
-    throw new Error(err);
+    console.error(`Resend error sending to ${to}: ${res.status} ${err}`);
+    throw new Error(`Resend ${res.status}: ${err}`);
   }
 };
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-      },
-    });
+    return new Response(null, { headers: CORS_HEADERS });
   }
 
   try {
+    if (!RESEND_API_KEY) {
+      console.error('RESEND_API_KEY secret not set on this project');
+      return new Response(
+        JSON.stringify({ error: 'RESEND_API_KEY secret not set on this Supabase project' }),
+        { status: 500, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } },
+      );
+    }
+
     const payload = (await req.json()) as Payload;
     const { coupleName, weddingDateStart, weddingDateEnd, email, city, notes } = payload;
 
-    if (!RESEND_API_KEY) {
-      console.error('RESEND_API_KEY secret not set');
-      return new Response(JSON.stringify({ error: 'Email not configured' }), { status: 500 });
+    if (!coupleName || !weddingDateStart || !email) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required fields: coupleName, weddingDateStart, email' }),
+        { status: 400, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } },
+      );
     }
 
     const dateStr = formatRange(weddingDateStart, weddingDateEnd);
@@ -114,21 +141,27 @@ Deno.serve(async (req) => {
       </div>
     `;
 
-    // Send both. Admin first (more important); couple confirmation is
-    // best-effort — if it fails we still return OK, since the row is
-    // already saved and the admin has been notified.
-    await sendEmail(ADMIN_EMAIL, adminSubject, adminHtml, adminText);
+    // Admin first (hard fail). Couple confirmation best-effort — if it
+    // bounces (typo in their email, etc.) we still return ok because the
+    // row is saved and the admin has been notified.
+    await sendEmail(ADMIN_EMAIL, adminSubject, adminHtml, adminText, email);
+    let confirmationSent = true;
     try {
-      await sendEmail(email, coupleSubject, coupleHtml, coupleText);
+      await sendEmail(email, coupleSubject, coupleHtml, coupleText, REPLY_TO);
     } catch (e) {
+      confirmationSent = false;
       console.error('Confirmation email failed (non-fatal):', e);
     }
 
-    return new Response(JSON.stringify({ ok: true }), {
-      headers: { 'Content-Type': 'application/json' },
+    return new Response(JSON.stringify({ ok: true, confirmationSent }), {
+      headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     });
   } catch (e) {
-    console.error('Function error:', e);
-    return new Response(JSON.stringify({ error: String(e) }), { status: 500 });
+    const message = e instanceof Error ? e.message : String(e);
+    console.error('Function error:', message);
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+    });
   }
 });
