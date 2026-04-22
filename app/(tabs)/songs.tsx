@@ -17,16 +17,12 @@ import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { getSongRequests, addSongRequest, deleteSongRequest, SongRequest } from '@/services/storage';
 import { useWedding } from '@/context/WeddingContext';
-import { DEFAULT_WEDDING_ID } from '@/constants/weddingData';
+import { NN_WEDDING_IDS } from '@/constants/weddingData';
 import { haptic } from '@/utils/haptics';
-
-const PLAYLIST_TAG = DEFAULT_WEDDING_ID === null
-  ? 'Welcome Party & Reception Playlist'
-  : 'Sangeet & Reception Playlist';
 
 // Inspiration chips shown above the "Request a song" form. The last three
 // Bollywood picks only make sense for the N&N sangeet; swap them for a few
-// broadly known dance hits on the SaaS variant so the demo reads generic.
+// broadly known dance hits on the demo so it reads generic.
 const SAMPLE_SUGGESTIONS_NN = [
   { song: 'Gimme! Gimme! Gimme!', artist: 'ABBA' },
   { song: 'Despacito', artist: 'Luis Fonsi' },
@@ -49,8 +45,6 @@ const SAMPLE_SUGGESTIONS_DEMO = [
   { song: 'Shake It Off', artist: 'Taylor Swift' },
 ];
 
-const SAMPLE_SUGGESTIONS =
-  DEFAULT_WEDDING_ID === null ? SAMPLE_SUGGESTIONS_DEMO : SAMPLE_SUGGESTIONS_NN;
 
 function SongCard({
   request,
@@ -85,6 +79,9 @@ export default function SongsScreen() {
   const insets = useSafeAreaInsets();
   const { guestName } = useAuth();
   const { weddingId } = useWedding();
+  const isNN = NN_WEDDING_IDS.has(weddingId ?? '');
+  const PLAYLIST_TAG = isNN ? 'Sangeet & Reception Playlist' : 'Welcome Party & Reception Playlist';
+  const SAMPLE_SUGGESTIONS = isNN ? SAMPLE_SUGGESTIONS_NN : SAMPLE_SUGGESTIONS_DEMO;
   const [requests, setRequests] = useState<SongRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);

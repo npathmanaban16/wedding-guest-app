@@ -19,7 +19,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
 import { haptic } from '@/utils/haptics';
-import { WEDDING, SenderId } from '@/constants/weddingData';
+import { NN_WEDDING_IDS, SenderId } from '@/constants/weddingData';
 
 type SenderOption = {
   id: SenderId;
@@ -47,9 +47,11 @@ export default function AdminScreen() {
     );
   }
 
+  const isNN = NN_WEDDING_IDS.has(weddingId ?? '');
+  const plannerName = isNN ? 'Astrid' : 'Sophie';
   const senders: SenderOption[] = [
     { id: 'couple', label: wedding.couple_names, icon: 'heart' },
-    { id: 'planner', label: WEDDING.plannerName, subtitle: WEDDING.plannerSubtitle, icon: 'star' },
+    { id: 'planner', label: plannerName, subtitle: 'Wedding Planner', icon: 'star' },
   ];
   const senderLabel = senders.find((s) => s.id === sender)?.label ?? wedding.couple_names;
 

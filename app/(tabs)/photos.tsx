@@ -10,12 +10,16 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
-import { WEDDING } from '@/constants/weddingData';
+import { NN_WEDDING_IDS } from '@/constants/weddingData';
 import { useWedding } from '@/context/WeddingContext';
+
+const NN_ALBUM_URL = 'https://photos.app.goo.gl/YCMxM6i7XRNzKERd6';
+const DEMO_ALBUM_URL = 'https://example.com/photos';
 
 export default function PhotosScreen() {
   const insets = useSafeAreaInsets();
   const { wedding } = useWedding();
+  const albumUrl = NN_WEDDING_IDS.has(wedding.id) ? NN_ALBUM_URL : DEMO_ALBUM_URL;
 
   return (
     <ScrollView
@@ -42,7 +46,7 @@ export default function PhotosScreen() {
         </Text>
         <TouchableOpacity
           style={styles.albumButton}
-          onPress={() => Linking.openURL(WEDDING.albumUrl)}
+          onPress={() => Linking.openURL(albumUrl)}
           activeOpacity={0.85}
         >
           <Ionicons name="logo-google" size={18} color={Colors.white} style={{ marginRight: Spacing.xs }} />

@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
 import { Colors, Fonts, Typography, Spacing, Radius, Shadow } from '@/constants/theme';
-import { WEDDING, EVENTS } from '@/constants/weddingData';
+import { WEDDING, EVENTS_NN, EVENTS_DEMO, NN_WEDDING_IDS } from '@/constants/weddingData';
 
 function useCountdown(targetDate: Date) {
   const getTimeLeft = (target: Date) => {
@@ -66,7 +66,8 @@ export default function HomeScreen() {
   const firstName = guestName?.split(' ')[0] ?? 'Guest';
   const inWeddingParty = isWeddingParty(guestName ?? '');
   const isAdminUser = !!guestName && isAdmin(guestName);
-  const firstEvent = EVENTS.find((e) => !e.weddingPartyOnly || inWeddingParty)!
+  const events = NN_WEDDING_IDS.has(wedding.id) ? EVENTS_NN : EVENTS_DEMO;
+  const firstEvent = events.find((e) => !e.weddingPartyOnly || inWeddingParty)!
 
   return (
     <ScrollView

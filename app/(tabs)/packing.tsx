@@ -10,7 +10,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
-import { PACKING_GUIDE, PACKING_TIP_FOOTER, PackingCategory, PackingItem } from '@/constants/weddingData';
+import { PACKING_GUIDE_NN, PACKING_GUIDE_DEMO, PACKING_TIP_FOOTER, NN_WEDDING_IDS, PackingCategory, PackingItem } from '@/constants/weddingData';
 import { getCheckedItems, togglePackingItem } from '@/services/storage';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
@@ -123,8 +123,9 @@ export default function PackingScreen() {
   const { weddingId, isWeddingParty, getGuestGender, wedding } = useWedding();
   const inWeddingParty = isWeddingParty(guestName ?? '');
   const gender = getGuestGender(guestName ?? '');
+  const packingGuide = NN_WEDDING_IDS.has(wedding.id) ? PACKING_GUIDE_NN : PACKING_GUIDE_DEMO;
 
-  const filteredGuide = PACKING_GUIDE.map((cat) => ({
+  const filteredGuide = packingGuide.map((cat) => ({
     ...cat,
     items: cat.items.filter((item) => {
       if (item.weddingPartyOnly && !inWeddingParty) return false;
