@@ -71,3 +71,24 @@ export async function fetchAdmins(weddingId: string): Promise<AdminRow[]> {
   if (error) throw error;
   return data ?? [];
 }
+
+export interface ResolvedWedding {
+  wedding: WeddingRow;
+  guests: GuestRow[];
+  admins: AdminRow[];
+}
+
+// Full bundle needed to validate a guest name on the invite screen before
+// persisting session state. Returns null if the invite code doesn't match
+// any wedding so callers can show an error.
+export async function resolveWeddingByInviteCode(
+  inviteCode: string,
+): Promise<ResolvedWedding | null> {
+  const wedding = await fetchWeddingByInviteCode(inviteCode);
+  if (!wedding) return null;
+  const [guests, admins] = await Promise.all([
+    fetchGuests(wedding.id),
+    fetchAdmins(wedding.id),
+  ]);
+  return { wedding, guests, admins };
+}

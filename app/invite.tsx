@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Animated,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   ScrollView,
   StyleSheet,
@@ -12,16 +13,28 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useAuth } from '@/context/AuthContext';
 import { useWeddingSession } from '@/context/WeddingContext';
+import type { WeddingRow } from '@/services/wedding';
 import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 
+// Shared normalization — mirrors WeddingContext so invite-screen validation
+// agrees with the validation the provider applies after login.
+const normalize = (s: string) => s.toLowerCase().trim().replace(/\s+/g, ' ');
+
 export default function InviteScreen() {
-  const { setWeddingIdFromInviteCode } = useWeddingSession();
+  const { resolveWeddingByInviteCode, applyResolvedWedding } = useWeddingSession();
+  const { login } = useAuth();
   const router = useRouter();
 
   const [code, setCode] = useState('');
+  const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  // Set only when the code resolved successfully but the name wasn't on
+  // the guest list. Holds the wedding so we can offer a mailto link to
+  // the couple for that specific wedding.
+  const [nameNotFoundFor, setNameNotFoundFor] = useState<WeddingRow | null>(null);
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
   const shake = () => {
@@ -34,23 +47,49 @@ export default function InviteScreen() {
     ]).start();
   };
 
+  // Clear transient error state on any edit — the user is re-attempting.
+  const clearError = () => {
+    if (error) setError('');
+    if (nameNotFoundFor) setNameNotFoundFor(null);
+  };
+
   const handleSubmit = async () => {
     setError('');
-    const trimmed = code.trim();
-    if (!trimmed) {
+    setNameNotFoundFor(null);
+    const trimmedCode = code.trim();
+    const trimmedName = name.trim();
+    if (!trimmedCode) {
       setError('Please enter your invite code.');
+      shake();
+      return;
+    }
+    if (!trimmedName) {
+      setError('Please enter your name.');
       shake();
       return;
     }
     setLoading(true);
     try {
-      const wedding = await setWeddingIdFromInviteCode(trimmed);
-      if (!wedding) {
-        setError("We couldn't find a wedding with that code. Please check with the couple.");
+      const resolved = await resolveWeddingByInviteCode(trimmedCode);
+      if (!resolved) {
+        setError("We couldn't find a wedding with that invite code.");
         shake();
         return;
       }
-      router.replace('/login');
+      const n = normalize(trimmedName);
+      const canonical =
+        resolved.guests.find((g) => normalize(g.canonical_name) === n)?.canonical_name ??
+        resolved.admins.find((a) => normalize(a.guest_name) === n)?.guest_name ??
+        null;
+      if (!canonical) {
+        setError("We couldn't find your name on the guest list. Please check the spelling.");
+        setNameNotFoundFor(resolved.wedding);
+        shake();
+        return;
+      }
+      await applyResolvedWedding(resolved);
+      await login(canonical);
+      router.replace('/(tabs)');
     } catch {
       setError("Couldn't reach the server. Please check your connection and try again.");
       shake();
@@ -58,6 +97,11 @@ export default function InviteScreen() {
       setLoading(false);
     }
   };
+
+  // Button stays tappable while fields are incomplete so handleSubmit can
+  // show the "please enter your name" / "please enter your code" error.
+  // `dimButton` is only for visual affordance.
+  const dimButton = !code.trim() || !name.trim() || loading;
 
   return (
     <View style={styles.container}>
@@ -85,41 +129,71 @@ export default function InviteScreen() {
             <View style={styles.ornamentLine} />
           </View>
 
-          <Text style={styles.welcome}>Enter your invite code</Text>
+          <Text style={styles.welcome}>Welcome</Text>
           <Text style={styles.instruction}>
-            The couple shared a code with their invitation. It unlocks your wedding's app.
+            Enter the invite code the couple shared with you, along with your full name.
           </Text>
 
-          <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
+          <Animated.View style={[styles.formWrap, { transform: [{ translateX: shakeAnim }] }]}>
+            <Text style={styles.label}>Invite code</Text>
             <TextInput
               style={[styles.input, error ? styles.inputError : null]}
-              placeholder="Invite code"
+              placeholder="e.g. ABC123"
               placeholderTextColor={Colors.textMuted}
               value={code}
-              onChangeText={(t) => {
-                setCode(t);
-                if (error) setError('');
-              }}
+              onChangeText={(t) => { setCode(t); clearError(); }}
               autoCapitalize="characters"
+              autoCorrect={false}
+              returnKeyType="next"
+            />
+
+            <Text style={styles.label}>Your full name</Text>
+            <TextInput
+              style={[styles.input, error ? styles.inputError : null]}
+              placeholder="e.g. Jane Doe"
+              placeholderTextColor={Colors.textMuted}
+              value={name}
+              onChangeText={(t) => { setName(t); clearError(); }}
+              autoCapitalize="words"
               autoCorrect={false}
               returnKeyType="go"
               onSubmitEditing={handleSubmit}
             />
+
             {!!error && <Text style={styles.errorText}>{error}</Text>}
           </Animated.View>
 
           <TouchableOpacity
-            style={[styles.button, (!code.trim() || loading) && styles.buttonDisabled]}
+            style={[styles.button, dimButton && styles.buttonDisabled]}
             onPress={handleSubmit}
-            disabled={!code.trim() || loading}
+            disabled={loading}
             activeOpacity={0.75}
           >
             {loading ? (
-              <ActivityIndicator color={Colors.white} size="small" />
+              <ActivityIndicator color={Colors.primary} size="small" />
             ) : (
-              <Text style={styles.buttonText}>CONTINUE</Text>
+              <Text style={styles.buttonText}>ENTER</Text>
             )}
           </TouchableOpacity>
+
+          {nameNotFoundFor && (
+            <Text style={styles.hint}>
+              Can't find your name?{' '}
+              {nameNotFoundFor.contact_email ? (
+                <Text
+                  style={styles.hintLink}
+                  onPress={() =>
+                    Linking.openURL(`mailto:${nameNotFoundFor.contact_email}`)
+                  }
+                >
+                  Contact the couple
+                </Text>
+              ) : (
+                <Text style={styles.hintStrong}>Contact the couple</Text>
+              )}
+              .
+            </Text>
+          )}
 
           <View style={styles.divider}>
             <View style={styles.dividerLine} />
@@ -187,11 +261,26 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: Spacing.xl,
     lineHeight: 20,
+    paddingHorizontal: Spacing.sm,
   },
 
+  formWrap: {
+    width: '100%',
+    maxWidth: 340,
+    alignSelf: 'center',
+  },
+  label: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 10,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    color: Colors.textMuted,
+    textAlign: 'center',
+    marginTop: Spacing.md,
+    marginBottom: Spacing.xs,
+  },
   input: {
     width: '100%',
-    minWidth: 280,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
     paddingVertical: Spacing.sm,
@@ -200,9 +289,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     color: Colors.textPrimary,
     textAlign: 'center',
-    marginBottom: Spacing.sm,
     backgroundColor: 'transparent',
-    letterSpacing: 2,
   },
   inputError: {
     borderBottomColor: Colors.error,
@@ -212,7 +299,7 @@ const styles = StyleSheet.create({
     fontSize: Typography.xs,
     color: Colors.error,
     textAlign: 'center',
-    marginBottom: Spacing.md,
+    marginTop: Spacing.md,
   },
 
   button: {
@@ -222,7 +309,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.primary,
     borderRadius: Radius.full,
     alignItems: 'center',
-    marginTop: Spacing.lg,
+    marginTop: Spacing.xl,
     minWidth: 180,
   },
   buttonDisabled: {
@@ -233,6 +320,21 @@ const styles = StyleSheet.create({
     fontSize: Typography.xs,
     letterSpacing: 3,
     color: Colors.primary,
+  },
+
+  hint: {
+    fontFamily: Fonts.sans,
+    fontSize: Typography.xs,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    marginTop: Spacing.md,
+  },
+  hintLink: {
+    color: Colors.primary,
+    textDecorationLine: 'underline',
+  },
+  hintStrong: {
+    color: Colors.textSecondary,
   },
 
   divider: {

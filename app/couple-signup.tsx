@@ -28,6 +28,8 @@ export default function CoupleSignupScreen() {
   const [email, setEmail] = useState('');
   const [city, setCity] = useState('');
   const [notes, setNotes] = useState('');
+  // Honeypot — real humans never see this, bots usually fill every field.
+  const [website, setWebsite] = useState('');
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -52,6 +54,15 @@ export default function CoupleSignupScreen() {
     }
 
     setLoading(true);
+
+    // Honeypot: a bot filled the hidden field. Pretend success to keep it
+    // from retrying; skip the DB insert and email entirely.
+    if (website.trim()) {
+      setLoading(false);
+      setSubmitted(true);
+      return;
+    }
+
     const payload = {
       couple_name: coupleName.trim(),
       wedding_date_start: startDate,
@@ -63,7 +74,12 @@ export default function CoupleSignupScreen() {
 
     const { error: dbError } = await supabase.from('wedding_requests').insert(payload);
     if (dbError) {
-      setError('Something went wrong saving your request. Please try again.');
+      // Rate-limit trigger raises a P0001 with "rate_limited:" prefix.
+      if (dbError.message?.toLowerCase().includes('rate_limited')) {
+        setError('You just submitted a request. Please wait a minute before trying again.');
+      } else {
+        setError('Something went wrong saving your request. Please try again.');
+      }
       setLoading(false);
       return;
     }
@@ -97,9 +113,9 @@ export default function CoupleSignupScreen() {
           </View>
           <Text style={styles.confirmTitle}>Thank you!</Text>
           <Text style={styles.confirmBody}>
-            We received your request and sent a confirmation to{' '}
-            <Text style={styles.confirmEmail}>{email.trim()}</Text>. We’ll be in touch within a
-            few days to get your wedding set up.
+            We received your request. We’ll reach out at{' '}
+            <Text style={styles.confirmEmail}>{email.trim()}</Text> within a few days to get
+            your wedding set up.
           </Text>
           <TouchableOpacity
             style={styles.primaryButton}
@@ -220,6 +236,21 @@ export default function CoupleSignupScreen() {
             numberOfLines={4}
             textAlignVertical="top"
           />
+
+          {/* Honeypot — positioned off-screen, hidden from users but
+              present in the DOM so naive bots fill it in. */}
+          <View style={styles.honeypot} pointerEvents="none">
+            <TextInput
+              value={website}
+              onChangeText={setWebsite}
+              autoComplete="off"
+              autoCorrect={false}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+              tabIndex={-1}
+              placeholder="Website"
+            />
+          </View>
 
           {!!error && <Text style={styles.errorText}>{error}</Text>}
 
@@ -368,6 +399,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: Spacing.sm,
     marginBottom: Spacing.sm,
+  },
+
+  honeypot: {
+    position: 'absolute',
+    left: -9999,
+    top: -9999,
+    width: 1,
+    height: 1,
+    opacity: 0,
   },
 
   primaryButton: {

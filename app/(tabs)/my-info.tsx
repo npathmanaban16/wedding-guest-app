@@ -11,13 +11,22 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
+import { DEFAULT_WEDDING_ID } from '@/constants/weddingData';
 import { getMyInfo, saveMyInfo, MyInfo } from '@/services/storage';
 import { HotelPickerField } from '@/components/HotelPickerField';
 import { DateField } from '@/components/DateField';
+
+// Kept in sync with WeddingContext's WEDDING_ID_STORAGE_KEY. Inlined here
+// so sign-out can drop the persisted wedding id without also clearing the
+// in-memory context state — clearing context state mid-sign-out can throw
+// on any still-mounted screen that calls useWedding().
+const WEDDING_ID_STORAGE_KEY = '@wedding_id';
 
 const MIN_DATE = new Date('2026-05-18');
 const MAX_DATE = new Date('2026-06-01');
@@ -65,8 +74,21 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
 
 export default function MyInfoScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { guestName, logout } = useAuth();
   const { weddingId, wedding } = useWedding();
+
+  // SaaS: navigate to /invite explicitly and clear storage so the next
+  // cold launch also routes to /invite. We do NOT call clearWeddingId()
+  // — that mutates in-memory WeddingContext state, which can throw on
+  // any screen that's mid-unmount and still calling useWedding().
+  const handleSignOut = async () => {
+    if (DEFAULT_WEDDING_ID === null) {
+      router.replace('/invite');
+      await AsyncStorage.removeItem(WEDDING_ID_STORAGE_KEY);
+    }
+    await logout();
+  };
   const [info, setInfo] = useState<MyInfo>({
     hotel: '',
     checkIn: '',
@@ -304,7 +326,7 @@ export default function MyInfoScreen() {
         </Text>
 
         {/* Logout */}
-        <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
           <Ionicons name="log-out-outline" size={17} color={Colors.textMuted} />
           <Text style={styles.logoutText}>Sign out</Text>
         </TouchableOpacity>

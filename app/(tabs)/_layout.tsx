@@ -2,6 +2,7 @@ import { Tabs, Redirect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
+import { DEFAULT_WEDDING_ID } from '@/constants/weddingData';
 import { Colors, Fonts } from '@/constants/theme';
 import { ActivityIndicator, AppState, View, StyleSheet } from 'react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -79,7 +80,12 @@ export default function TabLayout() {
     );
   }
 
-  if (!guestName) return <Redirect href="/login" />;
+  // SaaS (no pinned wedding): a signed-out device should land on the
+  // invite-code screen so the user can enter a different wedding. N&N
+  // keeps the login screen since the wedding is baked into the build.
+  if (!guestName) {
+    return <Redirect href={DEFAULT_WEDDING_ID === null ? '/invite' : '/login'} />;
+  }
   if (needsOnboarding && !onboardingSkipped) return <Redirect href="/onboarding" />;
 
   return (

@@ -1,15 +1,24 @@
 // Triggered by the client (via supabase.functions.invoke) right after a
-// new row is inserted into `wedding_requests`. Sends two emails:
-//   1. Admin notification — to ADMIN_EMAIL so the couple's request is seen.
-//   2. Confirmation — to the email the couple entered on the form.
-//
-// Modeled after send-notification. Resend is already configured via the
-// RESEND_API_KEY secret on the Supabase project.
+// new row is inserted into `wedding_requests`. Sends an admin notification
+// email so the request is seen. A couple-facing confirmation email is
+// intentionally NOT sent yet — Resend's shared test sender can only
+// deliver to the account owner's address, so any third-party recipient is
+// silently rejected. Wire that second send back in once a sender domain
+// is verified on Resend.
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? '';
 const ADMIN_EMAIL = 'neha.pathmanaban.2016@gmail.com';
+// Resend requires a verified sender. Until a domain is verified, use
+// Resend's shared onboarding address for the From header; Reply-To is set
+// per-send on the admin email to the couple's address so replies land in
+// a real conversation.
 const FROM_EMAIL = 'onboarding@resend.dev';
 const APP_NAME = 'Wedding Companion';
+
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 interface Payload {
   coupleName: string;
@@ -28,39 +37,57 @@ const formatRange = (start: string, end?: string | null): string => {
   return end && end !== start ? `${fmt(start)} – ${fmt(end)}` : fmt(start);
 };
 
-const sendEmail = async (to: string, subject: string, html: string, text: string) => {
+const sendEmail = async (
+  to: string,
+  subject: string,
+  html: string,
+  text: string,
+  replyTo?: string,
+) => {
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${RESEND_API_KEY}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ from: FROM_EMAIL, to: [to], subject, html, text }),
+    body: JSON.stringify({
+      from: FROM_EMAIL,
+      to: [to],
+      subject,
+      html,
+      text,
+      ...(replyTo ? { reply_to: replyTo } : {}),
+    }),
   });
   if (!res.ok) {
     const err = await res.text();
-    console.error(`Resend error sending to ${to}:`, err);
-    throw new Error(err);
+    console.error(`Resend error sending to ${to}: ${res.status} ${err}`);
+    throw new Error(`Resend ${res.status}: ${err}`);
   }
 };
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-      },
-    });
+    return new Response(null, { headers: CORS_HEADERS });
   }
 
   try {
+    if (!RESEND_API_KEY) {
+      console.error('RESEND_API_KEY secret not set on this project');
+      return new Response(
+        JSON.stringify({ error: 'RESEND_API_KEY secret not set on this Supabase project' }),
+        { status: 500, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } },
+      );
+    }
+
     const payload = (await req.json()) as Payload;
     const { coupleName, weddingDateStart, weddingDateEnd, email, city, notes } = payload;
 
-    if (!RESEND_API_KEY) {
-      console.error('RESEND_API_KEY secret not set');
-      return new Response(JSON.stringify({ error: 'Email not configured' }), { status: 500 });
+    if (!coupleName || !weddingDateStart || !email) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required fields: coupleName, weddingDateStart, email' }),
+        { status: 400, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } },
+      );
     }
 
     const dateStr = formatRange(weddingDateStart, weddingDateEnd);
@@ -91,44 +118,22 @@ Deno.serve(async (req) => {
       </div>
     `;
 
-    // ── Couple confirmation ───────────────────────────────────────
-    const coupleSubject = `Your ${APP_NAME} request`;
-    const coupleText =
-      `Hi ${coupleName},\n\n` +
-      `Thanks for signing up for ${APP_NAME}! We received your request for ${dateStr} and will be in touch within a few days to get your wedding app set up.\n\n` +
-      `If you have any questions in the meantime, just reply to this email.\n\n` +
-      `— The ${APP_NAME} team`;
-    const coupleHtml = `
-      <div style="font-family: Georgia, serif; max-width: 480px; margin: 0 auto; padding: 32px; color: #1C1810;">
-        <h2 style="color: #7A6A55; margin-bottom: 16px;">Thanks for reaching out!</h2>
-        <p style="font-size: 15px; line-height: 1.7;">Hi ${coupleName},</p>
-        <p style="font-size: 15px; line-height: 1.7;">
-          We received your request to set up a ${APP_NAME} for your wedding on <strong>${dateStr}</strong>.
-          We'll be in touch within a few days to get everything set up for you.
-        </p>
-        <p style="font-size: 15px; line-height: 1.7;">
-          Any questions in the meantime? Just reply to this email.
-        </p>
-        <hr style="border: none; border-top: 1px solid #E4D9CC; margin: 24px 0;" />
-        <p style="font-size: 13px; color: #9A8A78;">— The ${APP_NAME} team</p>
-      </div>
-    `;
-
-    // Send both. Admin first (more important); couple confirmation is
-    // best-effort — if it fails we still return OK, since the row is
-    // already saved and the admin has been notified.
-    await sendEmail(ADMIN_EMAIL, adminSubject, adminHtml, adminText);
-    try {
-      await sendEmail(email, coupleSubject, coupleHtml, coupleText);
-    } catch (e) {
-      console.error('Confirmation email failed (non-fatal):', e);
-    }
+    // Admin notification only. Couple confirmation is disabled until a
+    // sender domain is verified on Resend — the test sender can't deliver
+    // to arbitrary third-party addresses, so promising a confirmation
+    // email in the UI would be a lie. Re-enable the send once FROM_EMAIL
+    // is switched from onboarding@resend.dev to a verified-domain address.
+    await sendEmail(ADMIN_EMAIL, adminSubject, adminHtml, adminText, email);
 
     return new Response(JSON.stringify({ ok: true }), {
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     });
   } catch (e) {
-    console.error('Function error:', e);
-    return new Response(JSON.stringify({ error: String(e) }), { status: 500 });
+    const message = e instanceof Error ? e.message : String(e);
+    console.error('Function error:', message);
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+    });
   }
 });
