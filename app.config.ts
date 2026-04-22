@@ -67,11 +67,10 @@ const variants: Record<Variant, VariantConfig> = {
     supabaseUrl: 'https://anezjniflzoxfzxyctja.supabase.co',
     supabaseKey: 'sb_publishable_4uSK3ecrM5RBce-3aDh_cw_2YjutNTQ',
     defaultWeddingId: null,
-    // Re-run `eas init` against the new slug to generate a fresh EAS project
-    // and paste the new values here. Until then, OTA updates for this
-    // variant are disabled and `eas build` will prompt to link a project.
-    easProjectId: undefined,
-    updatesUrl: undefined,
+    // EAS project created via `APP_VARIANT=saas eas init` against the
+    // 'tetherly' slug. Re-run `eas init` if you ever recreate it.
+    easProjectId: '54915c3a-5195-493a-b080-3544c9e1782a',
+    updatesUrl: 'https://u.expo.dev/54915c3a-5195-493a-b080-3544c9e1782a',
   },
 };
 
