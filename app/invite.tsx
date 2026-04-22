@@ -140,7 +140,7 @@ export default function InviteScreen() {
             <View style={styles.ornamentLine} />
           </View>
 
-          <Text style={styles.title}>Wedding Companion</Text>
+          <Text style={styles.title}>Tetherly</Text>
 
           <View style={styles.ornament}>
             <View style={styles.ornamentLine} />

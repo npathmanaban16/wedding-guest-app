@@ -1,5 +1,5 @@
 -- ============================================================
--- Wedding Companion — SaaS Seed (Neha & Naveen full mirror)
+-- Tetherly — SaaS Seed (Neha & Naveen full mirror)
 -- Run this AFTER supabase/schema_saas.sql in the SaaS project's
 -- Database → SQL Editor.
 -- ============================================================

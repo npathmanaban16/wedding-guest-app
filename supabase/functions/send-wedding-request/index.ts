@@ -13,7 +13,7 @@ const ADMIN_EMAIL = 'neha.pathmanaban.2016@gmail.com';
 // per-send on the admin email to the couple's address so replies land in
 // a real conversation.
 const FROM_EMAIL = 'onboarding@resend.dev';
-const APP_NAME = 'Wedding Companion';
+const APP_NAME = 'Tetherly';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
