@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Animated,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   ScrollView,
   StyleSheet,
@@ -14,6 +15,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useWeddingSession } from '@/context/WeddingContext';
+import type { WeddingRow } from '@/services/wedding';
 import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 
 // Shared normalization — mirrors WeddingContext so invite-screen validation
@@ -29,6 +31,10 @@ export default function InviteScreen() {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  // Set only when the code resolved successfully but the name wasn't on
+  // the guest list. Holds the wedding so we can offer a mailto link to
+  // the couple for that specific wedding.
+  const [nameNotFoundFor, setNameNotFoundFor] = useState<WeddingRow | null>(null);
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
   const shake = () => {
@@ -41,10 +47,15 @@ export default function InviteScreen() {
     ]).start();
   };
 
-  const clearError = () => { if (error) setError(''); };
+  // Clear transient error state on any edit — the user is re-attempting.
+  const clearError = () => {
+    if (error) setError('');
+    if (nameNotFoundFor) setNameNotFoundFor(null);
+  };
 
   const handleSubmit = async () => {
     setError('');
+    setNameNotFoundFor(null);
     const trimmedCode = code.trim();
     const trimmedName = name.trim();
     if (!trimmedCode) {
@@ -71,9 +82,8 @@ export default function InviteScreen() {
         resolved.admins.find((a) => normalize(a.guest_name) === n)?.guest_name ??
         null;
       if (!canonical) {
-        setError(
-          "We couldn't find your name on the guest list. Please check the spelling or contact the couple.",
-        );
+        setError("We couldn't find your name on the guest list. Please check the spelling.");
+        setNameNotFoundFor(resolved.wedding);
         shake();
         return;
       }
@@ -163,9 +173,24 @@ export default function InviteScreen() {
             )}
           </TouchableOpacity>
 
-          <Text style={styles.hint}>
-            Can't find your name? Contact the couple.
-          </Text>
+          {nameNotFoundFor && (
+            <Text style={styles.hint}>
+              Can't find your name?{' '}
+              {nameNotFoundFor.contact_email ? (
+                <Text
+                  style={styles.hintLink}
+                  onPress={() =>
+                    Linking.openURL(`mailto:${nameNotFoundFor.contact_email}`)
+                  }
+                >
+                  Contact the couple
+                </Text>
+              ) : (
+                <Text style={styles.hintStrong}>Contact the couple</Text>
+              )}
+              .
+            </Text>
+          )}
 
           <View style={styles.divider}>
             <View style={styles.dividerLine} />
@@ -300,6 +325,13 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     textAlign: 'center',
     marginTop: Spacing.md,
+  },
+  hintLink: {
+    color: Colors.primary,
+    textDecorationLine: 'underline',
+  },
+  hintStrong: {
+    color: Colors.textSecondary,
   },
 
   divider: {
