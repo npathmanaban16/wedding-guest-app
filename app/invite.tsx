@@ -163,6 +163,10 @@ export default function InviteScreen() {
             )}
           </TouchableOpacity>
 
+          <Text style={styles.hint}>
+            Can't find your name? Contact the couple.
+          </Text>
+
           <View style={styles.divider}>
             <View style={styles.dividerLine} />
             <Text style={styles.dividerText}>or</Text>
@@ -288,6 +292,14 @@ const styles = StyleSheet.create({
     fontSize: Typography.xs,
     letterSpacing: 3,
     color: Colors.primary,
+  },
+
+  hint: {
+    fontFamily: Fonts.sans,
+    fontSize: Typography.xs,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    marginTop: Spacing.md,
   },
 
   divider: {
