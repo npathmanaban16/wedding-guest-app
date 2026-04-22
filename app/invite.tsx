@@ -122,9 +122,10 @@ export default function InviteScreen() {
           </Text>
 
           <Animated.View style={[styles.formWrap, { transform: [{ translateX: shakeAnim }] }]}>
+            <Text style={styles.label}>Invite code</Text>
             <TextInput
-              style={[styles.input, styles.codeInput, error ? styles.inputError : null]}
-              placeholder="Invite code"
+              style={[styles.input, error ? styles.inputError : null]}
+              placeholder="e.g. ABC123"
               placeholderTextColor={Colors.textMuted}
               value={code}
               onChangeText={(t) => { setCode(t); clearError(); }}
@@ -132,9 +133,11 @@ export default function InviteScreen() {
               autoCorrect={false}
               returnKeyType="next"
             />
+
+            <Text style={styles.label}>Your full name</Text>
             <TextInput
               style={[styles.input, error ? styles.inputError : null]}
-              placeholder="Your full name"
+              placeholder="e.g. Jane Doe"
               placeholderTextColor={Colors.textMuted}
               value={name}
               onChangeText={(t) => { setName(t); clearError(); }}
@@ -143,6 +146,7 @@ export default function InviteScreen() {
               returnKeyType="go"
               onSubmitEditing={handleSubmit}
             />
+
             {!!error && <Text style={styles.errorText}>{error}</Text>}
           </Animated.View>
 
@@ -230,11 +234,21 @@ const styles = StyleSheet.create({
 
   formWrap: {
     width: '100%',
-    alignItems: 'center',
+    maxWidth: 340,
+    alignSelf: 'center',
+  },
+  label: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 10,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    color: Colors.textMuted,
+    textAlign: 'center',
+    marginTop: Spacing.md,
+    marginBottom: Spacing.xs,
   },
   input: {
     width: '100%',
-    minWidth: 280,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
     paddingVertical: Spacing.sm,
@@ -243,11 +257,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     color: Colors.textPrimary,
     textAlign: 'center',
-    marginBottom: Spacing.md,
     backgroundColor: 'transparent',
-  },
-  codeInput: {
-    letterSpacing: 2,
   },
   inputError: {
     borderBottomColor: Colors.error,
@@ -257,7 +267,7 @@ const styles = StyleSheet.create({
     fontSize: Typography.xs,
     color: Colors.error,
     textAlign: 'center',
-    marginTop: Spacing.xs,
+    marginTop: Spacing.md,
   },
 
   button: {
@@ -267,7 +277,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.primary,
     borderRadius: Radius.full,
     alignItems: 'center',
-    marginTop: Spacing.lg,
+    marginTop: Spacing.xl,
     minWidth: 180,
   },
   buttonDisabled: {
