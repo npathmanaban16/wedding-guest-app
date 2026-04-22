@@ -11,12 +11,18 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
-import { useWedding, useWeddingSession } from '@/context/WeddingContext';
+import { useWedding } from '@/context/WeddingContext';
 import { DEFAULT_WEDDING_ID } from '@/constants/weddingData';
+
+// Kept in sync with WeddingContext's WEDDING_ID_STORAGE_KEY. Inlined here
+// so sign-out can drop the persisted wedding id without also clearing the
+// in-memory context state — clearing context state mid-sign-out can throw
+// on any still-mounted screen that calls useWedding().
+const WEDDING_ID_STORAGE_KEY = '@wedding_id';
 import { getMyInfo, saveMyInfo, MyInfo } from '@/services/storage';
 import { HotelPickerField } from '@/components/HotelPickerField';
 import { DateField } from '@/components/DateField';
@@ -67,29 +73,25 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
 
 export default function MyInfoScreen() {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
   const { guestName, logout } = useAuth();
   const { weddingId, wedding } = useWedding();
-  const { clearWeddingId } = useWeddingSession();
 
-  // On SaaS builds (no pinned wedding), signing out should fully detach
-  // the device from the current wedding so the user lands back on the
-  // invite-code screen and can enter a different wedding. On N&N, keep
-  // the old behavior — just clear the name, stay attached to the wedding
-  // (the tabs layout redirects to /login automatically via its !guestName
-  // guard).
+  // On SaaS builds, a signed-out device should land on /invite so the user
+  // can enter a different wedding. The tabs layout's !guestName guard
+  // handles the redirect — we only need to drop the persisted wedding id
+  // so the next cold launch also routes to /invite (rather than restoring
+  // this wedding from AsyncStorage and landing on /login).
   //
-  // For SaaS, we navigate to /invite FIRST. That unmounts /(tabs) — which
-  // calls useWedding() — before we clear the wedding context, so the hook
-  // doesn't throw on the tab layout's final render.
+  // We intentionally do NOT call clearWeddingId() here — that mutates the
+  // in-memory WeddingContext state, which can throw on any screen that's
+  // mid-unmount and still calling useWedding(). The in-memory state will
+  // be overwritten the next time applyResolvedWedding() runs (when the
+  // user enters a new invite code).
   const handleSignOut = async () => {
     if (DEFAULT_WEDDING_ID === null) {
-      router.replace('/invite');
-      await logout();
-      await clearWeddingId();
-    } else {
-      await logout();
+      await AsyncStorage.removeItem(WEDDING_ID_STORAGE_KEY);
     }
+    await logout();
   };
   const [info, setInfo] = useState<MyInfo>({
     hotel: '',
