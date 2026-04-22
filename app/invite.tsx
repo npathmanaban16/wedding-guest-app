@@ -16,6 +16,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useWeddingSession } from '@/context/WeddingContext';
 import type { WeddingRow } from '@/services/wedding';
+import { supabase } from '@/lib/supabase';
 import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 
 // Shared normalization — mirrors WeddingContext so invite-screen validation
@@ -109,11 +110,22 @@ export default function InviteScreen() {
 
   const handleSubmit = () => runLogin(code, name);
 
-  const handleTryDemo = () => {
+  const handleTryDemo = async () => {
     // Prefill the form so users can see what they submitted, but pass the
     // literal values to runLogin so we don't race React's state batching.
     setCode(DEMO_INVITE_CODE);
     setName(DEMO_GUEST_NAME);
+
+    // Reset the shared demo tenant back to seed state before signing the
+    // next curious couple in. Non-blocking on failure: if the RPC errors
+    // (network hiccup, old backend without migration 005) we still let
+    // the user into the demo — they'll just see whatever state it's in.
+    try {
+      await supabase.rpc('reset_demo_wedding');
+    } catch (e) {
+      console.warn('[demo] reset_demo_wedding RPC failed:', e);
+    }
+
     runLogin(DEMO_INVITE_CODE, DEMO_GUEST_NAME);
   };
 
