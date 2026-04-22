@@ -1,5 +1,5 @@
 -- ============================================================
--- Wedding Companion — Demo Wedding Seed (for App Store review)
+-- Tetherly — Demo Wedding Seed (for App Store review)
 -- ============================================================
 -- Run this in the SaaS Supabase project's Database → SQL Editor.
 -- Safe to run alongside supabase/seed_saas.sql — this seeds a
@@ -53,7 +53,7 @@ insert into public.weddings (
   'Montreux',
   '#EmmaAndJames2027',
   'https://example.com/emma-and-james',
-  'demo@weddingcompanion.app',
+  'demo@tetherly.app',
   'https://example.com/registry',
   '#8B5E6B'
 ) on conflict (id) do update set
@@ -101,13 +101,13 @@ insert into public.guest_info
 values
   ('a0000000-0000-0000-0000-000000000002', 'Taylor Reviewer', '',
     'Burrata & Watermelon (Vegetarian)', 'Zucchini Risotto (Vegetarian)',
-    'Spinach & Ricotta Ravioli (Vegetarian)', true,  'demo@weddingcompanion.app'),
+    'Spinach & Ricotta Ravioli (Vegetarian)', true,  'demo@tetherly.app'),
   ('a0000000-0000-0000-0000-000000000002', 'Preview Guest',   '',
     'Tuna Tataki', 'Zucchini Risotto (Vegetarian)', 'Roasted Lamb', false,
-    'preview@weddingcompanion.app'),
+    'preview@tetherly.app'),
   ('a0000000-0000-0000-0000-000000000002', 'Jordan Guest',    '',
     'Tuna Tataki', 'Roasted Prawn & Peach Tartare', 'Roasted Lamb', true,
-    'jordan.demo@weddingcompanion.app')
+    'jordan.demo@tetherly.app')
 on conflict (wedding_id, guest_name) do update set
   dietary          = excluded.dietary,
   meal_1           = excluded.meal_1,

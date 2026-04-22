@@ -1,10 +1,10 @@
 -- ============================================================
--- Wedding Companion — SaaS Supabase Schema
+-- Tetherly — SaaS Supabase Schema
 -- Paste this into the new SaaS project's SQL Editor and run once.
 -- ============================================================
 --
 -- This schema is for the fresh SaaS Supabase project that backs the
--- multi-tenant "Wedding Companion" build (separate App Store app from
+-- multi-tenant "Tetherly" build (separate App Store app from
 -- the Neha & Naveen unlisted submission).
 --
 -- Differences from supabase/schema.sql:

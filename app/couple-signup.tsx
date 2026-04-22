@@ -157,8 +157,7 @@ export default function CoupleSignupScreen() {
 
           <Text style={styles.title}>Set up your wedding</Text>
           <Text style={styles.subtitle}>
-            Tell us a little about your wedding and we’ll reach out to get your Wedding Companion
-            app set up.
+            Tell us a little about your wedding and we’ll reach out to get your Tetherly app set up.
           </Text>
 
           <Text style={styles.label}>Couple</Text>

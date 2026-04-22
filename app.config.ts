@@ -2,7 +2,7 @@ import { ExpoConfig, ConfigContext } from 'expo/config';
 
 // Build variants:
 //   APP_VARIANT=nn    → "Neha & Naveen" (live wedding, existing App Store submission)
-//   APP_VARIANT=saas  → "Wedding Companion" (multi-tenant public app, separate bundle)
+//   APP_VARIANT=saas  → "Tetherly" (multi-tenant public app, separate bundle)
 //
 // Single source of truth for per-variant config. Screens stay single-path —
 // runtime values they need (Supabase creds, etc.) are read from
@@ -54,21 +54,24 @@ const variants: Record<Variant, VariantConfig> = {
     updatesUrl: 'https://u.expo.dev/ae93c50e-f645-405a-818e-2737f5560e96',
   },
   saas: {
-    name: 'Wedding Companion',
-    slug: 'wedding-companion',
-    bundleIdentifier: 'com.npathmanaban.weddingcompanion',
-    androidPackage: 'com.npathmanaban.weddingcompanion',
-    icon: './assets/images/wedding_companion_icon.png',
-    favicon: './assets/images/wedding_companion_icon.png',
-    scheme: 'wedding-companion',
-    webName: 'Wedding Companion',
-    webShortName: 'Wedding Companion',
-    usageDescriptionSubject: 'Wedding Companion',
+    name: 'Tetherly',
+    slug: 'tetherly',
+    bundleIdentifier: 'com.npathmanaban.tetherly',
+    androidPackage: 'com.npathmanaban.tetherly',
+    icon: './assets/images/tetherly_icon.png',
+    favicon: './assets/images/tetherly_icon.png',
+    scheme: 'tetherly',
+    webName: 'Tetherly',
+    webShortName: 'Tetherly',
+    usageDescriptionSubject: 'Tetherly',
     supabaseUrl: 'https://anezjniflzoxfzxyctja.supabase.co',
     supabaseKey: 'sb_publishable_4uSK3ecrM5RBce-3aDh_cw_2YjutNTQ',
     defaultWeddingId: null,
-    easProjectId: '7f666639-9601-41fb-a753-98836ac47f73',
-    updatesUrl: 'https://u.expo.dev/7f666639-9601-41fb-a753-98836ac47f73',
+    // Re-run `eas init` against the new slug to generate a fresh EAS project
+    // and paste the new values here. Until then, OTA updates for this
+    // variant are disabled and `eas build` will prompt to link a project.
+    easProjectId: undefined,
+    updatesUrl: undefined,
   },
 };
 
