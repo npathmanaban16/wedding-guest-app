@@ -10,6 +10,12 @@
 --   Invite code: DEMO2026
 --   Guest name:  Taylor Reviewer   (also an admin for this demo)
 --
+-- The SaaS build of the app also swaps out N&N-specific content for
+-- generic equivalents via constants/weddingData.ts (Sangeet → Welcome
+-- Party, Astrid → Sophie, real photo album URL → example.com), so the
+-- Schedule / Packing / Admin / Photos tabs read coherently for the
+-- demo wedding.
+--
 -- Tenant id:     a0000000-0000-0000-0000-000000000002
 --                (one higher than the N&N seed; easy to spot/delete)
 --
@@ -23,8 +29,9 @@
 -- ─── Wedding row ─────────────────────────────────────────────────────────────
 -- Location + destination_city kept as Montreux so the hard-coded Schedule,
 -- Switzerland guide, and Packing tabs render a coherent experience. The
--- wedding_date is set a year in the future so the countdown on the Home
--- screen shows a sensible value.
+-- wedding_date is May 23, 2026 — matches the hard-coded ceremony date in
+-- constants/weddingData.ts so the home-screen countdown and the Schedule
+-- tab's events agree with each other.
 
 insert into public.weddings (
   id, invite_code, couple_names, wedding_date, location, destination_city,
@@ -33,10 +40,10 @@ insert into public.weddings (
   'a0000000-0000-0000-0000-000000000002',
   'DEMO2026',
   'Emma & James',
-  '2027-05-22T18:00:00Z',
+  '2026-05-23T15:00:00Z',
   'Montreux, Switzerland',
   'Montreux',
-  '#EmmaAndJames2027',
+  '#EmmaAndJames2026',
   'https://example.com/emma-and-james',
   'demo@weddingcompanion.app',
   'https://example.com/registry',

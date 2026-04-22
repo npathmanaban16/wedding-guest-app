@@ -23,12 +23,23 @@ export const DEFAULT_WEDDING_ID: string | null =
 // Fields that aren't yet modeled in the `weddings` table. Display strings
 // like coupleNames, location, destinationCity, weddingDate, hashtag, website,
 // contactEmail, and registry URL now come from WeddingContext.
-export const WEDDING = {
-  heroImage: require("@/assets/images/montreux.png"),
-  albumUrl: "https://photos.app.goo.gl/YCMxM6i7XRNzKERd6",
-  plannerName: "Astrid",
-  plannerSubtitle: "Wedding Planner",
-};
+//
+// Variant-aware: the SaaS build uses a generic wedding planner name and a
+// placeholder album URL so the demo wedding's Admin screen and Photos tab
+// don't leak real-wedding content. N&N keeps the configured values.
+export const WEDDING = DEFAULT_WEDDING_ID === null
+  ? {
+      heroImage: require("@/assets/images/montreux.png"),
+      albumUrl: "https://example.com/photos",
+      plannerName: "Sophie",
+      plannerSubtitle: "Wedding Planner",
+    }
+  : {
+      heroImage: require("@/assets/images/montreux.png"),
+      albumUrl: "https://photos.app.goo.gl/YCMxM6i7XRNzKERd6",
+      plannerName: "Astrid",
+      plannerSubtitle: "Wedding Planner",
+    };
 
 export type SenderId = "couple" | "planner";
 
@@ -65,7 +76,7 @@ export interface WeddingEvent {
   hairMakeupLinks?: { label: string; url: string }[];
 }
 
-export const EVENTS: WeddingEvent[] = [
+const EVENTS_NN: WeddingEvent[] = [
   {
     id: "rehearsal-dinner",
     title: "Rehearsal Dinner",
@@ -205,6 +216,65 @@ export const EVENTS: WeddingEvent[] = [
     },
   },
 ];
+
+// SaaS demo variant — derived from EVENTS_NN with N&N-specific strings
+// (Sangeet, Indian attire references, the outfit inspiration URL) swapped
+// for generic equivalents so a reviewer or demo tenant sees a coherent
+// non-culture-specific schedule. Dates, venues, and logistics are shared.
+const EVENTS_DEMO: WeddingEvent[] = EVENTS_NN.map((event) => {
+  // Every event drops the real outfit-inspiration Netlify link (it's the
+  // couple's personal style board). Setting to undefined is equivalent to
+  // omitting since the field is optional on WeddingEvent.
+  const base: WeddingEvent = { ...event, outfitInspirationUrl: undefined };
+
+  if (event.id === 'rehearsal-dinner') {
+    return {
+      ...base,
+      dressCode:
+        "Smart casual. White, soft neutrals, shades of green or rose. The venue is a vineyard estate — comfortable yet elegant.",
+    };
+  }
+  if (event.id === 'sangeet') {
+    // Rename to a generic welcome party and strip Indian-attire references.
+    return {
+      ...base,
+      id: 'welcome-party',
+      title: 'Welcome Party',
+      dressCode:
+        "Festive semi-formal. Bright jewel tones and colorful cocktail attire — come ready to dance!",
+      description:
+        "Welcome party with dancing, drinks, and dinner. The big celebration night — come ready to dance!",
+      outdoorNote:
+        "The welcome party will be held on a terrace and is outdoors, weather permitting. In the event of rain or inclement weather, it will be moved indoors.",
+      indianAttire: undefined,
+    };
+  }
+  if (event.id === 'ceremony') {
+    return {
+      ...base,
+      dressCode: "Black-tie. Elegant neutrals and muted evening tones.",
+      blackTieGuide: {
+        men: "Tuxedos (or a black suit)",
+        women: "Floor-length gowns",
+      },
+    };
+  }
+  if (event.id === 'reception') {
+    return {
+      ...base,
+      dressCode:
+        "Black-tie. Elegant neutrals and muted evening tones — same outfit as the ceremony.",
+      blackTieGuide: {
+        men: "Tuxedos (or a black suit)",
+        women: "Floor-length gowns",
+      },
+    };
+  }
+  return base;
+});
+
+export const EVENTS: WeddingEvent[] =
+  DEFAULT_WEDDING_ID === null ? EVENTS_DEMO : EVENTS_NN;
 
 // ============================================================
 // SWITZERLAND GUIDE — Montreux
@@ -639,7 +709,7 @@ export interface PackingItem {
   gender?: 'male' | 'female';
 }
 
-export const PACKING_GUIDE: PackingCategory[] = [
+const PACKING_GUIDE_NN: PackingCategory[] = [
   {
     id: "outfits",
     title: "Outfits",
@@ -898,3 +968,61 @@ export const PACKING_GUIDE: PackingCategory[] = [
     ],
   },
 ];
+
+// SaaS demo variant — drops the "Attire Extras" section (too Indian-
+// wedding-specific: sarees, bindis, dupattas) and renames Sangeet entries
+// to "Welcome Party" so the Packing tab reads coherently for a generic
+// demo wedding. Weather / grooming / essentials are unchanged.
+const PACKING_GUIDE_DEMO: PackingCategory[] = PACKING_GUIDE_NN
+  .filter((cat) => cat.id !== 'indian-attire-extras')
+  .map((cat) => ({
+    ...cat,
+    items: cat.items.map((item) => {
+      if (item.id === 'mehendi-outfit') {
+        return {
+          ...item,
+          tip: "Smart casual. White, soft neutrals, shades of green or rose. The venue is a vineyard estate — comfortable yet elegant.",
+        };
+      }
+      if (item.id === 'sangeet-outfit') {
+        return {
+          ...item,
+          id: 'welcome-party-outfit',
+          label: 'Welcome Party outfit',
+          tip: "Festive semi-formal. Bright jewel tones and colorful cocktail attire — this is the big dancing night, dress to impress!",
+        };
+      }
+      if (item.id === 'sangeet-outfit-male') {
+        return {
+          ...item,
+          id: 'welcome-party-outfit-male',
+          label: 'Welcome Party outfit',
+          tip: "Festive semi-formal. Bright jewel tones and colorful cocktail attire — this is the big dancing night, dress to impress!",
+        };
+      }
+      if (item.id === 'ceremony-outfit') {
+        return {
+          ...item,
+          tip: "Black-tie. Elegant neutrals and muted evening tones. Floor-length gown.",
+        };
+      }
+      if (item.id === 'heels-sangeet') {
+        return {
+          ...item,
+          id: 'heels-welcome-party',
+          label: 'Flats, heels, or comfortable shoes for Welcome Party',
+        };
+      }
+      if (item.id === 'shoes-sangeet-male') {
+        return {
+          ...item,
+          id: 'shoes-welcome-party-male',
+          label: 'Shoes for Welcome Party',
+        };
+      }
+      return item;
+    }),
+  }));
+
+export const PACKING_GUIDE: PackingCategory[] =
+  DEFAULT_WEDDING_ID === null ? PACKING_GUIDE_DEMO : PACKING_GUIDE_NN;
