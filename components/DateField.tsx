@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  Keyboard,
   View,
   Text,
   TextInput,
@@ -63,7 +64,12 @@ function NativeDateField({ label, value, onChange, placeholder, minimumDate, max
       <Text style={styles.label}>{label}</Text>
       <TouchableOpacity
         style={[styles.trigger, show && styles.triggerActive]}
-        onPress={() => setShow((v) => !v)}
+        onPress={() => {
+          // Dismiss any soft-keyboard still up from a previous text input
+          // so it doesn't overlap the inline iOS calendar / Android dialog.
+          Keyboard.dismiss();
+          setShow((v) => !v);
+        }}
         activeOpacity={0.8}
       >
         <Ionicons name="calendar-outline" size={16} color={Colors.textMuted} style={styles.icon} />
