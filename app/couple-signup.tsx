@@ -113,9 +113,9 @@ export default function CoupleSignupScreen() {
           </View>
           <Text style={styles.confirmTitle}>Thank you!</Text>
           <Text style={styles.confirmBody}>
-            We received your request and sent a confirmation to{' '}
-            <Text style={styles.confirmEmail}>{email.trim()}</Text>. We’ll be in touch within a
-            few days to get your wedding set up.
+            We received your request. We’ll reach out at{' '}
+            <Text style={styles.confirmEmail}>{email.trim()}</Text> within a few days to get
+            your wedding set up.
           </Text>
           <TouchableOpacity
             style={styles.primaryButton}

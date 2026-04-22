@@ -1,18 +1,18 @@
 // Triggered by the client (via supabase.functions.invoke) right after a
-// new row is inserted into `wedding_requests`. Sends two emails:
-//   1. Admin notification — to ADMIN_EMAIL so the couple's request is seen.
-//   2. Confirmation — to the email the couple entered on the form.
-//
-// Modeled after send-notification. Resend is already configured via the
-// RESEND_API_KEY secret on the Supabase project.
+// new row is inserted into `wedding_requests`. Sends an admin notification
+// email so the request is seen. A couple-facing confirmation email is
+// intentionally NOT sent yet — Resend's shared test sender can only
+// deliver to the account owner's address, so any third-party recipient is
+// silently rejected. Wire that second send back in once a sender domain
+// is verified on Resend.
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? '';
 const ADMIN_EMAIL = 'neha.pathmanaban.2016@gmail.com';
-// Resend requires a verified sender. Until we own a domain, use Resend's
-// shared onboarding address for the From header and set Reply-To so
-// replies land in the real inbox.
+// Resend requires a verified sender. Until a domain is verified, use
+// Resend's shared onboarding address for the From header; Reply-To is set
+// per-send on the admin email to the couple's address so replies land in
+// a real conversation.
 const FROM_EMAIL = 'onboarding@resend.dev';
-const REPLY_TO = 'neha.pathmanaban.2016@gmail.com';
 const APP_NAME = 'Wedding Companion';
 
 const CORS_HEADERS = {
@@ -118,42 +118,14 @@ Deno.serve(async (req) => {
       </div>
     `;
 
-    // ── Couple confirmation ───────────────────────────────────────
-    const coupleSubject = `Your ${APP_NAME} request`;
-    const coupleText =
-      `Hi ${coupleName},\n\n` +
-      `Thanks for signing up for ${APP_NAME}! We received your request for ${dateStr} and will be in touch within a few days to get your wedding app set up.\n\n` +
-      `If you have any questions in the meantime, just reply to this email.\n\n` +
-      `— The ${APP_NAME} team`;
-    const coupleHtml = `
-      <div style="font-family: Georgia, serif; max-width: 480px; margin: 0 auto; padding: 32px; color: #1C1810;">
-        <h2 style="color: #7A6A55; margin-bottom: 16px;">Thanks for reaching out!</h2>
-        <p style="font-size: 15px; line-height: 1.7;">Hi ${coupleName},</p>
-        <p style="font-size: 15px; line-height: 1.7;">
-          We received your request to set up a ${APP_NAME} for your wedding on <strong>${dateStr}</strong>.
-          We'll be in touch within a few days to get everything set up for you.
-        </p>
-        <p style="font-size: 15px; line-height: 1.7;">
-          Any questions in the meantime? Just reply to this email.
-        </p>
-        <hr style="border: none; border-top: 1px solid #E4D9CC; margin: 24px 0;" />
-        <p style="font-size: 13px; color: #9A8A78;">— The ${APP_NAME} team</p>
-      </div>
-    `;
-
-    // Admin first (hard fail). Couple confirmation best-effort — if it
-    // bounces (typo in their email, etc.) we still return ok because the
-    // row is saved and the admin has been notified.
+    // Admin notification only. Couple confirmation is disabled until a
+    // sender domain is verified on Resend — the test sender can't deliver
+    // to arbitrary third-party addresses, so promising a confirmation
+    // email in the UI would be a lie. Re-enable the send once FROM_EMAIL
+    // is switched from onboarding@resend.dev to a verified-domain address.
     await sendEmail(ADMIN_EMAIL, adminSubject, adminHtml, adminText, email);
-    let confirmationSent = true;
-    try {
-      await sendEmail(email, coupleSubject, coupleHtml, coupleText, REPLY_TO);
-    } catch (e) {
-      confirmationSent = false;
-      console.error('Confirmation email failed (non-fatal):', e);
-    }
 
-    return new Response(JSON.stringify({ ok: true, confirmationSent }), {
+    return new Response(JSON.stringify({ ok: true }), {
       headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     });
   } catch (e) {
