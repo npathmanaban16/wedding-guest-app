@@ -29,9 +29,11 @@
 -- ─── Wedding row ─────────────────────────────────────────────────────────────
 -- Location + destination_city kept as Montreux so the hard-coded Schedule,
 -- Switzerland guide, and Packing tabs render a coherent experience. The
--- wedding_date is May 23, 2026 — matches the hard-coded ceremony date in
--- constants/weddingData.ts so the home-screen countdown and the Schedule
--- tab's events agree with each other.
+-- wedding_date is set to May 22, 2027 — the SaaS variant of EVENTS in
+-- constants/weddingData.ts uses the same weekend (Thu May 20 → Sat May 22,
+-- 2027), so the home-screen countdown and the Schedule tab agree. Keeping
+-- the demo in the future means the app continues to demo sensibly after
+-- the real N&N wedding in May 2026 has passed.
 
 insert into public.weddings (
   id, invite_code, couple_names, wedding_date, location, destination_city,
@@ -40,10 +42,10 @@ insert into public.weddings (
   'a0000000-0000-0000-0000-000000000002',
   'DEMO2026',
   'Emma & James',
-  '2026-05-23T15:00:00Z',
+  '2027-05-22T15:00:00Z',
   'Montreux, Switzerland',
   'Montreux',
-  '#EmmaAndJames2026',
+  '#EmmaAndJames2027',
   'https://example.com/emma-and-james',
   'demo@weddingcompanion.app',
   'https://example.com/registry',

@@ -221,6 +221,9 @@ const EVENTS_NN: WeddingEvent[] = [
 // (Sangeet, Indian attire references, the outfit inspiration URL) swapped
 // for generic equivalents so a reviewer or demo tenant sees a coherent
 // non-culture-specific schedule. Dates, venues, and logistics are shared.
+// Shift event dates one year forward (N&N dates are 2026-05-21/22/23; demo
+// uses 2027-05-20/21/22 so the same weekdays — Thu/Fri/Sat — line up with
+// the home-screen countdown for the demo wedding).
 const EVENTS_DEMO: WeddingEvent[] = EVENTS_NN.map((event) => {
   // Every event drops the real outfit-inspiration Netlify link (it's the
   // couple's personal style board). Setting to undefined is equivalent to
@@ -230,6 +233,9 @@ const EVENTS_DEMO: WeddingEvent[] = EVENTS_NN.map((event) => {
   if (event.id === 'rehearsal-dinner') {
     return {
       ...base,
+      date: "Thursday, 20 May 2027",
+      startDate: "2027-05-20T16:00:00Z",
+      endDate: "2027-05-20T19:00:00Z",
       dressCode:
         "Smart casual. White, soft neutrals, shades of green or rose. The venue is a vineyard estate — comfortable yet elegant.",
     };
@@ -240,6 +246,9 @@ const EVENTS_DEMO: WeddingEvent[] = EVENTS_NN.map((event) => {
       ...base,
       id: 'welcome-party',
       title: 'Welcome Party',
+      date: "Friday, 21 May 2027",
+      startDate: "2027-05-21T16:30:00Z",
+      endDate: "2027-05-21T21:00:00Z",
       dressCode:
         "Festive semi-formal. Bright jewel tones and colorful cocktail attire — come ready to dance!",
       description:
@@ -252,6 +261,9 @@ const EVENTS_DEMO: WeddingEvent[] = EVENTS_NN.map((event) => {
   if (event.id === 'ceremony') {
     return {
       ...base,
+      date: "Saturday, 22 May 2027",
+      startDate: "2027-05-22T15:00:00Z",
+      endDate: "2027-05-22T16:00:00Z",
       dressCode: "Black-tie. Elegant neutrals and muted evening tones.",
       blackTieGuide: {
         men: "Tuxedos (or a black suit)",
@@ -262,6 +274,9 @@ const EVENTS_DEMO: WeddingEvent[] = EVENTS_NN.map((event) => {
   if (event.id === 'reception') {
     return {
       ...base,
+      date: "Saturday, 22 May 2027",
+      startDate: "2027-05-22T17:30:00Z",
+      endDate: "2027-05-22T23:00:00Z",
       dressCode:
         "Black-tie. Elegant neutrals and muted evening tones — same outfit as the ceremony.",
       blackTieGuide: {
@@ -1018,6 +1033,13 @@ const PACKING_GUIDE_DEMO: PackingCategory[] = PACKING_GUIDE_NN
           ...item,
           id: 'shoes-welcome-party-male',
           label: 'Shoes for Welcome Party',
+        };
+      }
+      if (item.id === 'passport') {
+        // Match the demo wedding's 2027 date.
+        return {
+          ...item,
+          tip: "Ensure your passport is valid through at least November 2027.",
         };
       }
       return item;
