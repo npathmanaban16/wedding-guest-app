@@ -79,6 +79,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
 
   return {
     ...config,
+    // Expo/EAS account that owns both variants' EAS projects.
+    owner: 'npathmanaban',
     name: v.name,
     slug: v.slug,
     version: '2.0.0',
