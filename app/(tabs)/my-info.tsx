@@ -78,15 +78,6 @@ export default function MyInfoScreen() {
   const { guestName, logout } = useAuth();
   const { weddingId, wedding } = useWedding();
 
-  // Log the runtime variant on mount so we can verify which build is
-  // actually loaded when a user reports routing issues.
-  useEffect(() => {
-    console.warn(
-      '[variant]',
-      DEFAULT_WEDDING_ID === null ? 'saas (no pinned wedding)' : `nn (${DEFAULT_WEDDING_ID})`,
-    );
-  }, []);
-
   // SaaS: navigate to /invite explicitly and clear storage so the next
   // cold launch also routes to /invite. We do NOT call clearWeddingId()
   // — that mutates in-memory WeddingContext state, which can throw on
