@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
+import { DEFAULT_WEDDING_ID } from '@/constants/weddingData';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -25,11 +26,22 @@ const animateLayout = () => {
 const IMG_W = 888;
 const IMG_H = 1016;
 
-const VENUES = [
-  { n: 1, event: 'Sangeet',   room: 'La Coupole & Terrasse du Petit Palais', when: 'Fri 22 May · 6:30 PM', color: '#B81D56' },
-  { n: 2, event: 'Ceremony',  room: 'Garden',                                when: 'Sat 23 May · 5:00 PM', color: '#4A7040' },
-  { n: 3, event: 'Reception', room: 'Salle des Fêtes',                       when: 'Sat 23 May · 7:30 PM', color: Colors.primary },
+// N&N venues + dates (May 2026). The SaaS variant swaps the Sangeet label
+// for "Welcome Party" and shifts dates forward one year to match
+// EVENTS_DEMO + the demo wedding_date in seed_demo_wedding.sql.
+const VENUES_NN = [
+  { n: 1, event: 'Sangeet',       room: 'La Coupole & Terrasse du Petit Palais', when: 'Fri 22 May · 6:30 PM', color: '#B81D56' },
+  { n: 2, event: 'Ceremony',      room: 'Garden',                                when: 'Sat 23 May · 5:00 PM', color: '#4A7040' },
+  { n: 3, event: 'Reception',     room: 'Salle des Fêtes',                       when: 'Sat 23 May · 7:30 PM', color: Colors.primary },
 ];
+
+const VENUES_DEMO = [
+  { n: 1, event: 'Welcome Party', room: 'La Coupole & Terrasse du Petit Palais', when: 'Fri 21 May · 6:30 PM', color: '#B81D56' },
+  { n: 2, event: 'Ceremony',      room: 'Garden',                                when: 'Sat 22 May · 5:00 PM', color: '#4A7040' },
+  { n: 3, event: 'Reception',     room: 'Salle des Fêtes',                       when: 'Sat 22 May · 7:30 PM', color: Colors.primary },
+];
+
+const VENUES = DEFAULT_WEDDING_ID === null ? VENUES_DEMO : VENUES_NN;
 
 
 export function FairmontMap() {
