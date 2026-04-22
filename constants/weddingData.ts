@@ -8,8 +8,17 @@ import Constants from 'expo-constants';
 // app.config.ts per-variant config: the N&N build bakes in the seeded
 // Neha & Naveen UUID; the SaaS build leaves this null and will resolve
 // the wedding from an invite code at login time.
+//
+// Only accept a real UUID string — expo-constants has been observed to
+// round-trip `null` as `{}` in some environments (Expo Go in particular),
+// which would poison every `=== null` variant check downstream.
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const rawDefaultWeddingId = Constants.expoConfig?.extra?.defaultWeddingId;
 export const DEFAULT_WEDDING_ID: string | null =
-  (Constants.expoConfig?.extra?.defaultWeddingId as string | null | undefined) ?? null;
+  typeof rawDefaultWeddingId === 'string' && UUID_REGEX.test(rawDefaultWeddingId)
+    ? rawDefaultWeddingId
+    : null;
 
 // Fields that aren't yet modeled in the `weddings` table. Display strings
 // like coupleNames, location, destinationCity, weddingDate, hashtag, website,
