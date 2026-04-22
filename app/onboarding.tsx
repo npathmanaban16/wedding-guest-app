@@ -238,10 +238,10 @@ const styles = StyleSheet.create({
 
   header: {
     alignItems: 'center',
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.xl,
   },
   greeting: {
-    fontSize: 28,
+    fontSize: 36,
     fontFamily: Fonts.serifSemiBold,
     color: Colors.textPrimary,
     marginBottom: Spacing.xs,
@@ -254,14 +254,14 @@ const styles = StyleSheet.create({
     letterSpacing: 2.5,
     textTransform: 'uppercase',
     color: Colors.gold,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   body: {
     fontSize: 14,
     fontFamily: Fonts.sans,
     color: Colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 22,
   },
 
   card: {
