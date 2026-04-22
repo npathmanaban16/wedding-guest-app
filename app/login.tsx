@@ -12,12 +12,23 @@ import {
   Animated,
   Linking,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
+import { DEFAULT_WEDDING_ID } from '@/constants/weddingData';
 import { Colors, Fonts, Typography, Spacing, Radius } from '@/constants/theme';
 
 export default function LoginScreen() {
+  // SaaS builds should never land on /login — the invite screen
+  // captures both code + name in one form. If something routes here
+  // anyway (stale redirect, deep link, etc.), bounce to /invite.
+  if (DEFAULT_WEDDING_ID === null) {
+    return <Redirect href="/invite" />;
+  }
+  return <LoginScreenInner />;
+}
+
+function LoginScreenInner() {
   const { login } = useAuth();
   const { wedding, isValidGuestOrAdmin, getCanonicalName } = useWedding();
   const router = useRouter();
