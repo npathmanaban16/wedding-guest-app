@@ -470,8 +470,12 @@ export async function getCheckedItems(
       .eq('wedding_id', weddingId)
       .eq('guest_name', guestName)
       .maybeSingle();
-    if (!error && data) {
-      const items: string[] = data.checked_items ?? [];
+    // On a successful query the server is the source of truth — even when
+    // it returns no row (data is null). Treat no-row as empty and sync the
+    // local cache so a fresh/reset server state isn't masked by a stale
+    // AsyncStorage cache from a previous session on the same device.
+    if (!error) {
+      const items: string[] = data?.checked_items ?? [];
       await AsyncStorage.setItem(KEYS.packingChecklist(weddingId, guestName), JSON.stringify(items));
       return items;
     }
