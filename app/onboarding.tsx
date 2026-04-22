@@ -124,7 +124,7 @@ export default function OnboardingScreen() {
     >
       <ScrollView
         style={styles.container}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.xl }]}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.sm }]}
         keyboardShouldPersistTaps="handled"
       >
         {/* Header */}
@@ -238,10 +238,10 @@ const styles = StyleSheet.create({
 
   header: {
     alignItems: 'center',
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.md,
   },
   greeting: {
-    fontSize: 36,
+    fontSize: 28,
     fontFamily: Fonts.serifSemiBold,
     color: Colors.textPrimary,
     marginBottom: Spacing.xs,
@@ -254,14 +254,14 @@ const styles = StyleSheet.create({
     letterSpacing: 2.5,
     textTransform: 'uppercase',
     color: Colors.gold,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   body: {
     fontSize: 14,
     fontFamily: Fonts.sans,
     color: Colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 20,
   },
 
   card: {
