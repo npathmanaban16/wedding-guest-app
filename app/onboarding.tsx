@@ -333,13 +333,13 @@ const styles = StyleSheet.create({
 
   skipButton: {
     alignItems: 'center',
-    paddingVertical: Spacing.md,
-    marginTop: Spacing.xs,
+    paddingVertical: Spacing.xs,
+    marginTop: 0,
   },
   skipButtonText: {
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: Fonts.sansMedium,
-    color: Colors.primary,
+    color: Colors.textSecondary,
     textDecorationLine: 'underline',
   },
 });
