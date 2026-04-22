@@ -152,7 +152,7 @@ export default function InviteScreen() {
             <View style={styles.ornamentLine} />
           </View>
 
-          <Text style={styles.title}>Tetherly</Text>
+          <Text style={styles.title}>Welcome</Text>
 
           <View style={styles.ornament}>
             <View style={styles.ornamentLine} />
@@ -160,7 +160,6 @@ export default function InviteScreen() {
             <View style={styles.ornamentLine} />
           </View>
 
-          <Text style={styles.welcome}>Welcome</Text>
           <Text style={styles.instruction}>
             Enter the invite code the couple shared with you, along with your full name.
           </Text>
@@ -288,13 +287,6 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     textAlign: 'center',
     lineHeight: 50,
-  },
-  welcome: {
-    fontFamily: Fonts.serifItalic,
-    fontSize: Typography.lg,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: Spacing.xs,
   },
   instruction: {
     fontFamily: Fonts.sans,
