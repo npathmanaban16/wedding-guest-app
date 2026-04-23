@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -88,14 +88,25 @@ function BulletRow({ text }: { text: string }) {
   );
 }
 
-function EventCard({ event, coupleNames }: { event: WeddingEvent; coupleNames: string }) {
-  const [expanded, setExpanded] = useState(false);
+interface EventCardProps {
+  event: WeddingEvent;
+  coupleNames: string;
+  expanded: boolean;
+  onToggle: () => void;
+}
+
+function EventCard({ event, coupleNames, expanded, onToggle }: EventCardProps) {
   const [dressExpanded, setDressExpanded] = useState(false);
+
+  // When the parent collapses this card (because another event was opened),
+  // fold the dress-code subsection back up so the next open starts clean.
+  useEffect(() => {
+    if (!expanded) setDressExpanded(false);
+  }, [expanded]);
 
   const toggle = () => {
     haptic.selection();
-    animateLayout();
-    setExpanded((v) => !v);
+    onToggle();
   };
 
   const toggleDress = () => {
@@ -332,6 +343,14 @@ export default function ScheduleScreen() {
   const events = NN_WEDDING_IDS.has(wedding.id) ? EVENTS_NN : EVENTS_DEMO;
   const visibleEvents = events.filter((e) => !e.weddingPartyOnly || inWeddingParty);
 
+  // Accordion: at most one event expanded at a time. Tapping another event
+  // collapses the current one; tapping the open event again collapses it.
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
+  const handleToggle = (id: string) => {
+    animateLayout();
+    setExpandedEventId((cur) => (cur === id ? null : id));
+  };
+
   return (
     <ScrollView
       style={styles.container}
@@ -353,7 +372,12 @@ export default function ScheduleScreen() {
             {index < visibleEvents.length - 1 && <View style={styles.connector} />}
             <View style={styles.dot} />
             <View style={styles.timelineContent}>
-              <EventCard event={event} coupleNames={wedding.couple_names} />
+              <EventCard
+                event={event}
+                coupleNames={wedding.couple_names}
+                expanded={expandedEventId === event.id}
+                onToggle={() => handleToggle(event.id)}
+              />
             </View>
           </View>
         ))}
