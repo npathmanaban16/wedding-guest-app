@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, createContext, useContext, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -27,12 +27,6 @@ const animateLayout = () => {
   if (Platform.OS !== 'web') LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
 };
 
-// Signalled by any section/subsection/item toggle so the PhotoStrip can stop
-// its auto-pan RAF loop the moment the user starts reading the guide. Keeping
-// this as a ref-setter (rather than lifted state) avoids re-rendering the
-// whole tree on the first tap.
-const StopAutoScrollContext = createContext<() => void>(() => {});
-
 const PHOTO_STRIP_ITEMS = [
   { src: require('@/assets/images/promenade.png'), label: 'Montreux promenade' },
   { src: require('@/assets/images/lauvaux.png'), label: 'Lavaux vineyards' },
@@ -41,11 +35,6 @@ const PHOTO_STRIP_ITEMS = [
   { src: require('@/assets/images/narcissus.png'), label: 'Narcissus fields in May' },
   { src: require('@/assets/images/boat.png'), label: 'Lake Geneva boat ride' },
 ];
-const PHOTO_WIDTH = 220;
-const PHOTO_GAP = Spacing.sm;
-// Cycle width for a seamless loop: by doubling the list and jumping back
-// by exactly one list's worth of pixels, the viewer sees no seam.
-const PHOTO_CYCLE = PHOTO_STRIP_ITEMS.length * (PHOTO_WIDTH + PHOTO_GAP);
 
 function openMaps(address: string) {
   const encoded = encodeURIComponent(address);
@@ -64,7 +53,6 @@ function GuideItemCard({ item }: { item: GuideItem }) {
   const [rates, setRates] = useState<ExchangeRates | null>(null);
   const [ratesLoading, setRatesLoading] = useState(false);
   const fetchedRef = useRef(false);
-  const stopAutoScroll = useContext(StopAutoScrollContext);
 
   const isCurrency = item.id === 'currency';
 
@@ -81,7 +69,6 @@ function GuideItemCard({ item }: { item: GuideItem }) {
   }, [isCurrency, expanded]);
 
   const toggle = () => {
-    stopAutoScroll();
     animateLayout();
     setExpanded((v) => !v);
   };
@@ -155,10 +142,8 @@ function GuideItemCard({ item }: { item: GuideItem }) {
 
 function SubsectionBlock({ subsection }: { subsection: GuideSubsection }) {
   const [expanded, setExpanded] = useState(false);
-  const stopAutoScroll = useContext(StopAutoScrollContext);
 
   const toggle = () => {
-    stopAutoScroll();
     animateLayout();
     setExpanded((v) => !v);
   };
@@ -204,74 +189,14 @@ function SectionBlock({ section }: { section: GuideSection }) {
   );
 }
 
-// Continuously pans the photo strip horizontally at ~25 px/sec, looping
-// seamlessly by rendering two copies of the list back-to-back and jumping
-// the scroll offset back by one copy's width when we cross the boundary.
-// Pauses while the user is dragging and resumes ~1.5s after they release.
-function PhotoStrip({ stoppedRef }: { stoppedRef: React.RefObject<boolean> }) {
-  const scrollRef = useRef<ScrollView>(null);
-  const scrollXRef = useRef(0);
-  const pausedRef = useRef(false);
-  const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (Platform.OS === 'web') return; // web uses native overflow scrolling
-    const PX_PER_SEC = 25;
-    let last = Date.now();
-    let frame: number;
-
-    const tick = () => {
-      // Once the user expands anything in the guide, stop the loop entirely.
-      // No more scrollTo commits on the JS thread — lets LayoutAnimation on
-      // the next tap land without competing layout traffic.
-      if (stoppedRef.current) return;
-      const now = Date.now();
-      const dt = now - last;
-      last = now;
-      if (!pausedRef.current && scrollRef.current) {
-        let next = scrollXRef.current + (PX_PER_SEC * dt) / 1000;
-        if (next >= PHOTO_CYCLE) next -= PHOTO_CYCLE;
-        scrollXRef.current = next;
-        scrollRef.current.scrollTo({ x: next, animated: false });
-      }
-      frame = requestAnimationFrame(tick);
-    };
-    frame = requestAnimationFrame(tick);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
-    };
-  }, [stoppedRef]);
-
-  const loopedItems = [...PHOTO_STRIP_ITEMS, ...PHOTO_STRIP_ITEMS];
-
+function PhotoStrip() {
   return (
     <ScrollView
-      ref={scrollRef}
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.photoStrip}
-      scrollEventThrottle={16}
-      onScroll={(e) => { scrollXRef.current = e.nativeEvent.contentOffset.x; }}
-      onScrollBeginDrag={() => {
-        pausedRef.current = true;
-        if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
-      }}
-      onScrollEndDrag={() => {
-        if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
-        resumeTimerRef.current = setTimeout(() => {
-          // Normalize position so we don't leave the looped range when
-          // resuming from a manual scroll that ended past the cycle.
-          if (scrollXRef.current >= PHOTO_CYCLE) {
-            scrollXRef.current -= PHOTO_CYCLE;
-            scrollRef.current?.scrollTo({ x: scrollXRef.current, animated: false });
-          }
-          pausedRef.current = false;
-        }, 1500);
-      }}
     >
-      {loopedItems.map((photo, i) => (
+      {PHOTO_STRIP_ITEMS.map((photo, i) => (
         <View key={i} style={styles.photoWrapper}>
           <Image source={photo.src} style={styles.photoItem} resizeMode="cover" />
           <Text style={styles.photoLabel}>{photo.label}</Text>
@@ -285,10 +210,6 @@ export default function SwitzerlandScreen() {
   const insets = useSafeAreaInsets();
   const { wedding } = useWedding();
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
-  const autoScrollStoppedRef = useRef(false);
-  const stopAutoScroll = useCallback(() => {
-    autoScrollStoppedRef.current = true;
-  }, []);
 
   const filters = ['All', 'Transport', 'Sightseeing', 'Activity', 'Restaurant', 'Bar', 'Practical'];
 
@@ -314,7 +235,6 @@ export default function SwitzerlandScreen() {
       : SWITZERLAND_GUIDE;
 
   return (
-    <StopAutoScrollContext.Provider value={stopAutoScroll}>
     <ScrollView
       style={styles.container}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.md }]}
@@ -328,9 +248,8 @@ export default function SwitzerlandScreen() {
         </Text>
       </View>
 
-      {/* Photo strip — auto-scrolls slowly, pauses on touch, stops
-          permanently once the user expands any guide section. */}
-      <PhotoStrip stoppedRef={autoScrollStoppedRef} />
+      {/* Photo strip — manual horizontal swipe. */}
+      <PhotoStrip />
 
       {/* Filter pills */}
       <ScrollView
@@ -390,7 +309,6 @@ export default function SwitzerlandScreen() {
         </View>
       </View>
     </ScrollView>
-    </StopAutoScrollContext.Provider>
   );
 }
 
