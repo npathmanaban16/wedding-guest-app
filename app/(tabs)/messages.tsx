@@ -66,7 +66,7 @@ function MessageCard({
   isAdmin: boolean;
   onReact: (emoji: string) => void;
   onDelete: () => void;
-  onEdit: (message: string) => Promise<void>;
+  onEdit: (message: string) => Promise<boolean>;
   onReply: (message: string) => void;
   onDeleteReply: (replyId: string) => void;
   onReplyOpen: (y: number) => void;
@@ -116,12 +116,9 @@ function MessageCard({
       return;
     }
     setSavingEdit(true);
-    try {
-      await onEdit(trimmed);
-      setEditOpen(false);
-    } finally {
-      setSavingEdit(false);
-    }
+    const ok = await onEdit(trimmed);
+    setSavingEdit(false);
+    if (ok) setEditOpen(false);
   };
 
   return (
@@ -421,21 +418,27 @@ export default function MessagesScreen() {
     );
   }, [weddingId, loadData]);
 
-  const handleEdit = useCallback(async (id: string, message: string) => {
+  const handleEdit = useCallback(async (id: string, message: string): Promise<boolean> => {
     const previous = notifications.find((n) => n.id === id);
-    const editedAt = new Date().toISOString();
+    const optimisticEditedAt = new Date().toISOString();
     setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, message, editedAt } : n)),
+      prev.map((n) => (n.id === id ? { ...n, message, editedAt: optimisticEditedAt } : n)),
     );
     try {
-      await editNotification(weddingId, id, message);
+      const { editedAt } = await editNotification(weddingId, id, message);
+      // Reconcile: if migration 007 isn't applied yet, editedAt comes back null
+      if (editedAt !== optimisticEditedAt) {
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === id ? { ...n, editedAt } : n)),
+        );
+      }
+      return true;
     } catch {
-      // rollback on failure
       if (previous) {
         setNotifications((prev) => prev.map((n) => (n.id === id ? previous : n)));
       }
       Alert.alert('Error', 'Could not save your changes.');
-      throw new Error('edit failed');
+      return false;
     }
   }, [weddingId, notifications]);
 

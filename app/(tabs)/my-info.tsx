@@ -106,6 +106,7 @@ export default function MyInfoScreen() {
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const saveTimer = useRef<ReturnType<typeof setTimeout>>();
+  const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     if (guestName) {
@@ -160,6 +161,7 @@ export default function MyInfoScreen() {
       style={styles.kav}
     >
       <ScrollView
+        ref={scrollRef}
         style={styles.container}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.md }]}
         keyboardShouldPersistTaps="handled"
@@ -216,6 +218,7 @@ export default function MyInfoScreen() {
             label="Hotel or accommodation"
             value={info.hotel}
             onChange={updateImmediate('hotel')}
+            scrollRef={scrollRef}
           />
           <DateField
             label="Check-in date"
