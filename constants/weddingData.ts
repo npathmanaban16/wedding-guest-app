@@ -882,19 +882,16 @@ export const PACKING_GUIDE_NN: PackingCategory[] = [
       {
         id: "jewelry",
         label: "Jewelry for each event",
-        tip: "Pack pieces in individual pouches to avoid tangling. Sangeet = bold statement jewelry; Ceremony = elegant classics.",
         gender: 'female',
       },
       {
         id: "safety-pins",
         label: "Safety pins (essential if wearing a saree)",
-        tip: "A small pouch of safety pins is a lifesaver for keeping a saree draped all night.",
         gender: 'female',
       },
       {
         id: "fashion-tape",
         label: "Double-sided fashion tape",
-        tip: "Lifesaver for blouses, dupattas, and formal dresses.",
         gender: 'female',
       },
       {
