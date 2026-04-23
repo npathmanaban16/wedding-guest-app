@@ -8,27 +8,46 @@
 -- guests nor invitees, so copying them into public.guests would pollute
 -- the guest list (counts, RSVPs, etc.).
 --
--- `role` additionally lets us tailor what each vendor sees — e.g. the DJ
--- only needs the events he's actually DJing, not the rehearsal dinner
--- or ceremony. The schedule screen reads the role and filters events
--- accordingly; see app/(tabs)/schedule.tsx.
+-- `role` additionally lets us tailor what each vendor sees and whether
+-- they get admin powers. Admins with no role (or role='planner') keep
+-- the full admin ui (send notifications, delete messages, admin page).
+-- Vendor roles like 'dj' are login-only — see WeddingContext.isAdmin.
 
 alter table public.wedding_admins
   add column if not exists is_wedding_party boolean not null default false,
   add column if not exists gender text check (gender in ('male', 'female')),
   add column if not exists role   text check (role   in ('planner', 'dj'));
 
--- N&N wedding planner: sees the rehearsal dinner + women-only packing.
-update public.wedding_admins
-set is_wedding_party = true, gender = 'female', role = 'planner'
-where wedding_id = '00000000-0000-0000-0000-000000000001'
-  and guest_name = 'Astrid Rolando';
+-- Resolve the N&N wedding id via invite code so this migration works
+-- regardless of which environment it's run against — seed.sql hardcoded
+-- 00000000-…-1, seed_saas.sql uses a0000000-…-1. Silently no-ops if the
+-- wedding doesn't exist in this env (e.g. SaaS test projects).
+do $$
+declare
+  nn_id uuid;
+begin
+  select id into nn_id
+  from public.weddings
+  where invite_code = 'NEHANAVEEN2026';
 
--- N&N DJ. Logs in as "DJ Shraii". Not in the wedding party; scoped to
--- the Sangeet + Reception on the schedule (enforced in the client).
-insert into public.wedding_admins (wedding_id, guest_name, is_wedding_party, gender, role)
-values ('00000000-0000-0000-0000-000000000001', 'DJ Shraii', false, null, 'dj')
-on conflict (wedding_id, guest_name) do update set
-  is_wedding_party = excluded.is_wedding_party,
-  gender           = excluded.gender,
-  role             = excluded.role;
+  if nn_id is null then
+    raise notice 'Wedding NEHANAVEEN2026 not present in this env; skipping N&N-specific seed.';
+    return;
+  end if;
+
+  -- Wedding planner: sees the rehearsal dinner + women-only packing.
+  update public.wedding_admins
+  set is_wedding_party = true, gender = 'female', role = 'planner'
+  where wedding_id = nn_id
+    and guest_name = 'Astrid Rolando';
+
+  -- DJ. Logs in as "DJ Shraii". Not in the wedding party (so the
+  -- rehearsal dinner is auto-hidden by the existing schedule filter).
+  -- role='dj' excludes him from admin powers in WeddingContext.
+  insert into public.wedding_admins (wedding_id, guest_name, is_wedding_party, gender, role)
+  values (nn_id, 'DJ Shraii', false, null, 'dj')
+  on conflict (wedding_id, guest_name) do update set
+    is_wedding_party = excluded.is_wedding_party,
+    gender           = excluded.gender,
+    role             = excluded.role;
+end $$;

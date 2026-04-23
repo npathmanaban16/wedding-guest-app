@@ -177,11 +177,21 @@ on conflict (wedding_id, canonical_name) do nothing;
 -- not be in the guest list — e.g. the wedding planner is an admin but not a
 -- guest.
 
-insert into public.wedding_admins (wedding_id, guest_name) values
-  ('a0000000-0000-0000-0000-000000000001', 'Neha Pathmanaban'),
-  ('a0000000-0000-0000-0000-000000000001', 'Naveen Nath'),
-  ('a0000000-0000-0000-0000-000000000001', 'Astrid Rolando')
-on conflict (wedding_id, guest_name) do nothing;
+-- is_wedding_party + gender are only consulted for admins who aren't in
+-- public.guests. Neha and Naveen are both, so their admin-row flags are
+-- harmless defaults. Astrid (planner) is tagged wedding-party + female
+-- so she sees the rehearsal dinner and the women's packing list. DJ
+-- Shraii logs in as "DJ Shraii" with role='dj' — login only, scoped to
+-- Sangeet + Ceremony + Reception (no rehearsal dinner), no admin powers.
+insert into public.wedding_admins (wedding_id, guest_name, is_wedding_party, gender, role) values
+  ('a0000000-0000-0000-0000-000000000001', 'Neha Pathmanaban', false, null,     null),
+  ('a0000000-0000-0000-0000-000000000001', 'Naveen Nath',      false, null,     null),
+  ('a0000000-0000-0000-0000-000000000001', 'Astrid Rolando',   true,  'female', 'planner'),
+  ('a0000000-0000-0000-0000-000000000001', 'DJ Shraii',        false, null,     'dj')
+on conflict (wedding_id, guest_name) do update set
+  is_wedding_party = excluded.is_wedding_party,
+  gender           = excluded.gender,
+  role             = excluded.role;
 
 
 -- ─── Guest Info ───────────────────────────────────────────────────────────────
