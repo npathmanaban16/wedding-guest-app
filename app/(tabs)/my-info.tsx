@@ -31,17 +31,21 @@ const WEDDING_ID_STORAGE_KEY = '@wedding_id';
 
 // Travel window brackets the wedding's event dates. N&N events run
 // May 21–23 2026; the SaaS demo wedding runs May 20–22 2027. The picker
-// uses these as its min/max so guests can't pick wildly off-dates, and
-// opens on INITIAL_DATE (the wedding's kickoff date) when value is empty.
+// uses MIN/MAX as its range, opens check-in on the rehearsal-dinner date
+// and check-out on the morning after the reception, when each value is
+// empty.
 const MIN_DATE = DEFAULT_WEDDING_ID === null
   ? new Date('2027-05-17')
   : new Date('2026-05-18');
 const MAX_DATE = DEFAULT_WEDDING_ID === null
   ? new Date('2027-05-31')
   : new Date('2026-06-01');
-const INITIAL_DATE = DEFAULT_WEDDING_ID === null
+const CHECKIN_INITIAL_DATE = DEFAULT_WEDDING_ID === null
   ? new Date(2027, 4, 20) // May 20 2027 — demo rehearsal dinner
   : new Date(2026, 4, 21); // May 21 2026 — N&N rehearsal dinner
+const CHECKOUT_INITIAL_DATE = DEFAULT_WEDDING_ID === null
+  ? new Date(2027, 4, 23) // May 23 2027 — day after demo reception
+  : new Date(2026, 4, 24); // May 24 2026 — day after N&N reception
 
 interface FieldProps {
   label: string;
@@ -272,7 +276,7 @@ export default function MyInfoScreen() {
             placeholder="Select date"
             minimumDate={MIN_DATE}
             maximumDate={MAX_DATE}
-            initialDate={INITIAL_DATE}
+            initialDate={CHECKIN_INITIAL_DATE}
           />
           <DateField
             label="Check-out date"
@@ -281,7 +285,7 @@ export default function MyInfoScreen() {
             placeholder="Select date"
             minimumDate={MIN_DATE}
             maximumDate={MAX_DATE}
-            initialDate={INITIAL_DATE}
+            initialDate={CHECKOUT_INITIAL_DATE}
           />
         </View>
 
