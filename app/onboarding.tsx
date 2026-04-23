@@ -16,12 +16,24 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
+import { DEFAULT_WEDDING_ID } from '@/constants/weddingData';
 import { getMyInfo, saveMyInfo } from '@/services/storage';
 import { HotelPickerField } from '@/components/HotelPickerField';
 import { DateField } from '@/components/DateField';
 
-const MIN_DATE = new Date('2026-05-18');
-const MAX_DATE = new Date('2026-06-01');
+// Travel window brackets the wedding's event dates. Kept in sync with
+// my-info.tsx so both onboarding and the settings tab enforce the same
+// range. N&N events run May 21–23 2026; the SaaS demo runs May 20–22 2027.
+// Picker opens on INITIAL_DATE (the rehearsal-dinner date) when empty.
+const MIN_DATE = DEFAULT_WEDDING_ID === null
+  ? new Date('2027-05-17')
+  : new Date('2026-05-18');
+const MAX_DATE = DEFAULT_WEDDING_ID === null
+  ? new Date('2027-05-31')
+  : new Date('2026-06-01');
+const INITIAL_DATE = DEFAULT_WEDDING_ID === null
+  ? new Date(2027, 4, 20) // May 20 2027 — demo rehearsal dinner
+  : new Date(2026, 4, 21); // May 21 2026 — N&N rehearsal dinner
 
 interface FieldProps {
   label: string;
@@ -164,6 +176,7 @@ export default function OnboardingScreen() {
             placeholder="Select date"
             minimumDate={MIN_DATE}
             maximumDate={MAX_DATE}
+            initialDate={INITIAL_DATE}
           />
           <DateField
             label="Check-out date"
@@ -172,6 +185,7 @@ export default function OnboardingScreen() {
             placeholder="Select date"
             minimumDate={MIN_DATE}
             maximumDate={MAX_DATE}
+            initialDate={INITIAL_DATE}
           />
         </View>
 
