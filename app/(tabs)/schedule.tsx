@@ -335,25 +335,13 @@ function InfoRow({ icon, label, value }: InfoRowProps) {
   );
 }
 
-// Vendor roles only need a subset of the schedule (the events they
-// actually work). Keyed by role; events outside the set are hidden for
-// users with that role regardless of wedding-party status.
-const VENDOR_VISIBLE_EVENT_IDS: Record<string, ReadonlySet<string>> = {
-  dj: new Set(['sangeet', 'reception']),
-};
-
 export default function ScheduleScreen() {
   const insets = useSafeAreaInsets();
   const { guestName } = useAuth();
-  const { isWeddingParty, getAdminRole, wedding } = useWedding();
+  const { isWeddingParty, wedding } = useWedding();
   const inWeddingParty = isWeddingParty(guestName ?? '');
-  const adminRole = getAdminRole(guestName ?? '');
-  const vendorEventIds = adminRole ? VENDOR_VISIBLE_EVENT_IDS[adminRole] : undefined;
   const events = NN_WEDDING_IDS.has(wedding.id) ? EVENTS_NN : EVENTS_DEMO;
-  const visibleEvents = events.filter((e) => {
-    if (vendorEventIds) return vendorEventIds.has(e.id);
-    return !e.weddingPartyOnly || inWeddingParty;
-  });
+  const visibleEvents = events.filter((e) => !e.weddingPartyOnly || inWeddingParty);
 
   // Accordion: at most one event expanded at a time. Tapping another event
   // collapses the current one; tapping the open event again collapses it.
