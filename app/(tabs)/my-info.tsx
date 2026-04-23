@@ -7,6 +7,7 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -18,7 +19,7 @@ import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
 import { DEFAULT_WEDDING_ID } from '@/constants/weddingData';
-import { getMyInfo, saveMyInfo, MyInfo } from '@/services/storage';
+import { getMyInfo, saveMyInfo, deleteMyAccount, MyInfo } from '@/services/storage';
 import { HotelPickerField } from '@/components/HotelPickerField';
 import { DateField } from '@/components/DateField';
 
@@ -88,6 +89,39 @@ export default function MyInfoScreen() {
       await AsyncStorage.removeItem(WEDDING_ID_STORAGE_KEY);
     }
     await logout();
+  };
+
+  const [deleting, setDeleting] = useState(false);
+  const handleDeleteAccount = () => {
+    if (!guestName || deleting) return;
+    Alert.alert(
+      'Delete your account?',
+      'This permanently removes your travel details, packing list, song requests, message replies, and reactions for this wedding. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setDeleting(true);
+              await deleteMyAccount(weddingId, guestName);
+              if (DEFAULT_WEDDING_ID === null) {
+                router.replace('/invite');
+                await AsyncStorage.removeItem(WEDDING_ID_STORAGE_KEY);
+              }
+              await logout();
+            } catch {
+              setDeleting(false);
+              Alert.alert(
+                'Could not delete account',
+                'Something went wrong. Please check your connection and try again.',
+              );
+            }
+          },
+        },
+      ],
+    );
   };
   const [info, setInfo] = useState<MyInfo>({
     hotel: '',
@@ -330,10 +364,29 @@ export default function MyInfoScreen() {
         </Text>
 
         {/* Logout */}
-        <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut} disabled={deleting}>
           <Ionicons name="log-out-outline" size={17} color={Colors.textMuted} />
           <Text style={styles.logoutText}>Sign out</Text>
         </TouchableOpacity>
+
+        {/* Delete account */}
+        <TouchableOpacity
+          style={styles.deleteAccountButton}
+          onPress={handleDeleteAccount}
+          disabled={deleting}
+        >
+          {deleting ? (
+            <ActivityIndicator size="small" color={Colors.error} />
+          ) : (
+            <>
+              <Ionicons name="trash-outline" size={15} color={Colors.error} />
+              <Text style={styles.deleteAccountText}>Delete my account</Text>
+            </>
+          )}
+        </TouchableOpacity>
+        <Text style={styles.deleteAccountHint}>
+          Permanently removes your data from this wedding. This cannot be undone.
+        </Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -533,5 +586,29 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     color: Colors.textMuted,
     textDecorationLine: 'underline',
+  },
+
+  deleteAccountButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    paddingVertical: Spacing.sm,
+    marginTop: Spacing.xs,
+    minHeight: 32,
+  },
+  deleteAccountText: {
+    fontSize: 13,
+    fontFamily: Fonts.sansMedium,
+    color: Colors.error,
+  },
+  deleteAccountHint: {
+    fontSize: 11,
+    fontFamily: Fonts.sans,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    paddingHorizontal: Spacing.xl,
+    lineHeight: 16,
+    marginTop: 2,
   },
 });

@@ -94,6 +94,29 @@ export async function getMyInfo(weddingId: string, guestName: string): Promise<M
   return { ...DEFAULT_MY_INFO, ...JSON.parse(raw) };
 }
 
+// Permanently removes every row this guest has written across the schema and
+// drops their AsyncStorage cache. The `guests` / `wedding_admins` rows are
+// left alone — those are the couple's invitation list, not user-authored
+// data. After this runs the caller should sign the user out.
+export async function deleteMyAccount(weddingId: string, guestName: string): Promise<void> {
+  const results = await Promise.all([
+    supabase.from('guest_info').delete().eq('wedding_id', weddingId).eq('guest_name', guestName),
+    supabase.from('packing_checklist').delete().eq('wedding_id', weddingId).eq('guest_name', guestName),
+    supabase.from('notification_reactions').delete().eq('wedding_id', weddingId).eq('guest_name', guestName),
+    supabase.from('notification_replies').delete().eq('wedding_id', weddingId).eq('guest_name', guestName),
+    supabase.from('song_requests').delete().eq('wedding_id', weddingId).eq('requested_by', guestName),
+  ]);
+  const failed = results.find((r) => r.error);
+  if (failed?.error) throw new Error(failed.error.message);
+
+  await AsyncStorage.multiRemove([
+    KEYS.myInfo(weddingId, guestName),
+    KEYS.packingChecklist(weddingId, guestName),
+    KEYS.onboarding(weddingId, guestName),
+    KEYS.messagesLastRead(weddingId, guestName),
+  ]);
+}
+
 export async function saveMyInfo(
   weddingId: string,
   guestName: string,
