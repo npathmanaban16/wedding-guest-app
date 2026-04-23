@@ -27,6 +27,20 @@ const animateLayout = () => {
   if (Platform.OS !== 'web') LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
 };
 
+const PHOTO_STRIP_ITEMS = [
+  { src: require('@/assets/images/promenade.png'), label: 'Montreux promenade' },
+  { src: require('@/assets/images/lauvaux.png'), label: 'Lavaux vineyards' },
+  { src: require('@/assets/images/narcissus_hike.png'), label: 'Narcissus hike' },
+  { src: require('@/assets/images/rochers_de_naye.png'), label: 'Rochers de Naye' },
+  { src: require('@/assets/images/narcissus.png'), label: 'Narcissus fields in May' },
+  { src: require('@/assets/images/boat.png'), label: 'Lake Geneva boat ride' },
+];
+const PHOTO_WIDTH = 220;
+const PHOTO_GAP = Spacing.sm;
+// Cycle width for a seamless loop: by doubling the list and jumping back
+// by exactly one list's worth of pixels, the viewer sees no seam.
+const PHOTO_CYCLE = PHOTO_STRIP_ITEMS.length * (PHOTO_WIDTH + PHOTO_GAP);
+
 function openMaps(address: string) {
   const encoded = encodeURIComponent(address);
   const url = Platform.select({
@@ -180,6 +194,79 @@ function SectionBlock({ section }: { section: GuideSection }) {
   );
 }
 
+// Continuously pans the photo strip horizontally at ~25 px/sec, looping
+// seamlessly by rendering two copies of the list back-to-back and jumping
+// the scroll offset back by one copy's width when we cross the boundary.
+// Pauses while the user is dragging and resumes ~1.5s after they release.
+function PhotoStrip() {
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollXRef = useRef(0);
+  const pausedRef = useRef(false);
+  const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (Platform.OS === 'web') return; // web uses native overflow scrolling
+    const PX_PER_SEC = 25;
+    let last = Date.now();
+    let frame: number;
+
+    const tick = () => {
+      const now = Date.now();
+      const dt = now - last;
+      last = now;
+      if (!pausedRef.current && scrollRef.current) {
+        let next = scrollXRef.current + (PX_PER_SEC * dt) / 1000;
+        if (next >= PHOTO_CYCLE) next -= PHOTO_CYCLE;
+        scrollXRef.current = next;
+        scrollRef.current.scrollTo({ x: next, animated: false });
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    };
+  }, []);
+
+  const loopedItems = [...PHOTO_STRIP_ITEMS, ...PHOTO_STRIP_ITEMS];
+
+  return (
+    <ScrollView
+      ref={scrollRef}
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.photoStrip}
+      scrollEventThrottle={16}
+      onScroll={(e) => { scrollXRef.current = e.nativeEvent.contentOffset.x; }}
+      onScrollBeginDrag={() => {
+        pausedRef.current = true;
+        if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+      }}
+      onScrollEndDrag={() => {
+        if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+        resumeTimerRef.current = setTimeout(() => {
+          // Normalize position so we don't leave the looped range when
+          // resuming from a manual scroll that ended past the cycle.
+          if (scrollXRef.current >= PHOTO_CYCLE) {
+            scrollXRef.current -= PHOTO_CYCLE;
+            scrollRef.current?.scrollTo({ x: scrollXRef.current, animated: false });
+          }
+          pausedRef.current = false;
+        }, 1500);
+      }}
+    >
+      {loopedItems.map((photo, i) => (
+        <View key={i} style={styles.photoWrapper}>
+          <Image source={photo.src} style={styles.photoItem} resizeMode="cover" />
+          <Text style={styles.photoLabel}>{photo.label}</Text>
+        </View>
+      ))}
+    </ScrollView>
+  );
+}
+
 export default function SwitzerlandScreen() {
   const insets = useSafeAreaInsets();
   const { wedding } = useWedding();
@@ -222,26 +309,8 @@ export default function SwitzerlandScreen() {
         </Text>
       </View>
 
-      {/* Photo strip */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.photoStrip}
-      >
-        {[
-          { src: require('@/assets/images/promenade.png'), label: 'Montreux promenade' },
-          { src: require('@/assets/images/lauvaux.png'), label: 'Lavaux vineyards' },
-          { src: require('@/assets/images/narcissus_hike.png'), label: 'Narcissus hike' },
-          { src: require('@/assets/images/rochers_de_naye.png'), label: 'Rochers de Naye' },
-          { src: require('@/assets/images/narcissus.png'), label: 'Narcissus fields in May' },
-          { src: require('@/assets/images/boat.png'), label: 'Lake Geneva boat ride' },
-        ].map((photo, i) => (
-          <View key={i} style={styles.photoWrapper}>
-            <Image source={photo.src} style={styles.photoItem} resizeMode="cover" />
-            <Text style={styles.photoLabel}>{photo.label}</Text>
-          </View>
-        ))}
-      </ScrollView>
+      {/* Photo strip — auto-scrolls slowly, pauses on touch */}
+      <PhotoStrip />
 
       {/* Filter pills */}
       <ScrollView
