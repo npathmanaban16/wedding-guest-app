@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -23,6 +23,7 @@ import {
   getReactions,
   toggleReaction,
   deleteNotification,
+  editNotification,
   markMessagesRead,
   getReplies,
   addReply,
@@ -53,8 +54,10 @@ function MessageCard({
   isAdmin,
   onReact,
   onDelete,
+  onEdit,
   onReply,
   onDeleteReply,
+  onReplyOpen,
 }: {
   notification: AppNotification;
   reactions: ReactionSummary[];
@@ -63,8 +66,10 @@ function MessageCard({
   isAdmin: boolean;
   onReact: (emoji: string) => void;
   onDelete: () => void;
+  onEdit: (message: string) => Promise<void>;
   onReply: (message: string) => void;
   onDeleteReply: (replyId: string) => void;
+  onReplyOpen: (y: number) => void;
 }) {
   const myReaction = guestName
     ? (reactions.find((r) => r.guestNames.includes(guestName))?.emoji ?? null)
@@ -73,6 +78,12 @@ function MessageCard({
   const [replyOpen, setReplyOpen] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [sending, setSending] = useState(false);
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [editText, setEditText] = useState(notification.message);
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const cardYRef = useRef(0);
 
   const handleSend = async () => {
     const text = replyText.trim();
@@ -85,24 +96,94 @@ function MessageCard({
     setSending(false);
   };
 
+  const handleOpenReply = () => {
+    setReplyOpen(true);
+    // Let the input mount + keyboard animation start, then scroll the
+    // card into view above the keyboard.
+    setTimeout(() => onReplyOpen(cardYRef.current), 50);
+  };
+
+  const handleStartEdit = () => {
+    haptic.light();
+    setEditText(notification.message);
+    setEditOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    const trimmed = editText.trim();
+    if (!trimmed || trimmed === notification.message) {
+      setEditOpen(false);
+      return;
+    }
+    setSavingEdit(true);
+    try {
+      await onEdit(trimmed);
+      setEditOpen(false);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
   return (
-    <View style={styles.card}>
+    <View
+      style={styles.card}
+      onLayout={(e) => { cardYRef.current = e.nativeEvent.layout.y; }}
+    >
       <View style={styles.cardHeader}>
         <View style={styles.senderBadge}>
           <Ionicons name="notifications" size={13} color={Colors.primary} />
         </View>
         <View style={styles.headerMeta}>
           <Text style={styles.senderName}>{notification.sender}</Text>
-          <Text style={styles.timeAgo}>{timeAgo(notification.sentAt)}</Text>
+          <Text style={styles.timeAgo}>
+            {timeAgo(notification.sentAt)}
+            {notification.editedAt ? ' · edited' : ''}
+          </Text>
         </View>
-        {isAdmin && (
-          <TouchableOpacity onPress={() => { haptic.warning(); onDelete(); }} style={styles.deleteBtn} hitSlop={8}>
-            <Ionicons name="trash-outline" size={16} color={Colors.textMuted} />
-          </TouchableOpacity>
+        {isAdmin && !editOpen && (
+          <View style={styles.headerActions}>
+            <TouchableOpacity onPress={handleStartEdit} style={styles.iconBtn} hitSlop={8}>
+              <Ionicons name="pencil-outline" size={15} color={Colors.textMuted} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => { haptic.warning(); onDelete(); }} style={styles.iconBtn} hitSlop={8}>
+              <Ionicons name="trash-outline" size={16} color={Colors.textMuted} />
+            </TouchableOpacity>
+          </View>
         )}
       </View>
 
-      <Text style={styles.messageText}>{notification.message}</Text>
+      {editOpen ? (
+        <View style={styles.editSection}>
+          <TextInput
+            style={styles.editInput}
+            value={editText}
+            onChangeText={setEditText}
+            multiline
+            maxLength={500}
+            autoFocus
+            textAlignVertical="top"
+          />
+          <View style={styles.editActions}>
+            <TouchableOpacity
+              onPress={() => setEditOpen(false)}
+              style={[styles.editBtn, styles.editCancel]}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.editCancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleSaveEdit}
+              disabled={!editText.trim() || savingEdit}
+              style={[styles.editBtn, styles.editSave, (!editText.trim() || savingEdit) && styles.editSaveDisabled]}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.editSaveText}>{savingEdit ? 'Saving…' : 'Save'}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : (
+        <Text style={styles.messageText}>{notification.message}</Text>
+      )}
 
       <View style={styles.reactionStrip}>
         {REACTION_EMOJIS.map((emoji) => {
@@ -158,6 +239,7 @@ function MessageCard({
             multiline
             maxLength={280}
             autoFocus
+            onFocus={() => onReplyOpen(cardYRef.current)}
           />
           <TouchableOpacity
             onPress={handleSend}
@@ -170,7 +252,7 @@ function MessageCard({
       ) : (
         <TouchableOpacity
           style={styles.replyToggle}
-          onPress={() => setReplyOpen(true)}
+          onPress={handleOpenReply}
           activeOpacity={0.7}
         >
           <Ionicons name="chatbubble-outline" size={13} color={Colors.textMuted} />
@@ -339,16 +421,46 @@ export default function MessagesScreen() {
     );
   }, [weddingId, loadData]);
 
+  const handleEdit = useCallback(async (id: string, message: string) => {
+    const previous = notifications.find((n) => n.id === id);
+    const editedAt = new Date().toISOString();
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, message, editedAt } : n)),
+    );
+    try {
+      await editNotification(weddingId, id, message);
+    } catch {
+      // rollback on failure
+      if (previous) {
+        setNotifications((prev) => prev.map((n) => (n.id === id ? previous : n)));
+      }
+      Alert.alert('Error', 'Could not save your changes.');
+      throw new Error('edit failed');
+    }
+  }, [weddingId, notifications]);
+
+  // Scroll a message card into view so the keyboard doesn't cover its
+  // reply input. Called when a guest taps "Reply" or focuses the input.
+  const scrollRef = useRef<ScrollView>(null);
+  const handleReplyOpen = useCallback((cardY: number) => {
+    // Position the top of the card near the top of the viewport so the
+    // input at the card's bottom sits well above the keyboard.
+    const targetY = Math.max(0, cardY - Spacing.md);
+    scrollRef.current?.scrollTo({ y: targetY, animated: true });
+  }, []);
+
   return (
     <KeyboardAvoidingView
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
+        ref={scrollRef}
         style={styles.container}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.md }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
       >
         <View style={styles.pageHeader}>
           <Text style={styles.pageTitle}>Messages</Text>
@@ -374,8 +486,10 @@ export default function MessagesScreen() {
               isAdmin={isAdmin}
               onReact={(emoji) => handleReact(n.id, emoji)}
               onDelete={() => handleDelete(n.id, n.message)}
+              onEdit={(msg) => handleEdit(n.id, msg)}
               onReply={(msg) => handleReply(n.id, msg)}
               onDeleteReply={(replyId) => handleDeleteReply(n.id, replyId)}
+              onReplyOpen={handleReplyOpen}
             />
           ))
         )}
@@ -462,8 +576,59 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: Colors.textMuted,
   },
-  deleteBtn: {
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconBtn: {
     padding: Spacing.xs,
+  },
+
+  editSection: {
+    marginBottom: Spacing.md,
+  },
+  editInput: {
+    fontFamily: Fonts.sans,
+    fontSize: 15,
+    color: Colors.textPrimary,
+    lineHeight: 23,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    backgroundColor: Colors.background,
+    minHeight: 80,
+  },
+  editActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: Spacing.sm,
+    marginTop: Spacing.sm,
+  },
+  editBtn: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 8,
+    borderRadius: Radius.full,
+  },
+  editCancel: {
+    backgroundColor: 'transparent',
+  },
+  editCancelText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 13,
+    color: Colors.textMuted,
+  },
+  editSave: {
+    backgroundColor: Colors.primary,
+  },
+  editSaveDisabled: {
+    opacity: 0.45,
+  },
+  editSaveText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 13,
+    color: Colors.white,
   },
 
   messageText: {

@@ -126,6 +126,7 @@ export default function OnboardingScreen() {
         style={styles.container}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.sm }]}
         keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
       >
         {/* Header */}
         <View style={styles.header}>

@@ -143,6 +143,7 @@ export default function InviteScreen() {
         <ScrollView
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
           bounces={false}
           showsVerticalScrollIndicator={false}
         >

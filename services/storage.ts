@@ -185,6 +185,7 @@ export interface AppNotification {
   message: string;
   sender: string;
   sentAt: string;
+  editedAt: string | null;
 }
 
 export async function getNotifications(weddingId: string): Promise<AppNotification[]> {
@@ -200,12 +201,26 @@ export async function getNotifications(weddingId: string): Promise<AppNotificati
         message: n.message,
         sender: n.sender,
         sentAt: n.sent_at,
+        editedAt: n.edited_at ?? null,
       }));
     }
   } catch {
     // offline — no local cache for notifications
   }
   return [];
+}
+
+export async function editNotification(
+  weddingId: string,
+  id: string,
+  message: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from('notifications')
+    .update({ message, edited_at: new Date().toISOString() })
+    .eq('wedding_id', weddingId)
+    .eq('id', id);
+  if (error) throw new Error(error.message);
 }
 
 export async function deleteNotification(weddingId: string, id: string): Promise<void> {

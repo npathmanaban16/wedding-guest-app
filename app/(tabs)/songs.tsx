@@ -145,6 +145,7 @@ export default function SongsScreen() {
         style={styles.container}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.md }]}
         keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
       >
         {/* Page header */}
         <View style={styles.pageHeader}>
