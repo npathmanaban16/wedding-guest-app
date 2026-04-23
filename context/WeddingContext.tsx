@@ -175,7 +175,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
       setWedding(w);
       setGuests(g);
-      setAdminNames(a.map((row) => row.guest_name));
+      setAdmins(a);
       setLoadState('ready');
       setWeddingId(w.id);
     },

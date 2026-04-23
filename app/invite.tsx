@@ -100,8 +100,7 @@ export default function InviteScreen() {
       await applyResolvedWedding(resolved);
       await login(canonical);
       router.replace('/(tabs)');
-    } catch (e) {
-      console.error('[invite] login failed:', e);
+    } catch {
       setError("Couldn't reach the server. Please check your connection and try again.");
       shake();
     } finally {
