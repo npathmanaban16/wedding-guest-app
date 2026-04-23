@@ -35,6 +35,17 @@ begin
     return;
   end if;
 
+  -- Neha + Naveen are in public.guests so the guests row wins for
+  -- wedding-party / gender lookups. Setting the admin row to match is
+  -- just data hygiene.
+  update public.wedding_admins
+  set is_wedding_party = true, gender = 'female'
+  where wedding_id = nn_id and guest_name = 'Neha Pathmanaban';
+
+  update public.wedding_admins
+  set is_wedding_party = true, gender = 'male'
+  where wedding_id = nn_id and guest_name = 'Naveen Nath';
+
   -- Wedding planner: sees the rehearsal dinner + women-only packing.
   update public.wedding_admins
   set is_wedding_party = true, gender = 'female', role = 'planner'
@@ -45,7 +56,7 @@ begin
   -- rehearsal dinner is auto-hidden by the existing schedule filter).
   -- role='dj' excludes him from admin powers in WeddingContext.
   insert into public.wedding_admins (wedding_id, guest_name, is_wedding_party, gender, role)
-  values (nn_id, 'DJ Shraii', false, null, 'dj')
+  values (nn_id, 'DJ Shraii', false, 'male', 'dj')
   on conflict (wedding_id, guest_name) do update set
     is_wedding_party = excluded.is_wedding_party,
     gender           = excluded.gender,

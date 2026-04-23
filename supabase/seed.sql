@@ -166,10 +166,10 @@ insert into public.guests (wedding_id, canonical_name, is_wedding_party, gender)
 -- Shraii logs in as "DJ Shraii" with role='dj' — login only, scoped to
 -- the Sangeet + Reception on the schedule, no admin powers.
 insert into public.wedding_admins (wedding_id, guest_name, is_wedding_party, gender, role) values
-  ('00000000-0000-0000-0000-000000000001', 'Neha Pathmanaban', false, null,    null),
-  ('00000000-0000-0000-0000-000000000001', 'Naveen Nath',      false, null,    null),
+  ('00000000-0000-0000-0000-000000000001', 'Neha Pathmanaban', true,  'female', null),
+  ('00000000-0000-0000-0000-000000000001', 'Naveen Nath',      true,  'male',   null),
   ('00000000-0000-0000-0000-000000000001', 'Astrid Rolando',   true,  'female', 'planner'),
-  ('00000000-0000-0000-0000-000000000001', 'DJ Shraii',        false, null,    'dj');
+  ('00000000-0000-0000-0000-000000000001', 'DJ Shraii',        false, 'male',   'dj');
 
 
 -- ─── Guest Info ───────────────────────────────────────────────────────────────

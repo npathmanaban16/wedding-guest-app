@@ -184,10 +184,10 @@ on conflict (wedding_id, canonical_name) do nothing;
 -- Shraii logs in as "DJ Shraii" with role='dj' — login only, scoped to
 -- Sangeet + Ceremony + Reception (no rehearsal dinner), no admin powers.
 insert into public.wedding_admins (wedding_id, guest_name, is_wedding_party, gender, role) values
-  ('a0000000-0000-0000-0000-000000000001', 'Neha Pathmanaban', false, null,     null),
-  ('a0000000-0000-0000-0000-000000000001', 'Naveen Nath',      false, null,     null),
+  ('a0000000-0000-0000-0000-000000000001', 'Neha Pathmanaban', true,  'female', null),
+  ('a0000000-0000-0000-0000-000000000001', 'Naveen Nath',      true,  'male',   null),
   ('a0000000-0000-0000-0000-000000000001', 'Astrid Rolando',   true,  'female', 'planner'),
-  ('a0000000-0000-0000-0000-000000000001', 'DJ Shraii',        false, null,     'dj')
+  ('a0000000-0000-0000-0000-000000000001', 'DJ Shraii',        false, 'male',   'dj')
 on conflict (wedding_id, guest_name) do update set
   is_wedding_party = excluded.is_wedding_party,
   gender           = excluded.gender,
