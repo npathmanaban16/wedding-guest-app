@@ -2,17 +2,15 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   StyleSheet,
-  Modal,
-  FlatList,
-  SafeAreaView,
-  TextInput,
-  KeyboardAvoidingView,
+  LayoutAnimation,
   Platform,
+  UIManager,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
+import { Colors, Fonts, Spacing, Radius } from '@/constants/theme';
 
 export const HOTEL_OPTIONS = [
   'Fairmont Le Montreux Palace',
@@ -25,6 +23,14 @@ export const HOTEL_OPTIONS = [
 const OTHER = '__other__';
 const LIST_ITEMS = [...HOTEL_OPTIONS, OTHER];
 
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+const animateLayout = () => {
+  if (Platform.OS !== 'web') LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+};
+
 interface Props {
   label: string;
   value: string;
@@ -32,31 +38,38 @@ interface Props {
 }
 
 export function HotelPickerField({ label, value, onChange }: Props) {
-  const [modalVisible, setModalVisible] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [otherOpen, setOtherOpen] = useState(false);
   const [otherText, setOtherText] = useState('');
-  const [showOtherInput, setShowOtherInput] = useState(false);
 
   const isKnownHotel = HOTEL_OPTIONS.includes(value);
   const isOther = !isKnownHotel && value !== '';
-  const triggerLabel = isKnownHotel ? value : isOther ? value : '';
+  const triggerLabel = value || '';
+
+  const toggleOpen = () => {
+    animateLayout();
+    setOpen((v) => !v);
+    if (otherOpen) setOtherOpen(false);
+  };
 
   const handleSelect = (item: string) => {
     if (item === OTHER) {
+      animateLayout();
       setOtherText(isOther ? value : '');
-      setShowOtherInput(true);
+      setOtherOpen(true);
     } else {
-      setShowOtherInput(false);
       onChange(item);
-      setModalVisible(false);
+      animateLayout();
+      setOpen(false);
+      setOtherOpen(false);
     }
   };
 
   const handleOtherConfirm = () => {
-    if (otherText.trim()) {
-      onChange(otherText.trim());
-    }
-    setShowOtherInput(false);
-    setModalVisible(false);
+    if (otherText.trim()) onChange(otherText.trim());
+    animateLayout();
+    setOtherOpen(false);
+    setOpen(false);
   };
 
   return (
@@ -64,46 +77,29 @@ export function HotelPickerField({ label, value, onChange }: Props) {
       <Text style={styles.label}>{label}</Text>
 
       <TouchableOpacity
-        style={[styles.trigger, modalVisible && styles.triggerActive]}
-        onPress={() => { setShowOtherInput(false); setModalVisible(true); }}
+        style={[styles.trigger, open && styles.triggerOpen]}
+        onPress={toggleOpen}
         activeOpacity={0.8}
       >
         <Ionicons
           name="bed-outline"
           size={16}
-          color={modalVisible ? Colors.primary : Colors.textMuted}
+          color={open ? Colors.primary : Colors.textMuted}
           style={styles.icon}
         />
         <Text style={[styles.triggerText, !triggerLabel && { color: Colors.textMuted }]}>
           {triggerLabel || 'Select hotel...'}
         </Text>
         <Ionicons
-          name={modalVisible ? 'chevron-up' : 'chevron-down'}
+          name={open ? 'chevron-up' : 'chevron-down'}
           size={18}
           color={Colors.textMuted}
         />
       </TouchableOpacity>
 
-      <Modal
-        visible={modalVisible}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <KeyboardAvoidingView
-          style={styles.kav}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-        <TouchableOpacity
-          style={styles.backdrop}
-          activeOpacity={1}
-          onPress={() => setModalVisible(false)}
-        />
-        <SafeAreaView style={styles.sheet}>
-          <View style={styles.sheetHandle} />
-          <Text style={styles.sheetTitle}>Where are you staying?</Text>
-
-          {showOtherInput ? (
+      {open && (
+        <View style={styles.dropdown}>
+          {otherOpen ? (
             <View style={styles.otherSection}>
               <Text style={styles.otherLabel}>Enter your hotel name</Text>
               <TextInput
@@ -116,48 +112,54 @@ export function HotelPickerField({ label, value, onChange }: Props) {
                 returnKeyType="done"
                 onSubmitEditing={handleOtherConfirm}
               />
+              <View style={styles.otherActions}>
+                <TouchableOpacity
+                  onPress={() => { animateLayout(); setOtherOpen(false); }}
+                  style={[styles.otherBtn, styles.otherCancel]}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.otherCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleOtherConfirm}
+                  disabled={!otherText.trim()}
+                  style={[styles.otherBtn, styles.otherConfirm, !otherText.trim() && styles.otherConfirmDisabled]}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.otherConfirmText}>Confirm</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           ) : (
-            <FlatList
-              data={LIST_ITEMS}
-              keyExtractor={(item) => item}
-              renderItem={({ item }) => {
-                const isSelected = item === OTHER ? isOther : value === item;
-                const displayText = item === OTHER ? 'Somewhere else...' : item;
-                return (
-                  <TouchableOpacity
-                    style={[styles.option, isSelected && styles.optionSelected]}
-                    onPress={() => handleSelect(item)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[
+            LIST_ITEMS.map((item, idx) => {
+              const isSelected = item === OTHER ? isOther : value === item;
+              const displayText = item === OTHER ? 'Somewhere else…' : item;
+              const isLast = idx === LIST_ITEMS.length - 1;
+              return (
+                <TouchableOpacity
+                  key={item}
+                  style={[styles.option, !isLast && styles.optionDivider, isSelected && styles.optionSelected]}
+                  onPress={() => handleSelect(item)}
+                  activeOpacity={0.6}
+                >
+                  <Text
+                    style={[
                       styles.optionText,
                       isSelected && styles.optionTextSelected,
                       item === OTHER && styles.optionTextOther,
-                    ]}>
-                      {displayText}
-                    </Text>
-                    {isSelected && (
-                      <Ionicons name="checkmark" size={18} color={Colors.primary} />
-                    )}
-                  </TouchableOpacity>
-                );
-              }}
-              ItemSeparatorComponent={() => <View style={styles.separator} />}
-            />
+                    ]}
+                  >
+                    {displayText}
+                  </Text>
+                  {isSelected ? (
+                    <Ionicons name="checkmark" size={16} color={Colors.primary} />
+                  ) : null}
+                </TouchableOpacity>
+              );
+            })
           )}
-
-          <TouchableOpacity
-            style={styles.doneButton}
-            onPress={showOtherInput ? handleOtherConfirm : () => setModalVisible(false)}
-          >
-            <Text style={styles.doneButtonText}>
-              {showOtherInput ? 'Confirm' : 'Done'}
-            </Text>
-          </TouchableOpacity>
-        </SafeAreaView>
-        </KeyboardAvoidingView>
-      </Modal>
+        </View>
+      )}
     </View>
   );
 }
@@ -172,6 +174,7 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     marginBottom: Spacing.xs,
   },
+
   trigger: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -182,8 +185,10 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: Colors.background,
   },
-  triggerActive: {
+  triggerOpen: {
     borderColor: Colors.primary,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
   },
   icon: { marginRight: Spacing.xs },
   triggerText: {
@@ -193,46 +198,33 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
 
-  kav: { flex: 1 },
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-  },
-  sheet: {
+  dropdown: {
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: Colors.primary,
+    borderBottomLeftRadius: Radius.md,
+    borderBottomRightRadius: Radius.md,
     backgroundColor: Colors.white,
-    borderTopLeftRadius: Radius.xl,
-    borderTopRightRadius: Radius.xl,
-    paddingBottom: Platform.OS === 'android' ? Spacing.lg : 0,
-    maxHeight: '75%',
-    ...Shadow.large,
+    overflow: 'hidden',
   },
-  sheetHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.divider,
-    alignSelf: 'center',
-    marginTop: Spacing.sm,
-    marginBottom: Spacing.md,
-  },
-  sheetTitle: {
-    fontSize: 17,
-    fontFamily: Fonts.serifSemiBold,
-    color: Colors.textPrimary,
-    textAlign: 'center',
-    marginBottom: Spacing.md,
-    letterSpacing: 0.2,
-  },
+
   option: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: 15,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 12,
   },
-  optionSelected: { backgroundColor: Colors.surfaceWarm },
+  optionDivider: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.divider,
+  },
+  optionSelected: {
+    backgroundColor: Colors.surfaceWarm,
+  },
   optionText: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: Fonts.sans,
     color: Colors.textPrimary,
   },
@@ -242,17 +234,11 @@ const styles = StyleSheet.create({
   },
   optionTextOther: {
     color: Colors.textMuted,
-    fontFamily: Fonts.sans,
-  },
-  separator: {
-    height: 1,
-    backgroundColor: Colors.divider,
-    marginHorizontal: Spacing.lg,
+    fontStyle: 'italic',
   },
 
   otherSection: {
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.md,
+    padding: Spacing.md,
   },
   otherLabel: {
     fontFamily: Fonts.sansMedium,
@@ -267,23 +253,40 @@ const styles = StyleSheet.create({
     borderColor: Colors.primary,
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.md,
-    paddingVertical: 12,
-    fontSize: 15,
+    paddingVertical: 10,
+    fontSize: 14,
     fontFamily: Fonts.sans,
     color: Colors.textPrimary,
     backgroundColor: Colors.background,
   },
-
-  doneButton: {
-    margin: Spacing.lg,
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.md,
-    paddingVertical: 14,
-    alignItems: 'center',
+  otherActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: Spacing.sm,
+    marginTop: Spacing.sm,
   },
-  doneButtonText: {
-    fontSize: 15,
+  otherBtn: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 8,
+    borderRadius: Radius.full,
+  },
+  otherCancel: {
+    backgroundColor: 'transparent',
+  },
+  otherCancelText: {
     fontFamily: Fonts.sansMedium,
+    fontSize: 13,
+    color: Colors.textMuted,
+  },
+  otherConfirm: {
+    backgroundColor: Colors.primary,
+  },
+  otherConfirmDisabled: {
+    opacity: 0.4,
+  },
+  otherConfirmText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 13,
     color: Colors.white,
   },
 });

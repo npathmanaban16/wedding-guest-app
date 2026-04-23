@@ -77,6 +77,7 @@ function LoginScreenInner() {
         <ScrollView
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
           bounces={false}
           showsVerticalScrollIndicator={false}
         >

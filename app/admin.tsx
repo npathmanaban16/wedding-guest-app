@@ -108,6 +108,7 @@ export default function AdminScreen() {
         style={styles.container}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.md }]}
         keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
       >
         {/* Header */}
         <View style={styles.header}>
