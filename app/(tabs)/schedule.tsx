@@ -108,20 +108,22 @@ function EventCard({ event, coupleNames }: { event: WeddingEvent; coupleNames: s
   const swatchWidth = `${100 / swatchsPerRow}%` as const;
 
   return (
-    <TouchableOpacity style={styles.card} onPress={toggle} activeOpacity={0.9}>
-      {/* Header */}
-      <View style={styles.cardHeader}>
-        <View style={styles.cardHeaderText}>
-          <Text style={styles.eventTitle}>{event.title}</Text>
-          <Text style={styles.eventDateTime}>{event.date}</Text>
-          <Text style={styles.eventTime}>{event.time}</Text>
+    <View style={styles.card}>
+      {/* Header — tapping here (title/date/time row) toggles the card */}
+      <TouchableOpacity onPress={toggle} activeOpacity={0.9}>
+        <View style={styles.cardHeader}>
+          <View style={styles.cardHeaderText}>
+            <Text style={styles.eventTitle}>{event.title}</Text>
+            <Text style={styles.eventDateTime}>{event.date}</Text>
+            <Text style={styles.eventTime}>{event.time}</Text>
+          </View>
+          <Ionicons
+            name={expanded ? 'chevron-up' : 'chevron-down'}
+            size={18}
+            color={Colors.textMuted}
+          />
         </View>
-        <Ionicons
-          name={expanded ? 'chevron-up' : 'chevron-down'}
-          size={18}
-          color={Colors.textMuted}
-        />
-      </View>
+      </TouchableOpacity>
 
       {expanded && (
         <View style={styles.cardBody}>
@@ -300,7 +302,7 @@ function EventCard({ event, coupleNames }: { event: WeddingEvent; coupleNames: s
           )}
         </View>
       )}
-    </TouchableOpacity>
+    </View>
   );
 }
 
