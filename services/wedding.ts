@@ -25,6 +25,10 @@ export interface GuestRow {
 
 export interface AdminRow {
   guest_name: string;
+  // Optional per-admin gating; only consulted when the admin isn't also
+  // in public.guests (see WeddingContext).
+  is_wedding_party: boolean;
+  gender: Gender | null;
 }
 
 const WEDDING_COLUMNS =
@@ -66,7 +70,7 @@ export async function fetchGuests(weddingId: string): Promise<GuestRow[]> {
 export async function fetchAdmins(weddingId: string): Promise<AdminRow[]> {
   const { data, error } = await supabase
     .from('wedding_admins')
-    .select('guest_name')
+    .select('guest_name, is_wedding_party, gender')
     .eq('wedding_id', weddingId);
   if (error) throw error;
   return data ?? [];

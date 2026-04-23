@@ -77,7 +77,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
 
   const [wedding, setWedding] = useState<WeddingRow | null>(null);
   const [guests, setGuests] = useState<GuestRow[]>([]);
-  const [adminNames, setAdminNames] = useState<string[]>([]);
+  const [admins, setAdmins] = useState<AdminRow[]>([]);
   const [loadState, setLoadState] = useState<'idle' | 'loading' | 'ready' | 'error'>(
     DEFAULT_WEDDING_ID ? 'loading' : 'idle',
   );
@@ -103,7 +103,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       setLoadState('idle');
       setWedding(null);
       setGuests([]);
-      setAdminNames([]);
+      setAdmins([]);
       return;
     }
     // Defensive: if weddingId somehow isn't a uuid-shaped string, clear it.
@@ -144,7 +144,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
         }
         setWedding(w);
         setGuests(g);
-        setAdminNames(a.map((row) => row.guest_name));
+        setAdmins(a);
         setLoadState('ready');
       } catch (err) {
         console.error('[WeddingProvider] failed to load wedding data', err);
@@ -194,24 +194,36 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
   const weddingValue = useMemo<WeddingContextType | null>(() => {
     if (!wedding || !weddingId) return null;
     const guestByNormalized = new Map(guests.map((g) => [normalizeName(g.canonical_name), g]));
-    const adminNormalized = new Set(adminNames.map(normalizeName));
+    const adminByNormalized = new Map(admins.map((a) => [normalizeName(a.guest_name), a]));
 
     const isValidGuest = (name: string) => guestByNormalized.has(normalizeName(name));
-    const isAdmin = (name: string) => adminNormalized.has(normalizeName(name));
+    const isAdmin = (name: string) => adminByNormalized.has(normalizeName(name));
     const isValidGuestOrAdmin = (name: string) => isValidGuest(name) || isAdmin(name);
 
     const getCanonicalName = (name: string) => {
       const n = normalizeName(name);
       return guestByNormalized.get(n)?.canonical_name
-        ?? adminNames.find((a) => normalizeName(a) === n)
+        ?? adminByNormalized.get(n)?.guest_name
         ?? null;
     };
 
-    const isWeddingParty = (name: string) =>
-      guestByNormalized.get(normalizeName(name))?.is_wedding_party ?? false;
+    // Guests table wins for any user who's also a guest — guest-row flags
+    // are the RSVP source of truth. Non-guest admins (planner, DJ) fall
+    // through to the wedding_admins row so they can still be flagged as
+    // wedding-party or scoped to a gender-specific packing list.
+    const isWeddingParty = (name: string) => {
+      const n = normalizeName(name);
+      const g = guestByNormalized.get(n);
+      if (g) return g.is_wedding_party;
+      return adminByNormalized.get(n)?.is_wedding_party ?? false;
+    };
 
-    const getGuestGender = (name: string) =>
-      guestByNormalized.get(normalizeName(name))?.gender ?? null;
+    const getGuestGender = (name: string) => {
+      const n = normalizeName(name);
+      const g = guestByNormalized.get(n);
+      if (g) return g.gender;
+      return adminByNormalized.get(n)?.gender ?? null;
+    };
 
     return {
       weddingId,
@@ -223,7 +235,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       getGuestGender,
       isAdmin,
     };
-  }, [weddingId, wedding, guests, adminNames]);
+  }, [weddingId, wedding, guests, admins]);
 
   // Initial session restore — brief blank while AsyncStorage reads on SaaS.
   if (!sessionReady) {
