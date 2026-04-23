@@ -22,8 +22,13 @@ import { useWedding } from '@/context/WeddingContext';
 import { FairmontMap } from '@/components/FairmontMap';
 import { haptic } from '@/utils/haptics';
 
-function openMaps(address: string) {
-  const encoded = encodeURIComponent(address);
+// Pass `name` when a human-readable landmark / venue exists so the maps
+// app resolves to the actual destination rather than geocoding just the
+// street address — especially helpful for venues like "Fairmont Le
+// Montreux Palace" that sit on long shared blocks.
+function openMaps(address: string, name?: string) {
+  const query = name ? `${name}, ${address}` : address;
+  const encoded = encodeURIComponent(query);
   const url = Platform.select({
     ios: `maps:0,0?q=${encoded}`,
     android: `geo:0,0?q=${encoded}`,
@@ -147,7 +152,13 @@ function EventCard({ event, coupleNames, expanded, onToggle }: EventCardProps) {
           <View style={styles.actionRow}>
             <TouchableOpacity
               style={styles.actionBtn}
-              onPress={() => { haptic.medium(); openMaps(event.address); }}
+              onPress={() => {
+                haptic.medium();
+                // Venues are sometimes "Main Property | Specific Room"; the
+                // part before the pipe is what maps need for place lookup.
+                const venueName = event.venue.split('|')[0].trim();
+                openMaps(event.address, venueName);
+              }}
               activeOpacity={0.7}
             >
               <Ionicons name="map-outline" size={14} color={Colors.gold} />

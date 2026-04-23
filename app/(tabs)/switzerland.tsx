@@ -36,8 +36,13 @@ const PHOTO_STRIP_ITEMS = [
   { src: require('@/assets/images/boat.png'), label: 'Lake Geneva boat ride' },
 ];
 
-function openMaps(address: string) {
-  const encoded = encodeURIComponent(address);
+// Pass `name` when a human-readable landmark exists (e.g. "Glacier 3000",
+// "Rochers de Naye") so the maps app resolves to the actual destination
+// rather than geocoding the mailing address — which for landmarks can be
+// miles away from where the user actually wants to go.
+function openMaps(address: string, name?: string) {
+  const query = name ? `${name}, ${address}` : address;
+  const encoded = encodeURIComponent(query);
   const url = Platform.select({
     ios: `maps:0,0?q=${encoded}`,
     android: `geo:0,0?q=${encoded}`,
@@ -129,7 +134,7 @@ function GuideItemCard({ item }: { item: GuideItem }) {
             </View>
           )}
           {item.address && (
-            <TouchableOpacity style={styles.directionsButton} onPress={() => { haptic.medium(); openMaps(item.address!); }} activeOpacity={0.8}>
+            <TouchableOpacity style={styles.directionsButton} onPress={() => { haptic.medium(); openMaps(item.address!, item.name); }} activeOpacity={0.8}>
               <Ionicons name="map-outline" size={14} color={Colors.gold} />
               <Text style={styles.directionsText}>Get Directions</Text>
             </TouchableOpacity>
