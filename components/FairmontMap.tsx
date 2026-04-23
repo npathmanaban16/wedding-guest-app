@@ -46,11 +46,8 @@ export function FairmontMap() {
   const { weddingId } = useWedding();
   const VENUES = NN_WEDDING_IDS.has(weddingId ?? '') ? VENUES_NN : VENUES_DEMO;
   const [open, setOpen] = useState(false);
-  // Measure the rendered width of the image wrapper so we can set explicit
-  // pixel dimensions on the Image — avoids percentage/aspectRatio sizing bugs.
   const [imgW, setImgW] = useState(0);
   const imgH = imgW > 0 ? Math.round(imgW * (IMG_H / IMG_W)) : 0;
-
 
   const toggle = () => {
     animateLayout();
@@ -58,89 +55,102 @@ export function FairmontMap() {
   };
 
   return (
-    <View style={s.card}>
-      <TouchableOpacity style={s.header} onPress={toggle} activeOpacity={0.85}>
-        <View>
-          <Text style={s.tag}>Venue Overview</Text>
-          <Text style={s.title}>Hotel Map</Text>
-        </View>
-        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.textMuted} />
-      </TouchableOpacity>
+    // Outer view carries the shadow; inner view clips to border radius.
+    // Splitting them prevents iOS from clipping the shadow.
+    <View style={s.shadowWrap}>
+      <View style={s.card}>
+        <TouchableOpacity style={s.header} onPress={toggle} activeOpacity={0.85}>
+          <View style={s.headerLeft}>
+            <Text style={s.tag}>Venue Overview</Text>
+            <Text style={s.title}>Hotel Map</Text>
+          </View>
+          <View style={[s.chevronWrap, open && s.chevronWrapOpen]}>
+            <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={14} color={open ? Colors.primary : Colors.textMuted} />
+          </View>
+        </TouchableOpacity>
 
-      {open && (
-        <View>
-          <View style={s.divider} />
+        {open && (
+          <View>
+            <View style={s.divider} />
 
-          <View
-            style={s.imageContainer}
-            onLayout={e => setImgW(Math.floor(e.nativeEvent.layout.width) - Spacing.md * 2)}
-          >
-            <ScrollView
-              style={{ height: imgH > 0 ? Math.min(imgH, 420) : 420 }}
-              minimumZoomScale={1}
-              maximumZoomScale={4}
-              centerContent
-              bouncesZoom
-              showsHorizontalScrollIndicator={false}
-              showsVerticalScrollIndicator={false}
+            <View
+              style={s.imageContainer}
+              onLayout={e => setImgW(Math.floor(e.nativeEvent.layout.width) - Spacing.md * 2)}
             >
-              {imgW > 0 && (
-                <Image
-                  source={require('@/assets/images/fairmont_floor_plan.png')}
-                  style={{ width: imgW, height: imgH }}
-                  resizeMode="stretch"
-                />
-              )}
-            </ScrollView>
-            <Text style={s.zoomHint}>Pinch to zoom</Text>
-          </View>
+              <ScrollView
+                style={{ height: imgH > 0 ? Math.min(imgH, 420) : 420 }}
+                minimumZoomScale={1}
+                maximumZoomScale={4}
+                centerContent
+                bouncesZoom
+                showsHorizontalScrollIndicator={false}
+                showsVerticalScrollIndicator={false}
+              >
+                {imgW > 0 && (
+                  <Image
+                    source={require('@/assets/images/fairmont_floor_plan.png')}
+                    style={{ width: imgW, height: imgH }}
+                    resizeMode="stretch"
+                  />
+                )}
+              </ScrollView>
+              <Text style={s.zoomHint}>Pinch to zoom · double-tap to reset</Text>
+            </View>
 
-          <View style={s.divider} />
+            <View style={s.divider} />
 
-          {/* Legend */}
-          <View style={s.legend}>
-            {VENUES.map(v => (
-              <View key={v.n} style={s.legendRow}>
-                <View style={[s.legendPin, { backgroundColor: v.color }]}>
-                  <Text style={s.legendPinNum}>{v.n}</Text>
+            {/* Legend */}
+            <View style={s.legend}>
+              {VENUES.map(v => (
+                <View key={v.n} style={s.legendRow}>
+                  <View style={[s.legendPin, { backgroundColor: v.color }]}>
+                    <Text style={s.legendPinNum}>{v.n}</Text>
+                  </View>
+                  <View style={s.legendInfo}>
+                    <Text style={s.legendEvent}>{v.event}</Text>
+                    <Text style={s.legendRoom}>{v.room}</Text>
+                    <Text style={s.legendWhen}>{v.when}</Text>
+                  </View>
                 </View>
-                <View style={s.legendInfo}>
-                  <Text style={s.legendEvent}>{v.event}</Text>
-                  <Text style={s.legendRoom}>{v.room}</Text>
-                  <Text style={s.legendWhen}>{v.when}</Text>
-                </View>
-              </View>
-            ))}
+              ))}
+            </View>
           </View>
-        </View>
-      )}
+        )}
+      </View>
     </View>
   );
 }
 
 const s = StyleSheet.create({
+  // Shadow lives here; no overflow so it isn't clipped on iOS
+  shadowWrap: {
+    borderRadius: Radius.lg,
+    ...Shadow.small,
+  },
+  // Clip border radius here without a shadow
   card: {
     backgroundColor: Colors.white,
     borderRadius: Radius.lg,
     borderWidth: 0.5,
     borderColor: Colors.border,
     overflow: 'hidden',
-    ...Shadow.small,
   },
 
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    backgroundColor: Colors.surfaceWarm,
   },
+  headerLeft: { gap: 2 },
   tag: {
     fontFamily: Fonts.sansMedium,
     fontSize: 10,
     letterSpacing: 2,
     textTransform: 'uppercase',
     color: Colors.gold,
-    marginBottom: 2,
   },
   title: {
     fontFamily: Fonts.serifSemiBold,
@@ -148,13 +158,27 @@ const s = StyleSheet.create({
     color: Colors.textPrimary,
     letterSpacing: 0.2,
   },
+  chevronWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+  },
+  chevronWrapOpen: {
+    backgroundColor: Colors.surfaceWarm,
+    borderColor: Colors.primaryLight,
+  },
   divider: {
     height: 1,
     backgroundColor: Colors.divider,
   },
 
   imageContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.white,
     padding: Spacing.md,
   },
   zoomHint: {
@@ -177,15 +201,16 @@ const s = StyleSheet.create({
     gap: Spacing.sm,
   },
   legendPin: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 1,
+    flexShrink: 0,
   },
   legendPinNum: {
-    fontSize: 10,
+    fontSize: 11,
     fontFamily: Fonts.sansMedium,
     color: '#fff',
   },
