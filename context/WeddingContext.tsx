@@ -8,6 +8,7 @@ import {
   fetchGuests,
   fetchWedding,
   resolveWeddingByInviteCode,
+  type AdminRole,
   type AdminRow,
   type Gender,
   type GuestRow,
@@ -15,7 +16,7 @@ import {
   type WeddingRow,
 } from '@/services/wedding';
 
-export type { Gender };
+export type { AdminRole, Gender };
 
 // ─── Session: always available while WeddingProvider is mounted ──────────────
 // Tracks which wedding this install is attached to. Null on the SaaS variant
@@ -46,7 +47,12 @@ interface WeddingContextType {
   getCanonicalName: (name: string) => string | null;
   isWeddingParty: (name: string) => boolean;
   getGuestGender: (name: string) => Gender | null;
+  // True only for admins with full powers (no role, or role='planner').
+  // Vendor-role admins like DJs return false — they have login access but
+  // no admin-ui surfaces. Membership in wedding_admins is still checked
+  // by isValidGuestOrAdmin for login purposes.
   isAdmin: (name: string) => boolean;
+  getAdminRole: (name: string) => AdminRole | null;
 }
 
 const WeddingContext = createContext<WeddingContextType | null>(null);
@@ -197,8 +203,21 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
     const adminByNormalized = new Map(admins.map((a) => [normalizeName(a.guest_name), a]));
 
     const isValidGuest = (name: string) => guestByNormalized.has(normalizeName(name));
-    const isAdmin = (name: string) => adminByNormalized.has(normalizeName(name));
-    const isValidGuestOrAdmin = (name: string) => isValidGuest(name) || isAdmin(name);
+    // Raw membership in wedding_admins — used for login only. Admin-power
+    // gating uses isAdmin below, which additionally excludes vendor roles.
+    const isAdminMember = (name: string) => adminByNormalized.has(normalizeName(name));
+    const isValidGuestOrAdmin = (name: string) => isValidGuest(name) || isAdminMember(name);
+
+    const getAdminRole = (name: string): AdminRole | null =>
+      adminByNormalized.get(normalizeName(name))?.role ?? null;
+
+    // Admin powers = in wedding_admins AND not a vendor role. Vendor
+    // roles (currently just 'dj') get login access but no admin UI.
+    const isAdmin = (name: string) => {
+      const a = adminByNormalized.get(normalizeName(name));
+      if (!a) return false;
+      return a.role === null || a.role === 'planner';
+    };
 
     const getCanonicalName = (name: string) => {
       const n = normalizeName(name);
@@ -234,6 +253,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       isWeddingParty,
       getGuestGender,
       isAdmin,
+      getAdminRole,
     };
   }, [weddingId, wedding, guests, admins]);
 

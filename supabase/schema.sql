@@ -79,6 +79,11 @@ create table public.wedding_admins (
   -- columns are ignored.
   is_wedding_party boolean not null default false,
   gender           text check (gender in ('male', 'female')),
+  -- Optional role. Admins without a role (or role='planner') get full
+  -- admin powers (send notifications, delete messages, admin page).
+  -- Vendor roles like 'dj' are login-only: scoped schedule visibility,
+  -- no admin-ui surfaces. Expand the check list as new vendors are added.
+  role             text check (role in ('planner', 'dj')),
   created_at       timestamptz default now(),
   unique (wedding_id, guest_name)
 );

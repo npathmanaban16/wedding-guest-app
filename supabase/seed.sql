@@ -161,14 +161,15 @@ insert into public.guests (wedding_id, canonical_name, is_wedding_party, gender)
 
 -- is_wedding_party + gender are only consulted for admins who aren't in
 -- public.guests. Neha and Naveen are both, so their admin-row flags are
--- harmless defaults. Astrid is planner-only: tag her as wedding-party +
--- female so she sees the rehearsal dinner and the women's packing list.
--- Shraii is the DJ: login access only, no extra gating.
-insert into public.wedding_admins (wedding_id, guest_name, is_wedding_party, gender) values
-  ('00000000-0000-0000-0000-000000000001', 'Neha Pathmanaban', false, null),
-  ('00000000-0000-0000-0000-000000000001', 'Naveen Nath',      false, null),
-  ('00000000-0000-0000-0000-000000000001', 'Astrid Rolando',   true,  'female'),
-  ('00000000-0000-0000-0000-000000000001', 'Shraii Mashru',    false, null);
+-- harmless defaults. Astrid (planner) is tagged wedding-party + female
+-- so she sees the rehearsal dinner and the women's packing list. DJ
+-- Shraii logs in as "DJ Shraii" with role='dj' — login only, scoped to
+-- the Sangeet + Reception on the schedule, no admin powers.
+insert into public.wedding_admins (wedding_id, guest_name, is_wedding_party, gender, role) values
+  ('00000000-0000-0000-0000-000000000001', 'Neha Pathmanaban', false, null,    null),
+  ('00000000-0000-0000-0000-000000000001', 'Naveen Nath',      false, null,    null),
+  ('00000000-0000-0000-0000-000000000001', 'Astrid Rolando',   true,  'female', 'planner'),
+  ('00000000-0000-0000-0000-000000000001', 'DJ Shraii',        false, null,    'dj');
 
 
 -- ─── Guest Info ───────────────────────────────────────────────────────────────

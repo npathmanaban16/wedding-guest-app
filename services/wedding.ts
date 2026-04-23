@@ -23,12 +23,17 @@ export interface GuestRow {
   gender: Gender | null;
 }
 
+export type AdminRole = 'planner' | 'dj';
+
 export interface AdminRow {
   guest_name: string;
   // Optional per-admin gating; only consulted when the admin isn't also
   // in public.guests (see WeddingContext).
   is_wedding_party: boolean;
   gender: Gender | null;
+  // Optional vendor-style role. Admins with no role (or 'planner') get
+  // full admin powers; vendor roles like 'dj' are login-only.
+  role: AdminRole | null;
 }
 
 const WEDDING_COLUMNS =
@@ -70,7 +75,7 @@ export async function fetchGuests(weddingId: string): Promise<GuestRow[]> {
 export async function fetchAdmins(weddingId: string): Promise<AdminRow[]> {
   const { data, error } = await supabase
     .from('wedding_admins')
-    .select('guest_name, is_wedding_party, gender')
+    .select('guest_name, is_wedding_party, gender, role')
     .eq('wedding_id', weddingId);
   if (error) throw error;
   return data ?? [];
