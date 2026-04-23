@@ -1,6 +1,5 @@
 import React, { useRef, useState } from 'react';
 import {
-  findNodeHandle,
   View,
   Text,
   TextInput,
@@ -54,10 +53,14 @@ export function HotelPickerField({ label, value, onChange, scrollRef }: Props) {
 
   const scrollFieldIntoView = () => {
     if (!scrollRef?.current || !wrapperRef.current) return;
-    const node = findNodeHandle(scrollRef.current);
-    if (!node) return;
+    // On Fabric (RN 0.81), measureLayout requires a native component ref —
+    // a node-handle number from findNodeHandle triggers a runtime warning.
+    // getNativeScrollRef() returns the underlying host component of the
+    // ScrollView, which measureLayout accepts directly.
+    const scrollable = scrollRef.current.getNativeScrollRef?.();
+    if (!scrollable) return;
     wrapperRef.current.measureLayout(
-      node,
+      scrollable,
       (_x, y) => {
         scrollRef.current?.scrollTo({ y: Math.max(0, y - Spacing.sm), animated: true });
       },
