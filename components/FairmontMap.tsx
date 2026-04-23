@@ -12,7 +12,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
-import { DEFAULT_WEDDING_ID } from '@/constants/weddingData';
+import { NN_WEDDING_IDS } from '@/constants/weddingData';
+import { useWedding } from '@/context/WeddingContext';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -41,10 +42,9 @@ const VENUES_DEMO = [
   { n: 3, event: 'Reception',     room: 'Salle des Fêtes',                       when: 'Sat 22 May · 7:30 PM', color: Colors.primary },
 ];
 
-const VENUES = DEFAULT_WEDDING_ID === null ? VENUES_DEMO : VENUES_NN;
-
-
 export function FairmontMap() {
+  const { weddingId } = useWedding();
+  const VENUES = NN_WEDDING_IDS.has(weddingId ?? '') ? VENUES_NN : VENUES_DEMO;
   const [open, setOpen] = useState(false);
   // Measure the rendered width of the image wrapper so we can set explicit
   // pixel dimensions on the Image — avoids percentage/aspectRatio sizing bugs.

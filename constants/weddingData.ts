@@ -76,7 +76,17 @@ export interface WeddingEvent {
   hairMakeupLinks?: { label: string; url: string }[];
 }
 
-const EVENTS_NN: WeddingEvent[] = [
+// Wedding IDs that belong to the real N&N wedding (same couple, two Supabase
+// projects — the original single-tenant schema and the SaaS schema).
+// Used at runtime to decide whether to show N&N-specific content vs. generic
+// demo content, so that the N&N tenant in the SaaS/Tetherly build sees their
+// real Sangeet, Indian dress codes, Bollywood songs, etc.
+export const NN_WEDDING_IDS = new Set([
+  '00000000-0000-0000-0000-000000000001', // N&N in original (single-tenant) schema
+  'a0000000-0000-0000-0000-000000000001', // N&N in SaaS/Tetherly schema
+]);
+
+export const EVENTS_NN: WeddingEvent[] = [
   {
     id: "rehearsal-dinner",
     title: "Rehearsal Dinner",
@@ -224,7 +234,7 @@ const EVENTS_NN: WeddingEvent[] = [
 // Shift event dates one year forward (N&N dates are 2026-05-21/22/23; demo
 // uses 2027-05-20/21/22 so the same weekdays — Thu/Fri/Sat — line up with
 // the home-screen countdown for the demo wedding).
-const EVENTS_DEMO: WeddingEvent[] = EVENTS_NN.map((event) => {
+export const EVENTS_DEMO: WeddingEvent[] = EVENTS_NN.map((event) => {
   // Every event drops the real outfit-inspiration Netlify link (it's the
   // couple's personal style board). Setting to undefined is equivalent to
   // omitting since the field is optional on WeddingEvent.
@@ -724,7 +734,7 @@ export interface PackingItem {
   gender?: 'male' | 'female';
 }
 
-const PACKING_GUIDE_NN: PackingCategory[] = [
+export const PACKING_GUIDE_NN: PackingCategory[] = [
   {
     id: "outfits",
     title: "Outfits",
@@ -988,7 +998,7 @@ const PACKING_GUIDE_NN: PackingCategory[] = [
 // wedding-specific: sarees, bindis, dupattas) and renames Sangeet entries
 // to "Welcome Party" so the Packing tab reads coherently for a generic
 // demo wedding. Weather / grooming / essentials are unchanged.
-const PACKING_GUIDE_DEMO: PackingCategory[] = PACKING_GUIDE_NN
+export const PACKING_GUIDE_DEMO: PackingCategory[] = PACKING_GUIDE_NN
   .filter((cat) => cat.id !== 'indian-attire-extras')
   .map((cat) => ({
     ...cat,

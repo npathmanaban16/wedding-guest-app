@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Calendar from 'expo-calendar';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
-import { EVENTS, WeddingEvent } from '@/constants/weddingData';
+import { EVENTS_NN, EVENTS_DEMO, NN_WEDDING_IDS, WeddingEvent } from '@/constants/weddingData';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
 import { FairmontMap } from '@/components/FairmontMap';
@@ -327,7 +327,8 @@ export default function ScheduleScreen() {
   const { guestName } = useAuth();
   const { isWeddingParty, wedding } = useWedding();
   const inWeddingParty = isWeddingParty(guestName ?? '');
-  const visibleEvents = EVENTS.filter((e) => !e.weddingPartyOnly || inWeddingParty);
+  const events = NN_WEDDING_IDS.has(wedding.id) ? EVENTS_NN : EVENTS_DEMO;
+  const visibleEvents = events.filter((e) => !e.weddingPartyOnly || inWeddingParty);
 
   return (
     <ScrollView
