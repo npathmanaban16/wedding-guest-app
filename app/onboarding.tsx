@@ -24,16 +24,20 @@ import { DateField } from '@/components/DateField';
 // Travel window brackets the wedding's event dates. Kept in sync with
 // my-info.tsx so both onboarding and the settings tab enforce the same
 // range. N&N events run May 21–23 2026; the SaaS demo runs May 20–22 2027.
-// Picker opens on INITIAL_DATE (the rehearsal-dinner date) when empty.
+// Check-in opens on the rehearsal-dinner date, check-out on the morning
+// after the reception.
 const MIN_DATE = DEFAULT_WEDDING_ID === null
   ? new Date('2027-05-17')
   : new Date('2026-05-18');
 const MAX_DATE = DEFAULT_WEDDING_ID === null
   ? new Date('2027-05-31')
   : new Date('2026-06-01');
-const INITIAL_DATE = DEFAULT_WEDDING_ID === null
+const CHECKIN_INITIAL_DATE = DEFAULT_WEDDING_ID === null
   ? new Date(2027, 4, 20) // May 20 2027 — demo rehearsal dinner
   : new Date(2026, 4, 21); // May 21 2026 — N&N rehearsal dinner
+const CHECKOUT_INITIAL_DATE = DEFAULT_WEDDING_ID === null
+  ? new Date(2027, 4, 23) // May 23 2027 — day after demo reception
+  : new Date(2026, 4, 24); // May 24 2026 — day after N&N reception
 
 interface FieldProps {
   label: string;
@@ -176,7 +180,7 @@ export default function OnboardingScreen() {
             placeholder="Select date"
             minimumDate={MIN_DATE}
             maximumDate={MAX_DATE}
-            initialDate={INITIAL_DATE}
+            initialDate={CHECKIN_INITIAL_DATE}
           />
           <DateField
             label="Check-out date"
@@ -185,7 +189,7 @@ export default function OnboardingScreen() {
             placeholder="Select date"
             minimumDate={MIN_DATE}
             maximumDate={MAX_DATE}
-            initialDate={INITIAL_DATE}
+            initialDate={CHECKOUT_INITIAL_DATE}
           />
         </View>
 
