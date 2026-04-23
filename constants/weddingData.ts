@@ -803,13 +803,13 @@ export const PACKING_GUIDE_NN: PackingCategory[] = [
       {
         id: "heels-sangeet",
         label: "Flats, heels, or comfortable shoes for Sangeet",
-        tip: "Choose shoes you can dance in all night — block heels or kitten heels work well.",
+        tip: "Choose shoes you can dance in all night.",
         gender: 'female',
       },
       {
         id: "heels-ceremony",
         label: "Flats or heels for Ceremony & Reception",
-        tip: "All events are indoors at the Fairmont — heels are fine.",
+        tip: "The ceremony and cocktail hour are outdoors.",
         gender: 'female',
       },
       {
@@ -827,7 +827,7 @@ export const PACKING_GUIDE_NN: PackingCategory[] = [
       {
         id: "walking-shoes",
         label: "Comfortable walking shoes for sightseeing or gym",
-        tip: "Essential for the Montreux promenade and Château de Chillon — quite a lot of walking.",
+        tip: "Essential for the Montreux promenade and Château de Chillon.",
         gender: 'male',
       },
       {
@@ -838,7 +838,7 @@ export const PACKING_GUIDE_NN: PackingCategory[] = [
       {
         id: "walking-shoes-female",
         label: "Comfortable walking shoes for sightseeing or gym",
-        tip: "Essential for the Montreux promenade and Château de Chillon — quite a lot of walking.",
+        tip: "Essential for the Montreux promenade and Château de Chillon.",
         gender: 'female',
       },
     ],
