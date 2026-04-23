@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Redirect } from 'expo-router';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
@@ -5,9 +6,23 @@ import { useWeddingSession } from '@/context/WeddingContext';
 import { DEFAULT_WEDDING_ID } from '@/constants/weddingData';
 import { Colors } from '@/constants/theme';
 
+// Mirrors DEMO_GUEST_NAME in app/invite.tsx. Real wedding logins persist
+// across cold launches, but the public demo is a try-it-once preview — we
+// don't want a reopen to resume it mid-onboarding.
+const PREVIEW_GUEST_NAME = 'Preview Guest';
+
 export default function Index() {
-  const { weddingId } = useWeddingSession();
-  const { guestName, isLoading } = useAuth();
+  const { weddingId, clearWeddingId } = useWeddingSession();
+  const { guestName, isLoading, logout } = useAuth();
+
+  const isStaleDemo =
+    !isLoading && DEFAULT_WEDDING_ID === null && guestName === PREVIEW_GUEST_NAME;
+
+  useEffect(() => {
+    if (!isStaleDemo) return;
+    clearWeddingId();
+    logout();
+  }, [isStaleDemo, clearWeddingId, logout]);
 
   if (isLoading) {
     return (
@@ -16,6 +31,8 @@ export default function Index() {
       </View>
     );
   }
+
+  if (isStaleDemo) return <Redirect href="/invite" />;
 
   if (!weddingId) return <Redirect href="/invite" />;
   if (!guestName) {
