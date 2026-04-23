@@ -163,7 +163,7 @@ export default function CoupleSignupScreen() {
           <Text style={styles.label}>Couple</Text>
           <TextInput
             style={styles.input}
-            placeholder="Emma & James"
+            placeholder="e.g. Emma & James"
             placeholderTextColor={Colors.textMuted}
             value={coupleName}
             onChangeText={(t) => { setCoupleName(t); if (error) setError(''); }}
