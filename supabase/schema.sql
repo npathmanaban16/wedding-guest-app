@@ -70,10 +70,21 @@ create table public.guests (
 -- typically not a guest, so login validates the typed name against
 -- (guests ∪ wedding_admins) for the selected wedding.
 create table public.wedding_admins (
-  id         uuid primary key default gen_random_uuid(),
-  wedding_id uuid not null references public.weddings(id) on delete cascade,
-  guest_name text not null,
-  created_at timestamptz default now(),
+  id               uuid primary key default gen_random_uuid(),
+  wedding_id       uuid not null references public.weddings(id) on delete cascade,
+  guest_name       text not null,
+  -- Optional per-admin gating used when the admin isn't in the guest
+  -- list (e.g. wedding planner, DJ). When the admin IS in public.guests,
+  -- the app reads wedding-party + gender from guests first and these
+  -- columns are ignored.
+  is_wedding_party boolean not null default false,
+  gender           text check (gender in ('male', 'female')),
+  -- Optional role. Admins without a role (or role='planner') get full
+  -- admin powers (send notifications, delete messages, admin page).
+  -- Vendor roles like 'dj' are login-only: scoped schedule visibility,
+  -- no admin-ui surfaces. Expand the check list as new vendors are added.
+  role             text check (role in ('planner', 'dj')),
+  created_at       timestamptz default now(),
   unique (wedding_id, guest_name)
 );
 

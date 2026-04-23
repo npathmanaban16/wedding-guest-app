@@ -159,10 +159,17 @@ insert into public.guests (wedding_id, canonical_name, is_wedding_party, gender)
 -- not be in the guest list — e.g. the wedding planner is an admin but not a
 -- guest.
 
-insert into public.wedding_admins (wedding_id, guest_name) values
-  ('00000000-0000-0000-0000-000000000001', 'Neha Pathmanaban'),
-  ('00000000-0000-0000-0000-000000000001', 'Naveen Nath'),
-  ('00000000-0000-0000-0000-000000000001', 'Astrid Rolando');
+-- is_wedding_party + gender are only consulted for admins who aren't in
+-- public.guests. Neha and Naveen are both, so their admin-row flags are
+-- harmless defaults. Astrid (planner) is tagged wedding-party + female
+-- so she sees the rehearsal dinner and the women's packing list. DJ
+-- Shraii logs in as "DJ Shraii" with role='dj' — login only, scoped to
+-- the Sangeet + Reception on the schedule, no admin powers.
+insert into public.wedding_admins (wedding_id, guest_name, is_wedding_party, gender, role) values
+  ('00000000-0000-0000-0000-000000000001', 'Neha Pathmanaban', true,  'female', null),
+  ('00000000-0000-0000-0000-000000000001', 'Naveen Nath',      true,  'male',   null),
+  ('00000000-0000-0000-0000-000000000001', 'Astrid Rolando',   true,  'female', 'planner'),
+  ('00000000-0000-0000-0000-000000000001', 'DJ Shraii',        false, 'male',   'dj');
 
 
 -- ─── Guest Info ───────────────────────────────────────────────────────────────

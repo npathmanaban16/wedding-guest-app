@@ -849,7 +849,7 @@ export const PACKING_GUIDE_NN: PackingCategory[] = [
       {
         id: "dress-shoes-ceremony-male",
         label: "Dress Shoes for Ceremony & Reception",
-        tip: "Polished black leather pairs best with a tuxedo or black suit.",
+        tip: "Black patent leather pairs best with a tuxedo. Polished black leather works with a black suit.",
         gender: 'male',
       },
       {
