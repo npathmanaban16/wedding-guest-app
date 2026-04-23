@@ -53,8 +53,17 @@ function openMaps(address: string, name?: string) {
 
 type ExchangeRates = { USD: number; GBP: number; EUR: number };
 
-function GuideItemCard({ item }: { item: GuideItem }) {
-  const [expanded, setExpanded] = useState(false);
+interface GuideItemCardProps {
+  item: GuideItem;
+  expanded: boolean;
+  onToggle: () => void;
+  // Nested items render inside a 2-column grid in their SubsectionBlock
+  // parent — collapsed cards take half the row, and the expanded card
+  // takes the full row so there's room for its body content.
+  nested?: boolean;
+}
+
+function GuideItemCard({ item, expanded, onToggle, nested = false }: GuideItemCardProps) {
   const [rates, setRates] = useState<ExchangeRates | null>(null);
   const [ratesLoading, setRatesLoading] = useState(false);
   const fetchedRef = useRef(false);
@@ -73,19 +82,17 @@ function GuideItemCard({ item }: { item: GuideItem }) {
     }
   }, [isCurrency, expanded]);
 
-  const toggle = () => {
-    animateLayout();
-    setExpanded((v) => !v);
-  };
-
   const description = isCurrency && rates
     ? `Switzerland uses Swiss Francs (CHF). 1 CHF = $${rates.USD.toFixed(2)} / €${rates.EUR.toFixed(2)} / £${rates.GBP.toFixed(2)}.`
     : item.description;
 
   return (
     <TouchableOpacity
-      style={styles.itemCard}
-      onPress={toggle}
+      style={[
+        styles.itemCard,
+        nested && (expanded ? styles.itemCardNestedFull : styles.itemCardNestedHalf),
+      ]}
+      onPress={onToggle}
       activeOpacity={0.9}
     >
       <View style={styles.itemHeader}>
@@ -145,17 +152,32 @@ function GuideItemCard({ item }: { item: GuideItem }) {
   );
 }
 
-function SubsectionBlock({ subsection }: { subsection: GuideSubsection }) {
-  const [expanded, setExpanded] = useState(false);
+interface SubsectionBlockProps {
+  subsection: GuideSubsection;
+  expanded: boolean;
+  onToggle: () => void;
+}
 
-  const toggle = () => {
+function SubsectionBlock({ subsection, expanded, onToggle }: SubsectionBlockProps) {
+  // Which child item is currently open inside this subsection. One-open-
+  // at-a-time scoped to this subsection — opening a sibling item collapses
+  // the previous one, but doesn't close the subsection itself.
+  const [openItemId, setOpenItemId] = useState<string | null>(null);
+
+  // Collapsing the subsection leaves no visible items, so reset the
+  // remembered open item — next expansion starts clean.
+  useEffect(() => {
+    if (!expanded) setOpenItemId(null);
+  }, [expanded]);
+
+  const toggleItem = (id: string) => {
     animateLayout();
-    setExpanded((v) => !v);
+    setOpenItemId((cur) => (cur === id ? null : id));
   };
 
   return (
     <View style={styles.subsectionBlock}>
-      <TouchableOpacity style={styles.subsectionHeader} onPress={toggle} activeOpacity={0.7}>
+      <TouchableOpacity style={styles.subsectionHeader} onPress={onToggle} activeOpacity={0.7}>
         <View style={styles.itemHeaderText}>
           {subsection.category && (
             <View style={styles.categoryBadge}>
@@ -170,14 +192,33 @@ function SubsectionBlock({ subsection }: { subsection: GuideSubsection }) {
           color={Colors.textMuted}
         />
       </TouchableOpacity>
-      {expanded && subsection.items.map((item) => (
-        <GuideItemCard key={item.id} item={item} />
-      ))}
+      {expanded && (
+        <View style={styles.subsectionItemsGrid}>
+          {subsection.items.map((item) => (
+            <GuideItemCard
+              key={item.id}
+              item={item}
+              expanded={openItemId === item.id}
+              onToggle={() => toggleItem(item.id)}
+              nested
+            />
+          ))}
+        </View>
+      )}
     </View>
   );
 }
 
-function SectionBlock({ section }: { section: GuideSection }) {
+interface SectionBlockProps {
+  section: GuideSection;
+  // Page-wide "which first-level accordion is open" state. Either the id
+  // of a subsection (for subsection-bearing sections) or the id of a
+  // top-level item (for items-only sections).
+  openFirstLevelId: string | null;
+  onToggleFirstLevel: (id: string) => void;
+}
+
+function SectionBlock({ section, openFirstLevelId, onToggleFirstLevel }: SectionBlockProps) {
   return (
     <View style={styles.sectionBlock}>
       <View style={styles.sectionHeader}>
@@ -185,10 +226,20 @@ function SectionBlock({ section }: { section: GuideSection }) {
       </View>
       {section.subsections
         ? section.subsections.map((sub) => (
-            <SubsectionBlock key={sub.id} subsection={sub} />
+            <SubsectionBlock
+              key={sub.id}
+              subsection={sub}
+              expanded={openFirstLevelId === sub.id}
+              onToggle={() => onToggleFirstLevel(sub.id)}
+            />
           ))
         : section.items?.map((item) => (
-            <GuideItemCard key={item.id} item={item} />
+            <GuideItemCard
+              key={item.id}
+              item={item}
+              expanded={openFirstLevelId === item.id}
+              onToggle={() => onToggleFirstLevel(item.id)}
+            />
           ))}
     </View>
   );
@@ -215,6 +266,14 @@ export default function SwitzerlandScreen() {
   const insets = useSafeAreaInsets();
   const { wedding } = useWedding();
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  // One open first-level row page-wide. Subsections own their own
+  // "which inner item is open" state so opening a nested item doesn't
+  // disturb this value.
+  const [openFirstLevelId, setOpenFirstLevelId] = useState<string | null>(null);
+  const toggleFirstLevel = (id: string) => {
+    animateLayout();
+    setOpenFirstLevelId((cur) => (cur === id ? null : id));
+  };
 
   const filters = ['All', 'Transport', 'Sightseeing', 'Activity', 'Restaurant', 'Bar', 'Practical'];
 
@@ -282,7 +341,12 @@ export default function SwitzerlandScreen() {
 
       {/* Guide sections */}
       {filteredGuide.map((section) => (
-        <SectionBlock key={section.id} section={section} />
+        <SectionBlock
+          key={section.id}
+          section={section}
+          openFirstLevelId={openFirstLevelId}
+          onToggleFirstLevel={toggleFirstLevel}
+        />
       ))}
 
       {/* Quick facts */}
@@ -442,6 +506,21 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: Colors.border,
     ...Shadow.small,
+  },
+  // Items rendered inside a SubsectionBlock live in a 2-column flex-wrap
+  // grid so the nested-ness reads visually (smaller cards, two-per-row)
+  // without needing a different background color from the parent row.
+  // The expanded card breaks out to full width so its body has room.
+  subsectionItemsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  itemCardNestedHalf: {
+    width: '48.5%',
+  },
+  itemCardNestedFull: {
+    width: '100%',
   },
   itemHeader: {
     flexDirection: 'row',
