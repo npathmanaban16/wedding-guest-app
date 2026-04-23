@@ -64,14 +64,24 @@ export function HotelPickerField({ label, value, onChange }: Props) {
       <Text style={styles.label}>{label}</Text>
 
       <TouchableOpacity
-        style={styles.trigger}
+        style={[styles.trigger, modalVisible && styles.triggerActive]}
         onPress={() => { setShowOtherInput(false); setModalVisible(true); }}
         activeOpacity={0.8}
       >
+        <Ionicons
+          name="bed-outline"
+          size={16}
+          color={modalVisible ? Colors.primary : Colors.textMuted}
+          style={styles.icon}
+        />
         <Text style={[styles.triggerText, !triggerLabel && { color: Colors.textMuted }]}>
           {triggerLabel || 'Select hotel...'}
         </Text>
-        <Ionicons name="chevron-down" size={18} color={Colors.textMuted} />
+        <Ionicons
+          name={modalVisible ? 'chevron-up' : 'chevron-down'}
+          size={18}
+          color={Colors.textMuted}
+        />
       </TouchableOpacity>
 
       <Modal
@@ -172,6 +182,10 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: Colors.background,
   },
+  triggerActive: {
+    borderColor: Colors.primary,
+  },
+  icon: { marginRight: Spacing.xs },
   triggerText: {
     flex: 1,
     fontSize: 15,
