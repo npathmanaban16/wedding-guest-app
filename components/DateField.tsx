@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Keyboard,
   View,
@@ -50,20 +50,11 @@ function NativeDateField({ label, value, onChange, placeholder, minimumDate, max
   const [show, setShow] = useState(false);
 
   // Draft state: the date currently displayed in the picker. Seeded from
-  // `value` (or initialDate / minimumDate / today if unset) and kept in
-  // sync as the user scrubs. Committing on iOS "Done" uses this, so
-  // tapping Done without first changing the date still saves — fixing
-  // the bug where tapping the already-selected default didn't fire the
-  // picker's onChange.
+  // `value` (or initialDate / minimumDate / today if unset) and updated as
+  // the user scrubs on iOS. Committing on iOS "Done" uses this, so tapping
+  // Done without first changing the date still saves.
   const pickerFallback = initialDate ?? minimumDate ?? new Date();
   const [draft, setDraft] = useState<Date>(() => parseLocalDate(value) ?? pickerFallback);
-
-  // Re-sync draft when the parent value changes (e.g. a new field loaded
-  // from storage) so the picker opens on the saved date next time.
-  useEffect(() => {
-    const parsed = parseLocalDate(value);
-    if (parsed) setDraft(parsed);
-  }, [value]);
 
   // Lazy-load DateTimePicker only on native
   const DateTimePicker = require('@react-native-community/datetimepicker').default;
@@ -83,6 +74,14 @@ function NativeDateField({ label, value, onChange, placeholder, minimumDate, max
     setShow(false);
   };
 
+  const openPicker = () => {
+    // Reset draft to the saved value each time the picker opens, so it
+    // always lands on the currently-stored date (or initialDate for empty
+    // fields) — never on a stale draft from an abandoned previous open.
+    setDraft(parseLocalDate(value) ?? pickerFallback);
+    setShow(true);
+  };
+
   const displayText = formatDisplay(value);
 
   return (
@@ -94,7 +93,8 @@ function NativeDateField({ label, value, onChange, placeholder, minimumDate, max
           // Dismiss any soft-keyboard still up from a previous text input
           // so it doesn't overlap the inline iOS calendar / Android dialog.
           Keyboard.dismiss();
-          setShow((v) => !v);
+          if (show) setShow(false);
+          else openPicker();
         }}
         activeOpacity={0.8}
       >

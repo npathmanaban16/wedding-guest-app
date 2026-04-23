@@ -18,7 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
-import { DEFAULT_WEDDING_ID } from '@/constants/weddingData';
+import { DEFAULT_WEDDING_ID, getTravelWindow } from '@/constants/weddingData';
 import { getMyInfo, saveMyInfo, deleteMyAccount, MyInfo } from '@/services/storage';
 import { HotelPickerField } from '@/components/HotelPickerField';
 import { DateField } from '@/components/DateField';
@@ -28,24 +28,6 @@ import { DateField } from '@/components/DateField';
 // in-memory context state — clearing context state mid-sign-out can throw
 // on any still-mounted screen that calls useWedding().
 const WEDDING_ID_STORAGE_KEY = '@wedding_id';
-
-// Travel window brackets the wedding's event dates. N&N events run
-// May 21–23 2026; the SaaS demo wedding runs May 20–22 2027. The picker
-// uses MIN/MAX as its range, opens check-in on the rehearsal-dinner date
-// and check-out on the morning after the reception, when each value is
-// empty.
-const MIN_DATE = DEFAULT_WEDDING_ID === null
-  ? new Date('2027-05-17')
-  : new Date('2026-05-18');
-const MAX_DATE = DEFAULT_WEDDING_ID === null
-  ? new Date('2027-05-31')
-  : new Date('2026-06-01');
-const CHECKIN_INITIAL_DATE = DEFAULT_WEDDING_ID === null
-  ? new Date(2027, 4, 20) // May 20 2027 — demo rehearsal dinner
-  : new Date(2026, 4, 21); // May 21 2026 — N&N rehearsal dinner
-const CHECKOUT_INITIAL_DATE = DEFAULT_WEDDING_ID === null
-  ? new Date(2027, 4, 23) // May 23 2027 — day after demo reception
-  : new Date(2026, 4, 24); // May 24 2026 — day after N&N reception
 
 interface FieldProps {
   label: string;
@@ -93,6 +75,11 @@ export default function MyInfoScreen() {
   const router = useRouter();
   const { guestName, logout } = useAuth();
   const { weddingId, wedding } = useWedding();
+
+  // Travel window is keyed on the actual weddingId (not the build variant)
+  // so the N&N wedding always gets its 2026 window even when reached from
+  // the SaaS/Tetherly build.
+  const travel = getTravelWindow(weddingId);
 
   // SaaS: navigate to /invite explicitly and clear storage so the next
   // cold launch also routes to /invite. We do NOT call clearWeddingId()
@@ -274,18 +261,18 @@ export default function MyInfoScreen() {
             value={info.checkIn}
             onChange={updateImmediate('checkIn')}
             placeholder="Select date"
-            minimumDate={MIN_DATE}
-            maximumDate={MAX_DATE}
-            initialDate={CHECKIN_INITIAL_DATE}
+            minimumDate={travel.min}
+            maximumDate={travel.max}
+            initialDate={travel.checkInInitial}
           />
           <DateField
             label="Check-out date"
             value={info.checkOut}
             onChange={updateImmediate('checkOut')}
             placeholder="Select date"
-            minimumDate={MIN_DATE}
-            maximumDate={MAX_DATE}
-            initialDate={CHECKOUT_INITIAL_DATE}
+            minimumDate={travel.min}
+            maximumDate={travel.max}
+            initialDate={travel.checkOutInitial}
           />
         </View>
 
