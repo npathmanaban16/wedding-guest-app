@@ -41,17 +41,21 @@ interface Props {
   placeholder?: string;
   minimumDate?: Date;
   maximumDate?: Date;
+  // Date the picker opens on when `value` is empty. Falls back to
+  // minimumDate, then to today if unset.
+  initialDate?: Date;
 }
 
-function NativeDateField({ label, value, onChange, placeholder, minimumDate, maximumDate }: Props) {
+function NativeDateField({ label, value, onChange, placeholder, minimumDate, maximumDate, initialDate }: Props) {
   const [show, setShow] = useState(false);
 
   // Draft state: the date currently displayed in the picker. Seeded from
-  // `value` (or minimumDate / today if unset) and kept in sync as the user
-  // scrubs. Committing on iOS "Done" uses this, so tapping Done without
-  // first changing the date still saves — fixing the bug where tapping the
-  // already-selected default didn't fire the picker's onChange.
-  const pickerFallback = minimumDate ?? new Date();
+  // `value` (or initialDate / minimumDate / today if unset) and kept in
+  // sync as the user scrubs. Committing on iOS "Done" uses this, so
+  // tapping Done without first changing the date still saves — fixing
+  // the bug where tapping the already-selected default didn't fire the
+  // picker's onChange.
+  const pickerFallback = initialDate ?? minimumDate ?? new Date();
   const [draft, setDraft] = useState<Date>(() => parseLocalDate(value) ?? pickerFallback);
 
   // Re-sync draft when the parent value changes (e.g. a new field loaded
