@@ -1,4 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  createContext,
+  useContext,
+  useCallback,
+  useImperativeHandle,
+  forwardRef,
+} from 'react';
 import {
   View,
   Text,
@@ -12,6 +21,16 @@ import {
   Image,
   ActivityIndicator,
 } from 'react-native';
+import Animated, {
+  cancelAnimation,
+  Easing,
+  scrollTo,
+  useAnimatedRef,
+  useAnimatedReaction,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
@@ -27,6 +46,10 @@ const animateLayout = () => {
   if (Platform.OS !== 'web') LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
 };
 
+// Signalled by any section/subsection/item toggle so the PhotoStrip can stop
+// its UI-thread auto-pan the first time the user engages with the guide.
+const StopAutoScrollContext = createContext<() => void>(() => {});
+
 const PHOTO_STRIP_ITEMS = [
   { src: require('@/assets/images/promenade.png'), label: 'Montreux promenade' },
   { src: require('@/assets/images/lauvaux.png'), label: 'Lavaux vineyards' },
@@ -35,6 +58,13 @@ const PHOTO_STRIP_ITEMS = [
   { src: require('@/assets/images/narcissus.png'), label: 'Narcissus fields in May' },
   { src: require('@/assets/images/boat.png'), label: 'Lake Geneva boat ride' },
 ];
+const PHOTO_WIDTH = 220;
+const PHOTO_GAP = Spacing.sm;
+// Cycle width for a seamless loop: render two copies back-to-back and animate
+// from 0 → PHOTO_CYCLE, jumping back to 0 (same visible content) on repeat.
+const PHOTO_CYCLE = PHOTO_STRIP_ITEMS.length * (PHOTO_WIDTH + PHOTO_GAP);
+// ~25 px/sec — matches the prior feel.
+const PHOTO_SCROLL_DURATION_MS = (PHOTO_CYCLE / 25) * 1000;
 
 function openMaps(address: string) {
   const encoded = encodeURIComponent(address);
@@ -53,6 +83,7 @@ function GuideItemCard({ item }: { item: GuideItem }) {
   const [rates, setRates] = useState<ExchangeRates | null>(null);
   const [ratesLoading, setRatesLoading] = useState(false);
   const fetchedRef = useRef(false);
+  const stopAutoScroll = useContext(StopAutoScrollContext);
 
   const isCurrency = item.id === 'currency';
 
@@ -69,6 +100,7 @@ function GuideItemCard({ item }: { item: GuideItem }) {
   }, [isCurrency, expanded]);
 
   const toggle = () => {
+    stopAutoScroll();
     animateLayout();
     setExpanded((v) => !v);
   };
@@ -142,8 +174,10 @@ function GuideItemCard({ item }: { item: GuideItem }) {
 
 function SubsectionBlock({ subsection }: { subsection: GuideSubsection }) {
   const [expanded, setExpanded] = useState(false);
+  const stopAutoScroll = useContext(StopAutoScrollContext);
 
   const toggle = () => {
+    stopAutoScroll();
     animateLayout();
     setExpanded((v) => !v);
   };
@@ -189,27 +223,74 @@ function SectionBlock({ section }: { section: GuideSection }) {
   );
 }
 
-function PhotoStrip() {
+interface PhotoStripHandle {
+  stop: () => void;
+}
+
+// Reanimated-driven auto-pan. The animation runs entirely on the UI thread:
+// withRepeat/withTiming drives a shared value, useAnimatedReaction calls
+// scrollTo as a worklet. No JS-thread bridge traffic → no touch starvation
+// on sibling components, unlike the prior RAF + scrollTo loop.
+const PhotoStrip = forwardRef<PhotoStripHandle>((_, ref) => {
+  const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  const offsetX = useSharedValue(0);
+  const stoppedRef = useRef(false);
+
+  const stop = useCallback(() => {
+    if (stoppedRef.current) return;
+    stoppedRef.current = true;
+    cancelAnimation(offsetX);
+  }, [offsetX]);
+
+  useImperativeHandle(ref, () => ({ stop }), [stop]);
+
+  useEffect(() => {
+    offsetX.value = withRepeat(
+      withTiming(PHOTO_CYCLE, { duration: PHOTO_SCROLL_DURATION_MS, easing: Easing.linear }),
+      -1,
+      false,
+    );
+    return () => cancelAnimation(offsetX);
+  }, [offsetX]);
+
+  useAnimatedReaction(
+    () => offsetX.value,
+    (current) => {
+      scrollTo(scrollRef, current, 0, false);
+    },
+  );
+
+  // Two copies back-to-back so the animation's wrap from PHOTO_CYCLE → 0
+  // reveals identical content, i.e. the loop is seamless.
+  const loopedItems = [...PHOTO_STRIP_ITEMS, ...PHOTO_STRIP_ITEMS];
+
   return (
-    <ScrollView
+    <Animated.ScrollView
+      ref={scrollRef}
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.photoStrip}
+      onScrollBeginDrag={stop}
     >
-      {PHOTO_STRIP_ITEMS.map((photo, i) => (
+      {loopedItems.map((photo, i) => (
         <View key={i} style={styles.photoWrapper}>
           <Image source={photo.src} style={styles.photoItem} resizeMode="cover" />
           <Text style={styles.photoLabel}>{photo.label}</Text>
         </View>
       ))}
-    </ScrollView>
+    </Animated.ScrollView>
   );
-}
+});
+PhotoStrip.displayName = 'PhotoStrip';
 
 export default function SwitzerlandScreen() {
   const insets = useSafeAreaInsets();
   const { wedding } = useWedding();
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const photoStripRef = useRef<PhotoStripHandle>(null);
+  const stopAutoScroll = useCallback(() => {
+    photoStripRef.current?.stop();
+  }, []);
 
   const filters = ['All', 'Transport', 'Sightseeing', 'Activity', 'Restaurant', 'Bar', 'Practical'];
 
@@ -235,6 +316,7 @@ export default function SwitzerlandScreen() {
       : SWITZERLAND_GUIDE;
 
   return (
+    <StopAutoScrollContext.Provider value={stopAutoScroll}>
     <ScrollView
       style={styles.container}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.md }]}
@@ -248,8 +330,9 @@ export default function SwitzerlandScreen() {
         </Text>
       </View>
 
-      {/* Photo strip — manual horizontal swipe. */}
-      <PhotoStrip />
+      {/* Photo strip — UI-thread auto-pan; stops permanently on first
+          section expand or on a manual swipe of the strip. */}
+      <PhotoStrip ref={photoStripRef} />
 
       {/* Filter pills */}
       <ScrollView
@@ -309,6 +392,7 @@ export default function SwitzerlandScreen() {
         </View>
       </View>
     </ScrollView>
+    </StopAutoScrollContext.Provider>
   );
 }
 
