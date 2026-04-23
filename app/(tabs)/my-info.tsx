@@ -29,8 +29,17 @@ import { DateField } from '@/components/DateField';
 // on any still-mounted screen that calls useWedding().
 const WEDDING_ID_STORAGE_KEY = '@wedding_id';
 
-const MIN_DATE = new Date('2026-05-18');
-const MAX_DATE = new Date('2026-06-01');
+// Travel window brackets the wedding's event dates. N&N events run
+// May 21–23 2026; the SaaS demo wedding runs May 20–22 2027. The picker
+// uses these as its min/max so guests can't pick wildly off-dates — and
+// DateField seeds the picker to `minimumDate` when value is empty, so the
+// demo variant opens in May 2027 and N&N in May 2026.
+const MIN_DATE = DEFAULT_WEDDING_ID === null
+  ? new Date('2027-05-17')
+  : new Date('2026-05-18');
+const MAX_DATE = DEFAULT_WEDDING_ID === null
+  ? new Date('2027-05-31')
+  : new Date('2026-06-01');
 
 interface FieldProps {
   label: string;

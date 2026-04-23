@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Keyboard,
   View,
@@ -20,8 +20,11 @@ function parseLocalDate(value: string): Date | null {
   return null;
 }
 
-function parseDate(value: string): Date {
-  return parseLocalDate(value) ?? new Date(2026, 4, 21);
+function formatIso(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 function formatDisplay(value: string): string {
@@ -42,19 +45,38 @@ interface Props {
 
 function NativeDateField({ label, value, onChange, placeholder, minimumDate, maximumDate }: Props) {
   const [show, setShow] = useState(false);
-  const date = parseDate(value);
+
+  // Draft state: the date currently displayed in the picker. Seeded from
+  // `value` (or minimumDate / today if unset) and kept in sync as the user
+  // scrubs. Committing on iOS "Done" uses this, so tapping Done without
+  // first changing the date still saves — fixing the bug where tapping the
+  // already-selected default didn't fire the picker's onChange.
+  const pickerFallback = minimumDate ?? new Date();
+  const [draft, setDraft] = useState<Date>(() => parseLocalDate(value) ?? pickerFallback);
+
+  // Re-sync draft when the parent value changes (e.g. a new field loaded
+  // from storage) so the picker opens on the saved date next time.
+  useEffect(() => {
+    const parsed = parseLocalDate(value);
+    if (parsed) setDraft(parsed);
+  }, [value]);
 
   // Lazy-load DateTimePicker only on native
   const DateTimePicker = require('@react-native-community/datetimepicker').default;
 
   const handleChange = (_: any, selected?: Date) => {
-    if (Platform.OS === 'android') setShow(false);
-    if (selected) {
-      const y = selected.getFullYear();
-      const m = String(selected.getMonth() + 1).padStart(2, '0');
-      const d = String(selected.getDate()).padStart(2, '0');
-      onChange(`${y}-${m}-${d}`);
+    if (Platform.OS === 'android') {
+      setShow(false);
+      if (selected) onChange(formatIso(selected));
+      return;
     }
+    // iOS inline: just track the draft; commit happens when Done is tapped.
+    if (selected) setDraft(selected);
+  };
+
+  const handleDone = () => {
+    onChange(formatIso(draft));
+    setShow(false);
   };
 
   const displayText = formatDisplay(value);
@@ -82,7 +104,7 @@ function NativeDateField({ label, value, onChange, placeholder, minimumDate, max
       {show && (
         <View style={styles.pickerContainer}>
           <DateTimePicker
-            value={date}
+            value={draft}
             mode="date"
             display={Platform.OS === 'ios' ? 'inline' : 'default'}
             onChange={handleChange}
@@ -93,7 +115,7 @@ function NativeDateField({ label, value, onChange, placeholder, minimumDate, max
             style={styles.picker}
           />
           {Platform.OS === 'ios' && (
-            <TouchableOpacity style={styles.doneButton} onPress={() => setShow(false)}>
+            <TouchableOpacity style={styles.doneButton} onPress={handleDone}>
               <Text style={styles.doneButtonText}>Done</Text>
             </TouchableOpacity>
           )}
