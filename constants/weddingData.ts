@@ -86,6 +86,34 @@ export const NN_WEDDING_IDS = new Set([
   'a0000000-0000-0000-0000-000000000001', // N&N in SaaS/Tetherly schema
 ]);
 
+// Travel window for the travel-detail date pickers (onboarding + My Info).
+// Keyed on the actual wedding, NOT the build variant — the N&N wedding can
+// also be reached from the SaaS/Tetherly build, and in that case we still
+// want the 2026 window, not the demo's 2027 one.
+export interface TravelWindow {
+  min: Date;
+  max: Date;
+  checkInInitial: Date;
+  checkOutInitial: Date;
+}
+
+export function getTravelWindow(weddingId: string | null | undefined): TravelWindow {
+  const isNN = !!weddingId && NN_WEDDING_IDS.has(weddingId);
+  return isNN
+    ? {
+        min: new Date('2026-05-18'),
+        max: new Date('2026-06-01'),
+        checkInInitial: new Date(2026, 4, 21),  // May 21 2026 — rehearsal dinner
+        checkOutInitial: new Date(2026, 4, 24), // May 24 2026 — morning after reception
+      }
+    : {
+        min: new Date('2027-05-17'),
+        max: new Date('2027-05-31'),
+        checkInInitial: new Date(2027, 4, 20),  // May 20 2027 — demo rehearsal dinner
+        checkOutInitial: new Date(2027, 4, 23), // May 23 2027 — morning after demo reception
+      };
+}
+
 export const EVENTS_NN: WeddingEvent[] = [
   {
     id: "rehearsal-dinner",
