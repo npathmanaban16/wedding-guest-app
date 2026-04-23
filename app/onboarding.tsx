@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -67,6 +67,7 @@ export default function OnboardingScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [hasPrefilled, setHasPrefilled] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
 
   const firstName = guestName?.split(' ')[0] ?? 'there';
 
@@ -123,6 +124,7 @@ export default function OnboardingScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
+        ref={scrollRef}
         style={styles.container}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.sm }]}
         keyboardShouldPersistTaps="handled"
@@ -153,6 +155,7 @@ export default function OnboardingScreen() {
             label="Hotel or accommodation"
             value={hotel}
             onChange={setHotel}
+            scrollRef={scrollRef}
           />
           <DateField
             label="Check-in date"

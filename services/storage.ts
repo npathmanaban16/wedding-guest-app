@@ -214,13 +214,25 @@ export async function editNotification(
   weddingId: string,
   id: string,
   message: string,
-): Promise<void> {
+): Promise<{ editedAt: string | null }> {
+  const editedAt = new Date().toISOString();
+  // Try with the edited_at timestamp first. If migration 007 hasn't been
+  // applied yet, the column is missing — fall back to updating the message
+  // alone so the edit still saves.
   const { error } = await supabase
     .from('notifications')
-    .update({ message, edited_at: new Date().toISOString() })
+    .update({ message, edited_at: editedAt })
     .eq('wedding_id', weddingId)
     .eq('id', id);
-  if (error) throw new Error(error.message);
+  if (!error) return { editedAt };
+
+  const { error: fallbackError } = await supabase
+    .from('notifications')
+    .update({ message })
+    .eq('wedding_id', weddingId)
+    .eq('id', id);
+  if (fallbackError) throw new Error(fallbackError.message);
+  return { editedAt: null };
 }
 
 export async function deleteNotification(weddingId: string, id: string): Promise<void> {

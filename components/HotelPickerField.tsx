@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
+  findNodeHandle,
   View,
   Text,
   TextInput,
@@ -7,6 +8,7 @@ import {
   StyleSheet,
   LayoutAnimation,
   Platform,
+  ScrollView,
   UIManager,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -35,21 +37,43 @@ interface Props {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  // Optional ref to the parent ScrollView — when provided, expanding the
+  // dropdown auto-scrolls the field near the top so the options stay on screen.
+  scrollRef?: React.RefObject<ScrollView | null>;
 }
 
-export function HotelPickerField({ label, value, onChange }: Props) {
+export function HotelPickerField({ label, value, onChange, scrollRef }: Props) {
   const [open, setOpen] = useState(false);
   const [otherOpen, setOtherOpen] = useState(false);
   const [otherText, setOtherText] = useState('');
+  const wrapperRef = useRef<View>(null);
 
   const isKnownHotel = HOTEL_OPTIONS.includes(value);
   const isOther = !isKnownHotel && value !== '';
   const triggerLabel = value || '';
 
+  const scrollFieldIntoView = () => {
+    if (!scrollRef?.current || !wrapperRef.current) return;
+    const node = findNodeHandle(scrollRef.current);
+    if (!node) return;
+    wrapperRef.current.measureLayout(
+      node,
+      (_x, y) => {
+        scrollRef.current?.scrollTo({ y: Math.max(0, y - Spacing.sm), animated: true });
+      },
+      () => {},
+    );
+  };
+
   const toggleOpen = () => {
+    const willOpen = !open;
     animateLayout();
-    setOpen((v) => !v);
+    setOpen(willOpen);
     if (otherOpen) setOtherOpen(false);
+    if (willOpen) {
+      // Wait for layout + expand animation before measuring.
+      setTimeout(scrollFieldIntoView, 60);
+    }
   };
 
   const handleSelect = (item: string) => {
@@ -73,7 +97,7 @@ export function HotelPickerField({ label, value, onChange }: Props) {
   };
 
   return (
-    <View style={styles.wrapper}>
+    <View ref={wrapperRef} style={styles.wrapper}>
       <Text style={styles.label}>{label}</Text>
 
       <TouchableOpacity
