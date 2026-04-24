@@ -602,8 +602,9 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
     subsections: [
       {
         id: "cafes",
-        title: "Cafes",
+        title: "Cafés",
         emoji: "☕",
+        category: "Cafés",
         items: [
           {
             id: "sleepy-bear",
@@ -628,6 +629,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         id: "restaurants-bars",
         title: "Restaurants & Bars",
         emoji: "🍽️",
+        category: "Restaurant",
         items: [
           {
             id: "montreux-jazz-cafe",
