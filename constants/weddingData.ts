@@ -836,6 +836,7 @@ export const PACKING_GUIDE_NN: PackingCategory[] = [
       {
         id: "bridal-ceremony-sherwani",
         label: "Pink sherwani for the wedding ceremony (provided by Neha)",
+        tip: "For photos prior to the wedding ceremony. You'll change into your tuxedo before the ceremony so you can walk down the aisle with the groomsmen.",
         bridalPartyOnly: true,
         gender: 'male',
       },
