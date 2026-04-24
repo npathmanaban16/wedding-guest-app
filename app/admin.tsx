@@ -76,7 +76,6 @@ export default function AdminScreen() {
           onPress: async () => {
             setSending(true);
             try {
-              console.log('[admin] invoke send-push', { weddingId, sender: senderLabel, weddingPartyOnly });
               const { data, error } = await supabase.functions.invoke('send-push', {
                 body: { weddingId, message: trimmed, sender: senderLabel, weddingPartyOnly },
               });
