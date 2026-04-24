@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from 'expo-router';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
@@ -92,8 +93,12 @@ function MessageCard({
 
   // When a thread has more than COLLAPSED_REPLY_COUNT replies, hide the
   // older ones behind a "View N earlier replies" button. Tap expands
-  // inline with a layout animation.
+  // inline with a layout animation; navigating away from the screen
+  // resets back to collapsed so each visit starts clean.
   const [repliesExpanded, setRepliesExpanded] = useState(false);
+  useFocusEffect(
+    useCallback(() => () => setRepliesExpanded(false), []),
+  );
   const hiddenReplyCount = Math.max(0, replies.length - COLLAPSED_REPLY_COUNT);
   const visibleReplies =
     repliesExpanded || hiddenReplyCount === 0
