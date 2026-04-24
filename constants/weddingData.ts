@@ -628,7 +628,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         category: "Café",
         description:
           "Montreux's premier specialty coffee shop — the perfect place to start your day with expertly crafted espresso and a welcoming atmosphere.",
-        address: "Rue du Marché 1, 1820 Montreux, Switzerland",
+        address: "Avenue des Alpes 68, 1820 Montreux, Switzerland",
       },
       {
         id: "confiserie-zurcher",
