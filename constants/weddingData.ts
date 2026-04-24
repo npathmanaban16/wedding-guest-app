@@ -792,6 +792,38 @@ export const PACKING_GUIDE_NN: PackingCategory[] = [
         gender: 'male',
       },
       {
+        id: "bridal-morning-outfit",
+        label: "Light pink outfit for the wedding morning",
+        tip: "For getting-ready photos before the bride changes into her ceremony attire.",
+        bridalPartyOnly: true,
+      },
+      {
+        id: "bridesmaid-sweatshirt",
+        label: "Bridesmaid sweatshirt (provided by Neha)",
+        tip: "Matching sweatshirt for the wedding-morning getting-ready photos.",
+        bridalPartyOnly: true,
+        gender: 'female',
+      },
+      {
+        id: "bridesman-sweatshirt",
+        label: "Bridesman sweatshirt (provided by Neha)",
+        tip: "Matching sweatshirt for the wedding-morning getting-ready photos.",
+        bridalPartyOnly: true,
+        gender: 'male',
+      },
+      {
+        id: "bridal-ceremony-lehenga",
+        label: "Pink lehenga for the wedding ceremony (provided by Neha)",
+        bridalPartyOnly: true,
+        gender: 'female',
+      },
+      {
+        id: "bridal-ceremony-sherwani",
+        label: "Pink sherwani for the wedding ceremony (provided by Neha)",
+        bridalPartyOnly: true,
+        gender: 'male',
+      },
+      {
         id: "casual-exploring",
         label: "Casual sightseeing clothes (2–3 outfits)",
         tip: "Comfortable walking shoes essential — you'll be on the lake promenade and cobblestone streets.",
@@ -799,25 +831,6 @@ export const PACKING_GUIDE_NN: PackingCategory[] = [
       {
         id: "travel-outfit",
         label: "Comfortable travel outfit for the journey",
-      },
-    ],
-  },
-  {
-    id: "bridal-party",
-    title: "Bridal Party",
-    emoji: "💐",
-    items: [
-      {
-        id: "bridal-sweatshirt",
-        label: "Bridesmaid / Bridesman sweatshirt",
-        tip: "Matching sweatshirt for the wedding-morning getting-ready photos.",
-        bridalPartyOnly: true,
-      },
-      {
-        id: "bridal-morning-outfit",
-        label: "Light pink outfit for the wedding morning",
-        tip: "For getting-ready photos before the bride changes into her ceremony attire.",
-        bridalPartyOnly: true,
       },
     ],
   },
@@ -919,6 +932,24 @@ export const PACKING_GUIDE_NN: PackingCategory[] = [
     title: "Attire Extras",
     emoji: "✨",
     items: [
+      {
+        id: "bridal-earrings-tikka",
+        label: "Indian earrings and tikka for the wedding ceremony (provided by Neha)",
+        bridalPartyOnly: true,
+        gender: 'female',
+      },
+      {
+        id: "bridal-bangles",
+        label: "Bangles for the wedding ceremony (provided by Neha)",
+        bridalPartyOnly: true,
+        gender: 'female',
+      },
+      {
+        id: "bridal-scrunchie",
+        label: "White floral scrunchie for the rehearsal dinner (provided by Neha)",
+        bridalPartyOnly: true,
+        gender: 'female',
+      },
       {
         id: "jewelry",
         label: "Jewelry for each event",
