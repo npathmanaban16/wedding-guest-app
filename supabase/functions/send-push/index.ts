@@ -11,7 +11,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { weddingId, message, sender } = await req.json();
+    const { weddingId, message, sender, weddingPartyOnly } = await req.json();
+    const partyOnly = weddingPartyOnly === true;
 
     if (!weddingId || !message || !sender) {
       return new Response(
@@ -38,19 +39,44 @@ Deno.serve(async (req) => {
     const title = wedding?.couple_names?.trim() || 'Wedding Update';
 
     // Scope push tokens by wedding_id so we don't blast pushes across tenants.
-    const { data: guests, error: dbError } = await supabase
-      .from('guest_info')
-      .select('push_token')
-      .eq('wedding_id', weddingId)
-      .not('push_token', 'is', null);
-
-    if (dbError) throw dbError;
-
-    const tokens: string[] = [...new Set(
-      (guests ?? [])
-        .map((g: { push_token: string | null }) => g.push_token)
-        .filter((t): t is string => typeof t === 'string' && t.startsWith('ExponentPushToken')),
-    )];
+    // When the message is wedding-party-only, additionally restrict to names
+    // that appear in public.guests with is_wedding_party = true. Non-guest
+    // admins (planner, DJ) fall out naturally here because they don't have
+    // a guests row.
+    let tokens: string[];
+    if (partyOnly) {
+      const { data: partyGuests, error: partyError } = await supabase
+        .from('guests')
+        .select('canonical_name, guest_info!inner(push_token, wedding_id)')
+        .eq('wedding_id', weddingId)
+        .eq('is_wedding_party', true)
+        .eq('guest_info.wedding_id', weddingId)
+        .not('guest_info.push_token', 'is', null);
+      if (partyError) throw partyError;
+      tokens = [...new Set(
+        (partyGuests ?? [])
+          .flatMap((row: { guest_info: Array<{ push_token: string | null }> | { push_token: string | null } | null }) => {
+            const info = row.guest_info;
+            if (!info) return [];
+            return Array.isArray(info)
+              ? info.map((i) => i.push_token)
+              : [info.push_token];
+          })
+          .filter((t): t is string => typeof t === 'string' && t.startsWith('ExponentPushToken')),
+      )];
+    } else {
+      const { data: guests, error: dbError } = await supabase
+        .from('guest_info')
+        .select('push_token')
+        .eq('wedding_id', weddingId)
+        .not('push_token', 'is', null);
+      if (dbError) throw dbError;
+      tokens = [...new Set(
+        (guests ?? [])
+          .map((g: { push_token: string | null }) => g.push_token)
+          .filter((t): t is string => typeof t === 'string' && t.startsWith('ExponentPushToken')),
+      )];
+    }
 
     // Persist notification history for the in-app feed regardless of whether
     // any devices are registered for push yet.
@@ -59,6 +85,7 @@ Deno.serve(async (req) => {
         wedding_id: weddingId,
         message,
         sender,
+        wedding_party_only: partyOnly,
       });
     } catch (e) {
       console.error('notifications insert failed:', e);

@@ -37,6 +37,10 @@ export default function AdminScreen() {
   const [sender, setSender] = useState<SenderId>('couple');
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
+  // When true, only wedding-party guests see the message in the feed and
+  // receive the push. Useful for wedding-party-only logistics (e.g.
+  // "buses leave for the rehearsal dinner at 6 PM").
+  const [weddingPartyOnly, setWeddingPartyOnly] = useState(false);
 
   // Guard — should not be reachable via normal navigation, but just in case
   if (!guestName || !isAdmin(guestName)) {
@@ -60,9 +64,10 @@ export default function AdminScreen() {
     if (!trimmed) return;
     haptic.medium();
 
+    const audience = weddingPartyOnly ? 'the wedding party' : 'all guests';
     Alert.alert(
       'Send notification?',
-      `"${trimmed}"\n\nFrom: ${senderLabel}\n\nThis will be sent to all guests.`,
+      `"${trimmed}"\n\nFrom: ${senderLabel}\n\nThis will be sent to ${audience}.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -72,7 +77,7 @@ export default function AdminScreen() {
             setSending(true);
             try {
               const { data, error } = await supabase.functions.invoke('send-push', {
-                body: { weddingId, message: trimmed, sender: senderLabel },
+                body: { weddingId, message: trimmed, sender: senderLabel, weddingPartyOnly },
               });
               if (error) throw error;
               const sent = data?.sent ?? 0;
@@ -80,6 +85,7 @@ export default function AdminScreen() {
               const detail = data?.message ?? `Delivered to ${sent} device${sent !== 1 ? 's' : ''}${failed ? `, ${failed} failed` : ''}`;
               Alert.alert('Sent!', detail);
               setMessage('');
+              setWeddingPartyOnly(false);
             } catch (e: unknown) {
               let msg = e instanceof Error ? e.message : 'Unknown error';
               // Try to extract the actual error body from a FunctionsHttpError
@@ -179,6 +185,25 @@ export default function AdminScreen() {
           <Text style={styles.charCount}>{message.length}/500</Text>
         </View>
 
+        {/* Audience toggle — flips the message into wedding-party-only mode */}
+        <TouchableOpacity
+          style={styles.audienceRow}
+          onPress={() => setWeddingPartyOnly((v) => !v)}
+          activeOpacity={0.8}
+        >
+          <View style={styles.audienceText}>
+            <Text style={styles.audienceLabel}>Wedding party only</Text>
+            <Text style={styles.audienceHint}>
+              {weddingPartyOnly
+                ? 'Only wedding-party members will see this message and get the push.'
+                : 'Turn on for wedding-party-only logistics (e.g. rehearsal dinner transport).'}
+            </Text>
+          </View>
+          <View style={[styles.toggleTrack, weddingPartyOnly && styles.toggleTrackActive]}>
+            <View style={[styles.toggleThumb, weddingPartyOnly && styles.toggleThumbActive]} />
+          </View>
+        </TouchableOpacity>
+
         {/* Preview */}
         {message.trim().length > 0 && (
           <View style={styles.previewCard}>
@@ -210,7 +235,9 @@ export default function AdminScreen() {
           ) : (
             <>
               <Ionicons name="send" size={16} color={Colors.white} />
-              <Text style={styles.sendButtonText}>Send to all guests</Text>
+              <Text style={styles.sendButtonText}>
+                {weddingPartyOnly ? 'Send to wedding party' : 'Send to all guests'}
+              </Text>
             </>
           )}
         </TouchableOpacity>
@@ -367,6 +394,47 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     lineHeight: 19,
   },
+
+  audienceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.white,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    ...Shadow.small,
+  },
+  audienceText: { flex: 1, marginRight: Spacing.md },
+  audienceLabel: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 14,
+    color: Colors.textPrimary,
+    marginBottom: 2,
+  },
+  audienceHint: {
+    fontFamily: Fonts.sans,
+    fontSize: 12,
+    color: Colors.textMuted,
+    lineHeight: 17,
+  },
+  toggleTrack: {
+    width: 44,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: Colors.border,
+    padding: 3,
+    justifyContent: 'center',
+  },
+  toggleTrackActive: { backgroundColor: Colors.primary },
+  toggleThumb: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: Colors.white,
+  },
+  toggleThumbActive: { transform: [{ translateX: 18 }] },
 
   sendButton: {
     flexDirection: 'row',

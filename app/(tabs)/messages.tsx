@@ -136,6 +136,12 @@ function MessageCard({
             {timeAgo(notification.sentAt)}
             {notification.editedAt ? ' · edited' : ''}
           </Text>
+          {notification.weddingPartyOnly && (
+            <View style={styles.partyOnlyBadge}>
+              <Ionicons name="people-outline" size={10} color={Colors.gold} style={{ marginRight: 3 }} />
+              <Text style={styles.partyOnlyBadgeText}>Wedding party only</Text>
+            </View>
+          )}
         </View>
         {isAdmin && !editOpen && (
           <View style={styles.headerActions}>
@@ -263,8 +269,9 @@ function MessageCard({
 export default function MessagesScreen() {
   const insets = useSafeAreaInsets();
   const { guestName } = useAuth();
-  const { weddingId, isAdmin: isAdminCheck, wedding } = useWedding();
+  const { weddingId, isAdmin: isAdminCheck, isWeddingParty, wedding } = useWedding();
   const isAdmin = !!guestName && isAdminCheck(guestName);
+  const inWeddingParty = !!guestName && isWeddingParty(guestName);
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [reactions, setReactions] = useState<Record<string, ReactionSummary[]>>({});
@@ -272,7 +279,11 @@ export default function MessagesScreen() {
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
-    const notifs = await getNotifications(weddingId);
+    const all = await getNotifications(weddingId);
+    // Hide wedding-party-only messages from non-wedding-party users.
+    // Admins who are also party members see them; vendor-role admins
+    // (e.g. DJ) do not.
+    const notifs = all.filter((n) => !n.weddingPartyOnly || inWeddingParty);
     setNotifications(notifs);
     if (notifs.length > 0) {
       const ids = notifs.map((n) => n.id);
@@ -284,7 +295,7 @@ export default function MessagesScreen() {
       setAllReplies(rep);
     }
     setLoading(false);
-  }, [weddingId]);
+  }, [weddingId, inWeddingParty]);
 
   useEffect(() => {
     loadData();
@@ -578,6 +589,25 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     fontSize: 11,
     color: Colors.textMuted,
+  },
+  partyOnlyBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    marginTop: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.surfaceWarm,
+    borderWidth: 0.5,
+    borderColor: Colors.gold,
+  },
+  partyOnlyBadgeText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 9,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    color: Colors.gold,
   },
   headerActions: {
     flexDirection: 'row',
