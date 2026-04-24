@@ -177,7 +177,11 @@ function SubsectionBlock({ subsection, expanded, onToggle }: SubsectionBlockProp
 
   return (
     <View style={styles.subsectionBlock}>
-      <TouchableOpacity style={styles.subsectionHeader} onPress={onToggle} activeOpacity={0.7}>
+      <TouchableOpacity
+        style={[styles.subsectionHeader, expanded && styles.subsectionHeaderExpanded]}
+        onPress={onToggle}
+        activeOpacity={0.7}
+      >
         <View style={styles.itemHeaderText}>
           {subsection.category && (
             <View style={styles.categoryBadge}>
@@ -491,6 +495,13 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: Colors.border,
     ...Shadow.small,
+  },
+  // When expanded, the header gets a warm tint to read as the active /
+  // open row in a list of subsections — matches how other parent
+  // accordions across the app signal their expanded state.
+  subsectionHeaderExpanded: {
+    backgroundColor: Colors.surfaceWarm,
+    borderColor: Colors.primaryLight,
   },
   subsectionTitle: {
     fontSize: 15,
