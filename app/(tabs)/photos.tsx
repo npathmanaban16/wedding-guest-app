@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Linking,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,10 +17,16 @@ import { useWedding } from '@/context/WeddingContext';
 const NN_ALBUM_URL = 'https://photos.app.goo.gl/YCMxM6i7XRNzKERd6';
 const DEMO_ALBUM_URL = 'https://example.com/photos';
 
+// Commissioned watercolor of the couple in front of Fairmont Le Montreux
+// Palace. N&N-specific; the SaaS/demo variant skips this section so it
+// doesn't leak real-wedding art.
+const NN_COUPLE_ILLUSTRATION = require('@/assets/images/nn_couple_fairmont.png');
+
 export default function PhotosScreen() {
   const insets = useSafeAreaInsets();
   const { wedding } = useWedding();
-  const albumUrl = NN_WEDDING_IDS.has(wedding.id) ? NN_ALBUM_URL : DEMO_ALBUM_URL;
+  const isNN = NN_WEDDING_IDS.has(wedding.id);
+  const albumUrl = isNN ? NN_ALBUM_URL : DEMO_ALBUM_URL;
 
   return (
     <ScrollView
@@ -34,6 +41,18 @@ export default function PhotosScreen() {
           Share your favorite photos and videos from the weekend
         </Text>
       </View>
+
+      {/* Couple illustration — N&N only */}
+      {isNN && (
+        <View style={styles.heroWrap}>
+          <Image
+            source={NN_COUPLE_ILLUSTRATION}
+            style={styles.heroImage}
+            resizeMode="cover"
+            accessibilityLabel={`Watercolor of ${wedding.couple_names} at the Fairmont Le Montreux Palace`}
+          />
+        </View>
+      )}
 
       {/* Main CTA card */}
       <View style={styles.albumCard}>
@@ -116,6 +135,21 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
+  },
+
+  heroWrap: {
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+    borderRadius: Radius.lg,
+    overflow: 'hidden',
+    backgroundColor: Colors.white,
+    ...Shadow.small,
+  },
+  heroImage: {
+    width: '100%',
+    // 2:3 portrait mirrors the source artwork, preserving the whole
+    // composition (hotel, garden, couple) without cropping.
+    aspectRatio: 2 / 3,
   },
 
   albumCard: {
