@@ -11,7 +11,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { weddingId, message, sender } = await req.json();
+    const { weddingId, message, sender, weddingPartyOnly } = await req.json();
+    const partyOnly = weddingPartyOnly === true;
 
     if (!weddingId || !message || !sender) {
       return new Response(
@@ -37,20 +38,49 @@ Deno.serve(async (req) => {
       .maybeSingle();
     const title = wedding?.couple_names?.trim() || 'Wedding Update';
 
-    // Scope push tokens by wedding_id so we don't blast pushes across tenants.
-    const { data: guests, error: dbError } = await supabase
-      .from('guest_info')
-      .select('push_token')
-      .eq('wedding_id', weddingId)
-      .not('push_token', 'is', null);
+    // Push audience. Two simple queries — guests and guest_info aren't
+    // joined by a declared FK in the schema, so we can't use PostgREST's
+    // nested `!inner(...)` shorthand. Fetch the wedding-party guest
+    // names first, then filter guest_info by `.in(names)`.
+    let tokens: string[];
+    if (partyOnly) {
+      const { data: partyGuests, error: partyError } = await supabase
+        .from('guests')
+        .select('canonical_name')
+        .eq('wedding_id', weddingId)
+        .eq('is_wedding_party', true);
+      if (partyError) throw partyError;
 
-    if (dbError) throw dbError;
-
-    const tokens: string[] = [...new Set(
-      (guests ?? [])
-        .map((g: { push_token: string | null }) => g.push_token)
-        .filter((t): t is string => typeof t === 'string' && t.startsWith('ExponentPushToken')),
-    )];
+      const names = (partyGuests ?? []).map((g: { canonical_name: string }) => g.canonical_name);
+      if (names.length === 0) {
+        tokens = [];
+      } else {
+        const { data: infos, error: tokensError } = await supabase
+          .from('guest_info')
+          .select('push_token')
+          .eq('wedding_id', weddingId)
+          .in('guest_name', names)
+          .not('push_token', 'is', null);
+        if (tokensError) throw tokensError;
+        tokens = [...new Set(
+          (infos ?? [])
+            .map((g: { push_token: string | null }) => g.push_token)
+            .filter((t): t is string => typeof t === 'string' && t.startsWith('ExponentPushToken')),
+        )];
+      }
+    } else {
+      const { data: infos, error: dbError } = await supabase
+        .from('guest_info')
+        .select('push_token')
+        .eq('wedding_id', weddingId)
+        .not('push_token', 'is', null);
+      if (dbError) throw dbError;
+      tokens = [...new Set(
+        (infos ?? [])
+          .map((g: { push_token: string | null }) => g.push_token)
+          .filter((t): t is string => typeof t === 'string' && t.startsWith('ExponentPushToken')),
+      )];
+    }
 
     // Persist notification history for the in-app feed regardless of whether
     // any devices are registered for push yet.
@@ -59,6 +89,7 @@ Deno.serve(async (req) => {
         wedding_id: weddingId,
         message,
         sender,
+        wedding_party_only: partyOnly,
       });
     } catch (e) {
       console.error('notifications insert failed:', e);
@@ -113,7 +144,15 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), {
+    // `String(err)` on a PostgrestError returns "[object Object]", which
+    // isn't useful. Pull out .message if it's an Error, otherwise
+    // JSON-stringify the object so client alerts have the real reason.
+    const detail =
+      err instanceof Error ? err.message
+      : typeof err === 'object' && err !== null ? JSON.stringify(err)
+      : String(err);
+    console.error('send-push error:', detail);
+    return new Response(JSON.stringify({ error: detail }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

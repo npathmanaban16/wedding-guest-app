@@ -209,6 +209,9 @@ export interface AppNotification {
   sender: string;
   sentAt: string;
   editedAt: string | null;
+  // When true the message is only visible to wedding-party members and the
+  // message sender (who is also an admin). Default false (visible to all).
+  weddingPartyOnly: boolean;
 }
 
 export async function getNotifications(weddingId: string): Promise<AppNotification[]> {
@@ -225,6 +228,7 @@ export async function getNotifications(weddingId: string): Promise<AppNotificati
         sender: n.sender,
         sentAt: n.sent_at,
         editedAt: n.edited_at ?? null,
+        weddingPartyOnly: n.wedding_party_only ?? false,
       }));
     }
   } catch {

@@ -134,12 +134,15 @@ create table public.song_requests (
 
 -- ─── notifications ───────────────────────────────────────────────────────────
 create table public.notifications (
-  id         uuid primary key default gen_random_uuid(),
-  wedding_id uuid not null references public.weddings(id) on delete cascade
-             default '00000000-0000-0000-0000-000000000001',
-  message    text not null,
-  sender     text not null,
-  sent_at    timestamptz default now()
+  id                 uuid primary key default gen_random_uuid(),
+  wedding_id         uuid not null references public.weddings(id) on delete cascade
+                     default '00000000-0000-0000-0000-000000000001',
+  message            text not null,
+  sender             text not null,
+  -- When true the feed hides this message from non-wedding-party users
+  -- and the send-push edge function only pushes to wedding-party guests.
+  wedding_party_only boolean not null default false,
+  sent_at            timestamptz default now()
 );
 
 

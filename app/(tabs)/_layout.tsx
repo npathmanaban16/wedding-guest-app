@@ -29,7 +29,8 @@ interface TabConfig {
 
 export default function TabLayout() {
   const { guestName, isLoading, logout, onboardingSkipped } = useAuth();
-  const { weddingId, wedding } = useWedding();
+  const { weddingId, wedding, isWeddingParty } = useWedding();
+  const inWeddingParty = !!guestName && isWeddingParty(guestName);
   const insets = useSafeAreaInsets();
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
@@ -72,17 +73,20 @@ export default function TabLayout() {
 
   const refreshUnread = useCallback(async () => {
     if (!guestName) return;
-    const [notifs, lastRead] = await Promise.all([
+    const [allNotifs, lastRead] = await Promise.all([
       getNotifications(weddingId),
       getMessagesLastRead(weddingId, guestName),
     ]);
+    // Same filter the Messages screen applies — don't badge non-wedding-
+    // party users for messages they can't see.
+    const notifs = allNotifs.filter((n) => !n.weddingPartyOnly || inWeddingParty);
     if (!lastRead) {
       setUnreadCount(notifs.length);
       return;
     }
     const count = notifs.filter((n) => new Date(n.sentAt) > new Date(lastRead)).length;
     setUnreadCount(count);
-  }, [weddingId, guestName]);
+  }, [weddingId, guestName, inWeddingParty]);
 
   useEffect(() => {
     refreshUnread();
