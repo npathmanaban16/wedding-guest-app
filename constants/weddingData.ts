@@ -1006,6 +1006,15 @@ export const PACKING_GUIDE_NN: PackingCategory[] = [
         id: "meds",
         label: "Personal medications",
       },
+      {
+        id: "phone-charger",
+        label: "Phone charger",
+      },
+      {
+        id: "battery-pack",
+        label: "Portable battery pack",
+        tip: "Handy for long days of sightseeing, especially at Rochers de Naye or on the lake.",
+      },
     ],
   },
 ];
