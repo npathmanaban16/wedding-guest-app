@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   // Width + height are applied inline from the PNG's actual aspect
   // ratio so the whole composition always fits exactly.
   illustrationWrap: {
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.lg,
     borderRadius: Radius.md,
     overflow: 'hidden',
     backgroundColor: Colors.surfaceWarm,
