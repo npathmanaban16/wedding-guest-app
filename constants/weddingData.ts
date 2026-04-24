@@ -123,7 +123,7 @@ export const EVENTS_NN: WeddingEvent[] = [
     time: "6:00 PM – 9:00 PM",
     startDate: "2026-05-21T16:00:00Z",
     endDate: "2026-05-21T19:00:00Z",
-    venue: "Lavaux Vineyards | Le Baron Tavernier",
+    venue: "Le Baron Tavernier | Lavaux Vineyards",
     address: "Route de la Corniche 4, 1070 Puidoux, Vaud, Switzerland",
     dressCode:
       "Smart casual Indian or Western attire. White, soft neutrals, shades of green or rose.",
@@ -156,7 +156,7 @@ export const EVENTS_NN: WeddingEvent[] = [
     dressCode:
       "Festive Indian or semi-formal Western. Bright jewel tones and festive hues — think vibrant lehengas, sarees, sherwanis, or colorful cocktail attire.",
     description:
-      "Welcome party with dancing, drinks, and dinner. This is the big celebration night — come ready to dance!",
+      "Welcome party with dancing, drinks, and dinner. Come ready to dance!",
     colorPalette: [
       { name: 'ruby red', hex: '#9B1C1C' },
       { name: 'magenta', hex: '#C41E5E' },
@@ -194,7 +194,7 @@ export const EVENTS_NN: WeddingEvent[] = [
     dressCode:
       "Indian formal or black-tie. Elegant neutrals and muted evening tones.",
     description:
-      "The wedding ceremony in the beautiful gardens of the Fairmont, with the Alps and Lake Geneva as backdrop. Please arrive 20–30 minutes early to be seated.",
+      "The wedding ceremony is in the gardens of the Fairmont. Please arrive 20-30 minutes early to be seated.",
     notes: "Cocktail hour to follow at 6:00 PM.",
     colorPalette: [
       { name: 'blush', hex: '#F2C4CE' },
@@ -231,9 +231,9 @@ export const EVENTS_NN: WeddingEvent[] = [
     venue: "Fairmont Le Montreux Palace | Salle des Fêtes",
     address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
     dressCode:
-      "Indian formal or black-tie. Elegant neutrals and muted evening tones — same outfit as the ceremony.",
+      "Indian formal or black-tie. Elegant neutrals and muted evening tones — same dress code as the ceremony.",
     description:
-      "Dinner, speeches, dancing, and celebrating into the night in the grand Salle des Fêtes ballroom.",
+      "Dinner, speeches, dancing, and celebrating into the night.",
     notes:
       "The reception follows directly from the cocktail hour.",
     colorPalette: [
@@ -373,10 +373,10 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
     items: [
       {
         id: "flights",
-        name: "Flights",
+        name: "Flight",
         category: "Transport",
         description:
-          "Geneva (GVA) is the recommended airport — direct flights from London, Paris, Amsterdam, Dubai, and many other cities, with Montreux just 1h30 by train or 1 hour by car.\n\nIf you can't get a direct flight to Geneva, Zurich (ZRH) is Switzerland's main hub. Train from Zurich to Montreux takes about 2 hours through the heart of Switzerland.",
+          "Geneva (GVA) is the recommended airport, with Montreux just 1h30 by train or 1 hour by car.\n\nIf you can't get a direct flight to Geneva, Zurich (ZRH) is Switzerland's main hub. Trains from Zurich to Montreux take about 2 hours through the heart of Switzerland.",
         tip: "Book flights and trains in advance — Geneva fills up quickly during peak season.",
       },
       {
@@ -398,7 +398,6 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         category: "Transport",
         description:
           "It's approximately a 1 hour drive from Geneva Airport to Montreux, following the A1 and A9 highways along the lake. Rental cars are available at the airport. Uber also operates in Geneva and Montreux if you'd prefer not to drive.",
-        tip: "Rental cars give you flexibility to explore Lavaux and the surrounding region at your own pace.",
       },
     ],
   },
@@ -418,7 +417,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             name: "Montreux Riviera Promenade",
             category: "Sightseeing",
             description:
-              "Just steps from the Fairmont, this lakeside path is lined with vibrant flowers and palm trees, offering sweeping views of Lake Geneva and the Alps. Stretches several kilometres from Clarens to Villeneuve — perfect for a morning jog, leisurely walk, or sunset stroll. The famous Freddie Mercury statue is along the way.",
+              "Just steps from the Fairmont, this lakeside path is lined with vibrant flowers and palm trees, offering sweeping views of Lake Geneva and the Alps. The promenade stretches several kilometres from Clarens to Villeneuve — perfect for a morning jog, leisurely walk, or sunset stroll. The famous Freddie Mercury statue is along the way.",
             tip: "May is peak blooming season — perfect for photos with the Alps reflecting on the lake.",
             address: "Quai Edouard-Jaccoud, 1820 Montreux, Switzerland",
           },
@@ -494,7 +493,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             description:
               "Terraced vineyards along the hillsides above Lake Geneva — a UNESCO World Heritage Site. Accessible by train, car, or on foot between the villages of Cully, Epesses, and Saint-Saphorin.",
             tip: "Hop aboard the Lavaux Express or Lavaux Panoramic — tourist trains winding through the vineyards with stops for tastings.",
-            address: "Lavaux, Cully, Switzerland",
+            address: "Terraces Viticoles de Lavaux",
           },
           {
             id: "lavaux-wine",
@@ -529,7 +528,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             links: [
               { label: "CGN Lake Geneva cruises", url: "https://www.cgn.ch/en/" },
             ],
-            address: "Quai du Débarcadère, 1820 Montreux, Switzerland",
+            address: "Montreux ferry",
           },
           {
             id: "tennis",
@@ -578,7 +577,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             description:
               "A vibrant Swiss city just 30 minutes by train. Highlights: Gothic cathedral, Olympic Museum, the charming Old Town, and the lakefront at Ouchy.",
             tip: "The Olympic Museum is world-class and right on the lake — worth a few hours.",
-            address: "Lausanne, Switzerland",
+            address: "Lausanne",
           },
           {
             id: "golden-pass",
@@ -662,7 +661,6 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             category: "Restaurant",
             description:
               "A charming local favorite right on the lakeside — known for fresh seafood and Swiss specialties with beautiful lake views.",
-            tip: "Perch (perche) from Lake Geneva is a local specialty — try the classic meunière style.",
             address: "Rue du Marché 1, 1820 Montreux, Switzerland",
           },
           {
@@ -671,7 +669,6 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             category: "Restaurant",
             description:
               "If you have extra time, a quick 30-minute train ride to Lausanne opens up several world-class Michelin-starred restaurants for a truly special meal.",
-            tip: "Book well in advance — Michelin restaurants in the region fill up weeks ahead.",
           },
         ],
       },
