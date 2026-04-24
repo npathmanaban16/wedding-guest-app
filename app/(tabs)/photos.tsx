@@ -48,7 +48,7 @@ export default function PhotosScreen() {
           <Image
             source={NN_COUPLE_ILLUSTRATION}
             style={styles.heroImage}
-            resizeMode="cover"
+            resizeMode="contain"
             accessibilityLabel={`Watercolor of ${wedding.couple_names} at the Fairmont Le Montreux Palace`}
           />
         </View>
@@ -138,8 +138,9 @@ const styles = StyleSheet.create({
   },
 
   heroWrap: {
-    marginHorizontal: Spacing.lg,
+    alignSelf: 'center',
     marginBottom: Spacing.md,
+    width: 240,
     borderRadius: Radius.lg,
     overflow: 'hidden',
     backgroundColor: Colors.white,
@@ -147,8 +148,9 @@ const styles = StyleSheet.create({
   },
   heroImage: {
     width: '100%',
-    // 2:3 portrait mirrors the source artwork, preserving the whole
-    // composition (hotel, garden, couple) without cropping.
+    // 2:3 portrait matches the source artwork so `contain` letterboxes
+    // with minimal gap while guaranteeing the whole composition (hotel,
+    // garden, couple) is visible even if the source dimensions drift.
     aspectRatio: 2 / 3,
   },
 
