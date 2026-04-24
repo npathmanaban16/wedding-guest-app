@@ -403,28 +403,6 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
     ],
   },
   {
-    id: "getting-around",
-    title: "Getting Around Montreux",
-    emoji: "🚌",
-    items: [
-      {
-        id: "riviera-card",
-        name: "Montreux Riviera Card",
-        category: "Practical",
-        description:
-          "Many hotels provide guests with a Montreux Riviera Card, which includes free or discounted travel on local buses, boats, and mountain railways throughout the region.",
-        tip: "Ask your hotel at check-in — it can save you a lot on local transport.",
-      },
-      {
-        id: "uber-local",
-        name: "Uber & Taxis",
-        category: "Practical",
-        description:
-          "Uber and taxis also operate in Geneva, Montreux, Lausanne, and surrounding areas.",
-      },
-    ],
-  },
-  {
     id: "things-to-do",
     title: "Things to Do",
     emoji: "🗺️",
@@ -740,6 +718,14 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         category: "Practical",
         description:
           "Police: 117 | Ambulance: 144 | Fire: 118. The nearest hospital is RSMR in Vevey, about 5km from Montreux.",
+      },
+      {
+        id: "riviera-card",
+        name: "Montreux Riviera Card",
+        category: "Practical",
+        description:
+          "Many hotels provide guests with a Montreux Riviera Card, which includes free or discounted travel on local buses, boats, and mountain railways throughout the region.",
+        tip: "Ask your hotel at check-in — it can save you a lot on local transport.",
       },
     ],
   },
