@@ -10,7 +10,9 @@ import {
   AppState,
   ActivityIndicator,
   KeyboardAvoidingView,
+  LayoutAnimation,
   Platform,
+  UIManager,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -34,6 +36,11 @@ import {
 } from '@/services/storage';
 
 const REACTION_EMOJIS = ['❤️', '🎉', '😂', '👏', '🙌'];
+const COLLAPSED_REPLY_COUNT = 3;
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -82,6 +89,24 @@ function MessageCard({
   const [editOpen, setEditOpen] = useState(false);
   const [editText, setEditText] = useState(notification.message);
   const [savingEdit, setSavingEdit] = useState(false);
+
+  // When a thread has more than COLLAPSED_REPLY_COUNT replies, hide the
+  // older ones behind a "View N earlier replies" button. Tap expands
+  // inline with a layout animation.
+  const [repliesExpanded, setRepliesExpanded] = useState(false);
+  const hiddenReplyCount = Math.max(0, replies.length - COLLAPSED_REPLY_COUNT);
+  const visibleReplies =
+    repliesExpanded || hiddenReplyCount === 0
+      ? replies
+      : replies.slice(-COLLAPSED_REPLY_COUNT);
+
+  const handleExpandReplies = () => {
+    haptic.selection();
+    if (Platform.OS !== 'web') {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    }
+    setRepliesExpanded(true);
+  };
 
   const cardYRef = useRef(0);
 
@@ -209,7 +234,18 @@ function MessageCard({
       {/* Replies */}
       {replies.length > 0 && (
         <View style={styles.repliesSection}>
-          {replies.map((r) => (
+          {!repliesExpanded && hiddenReplyCount > 0 && (
+            <TouchableOpacity
+              onPress={handleExpandReplies}
+              style={styles.viewEarlierBtn}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.viewEarlierText}>
+                View {hiddenReplyCount} earlier {hiddenReplyCount === 1 ? 'reply' : 'replies'}
+              </Text>
+            </TouchableOpacity>
+          )}
+          {visibleReplies.map((r) => (
             <View key={r.id} style={styles.replyRow}>
               <View style={styles.replyContent}>
                 <Text style={styles.replyAuthor}>{r.guestName}</Text>
@@ -708,6 +744,16 @@ const styles = StyleSheet.create({
     borderTopWidth: 0.5,
     borderTopColor: Colors.border,
     paddingTop: Spacing.sm,
+  },
+  viewEarlierBtn: {
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.xs,
+    alignSelf: 'flex-start',
+  },
+  viewEarlierText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 12,
+    color: Colors.primary,
   },
   replyRow: {
     flexDirection: 'row',

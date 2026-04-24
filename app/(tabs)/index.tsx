@@ -167,16 +167,26 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Admin: send notification (only visible to admins) */}
+      {/* Admin: send notification + edit schedule times (only visible to admins) */}
       {isAdminUser && (
-        <TouchableOpacity
-          style={styles.adminButton}
-          onPress={() => router.push('/admin')}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="notifications-outline" size={15} color={Colors.white} />
-          <Text style={styles.adminButtonText}>Send Guest Notification</Text>
-        </TouchableOpacity>
+        <>
+          <TouchableOpacity
+            style={styles.adminButton}
+            onPress={() => router.push('/admin')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="notifications-outline" size={15} color={Colors.white} />
+            <Text style={styles.adminButtonText}>Send Guest Notification</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.adminButton}
+            onPress={() => router.push('/admin-schedule')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="time-outline" size={15} color={Colors.white} />
+            <Text style={styles.adminButtonText}>Edit Schedule Times</Text>
+          </TouchableOpacity>
+        </>
       )}
 
     </ScrollView>

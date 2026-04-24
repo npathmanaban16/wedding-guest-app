@@ -18,6 +18,7 @@ drop table if exists public.notification_replies   cascade;
 drop table if exists public.notification_reactions cascade;
 drop table if exists public.notifications         cascade;
 drop table if exists public.packing_checklist     cascade;
+drop table if exists public.event_time_overrides  cascade;
 drop table if exists public.song_requests         cascade;
 drop table if exists public.guest_info            cascade;
 drop table if exists public.wedding_admins        cascade;
@@ -175,6 +176,21 @@ create table public.notification_replies (
 );
 
 
+-- ─── event_time_overrides ───────────────────────────────────────────────────
+-- Lets admins override the `time` string on schedule events without a code
+-- deploy. Events themselves stay defined in code; this table only stores
+-- the overridden `time` per (wedding_id, event_id). The schedule screen
+-- merges at render time: override wins if present, else event.time.
+create table public.event_time_overrides (
+  id          uuid primary key default gen_random_uuid(),
+  wedding_id  uuid not null references public.weddings(id) on delete cascade,
+  event_id    text not null,
+  time        text not null,
+  updated_at  timestamptz not null default now(),
+  unique (wedding_id, event_id)
+);
+
+
 -- ─── packing_checklist ───────────────────────────────────────────────────────
 -- `guest_name` stays as the primary key for now so existing upserts keyed on
 -- it keep working. PR 3 will migrate this to a (wedding_id, guest_name) PK.
@@ -201,6 +217,7 @@ alter table public.notifications          enable row level security;
 alter table public.notification_reactions enable row level security;
 alter table public.notification_replies   enable row level security;
 alter table public.packing_checklist      enable row level security;
+alter table public.event_time_overrides   enable row level security;
 
 create policy "allow_all_weddings"               on public.weddings               for all using (true) with check (true);
 create policy "allow_all_guests"                 on public.guests                 for all using (true) with check (true);
@@ -211,3 +228,4 @@ create policy "allow_all_notifications"          on public.notifications        
 create policy "allow_all_notification_reactions" on public.notification_reactions for all using (true) with check (true);
 create policy "allow_all_notification_replies"   on public.notification_replies   for all using (true) with check (true);
 create policy "allow_all_packing_checklist"      on public.packing_checklist      for all using (true) with check (true);
+create policy "allow_all_event_time_overrides"   on public.event_time_overrides   for all using (true) with check (true);

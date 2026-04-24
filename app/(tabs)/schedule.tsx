@@ -21,6 +21,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
 import { FairmontMap } from '@/components/FairmontMap';
 import { haptic } from '@/utils/haptics';
+import { getEventTimeOverrides } from '@/services/storage';
 
 // Pass `name` when a human-readable landmark / venue exists so the maps
 // app resolves to the actual destination rather than geocoding just the
@@ -349,10 +350,21 @@ function InfoRow({ icon, label, value }: InfoRowProps) {
 export default function ScheduleScreen() {
   const insets = useSafeAreaInsets();
   const { guestName } = useAuth();
-  const { isWeddingParty, wedding } = useWedding();
+  const { weddingId, isWeddingParty, wedding } = useWedding();
   const inWeddingParty = isWeddingParty(guestName ?? '');
   const events = NN_WEDDING_IDS.has(wedding.id) ? EVENTS_NN : EVENTS_DEMO;
-  const visibleEvents = events.filter((e) => !e.weddingPartyOnly || inWeddingParty);
+
+  // Admins can override event.time without a code deploy. Fetched once on
+  // mount; if an admin edits while a guest is viewing, the guest will see
+  // the update on next foreground / re-mount.
+  const [timeOverrides, setTimeOverrides] = useState<Record<string, string>>({});
+  useEffect(() => {
+    getEventTimeOverrides(weddingId).then(setTimeOverrides).catch(() => {});
+  }, [weddingId]);
+
+  const visibleEvents = events
+    .map((e) => (timeOverrides[e.id] ? { ...e, time: timeOverrides[e.id] } : e))
+    .filter((e) => !e.weddingPartyOnly || inWeddingParty);
 
   // Accordion: at most one event expanded at a time. Tapping another event
   // collapses the current one; tapping the open event again collapses it.
