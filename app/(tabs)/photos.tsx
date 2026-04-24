@@ -18,20 +18,18 @@ const NN_ALBUM_URL = 'https://photos.app.goo.gl/YCMxM6i7XRNzKERd6';
 const DEMO_ALBUM_URL = 'https://example.com/photos';
 
 // Commissioned watercolor of the couple in front of Fairmont Le Montreux
-// Palace. N&N-specific; the SaaS/demo variant skips this section so it
-// doesn't leak real-wedding art.
+// Palace. Shown on the N&N variant in place of the stock album icon —
+// the SaaS/demo tenant keeps the Ionicons placeholder.
 const NN_COUPLE_ILLUSTRATION = require('@/assets/images/nn_couple_fairmont.png');
 
-// Size the hero card from the actual PNG dimensions so the frame always
-// matches the artwork — no letterboxing, no cropping regardless of what
-// aspect ratio the source happens to be. Cap the height so the hero
-// doesn't dominate the Photos screen on phones.
+// Size the illustration frame from the PNG's real aspect ratio so the
+// watercolor always fits exactly and the whole composition is visible.
 const NN_COUPLE_ASPECT = (() => {
   const src = Image.resolveAssetSource(NN_COUPLE_ILLUSTRATION);
   return src && src.height > 0 ? src.width / src.height : 2 / 3;
 })();
-const NN_HERO_HEIGHT = 260;
-const NN_HERO_WIDTH = NN_HERO_HEIGHT * NN_COUPLE_ASPECT;
+const NN_ILLUSTRATION_HEIGHT = 220;
+const NN_ILLUSTRATION_WIDTH = NN_ILLUSTRATION_HEIGHT * NN_COUPLE_ASPECT;
 
 export default function PhotosScreen() {
   const insets = useSafeAreaInsets();
@@ -53,23 +51,27 @@ export default function PhotosScreen() {
         </Text>
       </View>
 
-      {/* Couple illustration — N&N only */}
-      {isNN && (
-        <View style={[styles.heroWrap, { width: NN_HERO_WIDTH, height: NN_HERO_HEIGHT }]}>
-          <Image
-            source={NN_COUPLE_ILLUSTRATION}
-            style={styles.heroImage}
-            resizeMode="cover"
-            accessibilityLabel={`Watercolor of ${wedding.couple_names} at the Fairmont Le Montreux Palace`}
-          />
-        </View>
-      )}
-
       {/* Main CTA card */}
       <View style={styles.albumCard}>
-        <View style={styles.albumIconWrap}>
-          <Ionicons name="images" size={40} color={Colors.primary} />
-        </View>
+        {isNN ? (
+          <View
+            style={[
+              styles.illustrationWrap,
+              { width: NN_ILLUSTRATION_WIDTH, height: NN_ILLUSTRATION_HEIGHT },
+            ]}
+          >
+            <Image
+              source={NN_COUPLE_ILLUSTRATION}
+              style={styles.illustrationImage}
+              resizeMode="cover"
+              accessibilityLabel={`Watercolor of ${wedding.couple_names} at the Fairmont Le Montreux Palace`}
+            />
+          </View>
+        ) : (
+          <View style={styles.albumIconWrap}>
+            <Ionicons name="images" size={40} color={Colors.primary} />
+          </View>
+        )}
         <Text style={styles.albumTitle}>{wedding.couple_names}'s Shared Album</Text>
         <Text style={styles.albumBody}>
           All photos and videos from the wedding weekend live here. Add yours and see what everyone else captured.
@@ -148,17 +150,16 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
-  heroWrap: {
-    alignSelf: 'center',
+  // Wrap for the N&N watercolor that takes the album card's icon slot.
+  // Width + height are applied inline from the PNG's actual aspect
+  // ratio so the whole composition always fits exactly.
+  illustrationWrap: {
     marginBottom: Spacing.md,
-    // Explicit width + height come from the asset dimensions at render
-    // time — see NN_HERO_WIDTH / NN_HERO_HEIGHT above.
-    borderRadius: Radius.lg,
+    borderRadius: Radius.md,
     overflow: 'hidden',
-    backgroundColor: Colors.white,
-    ...Shadow.small,
+    backgroundColor: Colors.surfaceWarm,
   },
-  heroImage: { width: '100%', height: '100%' },
+  illustrationImage: { width: '100%', height: '100%' },
 
   albumCard: {
     marginHorizontal: Spacing.lg,
