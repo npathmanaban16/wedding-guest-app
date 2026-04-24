@@ -28,7 +28,7 @@ const animateLayout = () => {
 };
 
 const PHOTO_STRIP_ITEMS = [
-  { src: require('@/assets/images/promenade.png'), label: 'Montreux promenade' },
+  { src: require('@/assets/images/promenade.png'), label: 'Montreux Promenade' },
   { src: require('@/assets/images/lauvaux.png'), label: 'Lavaux vineyards' },
   { src: require('@/assets/images/narcissus_hike.png'), label: 'Narcissus hike' },
   { src: require('@/assets/images/rochers_de_naye.png'), label: 'Rochers de Naye' },
