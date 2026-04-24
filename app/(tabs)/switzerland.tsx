@@ -368,7 +368,7 @@ export default function SwitzerlandScreen() {
         <View style={styles.factDivider} />
         <View style={styles.factRow}>
           <Text style={styles.factKey}>Time zone</Text>
-          <Text style={styles.factValue}>CEST (UTC+2) in August</Text>
+          <Text style={styles.factValue}>CEST (UTC+2)</Text>
         </View>
         <View style={styles.factDivider} />
         <View style={styles.factRow}>
