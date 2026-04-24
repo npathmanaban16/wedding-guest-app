@@ -748,6 +748,10 @@ export interface PackingItem {
   weddingPartyOnly?: boolean;
   // Bridesmaids/bridesman only — narrower than weddingPartyOnly.
   bridalPartyOnly?: boolean;
+  // Hide from bridal party — used when a bridal-party-specific variant
+  // supersedes a generic item (e.g. the ceremony outfit is provided, so
+  // bridal-party women see "Reception outfit (optional)" instead).
+  excludeBridalParty?: boolean;
   /**
    * If set, this item is only shown to guests of that gender.
    * Guests whose gender is unknown see all items regardless.
@@ -784,6 +788,7 @@ export const PACKING_GUIDE_NN: PackingCategory[] = [
         label: "Ceremony & Reception outfit",
         tip: "Indian formal or black-tie Western. Elegant neutrals and muted evening tones. Lehenga, saree, or floor length gown.",
         gender: 'female',
+        excludeBridalParty: true,
       },
       {
         id: "ceremony-outfit-male",
@@ -822,6 +827,13 @@ export const PACKING_GUIDE_NN: PackingCategory[] = [
         label: "Pink sherwani for the wedding ceremony (provided by Neha)",
         bridalPartyOnly: true,
         gender: 'male',
+      },
+      {
+        id: "bridal-reception-outfit",
+        label: "Reception outfit (optional)",
+        tip: "Black-tie. Optional — you can stay in the pink lehenga through the reception if you prefer.",
+        bridalPartyOnly: true,
+        gender: 'female',
       },
       {
         id: "casual-exploring",
