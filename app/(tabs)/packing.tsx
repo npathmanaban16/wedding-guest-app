@@ -19,14 +19,16 @@ import { haptic } from '@/utils/haptics';
 function PackingItemRow({
   item,
   checked,
+  tipOpen,
   onToggle,
+  onToggleTip,
 }: {
   item: PackingItem;
   checked: boolean;
+  tipOpen: boolean;
   onToggle: () => void;
+  onToggleTip: () => void;
 }) {
-  const [showTip, setShowTip] = useState(false);
-
   return (
     <View style={styles.itemRow}>
       <TouchableOpacity
@@ -42,18 +44,18 @@ function PackingItemRow({
         </Text>
         {item.tip && (
           <TouchableOpacity
-            onPress={() => setShowTip((v) => !v)}
+            onPress={onToggleTip}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Ionicons
-              name={showTip ? 'information-circle' : 'information-circle-outline'}
+              name={tipOpen ? 'information-circle' : 'information-circle-outline'}
               size={17}
-              color={showTip ? Colors.primary : Colors.textMuted}
+              color={tipOpen ? Colors.primary : Colors.textMuted}
             />
           </TouchableOpacity>
         )}
       </TouchableOpacity>
-      {item.tip && showTip && (
+      {item.tip && tipOpen && (
         <View style={styles.tipBubble}>
           <Text style={styles.tipText}>{item.tip}</Text>
         </View>
@@ -65,11 +67,15 @@ function PackingItemRow({
 function CategorySection({
   category,
   checkedItems,
+  openTipId,
   onToggle,
+  onToggleTip,
 }: {
   category: PackingCategory;
   checkedItems: string[];
+  openTipId: string | null;
   onToggle: (id: string) => void;
+  onToggleTip: (id: string) => void;
 }) {
   const checkedCount = category.items.filter((i) => checkedItems.includes(i.id)).length;
   const total = category.items.length;
@@ -107,7 +113,9 @@ function CategorySection({
             key={item.id}
             item={item}
             checked={checkedItems.includes(item.id)}
+            tipOpen={openTipId === item.id}
             onToggle={() => onToggle(item.id)}
+            onToggleTip={() => onToggleTip(item.id)}
           />
         ))}
       </View>
@@ -119,6 +127,12 @@ export default function PackingScreen() {
   const insets = useSafeAreaInsets();
   const [checkedItems, setCheckedItems] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  // Single-open tip bubble page-wide — tapping another info icon closes
+  // the currently open one; tapping the same icon closes it.
+  const [openTipId, setOpenTipId] = useState<string | null>(null);
+  const handleToggleTip = (id: string) => {
+    setOpenTipId((cur) => (cur === id ? null : id));
+  };
   const { guestName } = useAuth();
   const { weddingId, isWeddingParty, getGuestGender, wedding } = useWedding();
   const inWeddingParty = isWeddingParty(guestName ?? '');
@@ -199,7 +213,9 @@ export default function PackingScreen() {
           key={category.id}
           category={category}
           checkedItems={checkedItems}
+          openTipId={openTipId}
           onToggle={handleToggle}
+          onToggleTip={handleToggleTip}
         />
       ))}
 
