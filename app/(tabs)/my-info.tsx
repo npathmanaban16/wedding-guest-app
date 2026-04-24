@@ -399,7 +399,7 @@ export default function MyInfoScreen() {
 const styles = StyleSheet.create({
   kav: { flex: 1, backgroundColor: Colors.background },
   container: { flex: 1, backgroundColor: Colors.background },
-  content: { paddingBottom: Spacing.xxl },
+  content: { paddingBottom: Spacing.lg },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.background },
 
   pageHeader: {
@@ -575,7 +575,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: Spacing.xl,
     lineHeight: 18,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.sm,
   },
 
   logoutButton: {
@@ -583,7 +583,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.xs,
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.sm,
   },
   logoutText: {
     fontSize: 13,
