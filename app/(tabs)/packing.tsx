@@ -146,6 +146,7 @@ export default function PackingScreen() {
       if (item.weddingPartyOnly && !inWeddingParty) return false;
       if (item.bridalPartyOnly && !inBridalParty) return false;
       if (item.excludeBridalParty && inBridalParty) return false;
+      if (item.excludeWeddingParty && inWeddingParty) return false;
       // If gender is unknown, show everything. Otherwise only show items
       // that match the guest's gender (or have no gender tag).
       if (item.gender && gender && item.gender !== gender) return false;

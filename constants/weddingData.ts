@@ -752,6 +752,9 @@ export interface PackingItem {
   // supersedes a generic item (e.g. the ceremony outfit is provided, so
   // bridal-party women see "Reception outfit (optional)" instead).
   excludeBridalParty?: boolean;
+  // Hide from wedding party — used when a wedding-party-specific variant
+  // supersedes a generic item (e.g. groomsmen wear tuxedos only).
+  excludeWeddingParty?: boolean;
   /**
    * If set, this item is only shown to guests of that gender.
    * Guests whose gender is unknown see all items regardless.
@@ -795,6 +798,14 @@ export const PACKING_GUIDE_NN: PackingCategory[] = [
         label: "Tuxedo or Black Suit",
         tip: "Black-tie dress code applies.",
         gender: 'male',
+        excludeWeddingParty: true,
+      },
+      {
+        id: "ceremony-outfit-male-wp",
+        label: "Tuxedo",
+        tip: "Black-tie dress code applies.",
+        gender: 'male',
+        weddingPartyOnly: true,
       },
       {
         id: "bridal-morning-outfit",
@@ -888,6 +899,14 @@ export const PACKING_GUIDE_NN: PackingCategory[] = [
         label: "Dress Shoes for Ceremony & Reception",
         tip: "Black patent leather pairs best with a tuxedo. Polished black leather works with a black suit.",
         gender: 'male',
+        excludeWeddingParty: true,
+      },
+      {
+        id: "dress-shoes-ceremony-male-wp",
+        label: "Dress Shoes for Ceremony & Reception",
+        tip: "Black patent leather pairs best with a tuxedo.",
+        gender: 'male',
+        weddingPartyOnly: true,
       },
       {
         id: "walking-shoes",
