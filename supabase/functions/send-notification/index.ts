@@ -14,12 +14,24 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { guestName, details } = await req.json();
+    // `kind` defaults to 'details' for backwards compat with the auto-save
+    // travel-update path. 'message' is the explicit-Send flow on the
+    // Notes field and lands with a distinct subject line.
+    const { guestName, details, kind } = await req.json();
+    const isMessage = kind === 'message';
 
     if (!RESEND_API_KEY) {
       console.error('RESEND_API_KEY secret not set');
       return new Response(JSON.stringify({ error: 'Email not configured' }), { status: 500 });
     }
+
+    const subject = isMessage
+      ? `✉️ ${guestName} sent you a message`
+      : `✈️ ${guestName} updated their travel details`;
+    const heading = isMessage ? 'New message from a guest' : 'Travel details update';
+    const textIntro = isMessage
+      ? `${guestName} sent you a message from the wedding app:`
+      : `${guestName} just saved their details in the wedding app:`;
 
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -30,11 +42,11 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from: FROM_EMAIL,
         to: [TO_EMAIL],
-        subject: `✈️ ${guestName} updated their travel details`,
-        text: `${guestName} just saved their details in the wedding app:\n\n${details}\n\n— Neha & Naveen Wedding App`,
+        subject,
+        text: `${textIntro}\n\n${details}\n\n— Neha & Naveen Wedding App`,
         html: `
           <div style="font-family: Georgia, serif; max-width: 480px; margin: 0 auto; padding: 32px; color: #1C1810;">
-            <h2 style="color: #7A6A55; margin-bottom: 4px;">Travel details update</h2>
+            <h2 style="color: #7A6A55; margin-bottom: 4px;">${heading}</h2>
             <p style="color: #9A8A78; font-size: 13px; margin-top: 0;">${new Date().toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'short' })}</p>
             <hr style="border: none; border-top: 1px solid #E4D9CC; margin: 20px 0;" />
             <pre style="font-family: Georgia, serif; font-size: 15px; line-height: 1.8; white-space: pre-wrap; color: #1C1810;">${details}</pre>

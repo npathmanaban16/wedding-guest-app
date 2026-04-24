@@ -19,7 +19,7 @@ import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
 import { DEFAULT_WEDDING_ID, getTravelWindow } from '@/constants/weddingData';
-import { getMyInfo, saveMyInfo, deleteMyAccount, MyInfo } from '@/services/storage';
+import { getMyInfo, saveMyInfo, deleteMyAccount, sendGuestMessage, MyInfo } from '@/services/storage';
 import { HotelPickerField } from '@/components/HotelPickerField';
 import { DateField } from '@/components/DateField';
 
@@ -141,6 +141,7 @@ export default function MyInfoScreen() {
   });
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [sendStatus, setSendStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const saveTimer = useRef<ReturnType<typeof setTimeout>>();
   const scrollRef = useRef<ScrollView>(null);
 
@@ -181,6 +182,24 @@ export default function MyInfoScreen() {
       persist(updated);
       return updated;
     });
+  };
+
+  const handleSendMessage = async () => {
+    const message = info.extraNotes.trim();
+    if (!guestName || !message) return;
+    setSendStatus('sending');
+    // Make sure the note is in the DB before the email goes out so the
+    // couple's follow-up matches what the guest sees on their device.
+    clearTimeout(saveTimer.current);
+    try {
+      await persist(info);
+      await sendGuestMessage(weddingId, guestName, message);
+      setSendStatus('sent');
+      setTimeout(() => setSendStatus((s) => (s === 'sent' ? 'idle' : s)), 3000);
+    } catch {
+      setSendStatus('error');
+      setTimeout(() => setSendStatus((s) => (s === 'error' ? 'idle' : s)), 4000);
+    }
   };
 
   if (loading) {
@@ -344,6 +363,33 @@ export default function MyInfoScreen() {
             placeholder="Type your message here..."
             multiline
           />
+          <TouchableOpacity
+            style={[
+              styles.sendMessageButton,
+              (!info.extraNotes.trim() || sendStatus === 'sending') && styles.sendMessageButtonDisabled,
+            ]}
+            onPress={handleSendMessage}
+            disabled={!info.extraNotes.trim() || sendStatus === 'sending'}
+            activeOpacity={0.8}
+          >
+            {sendStatus === 'sending' ? (
+              <ActivityIndicator size="small" color={Colors.white} />
+            ) : (
+              <>
+                <Ionicons
+                  name={sendStatus === 'sent' ? 'checkmark' : 'paper-plane-outline'}
+                  size={15}
+                  color={Colors.white}
+                />
+                <Text style={styles.sendMessageButtonText}>
+                  {sendStatus === 'sent' ? 'Sent!' : sendStatus === 'error' ? 'Try again' : 'Send to the couple'}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+          <Text style={styles.sendMessageHint}>
+            The note stays saved here. Sending also emails {wedding.couple_names}.
+          </Text>
         </View>
 
         {/* Auto-save status */}
@@ -576,6 +622,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     lineHeight: 18,
     marginBottom: Spacing.sm,
+  },
+
+  sendMessageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.full,
+    paddingVertical: 11,
+    paddingHorizontal: Spacing.lg,
+    marginTop: Spacing.sm,
+    minHeight: 40,
+  },
+  sendMessageButtonDisabled: {
+    opacity: 0.45,
+  },
+  sendMessageButtonText: {
+    fontSize: 13,
+    fontFamily: Fonts.sansMedium,
+    color: Colors.white,
+    letterSpacing: 0.3,
+  },
+  sendMessageHint: {
+    fontSize: 11,
+    fontFamily: Fonts.sans,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    marginTop: Spacing.xs,
   },
 
   logoutButton: {
