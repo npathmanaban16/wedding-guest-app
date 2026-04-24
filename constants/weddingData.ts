@@ -403,28 +403,6 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
     ],
   },
   {
-    id: "getting-around",
-    title: "Getting Around Montreux",
-    emoji: "🚌",
-    items: [
-      {
-        id: "riviera-card",
-        name: "Montreux Riviera Card",
-        category: "Practical",
-        description:
-          "Many hotels provide guests with a Montreux Riviera Card, which includes free or discounted travel on local buses, boats, and mountain railways throughout the region.",
-        tip: "Ask your hotel at check-in — it can save you a lot on local transport.",
-      },
-      {
-        id: "uber-local",
-        name: "Uber & Taxis",
-        category: "Practical",
-        description:
-          "Uber and taxis also operate in Geneva, Montreux, Lausanne, and surrounding areas.",
-      },
-    ],
-  },
-  {
     id: "things-to-do",
     title: "Things to Do",
     emoji: "🗺️",
@@ -621,65 +599,79 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
     id: "restaurants",
     title: "Eating & Drinking",
     emoji: "🍷",
-    items: [
+    subsections: [
       {
-        id: "sleepy-bear",
-        name: "Sleepy Bear Coffee",
-        category: "Café",
-        description:
-          "Montreux's premier specialty coffee shop — the perfect place to start your day with expertly crafted espresso and a welcoming atmosphere.",
-        address: "Avenue des Alpes 68, 1820 Montreux, Switzerland",
+        id: "cafes",
+        title: "Cafes",
+        emoji: "☕",
+        items: [
+          {
+            id: "sleepy-bear",
+            name: "Sleepy Bear Coffee",
+            category: "Café",
+            description:
+              "Montreux's premier specialty coffee shop — the perfect place to start your day with expertly crafted espresso and a welcoming atmosphere.",
+            address: "Avenue des Alpes 68, 1820 Montreux, Switzerland",
+          },
+          {
+            id: "confiserie-zurcher",
+            name: "Confiserie Zurcher",
+            category: "Café",
+            description:
+              "A traditional Swiss confectionery and café — perfect for breakfast pastries, hot chocolate, and handmade chocolates to take home.",
+            tip: "Pick up a box of Swiss chocolates as a souvenir — made in-house.",
+            address: "Av. du Casino 45, 1820 Montreux, Switzerland",
+          },
+        ],
       },
       {
-        id: "confiserie-zurcher",
-        name: "Confiserie Zurcher",
-        category: "Café",
-        description:
-          "A traditional Swiss confectionery and café — perfect for breakfast pastries, hot chocolate, and handmade chocolates to take home.",
-        tip: "Pick up a box of Swiss chocolates as a souvenir — made in-house.",
-        address: "Av. du Casino 45, 1820 Montreux, Switzerland",
-      },
-      {
-        id: "montreux-jazz-cafe",
-        name: "Montreux Jazz Café",
-        category: "Restaurant",
-        description:
-          "Lively vibes and modern European cuisine inspired by the legendary Montreux Jazz Festival. Located at the Fairmont.",
-        address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
-      },
-      {
-        id: "la-terrasse",
-        name: "La Terrasse",
-        category: "Restaurant",
-        description:
-          "Elegant Mediterranean-inspired dining at the Fairmont with beautiful views of Lake Geneva — perfect for a romantic dinner.",
-        address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
-      },
-      {
-        id: "funky-claudes",
-        name: "Funky Claude's Bar",
-        category: "Bar",
-        description:
-          "Casual cocktails, light bites, and a comfort-food menu with a fun, jazzy atmosphere at the Fairmont. Live music most evenings.",
-        tip: "Named after legendary Montreux Jazz Festival founder Claude Nobs — a Montreux icon.",
-        address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
-      },
-      {
-        id: "la-rouvenaz",
-        name: "La Rouvenaz",
-        category: "Restaurant",
-        description:
-          "A charming local favorite right on the lakeside — known for fresh seafood and Swiss specialties with beautiful lake views.",
-        tip: "Perch (perche) from Lake Geneva is a local specialty — try the classic meunière style.",
-        address: "Rue du Marché 1, 1820 Montreux, Switzerland",
-      },
-      {
-        id: "lausanne-dining",
-        name: "Michelin Dining in Lausanne",
-        category: "Restaurant",
-        description:
-          "If you have extra time, a quick 30-minute train ride to Lausanne opens up several world-class Michelin-starred restaurants for a truly special meal.",
-        tip: "Book well in advance — Michelin restaurants in the region fill up weeks ahead.",
+        id: "restaurants-bars",
+        title: "Restaurants & Bars",
+        emoji: "🍽️",
+        items: [
+          {
+            id: "montreux-jazz-cafe",
+            name: "Montreux Jazz Café",
+            category: "Restaurant",
+            description:
+              "Lively vibes and modern European cuisine inspired by the legendary Montreux Jazz Festival. Located at the Fairmont.",
+            address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
+          },
+          {
+            id: "la-terrasse",
+            name: "La Terrasse",
+            category: "Restaurant",
+            description:
+              "Elegant Mediterranean-inspired dining at the Fairmont with beautiful views of Lake Geneva — perfect for a romantic dinner.",
+            address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
+          },
+          {
+            id: "funky-claudes",
+            name: "Funky Claude's Bar",
+            category: "Bar",
+            description:
+              "Casual cocktails, light bites, and a comfort-food menu with a fun, jazzy atmosphere at the Fairmont. Live music most evenings.",
+            tip: "Named after legendary Montreux Jazz Festival founder Claude Nobs — a Montreux icon.",
+            address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
+          },
+          {
+            id: "la-rouvenaz",
+            name: "La Rouvenaz",
+            category: "Restaurant",
+            description:
+              "A charming local favorite right on the lakeside — known for fresh seafood and Swiss specialties with beautiful lake views.",
+            tip: "Perch (perche) from Lake Geneva is a local specialty — try the classic meunière style.",
+            address: "Rue du Marché 1, 1820 Montreux, Switzerland",
+          },
+          {
+            id: "lausanne-dining",
+            name: "Michelin Dining in Lausanne",
+            category: "Restaurant",
+            description:
+              "If you have extra time, a quick 30-minute train ride to Lausanne opens up several world-class Michelin-starred restaurants for a truly special meal.",
+            tip: "Book well in advance — Michelin restaurants in the region fill up weeks ahead.",
+          },
+        ],
       },
     ],
   },
@@ -713,14 +705,6 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         tip: "May is peak blooming season — the lake promenade will be stunning with roses and flowers.",
       },
       {
-        id: "getting-around",
-        name: "Getting Around Montreux",
-        category: "Transport",
-        description:
-          "Montreux is a normal town — cars, taxis, and Uber all work here. The town center is walkable. Trains connect to Lausanne (30 min), Geneva (1 hr), and beyond.",
-        tip: "The Fairmont is 5 minutes on foot from Montreux train station. Most wedding venues are at or near the hotel.",
-      },
-      {
         id: "adaptor",
         name: "Plug Adaptor",
         category: "Practical",
@@ -734,6 +718,14 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
         category: "Practical",
         description:
           "Police: 117 | Ambulance: 144 | Fire: 118. The nearest hospital is RSMR in Vevey, about 5km from Montreux.",
+      },
+      {
+        id: "riviera-card",
+        name: "Montreux Riviera Card",
+        category: "Practical",
+        description:
+          "Many hotels provide guests with a Montreux Riviera Card, which includes free or discounted travel on local buses, boats, and mountain railways throughout the region.",
+        tip: "Ask your hotel at check-in — it can save you a lot on local transport.",
       },
     ],
   },
