@@ -373,7 +373,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
     items: [
       {
         id: "flights",
-        name: "Flight",
+        name: "By Air",
         category: "Transport",
         description:
           "Geneva (GVA) is the recommended airport, with Montreux just 1h30 by train or 1 hour by car.\n\nIf you can't get a direct flight to Geneva, Zurich (ZRH) is Switzerland's main hub. Trains from Zurich to Montreux take about 2 hours through the heart of Switzerland.",
@@ -381,7 +381,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
       },
       {
         id: "train-montreux",
-        name: "Train",
+        name: "By Train",
         category: "Transport",
         description:
           "Switzerland's trains are the best way to reach Montreux — punctual, scenic, and stress-free. From Geneva Airport, take a direct train to Montreux (no transfers needed). Journey time is about 1 hour 30 minutes with beautiful views of the lake and vineyards along the way. The Fairmont is a 5-minute walk from Montreux station.\n\nImportant: tickets must be purchased before boarding — buy in the SBB app or at station ticket counters.",
@@ -394,7 +394,7 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
       },
       {
         id: "by-car",
-        name: "Car or Uber",
+        name: "By Car or Ride Share",
         category: "Transport",
         description:
           "It's approximately a 1 hour drive from Geneva Airport to Montreux, following the A1 and A9 highways along the lake. Rental cars are available at the airport. Uber also operates in Geneva and Montreux if you'd prefer not to drive.",
