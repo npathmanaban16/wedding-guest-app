@@ -22,6 +22,17 @@ const DEMO_ALBUM_URL = 'https://example.com/photos';
 // doesn't leak real-wedding art.
 const NN_COUPLE_ILLUSTRATION = require('@/assets/images/nn_couple_fairmont.png');
 
+// Size the hero card from the actual PNG dimensions so the frame always
+// matches the artwork — no letterboxing, no cropping regardless of what
+// aspect ratio the source happens to be. Cap the height so the hero
+// doesn't dominate the Photos screen on phones.
+const NN_COUPLE_ASPECT = (() => {
+  const src = Image.resolveAssetSource(NN_COUPLE_ILLUSTRATION);
+  return src && src.height > 0 ? src.width / src.height : 2 / 3;
+})();
+const NN_HERO_HEIGHT = 260;
+const NN_HERO_WIDTH = NN_HERO_HEIGHT * NN_COUPLE_ASPECT;
+
 export default function PhotosScreen() {
   const insets = useSafeAreaInsets();
   const { wedding } = useWedding();
@@ -44,11 +55,11 @@ export default function PhotosScreen() {
 
       {/* Couple illustration — N&N only */}
       {isNN && (
-        <View style={styles.heroWrap}>
+        <View style={[styles.heroWrap, { width: NN_HERO_WIDTH, height: NN_HERO_HEIGHT }]}>
           <Image
             source={NN_COUPLE_ILLUSTRATION}
             style={styles.heroImage}
-            resizeMode="contain"
+            resizeMode="cover"
             accessibilityLabel={`Watercolor of ${wedding.couple_names} at the Fairmont Le Montreux Palace`}
           />
         </View>
@@ -140,19 +151,14 @@ const styles = StyleSheet.create({
   heroWrap: {
     alignSelf: 'center',
     marginBottom: Spacing.md,
-    width: 240,
+    // Explicit width + height come from the asset dimensions at render
+    // time — see NN_HERO_WIDTH / NN_HERO_HEIGHT above.
     borderRadius: Radius.lg,
     overflow: 'hidden',
     backgroundColor: Colors.white,
     ...Shadow.small,
   },
-  heroImage: {
-    width: '100%',
-    // 2:3 portrait matches the source artwork so `contain` letterboxes
-    // with minimal gap while guaranteeing the whole composition (hotel,
-    // garden, couple) is visible even if the source dimensions drift.
-    aspectRatio: 2 / 3,
-  },
+  heroImage: { width: '100%', height: '100%' },
 
   albumCard: {
     marginHorizontal: Spacing.lg,
