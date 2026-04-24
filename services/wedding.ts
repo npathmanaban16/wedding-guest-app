@@ -20,10 +20,13 @@ export interface WeddingRow {
 export interface GuestRow {
   canonical_name: string;
   is_wedding_party: boolean;
+  // Bridesmaids/bridesman — subset of the wedding party with extra
+  // packing items.
+  is_bridal_party: boolean;
   gender: Gender | null;
 }
 
-export type AdminRole = 'planner' | 'dj';
+export type AdminRole = 'planner' | 'dj' | 'makeup_artist';
 
 export interface AdminRow {
   guest_name: string;
@@ -66,7 +69,7 @@ export async function fetchWeddingByInviteCode(inviteCode: string): Promise<Wedd
 export async function fetchGuests(weddingId: string): Promise<GuestRow[]> {
   const { data, error } = await supabase
     .from('guests')
-    .select('canonical_name, is_wedding_party, gender')
+    .select('canonical_name, is_wedding_party, is_bridal_party, gender')
     .eq('wedding_id', weddingId);
   if (error) throw error;
   return data ?? [];

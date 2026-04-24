@@ -504,10 +504,10 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             tip: "Book ahead — same-day tastings are rarely available at the best estates.",
             links: [
               { label: "Domaine Bovy (Chexbres)", url: "https://www.domainebovy.ch/" },
-              { label: "Domaine Croix Duplex (Grandvaux)", url: "https://www.croixduplex.ch/" },
-              { label: "Domaine Louis Bovard (Cully)", url: "https://www.louisbovard.ch/" },
+              { label: "Domaine Croix Duplex (Grandvaux)", url: "https://croix-duplex.ch/en" },
+              { label: "Domaine Louis Bovard (Cully)", url: "https://www.domainebovard.com/en-1-homepage.html" },
               { label: "Domaine Blaise Duboux (Epesses)", url: "https://www.blaiseduboux.ch/" },
-              { label: "Les Frères Dubois (Dézaley)", url: "https://www.lesfreresdubois.ch/" },
+              { label: "Les Frères Dubois (Dézaley)", url: "https://www.lfd.ch" },
             ],
           },
         ],
@@ -746,6 +746,8 @@ export interface PackingItem {
   label: string;
   tip?: string;
   weddingPartyOnly?: boolean;
+  // Bridesmaids/bridesman only — narrower than weddingPartyOnly.
+  bridalPartyOnly?: boolean;
   /**
    * If set, this item is only shown to guests of that gender.
    * Guests whose gender is unknown see all items regardless.
@@ -797,6 +799,25 @@ export const PACKING_GUIDE_NN: PackingCategory[] = [
       {
         id: "travel-outfit",
         label: "Comfortable travel outfit for the journey",
+      },
+    ],
+  },
+  {
+    id: "bridal-party",
+    title: "Bridal Party",
+    emoji: "💐",
+    items: [
+      {
+        id: "bridal-sweatshirt",
+        label: "Bridesmaid / Bridesman sweatshirt",
+        tip: "Matching sweatshirt for the wedding-morning getting-ready photos.",
+        bridalPartyOnly: true,
+      },
+      {
+        id: "bridal-morning-outfit",
+        label: "Light pink outfit for the wedding morning",
+        tip: "For getting-ready photos before the bride changes into her ceremony attire.",
+        bridalPartyOnly: true,
       },
     ],
   },

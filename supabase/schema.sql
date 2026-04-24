@@ -57,6 +57,10 @@ create table public.guests (
   wedding_id        uuid not null references public.weddings(id) on delete cascade,
   canonical_name    text not null,
   is_wedding_party  boolean not null default false,
+  -- Bridal party = bridesmaids/bridesman, a subset of the wedding party
+  -- with extra packing items (e.g. matching sweatshirts, getting-ready
+  -- outfits). Always implies is_wedding_party=true; enforced by seeding.
+  is_bridal_party   boolean not null default false,
   gender            text check (gender in ('male', 'female')),
   created_at        timestamptz default now(),
   unique (wedding_id, canonical_name)
@@ -81,9 +85,9 @@ create table public.wedding_admins (
   gender           text check (gender in ('male', 'female')),
   -- Optional role. Admins without a role (or role='planner') get full
   -- admin powers (send notifications, delete messages, admin page).
-  -- Vendor roles like 'dj' are login-only: scoped schedule visibility,
-  -- no admin-ui surfaces. Expand the check list as new vendors are added.
-  role             text check (role in ('planner', 'dj')),
+  -- Vendor roles ('dj', 'makeup_artist') are login-only: no admin-ui
+  -- surfaces. Expand the check list as new vendors are added.
+  role             text check (role in ('planner', 'dj', 'makeup_artist')),
   created_at       timestamptz default now(),
   unique (wedding_id, guest_name)
 );
