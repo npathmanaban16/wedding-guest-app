@@ -28,7 +28,7 @@ const NN_COUPLE_ASPECT = (() => {
   const src = Image.resolveAssetSource(NN_COUPLE_ILLUSTRATION);
   return src && src.height > 0 ? src.width / src.height : 2 / 3;
 })();
-const NN_ILLUSTRATION_HEIGHT = 220;
+const NN_ILLUSTRATION_HEIGHT = 180;
 const NN_ILLUSTRATION_WIDTH = NN_ILLUSTRATION_HEIGHT * NN_COUPLE_ASPECT;
 
 export default function PhotosScreen() {
