@@ -805,14 +805,14 @@ export const PACKING_GUIDE_NN: PackingCategory[] = [
       {
         id: "bridesmaid-sweatshirt",
         label: "Bridesmaid sweatshirt (provided by Neha)",
-        tip: "Matching sweatshirt for the wedding-morning getting-ready photos.",
+        tip: "For the ceremony rehearsal on Thursday afternoon.",
         bridalPartyOnly: true,
         gender: 'female',
       },
       {
         id: "bridesman-sweatshirt",
         label: "Bridesman sweatshirt (provided by Neha)",
-        tip: "Matching sweatshirt for the wedding-morning getting-ready photos.",
+        tip: "For the ceremony rehearsal on Thursday afternoon.",
         bridalPartyOnly: true,
         gender: 'male',
       },
@@ -831,7 +831,7 @@ export const PACKING_GUIDE_NN: PackingCategory[] = [
       {
         id: "bridal-reception-outfit",
         label: "Reception outfit (optional)",
-        tip: "Black-tie. Optional — you can stay in the pink lehenga through the reception if you prefer.",
+        tip: "Black-tie attire. You can stay in the pink lehenga through the reception if you prefer.",
         bridalPartyOnly: true,
         gender: 'female',
       },
