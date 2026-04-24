@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Linking,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,10 +17,25 @@ import { useWedding } from '@/context/WeddingContext';
 const NN_ALBUM_URL = 'https://photos.app.goo.gl/YCMxM6i7XRNzKERd6';
 const DEMO_ALBUM_URL = 'https://example.com/photos';
 
+// Commissioned watercolor of the couple in front of Fairmont Le Montreux
+// Palace. Shown on the N&N variant in place of the stock album icon —
+// the SaaS/demo tenant keeps the Ionicons placeholder.
+const NN_COUPLE_ILLUSTRATION = require('@/assets/images/nn_couple_fairmont.png');
+
+// Size the illustration frame from the PNG's real aspect ratio so the
+// watercolor always fits exactly and the whole composition is visible.
+const NN_COUPLE_ASPECT = (() => {
+  const src = Image.resolveAssetSource(NN_COUPLE_ILLUSTRATION);
+  return src && src.height > 0 ? src.width / src.height : 2 / 3;
+})();
+const NN_ILLUSTRATION_HEIGHT = 180;
+const NN_ILLUSTRATION_WIDTH = NN_ILLUSTRATION_HEIGHT * NN_COUPLE_ASPECT;
+
 export default function PhotosScreen() {
   const insets = useSafeAreaInsets();
   const { wedding } = useWedding();
-  const albumUrl = NN_WEDDING_IDS.has(wedding.id) ? NN_ALBUM_URL : DEMO_ALBUM_URL;
+  const isNN = NN_WEDDING_IDS.has(wedding.id);
+  const albumUrl = isNN ? NN_ALBUM_URL : DEMO_ALBUM_URL;
 
   return (
     <ScrollView
@@ -37,9 +53,25 @@ export default function PhotosScreen() {
 
       {/* Main CTA card */}
       <View style={styles.albumCard}>
-        <View style={styles.albumIconWrap}>
-          <Ionicons name="images" size={40} color={Colors.primary} />
-        </View>
+        {isNN ? (
+          <View
+            style={[
+              styles.illustrationWrap,
+              { width: NN_ILLUSTRATION_WIDTH, height: NN_ILLUSTRATION_HEIGHT },
+            ]}
+          >
+            <Image
+              source={NN_COUPLE_ILLUSTRATION}
+              style={styles.illustrationImage}
+              resizeMode="cover"
+              accessibilityLabel={`Watercolor of ${wedding.couple_names} at the Fairmont Le Montreux Palace`}
+            />
+          </View>
+        ) : (
+          <View style={styles.albumIconWrap}>
+            <Ionicons name="images" size={40} color={Colors.primary} />
+          </View>
+        )}
         <Text style={styles.albumTitle}>{wedding.couple_names}'s Shared Album</Text>
         <Text style={styles.albumBody}>
           All photos and videos from the wedding weekend live here. Add yours and see what everyone else captured.
@@ -117,6 +149,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
+
+  // Wrap for the N&N watercolor that takes the album card's icon slot.
+  // Width + height are applied inline from the PNG's actual aspect
+  // ratio so the whole composition always fits exactly.
+  illustrationWrap: {
+    marginBottom: Spacing.lg,
+    borderRadius: Radius.md,
+    overflow: 'hidden',
+    backgroundColor: Colors.surfaceWarm,
+  },
+  illustrationImage: { width: '100%', height: '100%' },
 
   albumCard: {
     marginHorizontal: Spacing.lg,
