@@ -147,6 +147,10 @@ export async function saveMyInfo(
 }
 
 async function notifyCouple(weddingId: string, guestName: string, info: MyInfo): Promise<void> {
+  // `extraNotes` is intentionally excluded here — it's emailed via the
+  // explicit "Send" button in the Notes card (sendGuestMessage below),
+  // so typing in that field doesn't noise-up the couple's inbox on every
+  // auto-save.
   const lines = [
     `Guest: ${guestName}`,
     info.phone       ? `Phone: ${info.phone}`              : null,
@@ -157,12 +161,31 @@ async function notifyCouple(weddingId: string, guestName: string, info: MyInfo):
     info.checkOut    ? `Check-out: ${info.checkOut}`       : null,
     info.arrivalTime ? `Arrival: ${info.arrivalTime}`      : null,
     info.flightNumber? `Flight: ${info.flightNumber}`      : null,
-    info.extraNotes  ? `\nNotes: ${info.extraNotes}`       : null,
   ].filter(Boolean).join('\n');
 
   await supabase.functions.invoke('send-notification', {
     body: { weddingId, guestName, details: lines },
   });
+}
+
+// Explicit "Send message" flow for the Notes field on My Details. The
+// note is already persisted via autosave on `guest_info.extra_notes`;
+// this fires a dedicated email to the couple with a message-specific
+// subject so it's visually distinct from routine travel-detail updates.
+export async function sendGuestMessage(
+  weddingId: string,
+  guestName: string,
+  message: string,
+): Promise<void> {
+  const body = [
+    `From: ${guestName}`,
+    ``,
+    message,
+  ].join('\n');
+  const { error } = await supabase.functions.invoke('send-notification', {
+    body: { weddingId, guestName, details: body, kind: 'message' },
+  });
+  if (error) throw error;
 }
 
 // ─── Push Tokens ─────────────────────────────────────────────────────────────
