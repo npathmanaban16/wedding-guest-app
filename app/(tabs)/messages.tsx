@@ -100,12 +100,12 @@ function MessageCard({
       ? replies
       : replies.slice(-COLLAPSED_REPLY_COUNT);
 
-  const handleExpandReplies = () => {
+  const handleToggleReplies = () => {
     haptic.selection();
     if (Platform.OS !== 'web') {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     }
-    setRepliesExpanded(true);
+    setRepliesExpanded((v) => !v);
   };
 
   const cardYRef = useRef(0);
@@ -234,14 +234,16 @@ function MessageCard({
       {/* Replies */}
       {replies.length > 0 && (
         <View style={styles.repliesSection}>
-          {!repliesExpanded && hiddenReplyCount > 0 && (
+          {hiddenReplyCount > 0 && (
             <TouchableOpacity
-              onPress={handleExpandReplies}
+              onPress={handleToggleReplies}
               style={styles.viewEarlierBtn}
               activeOpacity={0.7}
             >
               <Text style={styles.viewEarlierText}>
-                View {hiddenReplyCount} earlier {hiddenReplyCount === 1 ? 'reply' : 'replies'}
+                {repliesExpanded
+                  ? 'Hide earlier replies'
+                  : `View ${hiddenReplyCount} earlier ${hiddenReplyCount === 1 ? 'reply' : 'replies'}`}
               </Text>
             </TouchableOpacity>
           )}
