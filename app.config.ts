@@ -33,6 +33,7 @@ interface VariantConfig {
   defaultWeddingId: string | null;
   easProjectId: string | undefined;
   updatesUrl: string | undefined;
+  googleServicesFile: string | undefined;
 }
 
 const variants: Record<Variant, VariantConfig> = {
@@ -52,6 +53,7 @@ const variants: Record<Variant, VariantConfig> = {
     defaultWeddingId: '00000000-0000-0000-0000-000000000001',
     easProjectId: 'ae93c50e-f645-405a-818e-2737f5560e96',
     updatesUrl: 'https://u.expo.dev/ae93c50e-f645-405a-818e-2737f5560e96',
+    googleServicesFile: undefined,
   },
   saas: {
     name: 'Tetherly',
@@ -71,6 +73,7 @@ const variants: Record<Variant, VariantConfig> = {
     // 'tetherly' slug. Re-run `eas init` if you ever recreate it.
     easProjectId: '54915c3a-5195-493a-b080-3544c9e1782a',
     updatesUrl: 'https://u.expo.dev/54915c3a-5195-493a-b080-3544c9e1782a',
+    googleServicesFile: './google-services.json',
   },
 };
 
@@ -110,6 +113,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         foregroundImage: v.icon,
         backgroundColor: '#FAF7F4',
       },
+      ...(v.googleServicesFile ? { googleServicesFile: v.googleServicesFile } : {}),
       permissions: [
         'android.permission.READ_EXTERNAL_STORAGE',
         'android.permission.WRITE_EXTERNAL_STORAGE',
