@@ -73,7 +73,11 @@ const variants: Record<Variant, VariantConfig> = {
     // 'tetherly' slug. Re-run `eas init` if you ever recreate it.
     easProjectId: '54915c3a-5195-493a-b080-3544c9e1782a',
     updatesUrl: 'https://u.expo.dev/54915c3a-5195-493a-b080-3544c9e1782a',
-    googleServicesFile: './google-services.json',
+    // Path to google-services.json. The file is gitignored, so on EAS
+    // builds it's supplied via the GOOGLE_SERVICES_JSON file env var
+    // (uploaded once via `eas env:create`). Locally, the file sits at
+    // the repo root for `expo prebuild` and dev workflows.
+    googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? './google-services.json',
   },
 };
 
