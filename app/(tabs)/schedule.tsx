@@ -384,7 +384,7 @@ export default function ScheduleScreen() {
         <Text style={styles.pageTitle}>Wedding Schedule</Text>
         <Text style={styles.pageSubtitleTag}>Program</Text>
         <Text style={styles.pageSubtitle}>
-          Tap each event for full details, venue, dress code, and color palette
+          Tap each event for full details, including venue, dress code, and color palette.
         </Text>
       </View>
 
