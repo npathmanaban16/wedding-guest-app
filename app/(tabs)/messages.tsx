@@ -11,7 +11,9 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   LayoutAnimation,
+  Modal,
   Platform,
+  Pressable,
   UIManager,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -90,6 +92,9 @@ function MessageCard({
   const [editOpen, setEditOpen] = useState(false);
   const [editText, setEditText] = useState(notification.message);
   const [savingEdit, setSavingEdit] = useState(false);
+
+  const [reactionsModalOpen, setReactionsModalOpen] = useState(false);
+  const totalReactions = reactions.reduce((sum, r) => sum + r.count, 0);
 
   // When a thread has more than COLLAPSED_REPLY_COUNT replies, hide the
   // older ones behind a "View N earlier replies" button. Tap expands
@@ -235,6 +240,63 @@ function MessageCard({
           );
         })}
       </View>
+
+      {/* See who reacted — inline link opening a modal breakdown */}
+      {totalReactions > 0 && (
+        <TouchableOpacity
+          style={styles.seeReactionsBtn}
+          onPress={() => { haptic.selection(); setReactionsModalOpen(true); }}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.seeReactionsText}>
+            See who reacted
+          </Text>
+        </TouchableOpacity>
+      )}
+
+      <Modal
+        visible={reactionsModalOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setReactionsModalOpen(false)}
+      >
+        <Pressable
+          style={styles.modalBackdrop}
+          onPress={() => setReactionsModalOpen(false)}
+        >
+          <Pressable style={styles.modalCard} onPress={() => {}}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Reactions</Text>
+              <TouchableOpacity
+                onPress={() => setReactionsModalOpen(false)}
+                hitSlop={8}
+                style={styles.modalCloseBtn}
+              >
+                <Ionicons name="close" size={20} color={Colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalBody}>
+              {reactions.length === 0 ? (
+                <Text style={styles.modalEmptyText}>No reactions yet.</Text>
+              ) : (
+                reactions.map((r) => (
+                  <View key={r.emoji} style={styles.modalReactionGroup}>
+                    <View style={styles.modalReactionHeader}>
+                      <Text style={styles.modalReactionEmoji}>{r.emoji}</Text>
+                      <Text style={styles.modalReactionCount}>{r.count}</Text>
+                    </View>
+                    {r.guestNames.map((name) => (
+                      <Text key={name} style={styles.modalReactionName}>
+                        {name}
+                      </Text>
+                    ))}
+                  </View>
+                ))
+              )}
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       {/* Replies */}
       {replies.length > 0 && (
@@ -743,6 +805,87 @@ const styles = StyleSheet.create({
   },
   reactionCountSelected: {
     color: Colors.primary,
+  },
+
+  seeReactionsBtn: {
+    alignSelf: 'flex-start',
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.xs,
+    marginTop: 2,
+  },
+  seeReactionsText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 12,
+    color: Colors.textMuted,
+  },
+
+  // Reactions modal
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.lg,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 400,
+    maxHeight: '75%',
+    backgroundColor: Colors.white,
+    borderRadius: Radius.lg,
+    ...Shadow.small,
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.sm,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.divider,
+  },
+  modalTitle: {
+    fontFamily: Fonts.serifSemiBold,
+    fontSize: 17,
+    color: Colors.textPrimary,
+    letterSpacing: 0.2,
+  },
+  modalCloseBtn: { padding: Spacing.xs },
+  modalBody: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+  },
+  modalEmptyText: {
+    fontFamily: Fonts.sans,
+    fontSize: 13,
+    color: Colors.textMuted,
+    textAlign: 'center',
+  },
+  modalReactionGroup: {
+    marginBottom: Spacing.md,
+  },
+  modalReactionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    marginBottom: Spacing.xs,
+  },
+  modalReactionEmoji: {
+    fontSize: 20,
+  },
+  modalReactionCount: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 12,
+    color: Colors.textMuted,
+  },
+  modalReactionName: {
+    fontFamily: Fonts.sans,
+    fontSize: 14,
+    color: Colors.textPrimary,
+    paddingVertical: 3,
+    paddingLeft: 28,
   },
 
   // Replies
