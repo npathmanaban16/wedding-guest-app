@@ -134,8 +134,9 @@ export default function PackingScreen() {
     setOpenTipId((cur) => (cur === id ? null : id));
   };
   const { guestName } = useAuth();
-  const { weddingId, isWeddingParty, getGuestGender, wedding } = useWedding();
+  const { weddingId, isWeddingParty, isBridalParty, getGuestGender, wedding } = useWedding();
   const inWeddingParty = isWeddingParty(guestName ?? '');
+  const inBridalParty = isBridalParty(guestName ?? '');
   const gender = getGuestGender(guestName ?? '');
   const packingGuide = NN_WEDDING_IDS.has(wedding.id) ? PACKING_GUIDE_NN : PACKING_GUIDE_DEMO;
 
@@ -143,6 +144,9 @@ export default function PackingScreen() {
     ...cat,
     items: cat.items.filter((item) => {
       if (item.weddingPartyOnly && !inWeddingParty) return false;
+      if (item.bridalPartyOnly && !inBridalParty) return false;
+      if (item.excludeBridalParty && inBridalParty) return false;
+      if (item.excludeWeddingParty && inWeddingParty) return false;
       // If gender is unknown, show everything. Otherwise only show items
       // that match the guest's gender (or have no gender tag).
       if (item.gender && gender && item.gender !== gender) return false;

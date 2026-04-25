@@ -504,10 +504,10 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             tip: "Book ahead — same-day tastings are rarely available at the best estates.",
             links: [
               { label: "Domaine Bovy (Chexbres)", url: "https://www.domainebovy.ch/" },
-              { label: "Domaine Croix Duplex (Grandvaux)", url: "https://www.croixduplex.ch/" },
-              { label: "Domaine Louis Bovard (Cully)", url: "https://www.louisbovard.ch/" },
+              { label: "Domaine Croix Duplex (Grandvaux)", url: "https://croix-duplex.ch/en" },
+              { label: "Domaine Louis Bovard (Cully)", url: "https://www.domainebovard.com/en-1-homepage.html" },
               { label: "Domaine Blaise Duboux (Epesses)", url: "https://www.blaiseduboux.ch/" },
-              { label: "Les Frères Dubois (Dézaley)", url: "https://www.lesfreresdubois.ch/" },
+              { label: "Les Frères Dubois (Dézaley)", url: "https://www.lfd.ch" },
             ],
           },
         ],
@@ -746,6 +746,15 @@ export interface PackingItem {
   label: string;
   tip?: string;
   weddingPartyOnly?: boolean;
+  // Bridesmaids/bridesman only — narrower than weddingPartyOnly.
+  bridalPartyOnly?: boolean;
+  // Hide from bridal party — used when a bridal-party-specific variant
+  // supersedes a generic item (e.g. the ceremony outfit is provided, so
+  // bridal-party women see "Reception outfit (optional)" instead).
+  excludeBridalParty?: boolean;
+  // Hide from wedding party — used when a wedding-party-specific variant
+  // supersedes a generic item (e.g. groomsmen wear tuxedos only).
+  excludeWeddingParty?: boolean;
   /**
    * If set, this item is only shown to guests of that gender.
    * Guests whose gender is unknown see all items regardless.
@@ -782,12 +791,61 @@ export const PACKING_GUIDE_NN: PackingCategory[] = [
         label: "Ceremony & Reception outfit",
         tip: "Indian formal or black-tie Western. Elegant neutrals and muted evening tones. Lehenga, saree, or floor length gown.",
         gender: 'female',
+        excludeBridalParty: true,
       },
       {
         id: "ceremony-outfit-male",
         label: "Tuxedo or Black Suit",
         tip: "Black-tie dress code applies.",
         gender: 'male',
+        excludeWeddingParty: true,
+      },
+      {
+        id: "ceremony-outfit-male-wp",
+        label: "Tuxedo",
+        tip: "Black-tie dress code applies.",
+        gender: 'male',
+        weddingPartyOnly: true,
+      },
+      {
+        id: "bridal-morning-outfit",
+        label: "Light pink outfit for the wedding morning",
+        tip: "For getting-ready photos before the bride changes into her ceremony attire.",
+        bridalPartyOnly: true,
+      },
+      {
+        id: "bridesmaid-sweatshirt",
+        label: "Bridesmaid sweatshirt (provided by Neha)",
+        tip: "For the ceremony rehearsal on Thursday afternoon.",
+        bridalPartyOnly: true,
+        gender: 'female',
+      },
+      {
+        id: "bridesman-sweatshirt",
+        label: "Bridesman sweatshirt (provided by Neha)",
+        tip: "For the ceremony rehearsal on Thursday afternoon.",
+        bridalPartyOnly: true,
+        gender: 'male',
+      },
+      {
+        id: "bridal-ceremony-lehenga",
+        label: "Pink lehenga for the wedding ceremony (provided by Neha)",
+        bridalPartyOnly: true,
+        gender: 'female',
+      },
+      {
+        id: "bridal-ceremony-sherwani",
+        label: "Pink sherwani for the wedding ceremony (provided by Neha)",
+        tip: "For photos prior to the wedding ceremony. You'll change into your tuxedo before the ceremony so you can walk down the aisle with the groomsmen.",
+        bridalPartyOnly: true,
+        gender: 'male',
+      },
+      {
+        id: "bridal-reception-outfit",
+        label: "Reception outfit (optional)",
+        tip: "Black-tie attire. You can stay in the pink lehenga through the reception if you prefer.",
+        bridalPartyOnly: true,
+        gender: 'female',
       },
       {
         id: "casual-exploring",
@@ -842,6 +900,14 @@ export const PACKING_GUIDE_NN: PackingCategory[] = [
         label: "Dress Shoes for Ceremony & Reception",
         tip: "Black patent leather pairs best with a tuxedo. Polished black leather works with a black suit.",
         gender: 'male',
+        excludeWeddingParty: true,
+      },
+      {
+        id: "dress-shoes-ceremony-male-wp",
+        label: "Dress Shoes for Ceremony & Reception",
+        tip: "Black patent leather pairs best with a tuxedo.",
+        gender: 'male',
+        weddingPartyOnly: true,
       },
       {
         id: "walking-shoes",
@@ -898,6 +964,24 @@ export const PACKING_GUIDE_NN: PackingCategory[] = [
     title: "Attire Extras",
     emoji: "✨",
     items: [
+      {
+        id: "bridal-earrings-tikka",
+        label: "Indian earrings and tikka for the wedding ceremony (provided by Neha)",
+        bridalPartyOnly: true,
+        gender: 'female',
+      },
+      {
+        id: "bridal-bangles",
+        label: "Bangles for the wedding ceremony (provided by Neha)",
+        bridalPartyOnly: true,
+        gender: 'female',
+      },
+      {
+        id: "bridal-scrunchie",
+        label: "White floral scrunchie for the rehearsal dinner (provided by Neha)",
+        bridalPartyOnly: true,
+        gender: 'female',
+      },
       {
         id: "jewelry",
         label: "Jewelry for each event",

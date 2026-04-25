@@ -594,6 +594,44 @@ export async function togglePackingItem(
   return updated;
 }
 
+// ─── Event Time Overrides ─────────────────────────────────────────────────────
+// Admins can override the `time` string on schedule events without a code
+// deploy. Returned as a Record<event_id, time_string>; the schedule screen
+// merges with the hardcoded events at render time.
+
+export async function getEventTimeOverrides(
+  weddingId: string,
+): Promise<Record<string, string>> {
+  const { data, error } = await supabase
+    .from('event_time_overrides')
+    .select('event_id, time')
+    .eq('wedding_id', weddingId);
+  if (error) throw error;
+  const out: Record<string, string> = {};
+  for (const row of data ?? []) out[row.event_id] = row.time;
+  return out;
+}
+
+export async function setEventTimeOverride(
+  weddingId: string,
+  eventId: string,
+  time: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from('event_time_overrides')
+    .upsert(
+      {
+        wedding_id: weddingId,
+        event_id: eventId,
+        time,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'wedding_id,event_id' },
+    );
+  if (error) throw error;
+}
+
+
 // ─── Photo Submissions (local only for now) ───────────────────────────────────
 
 export interface PhotoRecord {
