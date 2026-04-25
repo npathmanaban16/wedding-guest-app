@@ -167,7 +167,7 @@ export const EVENTS_NN: WeddingEvent[] = [
       { name: 'light blue', hex: '#89CFF0' },
       { name: 'sapphire', hex: '#0F52BA' },
     ],
-    outdoorNote: "The Sangeet will be held on a terrace and is outdoors, weather permitting. In the event of rain or inclement weather, it will be moved indoors.",
+    outdoorNote: "The Sangeet will take place on a terrace and is outdoors, weather permitting. In the event of rain or inclement weather, it will be moved indoors.",
     outfitInspirationUrl: "https://neha-naveen-wedding-outfit-inspo.netlify.app/",
     indianAttire: {
       forWomen: [
@@ -194,7 +194,7 @@ export const EVENTS_NN: WeddingEvent[] = [
     dressCode:
       "Indian formal or black-tie. Elegant neutrals and muted evening tones.",
     description:
-      "The wedding ceremony is in the gardens of the Fairmont. Please arrive 20-30 minutes early to be seated.",
+      "The wedding ceremony will take place in the gardens of the Fairmont. Please arrive 20-30 minutes early to allow time to be seated.",
     notes: "Cocktail hour to follow at 6:00 PM.",
     colorPalette: [
       { name: 'blush', hex: '#F2C4CE' },
@@ -208,7 +208,7 @@ export const EVENTS_NN: WeddingEvent[] = [
       { name: 'muted plum', hex: '#7B5080' },
       { name: 'antique gold', hex: '#C9A84C' },
     ],
-    outdoorNote: "The ceremony will take place in the garden at the Fairmont Le Montreux Palace. We recommend wearing shoes you'll be comfortable walking on grass in. In the event of inclement weather, the ceremony will be moved indoors.",
+    outdoorNote: "The ceremony will take place in the garden at the Fairmont Le Montreux Palace. We recommend wearing shoes suitable for walking on grass. In the event of inclement weather, the ceremony will be moved indoors.",
     outfitInspirationUrl: "https://neha-naveen-wedding-outfit-inspo.netlify.app/",
     blackTieGuide: {
       men: "Tuxedos (or a black suit)",
@@ -233,7 +233,7 @@ export const EVENTS_NN: WeddingEvent[] = [
     dressCode:
       "Indian formal or black-tie. Elegant neutrals and muted evening tones — same dress code as the ceremony.",
     description:
-      "Dinner, speeches, dancing, and celebrating into the night.",
+      "Dinner, speeches, and dancing as we celebrate into the night.",
     notes:
       "The reception follows directly from the cocktail hour.",
     colorPalette: [
@@ -292,7 +292,7 @@ export const EVENTS_DEMO: WeddingEvent[] = EVENTS_NN.map((event) => {
       description:
         "Welcome party with dancing, drinks, and dinner. The big celebration night — come ready to dance!",
       outdoorNote:
-        "The welcome party will be held on a terrace and is outdoors, weather permitting. In the event of rain or inclement weather, it will be moved indoors.",
+        "The welcome party will take place on a terrace and is outdoors, weather permitting. In the event of rain or inclement weather, it will be moved indoors.",
       indianAttire: undefined,
     };
   }
