@@ -268,7 +268,7 @@ export default function CoupleSignupScreen() {
           <Text style={styles.label}>Notes <Text style={styles.optional}>(optional)</Text></Text>
           <TextInput
             style={[styles.input, styles.textarea]}
-            placeholder="Events you’re envisioning, wedding hotel(s), anything else..."
+            placeholder="Tell us a bit more about your wedding - events, hotels, travel info, and whether this is a destination wedding."
             placeholderTextColor={Colors.textMuted}
             value={notes}
             onChangeText={setNotes}
