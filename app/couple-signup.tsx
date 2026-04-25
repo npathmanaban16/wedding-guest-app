@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 import { DateField } from '@/components/DateField';
 import { supabase } from '@/lib/supabase';
+import { isDisposableEmail } from '@/constants/disposableEmailDomains';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -26,6 +27,8 @@ export default function CoupleSignupScreen() {
   const [endDate, setEndDate] = useState('');
   const [isMultiDay, setIsMultiDay] = useState(false);
   const [email, setEmail] = useState('');
+  const [confirmEmail, setConfirmEmail] = useState('');
+  const [guestCount, setGuestCount] = useState('');
   const [city, setCity] = useState('');
   const [notes, setNotes] = useState('');
   // Honeypot — real humans never see this, bots usually fill every field.
@@ -42,6 +45,10 @@ export default function CoupleSignupScreen() {
     if (isMultiDay && endDate && endDate < startDate) return 'End date must be after the start date.';
     if (!email.trim()) return 'Please enter your email.';
     if (!EMAIL_REGEX.test(email.trim())) return 'That email doesn’t look right.';
+    if (isDisposableEmail(email.trim())) return 'Please use a non-disposable email address.';
+    if (email.trim().toLowerCase() !== confirmEmail.trim().toLowerCase()) {
+      return 'Email addresses don’t match.';
+    }
     return null;
   };
 
@@ -63,11 +70,13 @@ export default function CoupleSignupScreen() {
       return;
     }
 
+    const parsedGuests = parseInt(guestCount.trim(), 10);
     const payload = {
       couple_name: coupleName.trim(),
       wedding_date_start: startDate,
       wedding_date_end: isMultiDay && endDate ? endDate : null,
       email: email.trim(),
+      guest_count: Number.isFinite(parsedGuests) ? parsedGuests : null,
       city: city.trim() || null,
       notes: notes.trim() || null,
     };
@@ -77,6 +86,8 @@ export default function CoupleSignupScreen() {
       // Rate-limit trigger raises a P0001 with "rate_limited:" prefix.
       if (dbError.message?.toLowerCase().includes('rate_limited')) {
         setError('You just submitted a request. Please wait a minute before trying again.');
+      } else if (dbError.message?.toLowerCase().includes('disposable_email')) {
+        setError('Please use a non-disposable email address.');
       } else {
         setError('Something went wrong saving your request. Please try again.');
       }
@@ -93,6 +104,7 @@ export default function CoupleSignupScreen() {
         weddingDateStart: payload.wedding_date_start,
         weddingDateEnd: payload.wedding_date_end,
         email: payload.email,
+        guestCount: payload.guest_count,
         city: payload.city,
         notes: payload.notes,
       },
@@ -215,6 +227,34 @@ export default function CoupleSignupScreen() {
             returnKeyType="next"
           />
 
+          {email.length > 0 && (
+            <>
+              <Text style={styles.label}>Confirm email</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="you@example.com"
+                placeholderTextColor={Colors.textMuted}
+                value={confirmEmail}
+                onChangeText={(t) => { setConfirmEmail(t); if (error) setError(''); }}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="email-address"
+                returnKeyType="next"
+              />
+            </>
+          )}
+
+          <Text style={styles.label}>Number of guests <Text style={styles.optional}>(optional)</Text></Text>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. 120"
+            placeholderTextColor={Colors.textMuted}
+            value={guestCount}
+            onChangeText={(t) => setGuestCount(t.replace(/[^0-9]/g, ''))}
+            keyboardType="number-pad"
+            returnKeyType="next"
+          />
+
           <Text style={styles.label}>City or venue <Text style={styles.optional}>(optional)</Text></Text>
           <TextInput
             style={styles.input}
@@ -228,7 +268,7 @@ export default function CoupleSignupScreen() {
           <Text style={styles.label}>Notes <Text style={styles.optional}>(optional)</Text></Text>
           <TextInput
             style={[styles.input, styles.textarea]}
-            placeholder="Tell us anything else about your wedding..."
+            placeholder="Tell us a bit more about your wedding - events, hotels, travel info, and whether this is a destination wedding."
             placeholderTextColor={Colors.textMuted}
             value={notes}
             onChangeText={setNotes}
