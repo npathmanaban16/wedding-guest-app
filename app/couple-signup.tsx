@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 import { DateField } from '@/components/DateField';
 import { supabase } from '@/lib/supabase';
@@ -21,6 +22,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function CoupleSignupScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [coupleName, setCoupleName] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -148,7 +150,10 @@ export default function CoupleSignupScreen() {
         style={styles.kav}
       >
         <ScrollView
-          contentContainerStyle={styles.scroll}
+          contentContainerStyle={[
+            styles.scroll,
+            { paddingTop: insets.top + Spacing.sm, paddingBottom: insets.bottom + Spacing.xxl },
+          ]}
           keyboardShouldPersistTaps="handled"
           automaticallyAdjustKeyboardInsets
           showsVerticalScrollIndicator={false}
@@ -318,8 +323,6 @@ const styles = StyleSheet.create({
   scroll: {
     flexGrow: 1,
     paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.xl,
-    paddingBottom: Spacing.xxl,
   },
 
   backButton: {
