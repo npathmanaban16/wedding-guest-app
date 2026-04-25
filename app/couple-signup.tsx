@@ -152,7 +152,7 @@ export default function CoupleSignupScreen() {
         <ScrollView
           contentContainerStyle={[
             styles.scroll,
-            { paddingTop: insets.top + Spacing.sm, paddingBottom: insets.bottom + Spacing.xxl },
+            { paddingTop: insets.top + Spacing.sm, paddingBottom: insets.bottom + Spacing.xxxl },
           ]}
           keyboardShouldPersistTaps="handled"
           automaticallyAdjustKeyboardInsets
@@ -249,26 +249,31 @@ export default function CoupleSignupScreen() {
             </>
           )}
 
-          <Text style={styles.label}>Number of guests <Text style={styles.optional}>(optional)</Text></Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. 120"
-            placeholderTextColor={Colors.textMuted}
-            value={guestCount}
-            onChangeText={(t) => setGuestCount(t.replace(/[^0-9]/g, ''))}
-            keyboardType="number-pad"
-            returnKeyType="next"
-          />
-
-          <Text style={styles.label}>City or venue <Text style={styles.optional}>(optional)</Text></Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. Montreux, Switzerland"
-            placeholderTextColor={Colors.textMuted}
-            value={city}
-            onChangeText={setCity}
-            returnKeyType="next"
-          />
+          <View style={styles.fieldRow}>
+            <View style={styles.fieldRowGuests}>
+              <Text style={styles.label}>Guests <Text style={styles.optional}>(optional)</Text></Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g. 120"
+                placeholderTextColor={Colors.textMuted}
+                value={guestCount}
+                onChangeText={(t) => setGuestCount(t.replace(/[^0-9]/g, ''))}
+                keyboardType="number-pad"
+                returnKeyType="next"
+              />
+            </View>
+            <View style={styles.fieldRowCity}>
+              <Text style={styles.label}>City or venue <Text style={styles.optional}>(optional)</Text></Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g. Montreux"
+                placeholderTextColor={Colors.textMuted}
+                value={city}
+                onChangeText={setCity}
+                returnKeyType="next"
+              />
+            </View>
+          </View>
 
           <Text style={styles.label}>Notes <Text style={styles.optional}>(optional)</Text></Text>
           <TextInput
@@ -401,6 +406,13 @@ const styles = StyleSheet.create({
     minHeight: 90,
     paddingTop: 12,
   },
+
+  fieldRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  fieldRowGuests: { flex: 1 },
+  fieldRowCity: { flex: 1.6 },
 
   toggleRow: {
     flexDirection: 'row',
