@@ -106,6 +106,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     android: {
       package: v.androidPackage,
+      adaptiveIcon: {
+        foregroundImage: v.icon,
+        backgroundColor: '#FAF7F4',
+      },
       permissions: [
         'android.permission.READ_EXTERNAL_STORAGE',
         'android.permission.WRITE_EXTERNAL_STORAGE',
