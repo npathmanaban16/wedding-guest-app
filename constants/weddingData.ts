@@ -777,13 +777,13 @@ export const PACKING_GUIDE_NN: PackingCategory[] = [
       {
         id: "sangeet-outfit",
         label: "Sangeet outfit",
-        tip: "Festive Indian or semi-formal Western. Bright jewel tones and festive hues! Think vibrant lehenga, saree, salwar kameez, or a colorful cocktail dress. This is the big dancing night — dress to impress!",
+        tip: "Festive Indian or semi-formal Western. Bright jewel tones and festive hues! Think vibrant lehenga, saree, salwar kameez, or a colorful cocktail dress. This is a big dancing night!",
         gender: 'female',
       },
       {
         id: "sangeet-outfit-male",
         label: "Sangeet outfit",
-        tip: "Festive Indian or semi-formal Western. Bright jewel tones and festive hues! Think sherwani, kurta, or smart semi-formal attire. This is the big dancing night — dress to impress!",
+        tip: "Festive Indian or semi-formal Western. Bright jewel tones and festive hues! Think sherwani, kurta, or smart semi-formal attire. This is a big dancing night!",
         gender: 'male',
       },
       {
@@ -850,7 +850,6 @@ export const PACKING_GUIDE_NN: PackingCategory[] = [
       {
         id: "casual-exploring",
         label: "Casual sightseeing clothes (2–3 outfits)",
-        tip: "Comfortable walking shoes essential — you'll be on the lake promenade and cobblestone streets.",
       },
       {
         id: "travel-outfit",
@@ -1123,7 +1122,7 @@ export const PACKING_GUIDE_DEMO: PackingCategory[] = PACKING_GUIDE_NN
           ...item,
           id: 'welcome-party-outfit',
           label: 'Welcome Party outfit',
-          tip: "Festive semi-formal. Bright jewel tones and colorful cocktail attire — this is the big dancing night, dress to impress!",
+          tip: "Festive semi-formal. Bright jewel tones and colorful cocktail attire — this is a big dancing night!",
         };
       }
       if (item.id === 'sangeet-outfit-male') {
@@ -1131,7 +1130,7 @@ export const PACKING_GUIDE_DEMO: PackingCategory[] = PACKING_GUIDE_NN
           ...item,
           id: 'welcome-party-outfit-male',
           label: 'Welcome Party outfit',
-          tip: "Festive semi-formal. Bright jewel tones and colorful cocktail attire — this is the big dancing night, dress to impress!",
+          tip: "Festive semi-formal. Bright jewel tones and colorful cocktail attire — this is a big dancing night!",
         };
       }
       if (item.id === 'ceremony-outfit') {
