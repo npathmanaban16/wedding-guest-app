@@ -28,7 +28,9 @@ export default function CoupleSignupScreen() {
   const [isMultiDay, setIsMultiDay] = useState(false);
   const [email, setEmail] = useState('');
   const [confirmEmail, setConfirmEmail] = useState('');
+  const [guestCount, setGuestCount] = useState('');
   const [city, setCity] = useState('');
+  const [venue, setVenue] = useState('');
   const [notes, setNotes] = useState('');
   // Honeypot — real humans never see this, bots usually fill every field.
   const [website, setWebsite] = useState('');
@@ -69,12 +71,15 @@ export default function CoupleSignupScreen() {
       return;
     }
 
+    const parsedGuests = parseInt(guestCount.trim(), 10);
     const payload = {
       couple_name: coupleName.trim(),
       wedding_date_start: startDate,
       wedding_date_end: isMultiDay && endDate ? endDate : null,
       email: email.trim(),
+      guest_count: Number.isFinite(parsedGuests) ? parsedGuests : null,
       city: city.trim() || null,
+      venue: venue.trim() || null,
       notes: notes.trim() || null,
     };
 
@@ -101,7 +106,9 @@ export default function CoupleSignupScreen() {
         weddingDateStart: payload.wedding_date_start,
         weddingDateEnd: payload.wedding_date_end,
         email: payload.email,
+        guestCount: payload.guest_count,
         city: payload.city,
+        venue: payload.venue,
         notes: payload.notes,
       },
     }).catch((e) => console.warn('send-wedding-request invoke failed:', e));
@@ -223,16 +230,31 @@ export default function CoupleSignupScreen() {
             returnKeyType="next"
           />
 
-          <Text style={styles.label}>Confirm email</Text>
+          {email.length > 0 && (
+            <>
+              <Text style={styles.label}>Confirm email</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="you@example.com"
+                placeholderTextColor={Colors.textMuted}
+                value={confirmEmail}
+                onChangeText={(t) => { setConfirmEmail(t); if (error) setError(''); }}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="email-address"
+                returnKeyType="next"
+              />
+            </>
+          )}
+
+          <Text style={styles.label}>Number of guests <Text style={styles.optional}>(optional)</Text></Text>
           <TextInput
             style={styles.input}
-            placeholder="you@example.com"
+            placeholder="e.g. 120"
             placeholderTextColor={Colors.textMuted}
-            value={confirmEmail}
-            onChangeText={(t) => { setConfirmEmail(t); if (error) setError(''); }}
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="email-address"
+            value={guestCount}
+            onChangeText={(t) => setGuestCount(t.replace(/[^0-9]/g, ''))}
+            keyboardType="number-pad"
             returnKeyType="next"
           />
 
@@ -246,10 +268,20 @@ export default function CoupleSignupScreen() {
             returnKeyType="next"
           />
 
+          <Text style={styles.label}>Venue / hotels <Text style={styles.optional}>(optional)</Text></Text>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. Fairmont Le Montreux Palace"
+            placeholderTextColor={Colors.textMuted}
+            value={venue}
+            onChangeText={setVenue}
+            returnKeyType="next"
+          />
+
           <Text style={styles.label}>Notes <Text style={styles.optional}>(optional)</Text></Text>
           <TextInput
             style={[styles.input, styles.textarea]}
-            placeholder="Tell us anything else about your wedding..."
+            placeholder="Types of events you’re envisioning during your wedding, and anything else about your wedding..."
             placeholderTextColor={Colors.textMuted}
             value={notes}
             onChangeText={setNotes}
