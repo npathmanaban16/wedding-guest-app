@@ -30,7 +30,6 @@ export default function CoupleSignupScreen() {
   const [confirmEmail, setConfirmEmail] = useState('');
   const [guestCount, setGuestCount] = useState('');
   const [city, setCity] = useState('');
-  const [venue, setVenue] = useState('');
   const [notes, setNotes] = useState('');
   // Honeypot — real humans never see this, bots usually fill every field.
   const [website, setWebsite] = useState('');
@@ -79,7 +78,6 @@ export default function CoupleSignupScreen() {
       email: email.trim(),
       guest_count: Number.isFinite(parsedGuests) ? parsedGuests : null,
       city: city.trim() || null,
-      venue: venue.trim() || null,
       notes: notes.trim() || null,
     };
 
@@ -108,7 +106,6 @@ export default function CoupleSignupScreen() {
         email: payload.email,
         guestCount: payload.guest_count,
         city: payload.city,
-        venue: payload.venue,
         notes: payload.notes,
       },
     }).catch((e) => console.warn('send-wedding-request invoke failed:', e));
@@ -268,20 +265,10 @@ export default function CoupleSignupScreen() {
             returnKeyType="next"
           />
 
-          <Text style={styles.label}>Venue / hotels <Text style={styles.optional}>(optional)</Text></Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. Fairmont Le Montreux Palace"
-            placeholderTextColor={Colors.textMuted}
-            value={venue}
-            onChangeText={setVenue}
-            returnKeyType="next"
-          />
-
           <Text style={styles.label}>Notes <Text style={styles.optional}>(optional)</Text></Text>
           <TextInput
             style={[styles.input, styles.textarea]}
-            placeholder="Types of events you’re envisioning during your wedding, and anything else about your wedding..."
+            placeholder="Events you’re envisioning, wedding hotel(s), anything else..."
             placeholderTextColor={Colors.textMuted}
             value={notes}
             onChangeText={setNotes}
