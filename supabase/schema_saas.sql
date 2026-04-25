@@ -53,6 +53,10 @@ create table public.guests (
   wedding_id        uuid not null references public.weddings(id) on delete cascade,
   canonical_name    text not null,
   is_wedding_party  boolean not null default false,
+  -- Bridal party = bridesmaids/bridesman, a subset of the wedding party
+  -- with extra packing items (e.g. matching sweatshirts, getting-ready
+  -- outfits). Always implies is_wedding_party=true; enforced by seeding.
+  is_bridal_party   boolean not null default false,
   gender            text check (gender in ('male', 'female')),
   created_at        timestamptz default now(),
   unique (wedding_id, canonical_name)
@@ -76,9 +80,9 @@ create table public.wedding_admins (
   gender           text check (gender in ('male', 'female')),
   -- Optional role. Admins without a role (or role='planner') get full
   -- admin powers (send notifications, delete messages, admin page).
-  -- Vendor roles like 'dj' are login-only: scoped schedule visibility,
-  -- no admin-ui surfaces. Expand the check list as new vendors are added.
-  role             text check (role in ('planner', 'dj')),
+  -- Vendor roles ('dj', 'makeup_artist') are login-only: no admin-ui
+  -- surfaces. Expand the check list as new vendors are added.
+  role             text check (role in ('planner', 'dj', 'makeup_artist')),
   created_at       timestamptz default now(),
   unique (wedding_id, guest_name)
 );
@@ -171,6 +175,21 @@ create table public.packing_checklist (
 );
 
 
+-- ─── event_time_overrides ───────────────────────────────────────────────────
+-- Lets admins override the `time` string on schedule events without a code
+-- deploy. Events themselves stay defined in code; this table only stores
+-- the overridden `time` per (wedding_id, event_id). The schedule screen
+-- merges at render time: override wins if present, else event.time.
+create table public.event_time_overrides (
+  id          uuid primary key default gen_random_uuid(),
+  wedding_id  uuid not null references public.weddings(id) on delete cascade,
+  event_id    text not null,
+  time        text not null,
+  updated_at  timestamptz not null default now(),
+  unique (wedding_id, event_id)
+);
+
+
 -- ─── Row Level Security ──────────────────────────────────────────────────────
 -- Guest identity is handled at the application layer (AsyncStorage-backed
 -- guest name) for now. Policies stay permissive until auth is introduced;
@@ -185,6 +204,7 @@ alter table public.notifications          enable row level security;
 alter table public.notification_reactions enable row level security;
 alter table public.notification_replies   enable row level security;
 alter table public.packing_checklist      enable row level security;
+alter table public.event_time_overrides   enable row level security;
 
 create policy "allow_all_weddings"               on public.weddings               for all using (true) with check (true);
 create policy "allow_all_guests"                 on public.guests                 for all using (true) with check (true);
@@ -195,6 +215,7 @@ create policy "allow_all_notifications"          on public.notifications        
 create policy "allow_all_notification_reactions" on public.notification_reactions for all using (true) with check (true);
 create policy "allow_all_notification_replies"   on public.notification_replies   for all using (true) with check (true);
 create policy "allow_all_packing_checklist"      on public.packing_checklist      for all using (true) with check (true);
+create policy "allow_all_event_time_overrides"   on public.event_time_overrides   for all using (true) with check (true);
 
 
 commit;

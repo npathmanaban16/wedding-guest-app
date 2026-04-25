@@ -25,6 +25,7 @@ interface Payload {
   weddingDateStart: string;   // YYYY-MM-DD
   weddingDateEnd?: string | null;
   email: string;
+  guestCount?: number | null;
   city?: string | null;
   notes?: string | null;
 }
@@ -81,7 +82,7 @@ Deno.serve(async (req) => {
     }
 
     const payload = (await req.json()) as Payload;
-    const { coupleName, weddingDateStart, weddingDateEnd, email, city, notes } = payload;
+    const { coupleName, weddingDateStart, weddingDateEnd, email, guestCount, city, notes } = payload;
 
     if (!coupleName || !weddingDateStart || !email) {
       return new Response(
@@ -99,6 +100,7 @@ Deno.serve(async (req) => {
       `Couple:   ${coupleName}\n` +
       `Date:     ${dateStr}\n` +
       `Email:    ${email}\n` +
+      (guestCount != null ? `Guests:   ${guestCount}\n` : '') +
       (city ? `City:     ${city}\n` : '') +
       (notes ? `Notes:    ${notes}\n` : '');
     const adminHtml = `
@@ -110,6 +112,7 @@ Deno.serve(async (req) => {
           <tr><td style="color:#9A8A78; padding-right:12px;">Couple</td><td><strong>${coupleName}</strong></td></tr>
           <tr><td style="color:#9A8A78; padding-right:12px;">Date</td><td>${dateStr}</td></tr>
           <tr><td style="color:#9A8A78; padding-right:12px;">Email</td><td><a href="mailto:${email}" style="color:#7A6A55;">${email}</a></td></tr>
+          ${guestCount != null ? `<tr><td style="color:#9A8A78; padding-right:12px;">Guests</td><td>${guestCount}</td></tr>` : ''}
           ${city ? `<tr><td style="color:#9A8A78; padding-right:12px;">City</td><td>${city}</td></tr>` : ''}
           ${notes ? `<tr><td style="color:#9A8A78; padding-right:12px; vertical-align:top;">Notes</td><td>${notes.replace(/\n/g, '<br/>')}</td></tr>` : ''}
         </table>

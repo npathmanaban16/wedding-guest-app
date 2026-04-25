@@ -46,6 +46,9 @@ interface WeddingContextType {
   isValidGuestOrAdmin: (name: string) => boolean;
   getCanonicalName: (name: string) => string | null;
   isWeddingParty: (name: string) => boolean;
+  // True only for bridesmaids/bridesman — used by the packing tab to
+  // surface bridal-party-only items.
+  isBridalParty: (name: string) => boolean;
   getGuestGender: (name: string) => Gender | null;
   // True only for admins with full powers (no role, or role='planner').
   // Vendor-role admins like DJs return false — they have login access but
@@ -237,6 +240,13 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       return adminByNormalized.get(n)?.is_wedding_party ?? false;
     };
 
+    // Bridal party is a guest-only concept — vendors and planners are
+    // never bridesmaids, so admins fall through to false.
+    const isBridalParty = (name: string) => {
+      const g = guestByNormalized.get(normalizeName(name));
+      return g?.is_bridal_party ?? false;
+    };
+
     const getGuestGender = (name: string) => {
       const n = normalizeName(name);
       const g = guestByNormalized.get(n);
@@ -251,6 +261,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       isValidGuestOrAdmin,
       getCanonicalName,
       isWeddingParty,
+      isBridalParty,
       getGuestGender,
       isAdmin,
       getAdminRole,

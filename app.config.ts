@@ -90,7 +90,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     owner: 'npathmanaban',
     name: v.name,
     slug: v.slug,
-    version: '2.1.0',
+    version: '2.2.0',
     runtimeVersion: { policy: 'appVersion' },
     ...(v.updatesUrl ? { updates: { url: v.updatesUrl } } : {}),
     orientation: 'portrait',

@@ -167,7 +167,7 @@ export const EVENTS_NN: WeddingEvent[] = [
       { name: 'light blue', hex: '#89CFF0' },
       { name: 'sapphire', hex: '#0F52BA' },
     ],
-    outdoorNote: "The Sangeet will be held on a terrace and is outdoors, weather permitting. In the event of rain or inclement weather, it will be moved indoors.",
+    outdoorNote: "The Sangeet will take place on a terrace and is outdoors, weather permitting. In the event of rain or inclement weather, it will be moved indoors.",
     outfitInspirationUrl: "https://neha-naveen-wedding-outfit-inspo.netlify.app/",
     indianAttire: {
       forWomen: [
@@ -194,7 +194,7 @@ export const EVENTS_NN: WeddingEvent[] = [
     dressCode:
       "Indian formal or black-tie. Elegant neutrals and muted evening tones.",
     description:
-      "The wedding ceremony is in the gardens of the Fairmont. Please arrive 20-30 minutes early to be seated.",
+      "The wedding ceremony will take place in the gardens of the Fairmont. Please arrive 20-30 minutes early to allow time to be seated.",
     notes: "Cocktail hour to follow at 6:00 PM.",
     colorPalette: [
       { name: 'blush', hex: '#F2C4CE' },
@@ -208,7 +208,7 @@ export const EVENTS_NN: WeddingEvent[] = [
       { name: 'muted plum', hex: '#7B5080' },
       { name: 'antique gold', hex: '#C9A84C' },
     ],
-    outdoorNote: "The ceremony will take place in the garden at the Fairmont Le Montreux Palace. We recommend wearing shoes you'll be comfortable walking on grass in. In the event of inclement weather, the ceremony will be moved indoors.",
+    outdoorNote: "The ceremony will take place in the garden at the Fairmont Le Montreux Palace. We recommend wearing shoes suitable for walking on grass. In the event of inclement weather, the ceremony will be moved indoors.",
     outfitInspirationUrl: "https://neha-naveen-wedding-outfit-inspo.netlify.app/",
     blackTieGuide: {
       men: "Tuxedos (or a black suit)",
@@ -233,7 +233,7 @@ export const EVENTS_NN: WeddingEvent[] = [
     dressCode:
       "Indian formal or black-tie. Elegant neutrals and muted evening tones — same dress code as the ceremony.",
     description:
-      "Dinner, speeches, dancing, and celebrating into the night.",
+      "Dinner, speeches, and dancing as we celebrate into the night.",
     notes:
       "The reception follows directly from the cocktail hour.",
     colorPalette: [
@@ -292,7 +292,7 @@ export const EVENTS_DEMO: WeddingEvent[] = EVENTS_NN.map((event) => {
       description:
         "Welcome party with dancing, drinks, and dinner. The big celebration night — come ready to dance!",
       outdoorNote:
-        "The welcome party will be held on a terrace and is outdoors, weather permitting. In the event of rain or inclement weather, it will be moved indoors.",
+        "The welcome party will take place on a terrace and is outdoors, weather permitting. In the event of rain or inclement weather, it will be moved indoors.",
       indianAttire: undefined,
     };
   }
@@ -504,10 +504,10 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
             tip: "Book ahead — same-day tastings are rarely available at the best estates.",
             links: [
               { label: "Domaine Bovy (Chexbres)", url: "https://www.domainebovy.ch/" },
-              { label: "Domaine Croix Duplex (Grandvaux)", url: "https://www.croixduplex.ch/" },
-              { label: "Domaine Louis Bovard (Cully)", url: "https://www.louisbovard.ch/" },
+              { label: "Domaine Croix Duplex (Grandvaux)", url: "https://croix-duplex.ch/en" },
+              { label: "Domaine Louis Bovard (Cully)", url: "https://www.domainebovard.com/en-1-homepage.html" },
               { label: "Domaine Blaise Duboux (Epesses)", url: "https://www.blaiseduboux.ch/" },
-              { label: "Les Frères Dubois (Dézaley)", url: "https://www.lesfreresdubois.ch/" },
+              { label: "Les Frères Dubois (Dézaley)", url: "https://www.lfd.ch" },
             ],
           },
         ],
@@ -746,6 +746,15 @@ export interface PackingItem {
   label: string;
   tip?: string;
   weddingPartyOnly?: boolean;
+  // Bridesmaids/bridesman only — narrower than weddingPartyOnly.
+  bridalPartyOnly?: boolean;
+  // Hide from bridal party — used when a bridal-party-specific variant
+  // supersedes a generic item (e.g. the ceremony outfit is provided, so
+  // bridal-party women see "Reception outfit (optional)" instead).
+  excludeBridalParty?: boolean;
+  // Hide from wedding party — used when a wedding-party-specific variant
+  // supersedes a generic item (e.g. groomsmen wear tuxedos only).
+  excludeWeddingParty?: boolean;
   /**
    * If set, this item is only shown to guests of that gender.
    * Guests whose gender is unknown see all items regardless.
@@ -768,13 +777,13 @@ export const PACKING_GUIDE_NN: PackingCategory[] = [
       {
         id: "sangeet-outfit",
         label: "Sangeet outfit",
-        tip: "Festive Indian or semi-formal Western. Bright jewel tones and festive hues! Think vibrant lehenga, saree, salwar kameez, or a colorful cocktail dress. This is the big dancing night — dress to impress!",
+        tip: "Festive Indian or semi-formal Western. Bright jewel tones and festive hues! Think vibrant lehenga, saree, salwar kameez, or a colorful cocktail dress. This is a big dancing night!",
         gender: 'female',
       },
       {
         id: "sangeet-outfit-male",
         label: "Sangeet outfit",
-        tip: "Festive Indian or semi-formal Western. Bright jewel tones and festive hues! Think sherwani, kurta, or smart semi-formal attire. This is the big dancing night — dress to impress!",
+        tip: "Festive Indian or semi-formal Western. Bright jewel tones and festive hues! Think sherwani, kurta, or smart semi-formal attire. This is a big dancing night!",
         gender: 'male',
       },
       {
@@ -782,17 +791,65 @@ export const PACKING_GUIDE_NN: PackingCategory[] = [
         label: "Ceremony & Reception outfit",
         tip: "Indian formal or black-tie Western. Elegant neutrals and muted evening tones. Lehenga, saree, or floor length gown.",
         gender: 'female',
+        excludeBridalParty: true,
       },
       {
         id: "ceremony-outfit-male",
         label: "Tuxedo or Black Suit",
         tip: "Black-tie dress code applies.",
         gender: 'male',
+        excludeWeddingParty: true,
+      },
+      {
+        id: "ceremony-outfit-male-wp",
+        label: "Tuxedo",
+        tip: "Black-tie dress code applies.",
+        gender: 'male',
+        weddingPartyOnly: true,
+      },
+      {
+        id: "bridal-morning-outfit",
+        label: "Light pink outfit for the wedding morning",
+        tip: "For getting-ready photos before the bride changes into her ceremony attire.",
+        bridalPartyOnly: true,
+      },
+      {
+        id: "bridesmaid-sweatshirt",
+        label: "Bridesmaid sweatshirt (provided by Neha)",
+        tip: "For the ceremony rehearsal on Thursday afternoon.",
+        bridalPartyOnly: true,
+        gender: 'female',
+      },
+      {
+        id: "bridesman-sweatshirt",
+        label: "Bridesman sweatshirt (provided by Neha)",
+        tip: "For the ceremony rehearsal on Thursday afternoon.",
+        bridalPartyOnly: true,
+        gender: 'male',
+      },
+      {
+        id: "bridal-ceremony-lehenga",
+        label: "Pink lehenga for the wedding ceremony (provided by Neha)",
+        bridalPartyOnly: true,
+        gender: 'female',
+      },
+      {
+        id: "bridal-ceremony-sherwani",
+        label: "Pink sherwani for the wedding ceremony (provided by Neha)",
+        tip: "For photos prior to the wedding ceremony. You'll change into your tuxedo before the ceremony so you can walk down the aisle with the groomsmen.",
+        bridalPartyOnly: true,
+        gender: 'male',
+      },
+      {
+        id: "bridal-reception-outfit",
+        label: "Reception outfit (optional)",
+        tip: "Black-tie attire. You can stay in the pink lehenga through the reception if you prefer.",
+        bridalPartyOnly: true,
+        gender: 'female',
       },
       {
         id: "casual-exploring",
         label: "Casual sightseeing clothes (2–3 outfits)",
-        tip: "Comfortable walking shoes essential — you'll be on the lake promenade and cobblestone streets.",
       },
       {
         id: "travel-outfit",
@@ -842,6 +899,14 @@ export const PACKING_GUIDE_NN: PackingCategory[] = [
         label: "Dress Shoes for Ceremony & Reception",
         tip: "Black patent leather pairs best with a tuxedo. Polished black leather works with a black suit.",
         gender: 'male',
+        excludeWeddingParty: true,
+      },
+      {
+        id: "dress-shoes-ceremony-male-wp",
+        label: "Dress Shoes for Ceremony & Reception",
+        tip: "Black patent leather pairs best with a tuxedo.",
+        gender: 'male',
+        weddingPartyOnly: true,
       },
       {
         id: "walking-shoes",
@@ -898,6 +963,24 @@ export const PACKING_GUIDE_NN: PackingCategory[] = [
     title: "Attire Extras",
     emoji: "✨",
     items: [
+      {
+        id: "bridal-earrings-tikka",
+        label: "Indian earrings and tikka for the wedding ceremony (provided by Neha)",
+        bridalPartyOnly: true,
+        gender: 'female',
+      },
+      {
+        id: "bridal-bangles",
+        label: "Bangles for the wedding ceremony (provided by Neha)",
+        bridalPartyOnly: true,
+        gender: 'female',
+      },
+      {
+        id: "bridal-scrunchie",
+        label: "White floral scrunchie for the rehearsal dinner (provided by Neha)",
+        bridalPartyOnly: true,
+        gender: 'female',
+      },
       {
         id: "jewelry",
         label: "Jewelry for each event",
@@ -1039,7 +1122,7 @@ export const PACKING_GUIDE_DEMO: PackingCategory[] = PACKING_GUIDE_NN
           ...item,
           id: 'welcome-party-outfit',
           label: 'Welcome Party outfit',
-          tip: "Festive semi-formal. Bright jewel tones and colorful cocktail attire — this is the big dancing night, dress to impress!",
+          tip: "Festive semi-formal. Bright jewel tones and colorful cocktail attire — this is a big dancing night!",
         };
       }
       if (item.id === 'sangeet-outfit-male') {
@@ -1047,7 +1130,7 @@ export const PACKING_GUIDE_DEMO: PackingCategory[] = PACKING_GUIDE_NN
           ...item,
           id: 'welcome-party-outfit-male',
           label: 'Welcome Party outfit',
-          tip: "Festive semi-formal. Bright jewel tones and colorful cocktail attire — this is the big dancing night, dress to impress!",
+          tip: "Festive semi-formal. Bright jewel tones and colorful cocktail attire — this is a big dancing night!",
         };
       }
       if (item.id === 'ceremony-outfit') {
