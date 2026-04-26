@@ -117,7 +117,7 @@ export const EVENTS_NN: WeddingEvent[] = [
     description:
       "An intimate dinner for the wedding party, following the ceremony rehearsal earlier in the day. Join us for a beautiful evening among UNESCO-listed terraced vineyards above Lake Geneva.",
     notes:
-      "Transportation will be provided from the Fairmont Le Montreux Palace.",
+      "Transportation will be provided from the Fairmont Le Montreux Palace. Bus will depart at 6:00 PM.",
     weddingPartyOnly: true,
     colorPalette: [
       { name: 'white', hex: '#FFFFFF' },
@@ -406,7 +406,7 @@ export const OFFSITE_VENUE_TRANSPORT: { venue: string; notes: string }[] = [
   {
     venue: 'Le Baron Tavernier (Rehearsal Dinner)',
     notes:
-      'Le Baron Tavernier is in the Lavaux Vineyards above Lake Geneva, about 17 km / a 25-minute drive from Montreux. The couple is providing transportation from the Fairmont Le Montreux Palace — guests staying elsewhere should make their way to the Fairmont first to catch the ride. Driving yourself takes about 25 minutes via the A9; trains involve a transfer at Puidoux station and take about 45 minutes.',
+      'Le Baron Tavernier is in the Lavaux Vineyards above Lake Geneva, about 17 km / a 25-minute drive from Montreux. The couple is providing transportation from the Fairmont Le Montreux Palace — the bus departs at 6:00 PM, so guests staying elsewhere should arrive at the Fairmont a few minutes early to catch it. Driving yourself takes about 25 minutes via the A9; trains involve a transfer at Puidoux station and take about 45 minutes.',
   },
 ];
 
