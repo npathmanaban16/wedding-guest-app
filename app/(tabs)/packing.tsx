@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   View,
   Text,
   StyleSheet,
@@ -346,10 +348,15 @@ export default function PackingScreen() {
   }
 
   return (
-    <ScrollView
+    <KeyboardAvoidingView
       style={styles.container}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.md }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.md }]}
+        keyboardShouldPersistTaps="handled"
+      >
       {/* Page header */}
       <View style={styles.pageHeader}>
         <Text style={styles.pageTitle}>Packing Guide</Text>
@@ -402,7 +409,8 @@ export default function PackingScreen() {
         <Text style={styles.tipsTitle}>{PACKING_TIP_FOOTER.title}</Text>
         <Text style={styles.tipsText}>{PACKING_TIP_FOOTER.text(wedding.destination_city)}</Text>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
