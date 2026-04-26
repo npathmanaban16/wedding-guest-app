@@ -182,6 +182,10 @@ export interface BuildContextArgs {
   // Notes for any off-site event venues (e.g. a vineyard rehearsal dinner) —
   // distance from the wedding hotel + how transport is being handled.
   offsiteVenueTransport?: { venue: string; notes: string }[];
+  // The asking guest's own additions to the packing list (per-guest, private).
+  // Surfaced under the packing section so the AI can answer questions like
+  // "did I add my contact lens solution?" or "what have I added so far?".
+  customPackingItems?: { id: string; label: string }[];
   registryUrl?: string | null;
 }
 
@@ -194,6 +198,7 @@ export function buildContextBlock(args: BuildContextArgs): string {
     destinationCity,
     hotelLogistics,
     offsiteVenueTransport,
+    customPackingItems,
     registryUrl,
   } = args;
 
@@ -309,6 +314,13 @@ export function buildContextBlock(args: BuildContextArgs): string {
     const items = cat.items.map((item) => formatPackingItem(item)).join('\n');
     sections.push(`### ${cat.title}\n${items}`);
   });
+  if (customPackingItems && customPackingItems.length > 0) {
+    // The guest's own additions, alongside the built-in packing list. Listed
+    // separately so the AI can talk about them as personal items the guest
+    // added themselves, not as items the couple is providing.
+    const lines = customPackingItems.map((item) => `- ${item.label}`).join('\n');
+    sections.push(`### My Personal Additions (this guest's own custom items)\n${lines}`);
+  }
 
   // ── Destination guide ─────────────────────────────────────────────────
   sections.push(`## ${destinationCity} Guide`);
