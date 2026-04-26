@@ -56,6 +56,7 @@ import {
   type GuestProfile,
   type TabContext,
 } from '@/services/aiAssistant';
+import { getCustomPackingItems, type CustomPackingItem } from '@/services/storage';
 import { haptic } from '@/utils/haptics';
 
 interface AskAiProps {
@@ -85,6 +86,11 @@ export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
   const [showHistory, setShowHistory] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Snapshot of the asking guest's custom packing items, refreshed each
+  // time the modal opens. Folded into the AI's wedding context so questions
+  // like "did I add my contact lens solution?" can be answered. Failure to
+  // load isn't fatal — the AI just won't know about custom items.
+  const [customPackingItems, setCustomPackingItems] = useState<CustomPackingItem[]>([]);
   const scrollRef = useRef<ScrollView | null>(null);
 
   const isNN = NN_WEDDING_IDS.has(wedding.id);
@@ -121,6 +127,7 @@ export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
         destinationCity: wedding.destination_city,
         hotelLogistics: HOTEL_LOGISTICS,
         offsiteVenueTransport: OFFSITE_VENUE_TRANSPORT,
+        customPackingItems,
         registryUrl: wedding.registry_url,
       });
     },
@@ -132,6 +139,7 @@ export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
       profile?.isWeddingParty,
       profile?.isBridalParty,
       profile?.gender,
+      customPackingItems,
     ],
   );
 
@@ -146,6 +154,18 @@ export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
       .then(setHistory)
       .catch((err) => console.warn('[AskAi] history fetch failed', err))
       .finally(() => setHistoryLoading(false));
+  }, [open, guestName, weddingId]);
+
+  // Refresh the asking guest's custom packing items each time the modal
+  // opens so the AI sees anything they've added since their last chat.
+  // Best-effort — failure leaves customPackingItems as the previous
+  // snapshot (or [] on first open) and the AI just won't know about
+  // them.
+  useEffect(() => {
+    if (!open || !guestName || !weddingId) return;
+    getCustomPackingItems(weddingId, guestName)
+      .then(setCustomPackingItems)
+      .catch((err) => console.warn('[AskAi] custom packing fetch failed', err));
   }, [open, guestName, weddingId]);
 
   const reset = useCallback(() => {
