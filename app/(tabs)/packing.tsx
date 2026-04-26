@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -142,6 +142,7 @@ function CustomItemsSection({
   onAdd,
   onToggle,
   onRemove,
+  onInputFocus,
 }: {
   items: CustomPackingItem[];
   checkedItems: string[];
@@ -150,6 +151,9 @@ function CustomItemsSection({
   onAdd: () => void;
   onToggle: (id: string) => void;
   onRemove: (item: CustomPackingItem) => void;
+  // Called when the Add-an-item input gains focus, so the parent can scroll
+  // the input up into a comfortable position above the keyboard.
+  onInputFocus: () => void;
 }) {
   const checkedCount = items.filter((i) => checkedItems.includes(i.id)).length;
   const total = items.length;
@@ -220,6 +224,7 @@ function CustomItemsSection({
           style={styles.customAddInput}
           value={draft}
           onChangeText={onDraftChange}
+          onFocus={onInputFocus}
           placeholder="Add an item…"
           placeholderTextColor={Colors.textMuted}
           returnKeyType="done"
@@ -242,10 +247,24 @@ function CustomItemsSection({
 
 export default function PackingScreen() {
   const insets = useSafeAreaInsets();
+  const scrollRef = useRef<ScrollView | null>(null);
   const [checkedItems, setCheckedItems] = useState<string[]>([]);
   const [customItems, setCustomItems] = useState<CustomPackingItem[]>([]);
   const [customDraft, setCustomDraft] = useState('');
   const [loading, setLoading] = useState(true);
+
+  // When the Add-an-item input gains focus, scroll to the very bottom of
+  // the list. The KeyboardAvoidingView wrapping the screen has already
+  // shrunk the visible area to exclude the keyboard, so scrolling to end
+  // lands the input + the button + a buffer of contentContainer padding
+  // comfortably above the keyboard. The 250ms delay lets the keyboard's
+  // animate-in finish before we measure — without it, the scroll fires
+  // against the pre-keyboard layout and ends up too low.
+  const handleInputFocus = () => {
+    setTimeout(() => {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    }, 250);
+  };
   // Single-open tip bubble page-wide — tapping another info icon closes
   // the currently open one; tapping the same icon closes it.
   const [openTipId, setOpenTipId] = useState<string | null>(null);
@@ -353,6 +372,7 @@ export default function PackingScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
+        ref={scrollRef}
         style={styles.container}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.md }]}
         keyboardShouldPersistTaps="handled"
@@ -402,6 +422,7 @@ export default function PackingScreen() {
         onAdd={handleAddCustom}
         onToggle={handleToggle}
         onRemove={handleRemoveCustom}
+        onInputFocus={handleInputFocus}
       />
 
       {/* Tips footer */}
