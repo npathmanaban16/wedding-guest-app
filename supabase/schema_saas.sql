@@ -177,6 +177,9 @@ create table public.packing_checklist (
   wedding_id    uuid not null references public.weddings(id) on delete cascade,
   guest_name    text not null,
   checked_items text[] not null default '{}',
+  -- Per-guest personal additions to the packing list, alongside the
+  -- built-in items defined in code. Each entry is {id, label}.
+  custom_items  jsonb not null default '[]'::jsonb,
   updated_at    timestamptz not null default now(),
   primary key (wedding_id, guest_name)
 );
