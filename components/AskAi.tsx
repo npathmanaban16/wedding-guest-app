@@ -47,6 +47,7 @@ import {
   deleteAskItem,
   getAskHistory,
   promptsForTab,
+  reportAiAnswer,
   type AskHistoryItem,
   type GuestProfile,
   type TabContext,
@@ -235,6 +236,49 @@ export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
     [guestName, history, weddingId],
   );
 
+  const handleReportAnswer = useCallback(
+    (assistantMessageId: string) => {
+      if (!weddingId || !guestName) return;
+      const idx = messages.findIndex((m) => m.id === assistantMessageId);
+      if (idx < 0) return;
+      const assistantMsg = messages[idx];
+      // Pair the assistant answer with the user message immediately before
+      // it. Falls back to "(question unavailable)" only if the messages
+      // array is malformed — shouldn't happen in normal flow.
+      const userMsg = [...messages.slice(0, idx)].reverse().find((m) => m.role === 'user');
+      const question = userMsg?.content ?? '(question unavailable)';
+
+      Alert.alert(
+        'Report this response?',
+        'The couple will be sent an email with the question and the AI\'s response so they can review it.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Report',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await reportAiAnswer({
+                  weddingId,
+                  guestName,
+                  question,
+                  answer: assistantMsg.content,
+                });
+                haptic.success();
+                Alert.alert('Thanks for letting us know', 'The couple has been notified.');
+              } catch (err) {
+                console.warn('[AskAi] report failed', err);
+                haptic.warning();
+                Alert.alert('Could not send report', 'Please try again later.');
+              }
+            },
+          },
+        ],
+      );
+    },
+    [guestName, messages, weddingId],
+  );
+
   const handleClearAll = useCallback(() => {
     if (!weddingId || !guestName || history.length === 0) return;
     Alert.alert(
@@ -350,7 +394,9 @@ export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
                     coupleNames={wedding.couple_names}
                   />
                 ) : (
-                  messages.map((m) => <Bubble key={m.id} message={m} />)
+                  messages.map((m) => (
+                    <Bubble key={m.id} message={m} onReport={handleReportAnswer} />
+                  ))
                 )}
                 {error && (
                   <View style={styles.errorBox}>
@@ -359,6 +405,10 @@ export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
                 )}
               </ScrollView>
 
+              <Text style={styles.disclosure}>
+                AI-generated responses may not always be accurate. Confirm
+                important details with the couple.
+              </Text>
               <View
                 style={[
                   styles.inputBar,
@@ -419,7 +469,13 @@ function TabPill({
   );
 }
 
-function Bubble({ message }: { message: ChatMessage }) {
+function Bubble({
+  message,
+  onReport,
+}: {
+  message: ChatMessage;
+  onReport: (id: string) => void;
+}) {
   const isUser = message.role === 'user';
   if (message.pending) {
     return (
@@ -432,8 +488,19 @@ function Bubble({ message }: { message: ChatMessage }) {
   }
   return (
     <View style={[styles.bubbleRow, isUser ? styles.userRow : styles.assistantRow]}>
-      <View style={[styles.bubble, isUser ? styles.userBubble : styles.assistantBubble]}>
-        <Text style={isUser ? styles.userText : styles.assistantText}>{message.content}</Text>
+      <View style={styles.bubbleColumn}>
+        <View style={[styles.bubble, isUser ? styles.userBubble : styles.assistantBubble]}>
+          <Text style={isUser ? styles.userText : styles.assistantText}>{message.content}</Text>
+        </View>
+        {!isUser && (
+          <TouchableOpacity
+            onPress={() => onReport(message.id)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityLabel="Report this response"
+          >
+            <Text style={styles.reportLink}>Report response</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -675,11 +742,18 @@ const styles = StyleSheet.create({
   bubbleRow: { flexDirection: 'row', marginBottom: Spacing.sm },
   userRow: { justifyContent: 'flex-end' },
   assistantRow: { justifyContent: 'flex-start' },
+  bubbleColumn: { maxWidth: '85%' },
   bubble: {
-    maxWidth: '85%',
     paddingHorizontal: Spacing.md,
     paddingVertical: 10,
     borderRadius: Radius.lg,
+  },
+  reportLink: {
+    fontFamily: Fonts.sans,
+    fontSize: 11,
+    color: Colors.textMuted,
+    paddingTop: 4,
+    paddingLeft: Spacing.sm,
   },
   userBubble: {
     backgroundColor: Colors.primary,
@@ -716,6 +790,17 @@ const styles = StyleSheet.create({
     color: Colors.error,
   },
 
+  disclosure: {
+    fontFamily: Fonts.sans,
+    fontSize: 11,
+    color: Colors.textMuted,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingTop: 6,
+    paddingBottom: 4,
+    backgroundColor: Colors.background,
+  },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',

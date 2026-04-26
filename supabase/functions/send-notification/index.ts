@@ -16,22 +16,34 @@ Deno.serve(async (req) => {
   try {
     // `kind` defaults to 'details' for backwards compat with the auto-save
     // travel-update path. 'message' is the explicit-Send flow on the
-    // Notes field and lands with a distinct subject line.
+    // Notes field. 'ai-report' is the in-app "Report response" button on
+    // assistant messages — the body holds both the question and the AI's
+    // answer so the couple can review what was problematic.
     const { guestName, details, kind } = await req.json();
     const isMessage = kind === 'message';
+    const isAiReport = kind === 'ai-report';
 
     if (!RESEND_API_KEY) {
       console.error('RESEND_API_KEY secret not set');
       return new Response(JSON.stringify({ error: 'Email not configured' }), { status: 500 });
     }
 
-    const subject = isMessage
-      ? `✉️ ${guestName} sent you a message`
-      : `✈️ ${guestName} updated their travel details`;
-    const heading = isMessage ? 'New message from a guest' : 'Travel details update';
-    const textIntro = isMessage
-      ? `${guestName} sent you a message from the wedding app:`
-      : `${guestName} just saved their details in the wedding app:`;
+    let subject: string;
+    let heading: string;
+    let textIntro: string;
+    if (isAiReport) {
+      subject = `🚩 ${guestName} flagged an AI response`;
+      heading = 'AI response report';
+      textIntro = `${guestName} flagged an AI assistant response in the wedding app:`;
+    } else if (isMessage) {
+      subject = `✉️ ${guestName} sent you a message`;
+      heading = 'New message from a guest';
+      textIntro = `${guestName} sent you a message from the wedding app:`;
+    } else {
+      subject = `✈️ ${guestName} updated their travel details`;
+      heading = 'Travel details update';
+      textIntro = `${guestName} just saved their details in the wedding app:`;
+    }
 
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',

@@ -347,3 +347,27 @@ export async function clearAskHistory(
     .eq('guest_name', guestName);
   if (error) throw error;
 }
+
+// Routes a guest's "Report response" through the existing send-notification
+// edge function (kind='ai-report') so the couple gets an email with both
+// the question and the flagged AI answer. Apple Guideline 1.2 requires a
+// reporting mechanism on user-facing AI output.
+export async function reportAiAnswer(args: {
+  weddingId: string;
+  guestName: string;
+  question: string;
+  answer: string;
+}): Promise<void> {
+  const { weddingId, guestName, question, answer } = args;
+  const body = [
+    `Question:`,
+    question,
+    ``,
+    `AI response:`,
+    answer,
+  ].join('\n');
+  const { error } = await supabase.functions.invoke('send-notification', {
+    body: { weddingId, guestName, details: body, kind: 'ai-report' },
+  });
+  if (error) throw error;
+}
