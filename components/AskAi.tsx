@@ -14,6 +14,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -42,6 +43,8 @@ import {
 import {
   askAi,
   buildContextBlock,
+  clearAskHistory,
+  deleteAskItem,
   getAskHistory,
   promptsForTab,
   type AskHistoryItem,
@@ -200,6 +203,66 @@ export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
     [contextBlock, messages, profile, weddingId],
   );
 
+  const handleDeleteItem = useCallback(
+    (item: AskHistoryItem) => {
+      if (!weddingId || !guestName) return;
+      Alert.alert(
+        'Delete this question?',
+        item.question.length > 80 ? `${item.question.slice(0, 80)}…` : item.question,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              // Optimistic — drop locally first, refetch on failure.
+              const previous = history;
+              setHistory((h) => h.filter((x) => x.id !== item.id));
+              try {
+                await deleteAskItem(weddingId, guestName, item.id);
+                haptic.success();
+              } catch (err) {
+                console.warn('[AskAi] delete failed', err);
+                setHistory(previous);
+                haptic.warning();
+                Alert.alert('Could not delete', 'Please try again.');
+              }
+            },
+          },
+        ],
+      );
+    },
+    [guestName, history, weddingId],
+  );
+
+  const handleClearAll = useCallback(() => {
+    if (!weddingId || !guestName || history.length === 0) return;
+    Alert.alert(
+      'Clear all history?',
+      `This will remove ${history.length} past question${history.length === 1 ? '' : 's'}. This can't be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear all',
+          style: 'destructive',
+          onPress: async () => {
+            const previous = history;
+            setHistory([]);
+            try {
+              await clearAskHistory(weddingId, guestName);
+              haptic.success();
+            } catch (err) {
+              console.warn('[AskAi] clear failed', err);
+              setHistory(previous);
+              haptic.warning();
+              Alert.alert('Could not clear history', 'Please try again.');
+            }
+          },
+        },
+      ],
+    );
+  }, [guestName, history, weddingId]);
+
   // Hide entirely if there's no logged-in guest — assistant is a guest-only
   // surface and the contexts above would throw without one.
   if (!guestName) return null;
@@ -264,6 +327,8 @@ export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
                   { id: `a-${item.id}`, role: 'assistant', content: item.answer },
                 ]);
               }}
+              onDelete={handleDeleteItem}
+              onClearAll={handleClearAll}
             />
           ) : (
             <KeyboardAvoidingView
@@ -412,10 +477,14 @@ function HistoryView({
   loading,
   items,
   onPick,
+  onDelete,
+  onClearAll,
 }: {
   loading: boolean;
   items: AskHistoryItem[];
   onPick: (item: AskHistoryItem) => void;
+  onDelete: (item: AskHistoryItem) => void;
+  onClearAll: () => void;
 }) {
   if (loading) {
     return (
@@ -434,27 +503,46 @@ function HistoryView({
     );
   }
   return (
-    <ScrollView style={styles.scroll} contentContainerStyle={styles.historyContent}>
-      {items.map((item) => (
-        <TouchableOpacity
-          key={item.id}
-          style={styles.historyCard}
-          onPress={() => onPick(item)}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.historyQuestion} numberOfLines={2}>
-            {item.question}
-          </Text>
-          <Text style={styles.historyAnswer} numberOfLines={3}>
-            {item.answer}
-          </Text>
-          <Text style={styles.historyMeta}>
-            {formatDate(item.createdAt)}
-            {item.tabContext ? ` · ${item.tabContext}` : ''}
-          </Text>
+    <View style={styles.chatRoot}>
+      <View style={styles.historyHeader}>
+        <Text style={styles.historyHeaderText}>
+          {items.length} question{items.length === 1 ? '' : 's'}
+        </Text>
+        <TouchableOpacity onPress={onClearAll} accessibilityLabel="Clear all history">
+          <Text style={styles.historyClearLink}>Clear all</Text>
         </TouchableOpacity>
-      ))}
-    </ScrollView>
+      </View>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.historyContent}>
+        {items.map((item) => (
+          <View key={item.id} style={styles.historyCard}>
+            <TouchableOpacity
+              style={styles.historyCardBody}
+              onPress={() => onPick(item)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.historyQuestion} numberOfLines={2}>
+                {item.question}
+              </Text>
+              <Text style={styles.historyAnswer} numberOfLines={3}>
+                {item.answer}
+              </Text>
+              <Text style={styles.historyMeta}>
+                {formatDate(item.createdAt)}
+                {item.tabContext ? ` · ${item.tabContext}` : ''}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.historyDeleteButton}
+              onPress={() => onDelete(item)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityLabel="Delete this question"
+            >
+              <Ionicons name="trash-outline" size={16} color={Colors.textMuted} />
+            </TouchableOpacity>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
   );
 }
 
@@ -674,13 +762,43 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     textAlign: 'center',
   },
+  historyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.xs,
+  },
+  historyHeaderText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: Typography.xs,
+    color: Colors.textMuted,
+    letterSpacing: 0.5,
+  },
+  historyClearLink: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: Typography.sm,
+    color: Colors.error,
+  },
   historyContent: { padding: Spacing.md, gap: Spacing.sm },
   historyCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     backgroundColor: Colors.surface,
     borderRadius: Radius.md,
-    padding: Spacing.md,
     borderWidth: 0.5,
     borderColor: Colors.border,
+  },
+  historyCardBody: {
+    flex: 1,
+    padding: Spacing.md,
+  },
+  historyDeleteButton: {
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.sm,
+    alignSelf: 'stretch',
+    justifyContent: 'center',
   },
   historyQuestion: {
     fontFamily: Fonts.sansSemiBold,

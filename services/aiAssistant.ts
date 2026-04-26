@@ -318,3 +318,32 @@ function stripProfilePrefix(question: string): string {
   // Profile lines look like "[Guest: Name (tags) · viewing X tab]\n\n…"
   return question.replace(/^\[Guest:[^\]]*\]\s*\n+/, '').trim();
 }
+
+// Always scope delete by (wedding_id, guest_name) so a misbehaving client
+// can't wipe someone else's history even with permissive RLS in place.
+
+export async function deleteAskItem(
+  weddingId: string,
+  guestName: string,
+  itemId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from('ai_questions')
+    .delete()
+    .eq('wedding_id', weddingId)
+    .eq('guest_name', guestName)
+    .eq('id', itemId);
+  if (error) throw error;
+}
+
+export async function clearAskHistory(
+  weddingId: string,
+  guestName: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from('ai_questions')
+    .delete()
+    .eq('wedding_id', weddingId)
+    .eq('guest_name', guestName);
+  if (error) throw error;
+}
