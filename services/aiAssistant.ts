@@ -312,11 +312,22 @@ export async function askAi(args: AskAiArgs): Promise<AskAiResult> {
 
 // ─── History ─────────────────────────────────────────────────────────────────
 
+// Identities whose Q&A is NEVER persisted or fetched. Mirrors the matching
+// set in supabase/functions/ai-assistant — Preview Guest is the public demo
+// login on the invite screen, so showing persisted history under that name
+// would expose prior demo users' chats to every visitor.
+const EPHEMERAL_GUEST_NAMES: ReadonlySet<string> = new Set(['Preview Guest']);
+
+export function isEphemeralGuest(guestName: string): boolean {
+  return EPHEMERAL_GUEST_NAMES.has(guestName);
+}
+
 export async function getAskHistory(
   weddingId: string,
   guestName: string,
   limit = 30,
 ): Promise<AskHistoryItem[]> {
+  if (isEphemeralGuest(guestName)) return [];
   const { data, error } = await supabase
     .from('ai_questions')
     .select('id, question, answer, tab_context, created_at')

@@ -32,6 +32,12 @@ const MAX_TOKENS = 1024;
 // still visible in the history view.
 const MAX_HISTORY_TURNS = 8;
 
+// Identities whose Q&A is NEVER persisted. Preview Guest is the
+// public demo login on the invite screen — anyone can sign in under
+// that name, so persisting their questions would expose prior demo
+// users' chats to every subsequent visitor.
+const EPHEMERAL_GUEST_NAMES = new Set(['Preview Guest']);
+
 const SYSTEM_PROMPT = `You are a warm, helpful AI assistant for a wedding guest app. You answer guests' questions about the wedding using the WEDDING CONTEXT provided in this system prompt as your source of truth, augmented with general knowledge (etiquette, travel, fashion, weather norms) when the context doesn't cover something.
 
 Style:
@@ -163,23 +169,27 @@ Deno.serve(async (req) => {
     }
 
     // Best-effort persistence — don't fail the request if logging fails.
-    try {
-      const supabase = createClient(
-        Deno.env.get('SUPABASE_URL')!,
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-      );
-      const { error: insertError } = await supabase.from('ai_questions').insert({
-        wedding_id: weddingId,
-        guest_name: guestName,
-        question,
-        answer,
-        tab_context: tabContext ?? null,
-      });
-      if (insertError) {
-        console.error('ai_questions insert failed:', insertError);
+    // Preview Guest (the public demo login) is intentionally skipped so
+    // demo sessions don't bleed across visitors.
+    if (!EPHEMERAL_GUEST_NAMES.has(guestName)) {
+      try {
+        const supabase = createClient(
+          Deno.env.get('SUPABASE_URL')!,
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+        );
+        const { error: insertError } = await supabase.from('ai_questions').insert({
+          wedding_id: weddingId,
+          guest_name: guestName,
+          question,
+          answer,
+          tab_context: tabContext ?? null,
+        });
+        if (insertError) {
+          console.error('ai_questions insert failed:', insertError);
+        }
+      } catch (e) {
+        console.error('ai_questions logging error:', e);
       }
-    } catch (e) {
-      console.error('ai_questions logging error:', e);
     }
 
     return jsonResponse({
