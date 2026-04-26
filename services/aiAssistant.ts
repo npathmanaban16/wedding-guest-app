@@ -110,6 +110,60 @@ export function promptsForTab(tab: TabContext | null): ContextualPrompt[] {
   return CONTEXTUAL_PROMPTS[tab] ?? DEFAULT_PROMPTS;
 }
 
+// ─── Per-guest filtering ─────────────────────────────────────────────────────
+// The AI used to receive the full packing list + every event with metadata
+// tags ("[bridal party only, male]") and was expected to scope answers
+// itself. It didn't, reliably — bridal-party-only items were leaking to
+// other wedding-party members, and wedding-party-only events to regular
+// guests. The filtering rules below mirror the ones the packing and
+// schedule screens apply at render time, so the assistant only sees the
+// slice of the wedding that actually applies to the asking guest.
+
+interface GuestVisibility {
+  inWeddingParty: boolean;
+  inBridalParty: boolean;
+  gender: Gender | null;
+}
+
+function visibilityFor(profile: GuestProfile): GuestVisibility {
+  return {
+    inWeddingParty: profile.isWeddingParty || profile.isBridalParty,
+    inBridalParty: profile.isBridalParty,
+    gender: profile.gender,
+  };
+}
+
+export function filterEventsForGuest(
+  events: WeddingEvent[],
+  profile: GuestProfile,
+): WeddingEvent[] {
+  const v = visibilityFor(profile);
+  return events.filter((e) => !e.weddingPartyOnly || v.inWeddingParty);
+}
+
+export function filterPackingForGuest(
+  packing: PackingCategory[],
+  profile: GuestProfile,
+): PackingCategory[] {
+  const v = visibilityFor(profile);
+  return packing
+    .map((cat) => ({
+      ...cat,
+      items: cat.items.filter((item) => {
+        if (item.weddingPartyOnly && !v.inWeddingParty) return false;
+        if (item.bridalPartyOnly && !v.inBridalParty) return false;
+        if (item.excludeBridalParty && v.inBridalParty) return false;
+        if (item.excludeWeddingParty && v.inWeddingParty) return false;
+        // Match the packing tab: items keep showing if the guest's
+        // gender isn't known. Only filter when both are known and
+        // disagree.
+        if (item.gender && v.gender && item.gender !== v.gender) return false;
+        return true;
+      }),
+    }))
+    .filter((cat) => cat.items.length > 0);
+}
+
 // ─── Context block builder ───────────────────────────────────────────────────
 // Assembles a markdown bundle of everything the assistant should know about
 // this wedding. Identical across guests of the same wedding (so the edge
@@ -167,7 +221,7 @@ export function buildContextBlock(args: BuildContextArgs): string {
       '## In-App Features (what guests can do in this app)',
       `- Schedule tab: full event lineup with times, venues, dress codes, and color palettes for each event.`,
       `- ${destinationCity} tab: curated guide with things to do, where to eat, and how to get around.`,
-      `- Packing tab: outfit and essentials checklist tailored to the wedding's events and the destination's weather. Wedding-party and bridal-party guests see additional items they need to bring.`,
+      `- Packing tab: outfit and essentials checklist tailored to the wedding's events and the destination's weather.`,
       `- Photos tab: ${wedding.photo_album_url
           ? `links to the wedding's shared Google Photos album (${wedding.photo_album_url}) where guests upload photos and view what others have shared. Encourage guests to use this album rather than the wedding website.`
           : `placeholder until the couple sets up a shared photo album.`}`,
