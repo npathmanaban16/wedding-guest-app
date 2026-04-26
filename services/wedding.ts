@@ -16,6 +16,7 @@ export interface WeddingRow {
   hero_image_url: string | null;
   theme_color: string | null;
   planner_name: string | null;
+  photo_album_url: string | null;
 }
 
 export interface GuestRow {
@@ -41,7 +42,7 @@ export interface AdminRow {
 }
 
 const WEDDING_COLUMNS =
-  'id, invite_code, couple_names, wedding_date, location, destination_city, hashtag, website, contact_email, registry_url, hero_image_url, theme_color, planner_name';
+  'id, invite_code, couple_names, wedding_date, location, destination_city, hashtag, website, contact_email, registry_url, hero_image_url, theme_color, planner_name, photo_album_url';
 
 export async function fetchWedding(weddingId: string): Promise<WeddingRow | null> {
   const { data, error } = await supabase

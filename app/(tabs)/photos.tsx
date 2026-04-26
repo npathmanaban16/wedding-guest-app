@@ -14,9 +14,6 @@ import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { NN_WEDDING_IDS } from '@/constants/weddingData';
 import { useWedding } from '@/context/WeddingContext';
 
-const NN_ALBUM_URL = 'https://photos.app.goo.gl/YCMxM6i7XRNzKERd6';
-const DEMO_ALBUM_URL = 'https://example.com/photos';
-
 // Commissioned watercolor of the couple in front of Fairmont Le Montreux
 // Palace. Shown on the N&N variant in place of the stock album icon —
 // the SaaS/demo tenant keeps the Ionicons placeholder.
@@ -35,7 +32,7 @@ export default function PhotosScreen() {
   const insets = useSafeAreaInsets();
   const { wedding } = useWedding();
   const isNN = NN_WEDDING_IDS.has(wedding.id);
-  const albumUrl = isNN ? NN_ALBUM_URL : DEMO_ALBUM_URL;
+  const albumUrl = wedding.photo_album_url ?? '';
 
   return (
     <ScrollView
@@ -76,14 +73,20 @@ export default function PhotosScreen() {
         <Text style={styles.albumBody}>
           All photos and videos from the wedding weekend live here. Add yours and see what everyone else captured.
         </Text>
-        <TouchableOpacity
-          style={styles.albumButton}
-          onPress={() => Linking.openURL(albumUrl)}
-          activeOpacity={0.85}
-        >
-          <Ionicons name="logo-google" size={18} color={Colors.white} style={{ marginRight: Spacing.xs }} />
-          <Text style={styles.albumButtonText}>Open in Google Photos</Text>
-        </TouchableOpacity>
+        {albumUrl ? (
+          <TouchableOpacity
+            style={styles.albumButton}
+            onPress={() => Linking.openURL(albumUrl)}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="logo-google" size={18} color={Colors.white} style={{ marginRight: Spacing.xs }} />
+            <Text style={styles.albumButtonText}>Open in Google Photos</Text>
+          </TouchableOpacity>
+        ) : (
+          <Text style={styles.albumBody}>
+            The shared album hasn't been set up yet — check back soon.
+          </Text>
+        )}
       </View>
 
       {/* How to add photos */}

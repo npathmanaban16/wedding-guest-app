@@ -158,6 +158,27 @@ export function buildContextBlock(args: BuildContextArgs): string {
     ].filter(Boolean).join('\n'),
   );
 
+  // ── App Features ──────────────────────────────────────────────────────
+  // What guests can do inside this app. Surfaced to the AI so it points
+  // people at in-app features first ("share photos via the Photos tab")
+  // before suggesting external workarounds (the wedding website).
+  sections.push(
+    [
+      '## In-App Features (what guests can do in this app)',
+      `- Schedule tab: full event lineup with times, venues, dress codes, and color palettes for each event.`,
+      `- ${destinationCity} tab: curated guide with things to do, where to eat, and how to get around.`,
+      `- Packing tab: outfit and essentials checklist tailored to the wedding's events and the destination's weather. Wedding-party and bridal-party guests see additional items they need to bring.`,
+      `- Photos tab: ${wedding.photo_album_url
+          ? `links to the wedding's shared Google Photos album (${wedding.photo_album_url}) where guests upload photos and view what others have shared. Encourage guests to use this album rather than the wedding website.`
+          : `placeholder until the couple sets up a shared photo album.`}`,
+      `- Songs tab: guests can submit song requests for the playlist.`,
+      `- Messages tab: in-app announcements from the couple/planner show up here.`,
+      `- My Info / Details tab: guests update their own travel details (hotel, check-in/out, arrival time, flight number, dietary preferences). This info is private to each guest and the couple — not shared between guests.`,
+      ``,
+      `Important: each guest arranges their own accommodation. The app does NOT designate a hotel for guests, the wedding party, or the bridal party — even when wedding events are held at a hotel like the Fairmont. Don't assume guests are staying at the venue hotel. If a guest asks where to stay, suggest they ask the couple or check the wedding website for any recommended room blocks.`,
+    ].join('\n'),
+  );
+
   // ── Events ────────────────────────────────────────────────────────────
   sections.push('## Events');
   events.forEach((event) => {

@@ -43,6 +43,10 @@ create table public.weddings (
   -- Per-wedding planner name. Used in the Admin tab and supplied to
   -- the AI assistant so it can refer to the planner accurately.
   planner_name     text,
+  -- Public URL for the wedding's shared photo album (Google Photos by
+  -- default). Surfaced on the Photos tab and to the AI assistant so it
+  -- can direct guests to the right place when asked about sharing photos.
+  photo_album_url  text,
   created_at       timestamptz default now(),
   updated_at       timestamptz default now()
 );
