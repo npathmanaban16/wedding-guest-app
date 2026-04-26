@@ -80,6 +80,7 @@ export const CONTEXTUAL_PROMPTS: Record<TabContext, ContextualPrompt[]> = {
     { emoji: '👠', label: 'What shoes work for an outdoor ceremony?' },
     { emoji: '🌦️', label: 'What weather should I pack for?' },
     { emoji: '🔌', label: 'Will my charger work there?' },
+    { emoji: '💡', label: 'Is there anything else you\'d recommend bringing that\'s not on the packing list?' },
   ],
   photos: [
     { emoji: '📸', label: 'What\'s the best way to share my photos?' },
