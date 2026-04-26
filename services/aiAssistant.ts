@@ -499,6 +499,11 @@ export async function reportAiAnswer(args: {
   answer: string;
 }): Promise<void> {
   const { weddingId, guestName, question, answer } = args;
+  // Demo-account safeguard: never email the couple for Preview Guest
+  // reports. Anyone can sign in under that name from the invite screen,
+  // so unsuppressed reports would noise up the inbox during testing.
+  // The UI flow still treats the call as successful.
+  if (isEphemeralGuest(guestName)) return;
   const body = [
     `Question:`,
     question,

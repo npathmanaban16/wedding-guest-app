@@ -12,6 +12,7 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
+import { isEphemeralGuest } from '@/services/aiAssistant';
 
 const KEYS = {
   myInfo: (weddingId: string, name: string) => `@wedding_my_info_${weddingId}_${name}`,
@@ -149,6 +150,11 @@ export async function saveMyInfo(
 }
 
 async function notifyCouple(weddingId: string, guestName: string, info: MyInfo): Promise<void> {
+  // Demo-account safeguard: the "Try the demo" Preview Guest is public,
+  // anyone can sign in under that name, so we never email the couple
+  // when that identity types into My Info — otherwise every casual
+  // demo session would noise up the couple's inbox.
+  if (isEphemeralGuest(guestName)) return;
   // `extraNotes` is intentionally excluded here — it's emailed via the
   // explicit "Send" button in the Notes card (sendGuestMessage below),
   // so typing in that field doesn't noise-up the couple's inbox on every
@@ -179,6 +185,10 @@ export async function sendGuestMessage(
   guestName: string,
   message: string,
 ): Promise<void> {
+  // Same demo-account safeguard as notifyCouple — silently no-op for the
+  // public Preview Guest identity. The UI flow still treats the call as
+  // successful so the demo path doesn't surface an error.
+  if (isEphemeralGuest(guestName)) return;
   const body = [
     `From: ${guestName}`,
     ``,
