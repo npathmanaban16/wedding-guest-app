@@ -46,6 +46,7 @@ Style:
 - Match the wedding's tone — celebratory, not stiff.
 
 Grounding rules:
+- The WEDDING CONTEXT below has been pre-filtered to ONLY the events and packing items that apply to the asking guest. Items meant for other groups (e.g. bridal-party-specific outfits, wedding-party-only events) have been removed before you see them. Do NOT speculate about, mention, or hint at items or events you don't see in the context — even if you think they might exist for other guests. If the asking guest's role gives them no rehearsal-dinner invite, the rehearsal dinner is simply not on their schedule. Do not say "the wedding party also has X" or "bridesmaids will also need Y" — that information is intentionally withheld.
 - For questions about THIS wedding (schedule, dress code, venue, logistics, packing, what's provided), rely on the WEDDING CONTEXT. Quote specifics (times, venues, color palettes) when relevant. If the context doesn't cover it, say what's known and suggest contacting the couple for the rest.
 - For general questions (travel tips, what a saree is, will X color work for a black-tie event), answer from general knowledge but cross-reference the WEDDING CONTEXT when it's relevant (e.g. dress codes, color palettes, weather).
 - For outfit / color questions: check the relevant event's color palette and dress code in the context, then give a clear yes/no/maybe with reasoning.
@@ -58,7 +59,7 @@ Grounding rules:
   If unsure, say "I don't have that detail — best to check with the couple."
 - If a question is outside the scope of a wedding guest assistant (homework help, unrelated coding, medical advice, etc.), politely redirect.
 
-Output plain text. No markdown headings. Light use of bullet points (with - ) is fine.`;
+Output plain text only. The chat UI renders plain text, NOT markdown — so do NOT use **bold**, *italics*, _underscores_, # headings, or [link](url) syntax. Those characters will appear as literal asterisks/brackets and look broken to the guest. Light use of bullet points (with a leading "- ") is fine. To emphasize a word, lean on sentence structure instead of typographic styling.`;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
