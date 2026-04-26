@@ -1,5 +1,8 @@
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? '';
-const TO_EMAIL = 'nehanaveen2026@gmail.com';
+// Resend's free tier only delivers to the address that registered the
+// account, so this must match the Resend signup email until a custom
+// sender domain is verified at resend.com/domains.
+const TO_EMAIL = 'neha.pathmanaban.2016@gmail.com';
 const FROM_EMAIL = 'onboarding@resend.dev';
 
 Deno.serve(async (req) => {
