@@ -44,6 +44,8 @@ import {
   buildContextBlock,
   clearAskHistory,
   deleteAskItem,
+  filterEventsForGuest,
+  filterPackingForGuest,
   getAskHistory,
   promptsForTab,
   reportAiAnswer,
@@ -86,22 +88,6 @@ export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
   const events = isNN ? EVENTS_NN : EVENTS_DEMO;
   const packingGuide = isNN ? PACKING_GUIDE_NN : PACKING_GUIDE_DEMO;
 
-  const contextBlock = useMemo(
-    () =>
-      buildContextBlock({
-        wedding,
-        events,
-        packingGuide,
-        // Switzerland guide ships with all weddings for now (single-destination
-        // app). When the SaaS variant grows multiple destinations this will
-        // switch on the wedding's destination_city.
-        destinationGuide: SWITZERLAND_GUIDE,
-        destinationCity: wedding.destination_city,
-        registryUrl: wedding.registry_url,
-      }),
-    [wedding, events, packingGuide],
-  );
-
   const profile: GuestProfile | null = guestName
     ? {
         guestName,
@@ -111,6 +97,38 @@ export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
         tabContext,
       }
     : null;
+
+  // Filter events + packing to what this specific guest can see BEFORE
+  // sending to the AI, so it can't accidentally surface bridal-party-only
+  // items to other wedding-party members or wedding-party-only events to
+  // regular guests. Mirrors the rules the packing/schedule screens apply
+  // at render time. Per-profile cache key trades a slightly lower hit
+  // rate for correctness — the wrong cost to skimp on.
+  const contextBlock = useMemo(
+    () => {
+      if (!profile) return '';
+      return buildContextBlock({
+        wedding,
+        events: filterEventsForGuest(events, profile),
+        packingGuide: filterPackingForGuest(packingGuide, profile),
+        // Switzerland guide ships with all weddings for now (single-destination
+        // app). When the SaaS variant grows multiple destinations this will
+        // switch on the wedding's destination_city.
+        destinationGuide: SWITZERLAND_GUIDE,
+        destinationCity: wedding.destination_city,
+        registryUrl: wedding.registry_url,
+      });
+    },
+    [
+      wedding,
+      events,
+      packingGuide,
+      profile?.guestName,
+      profile?.isWeddingParty,
+      profile?.isBridalParty,
+      profile?.gender,
+    ],
+  );
 
   const prompts = promptsForTab(tabContext);
 
