@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import {
+  Alert,
   View,
   Text,
   StyleSheet,
   ScrollView,
+  TextInput,
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
@@ -11,7 +13,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { PACKING_GUIDE_NN, PACKING_GUIDE_DEMO, PACKING_TIP_FOOTER, NN_WEDDING_IDS, PackingCategory, PackingItem } from '@/constants/weddingData';
-import { getCheckedItems, togglePackingItem } from '@/services/storage';
+import {
+  addCustomPackingItem,
+  CustomPackingItem,
+  getCheckedItems,
+  getCustomPackingItems,
+  removeCustomPackingItem,
+  togglePackingItem,
+} from '@/services/storage';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
 import { haptic } from '@/utils/haptics';
@@ -123,9 +132,117 @@ function CategorySection({
   );
 }
 
+function CustomItemsSection({
+  items,
+  checkedItems,
+  draft,
+  onDraftChange,
+  onAdd,
+  onToggle,
+  onRemove,
+}: {
+  items: CustomPackingItem[];
+  checkedItems: string[];
+  draft: string;
+  onDraftChange: (v: string) => void;
+  onAdd: () => void;
+  onToggle: (id: string) => void;
+  onRemove: (item: CustomPackingItem) => void;
+}) {
+  const checkedCount = items.filter((i) => checkedItems.includes(i.id)).length;
+  const total = items.length;
+  const allDone = total > 0 && checkedCount === total;
+  const canAdd = draft.trim().length > 0;
+
+  return (
+    <View style={styles.categoryCard}>
+      <View style={styles.categoryHeader}>
+        <View style={styles.categoryHeaderText}>
+          <Text style={styles.categoryTitle}>My Additions</Text>
+          <Text style={styles.categoryProgress}>
+            {total === 0
+              ? 'Anything else you want to remember'
+              : `${checkedCount}/${total} packed`}
+          </Text>
+        </View>
+        {allDone && (
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+        )}
+      </View>
+
+      {total > 0 && (
+        <View style={styles.progressTrack}>
+          <View
+            style={[
+              styles.progressFill,
+              { width: `${(checkedCount / total) * 100}%` },
+              allDone && styles.progressFillDone,
+            ]}
+          />
+        </View>
+      )}
+
+      <View style={styles.itemsList}>
+        {items.map((item) => {
+          const checked = checkedItems.includes(item.id);
+          return (
+            <View key={item.id} style={styles.itemRow}>
+              <View style={styles.checkRow}>
+                <TouchableOpacity
+                  style={styles.customCheckArea}
+                  onPress={() => { haptic.light(); onToggle(item.id); }}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
+                    {checked && <Ionicons name="checkmark" size={13} color={Colors.white} />}
+                  </View>
+                  <Text style={[styles.itemLabel, checked && styles.itemLabelChecked]}>
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => onRemove(item)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  accessibilityLabel={`Remove ${item.label}`}
+                >
+                  <Ionicons name="trash-outline" size={16} color={Colors.textMuted} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          );
+        })}
+      </View>
+
+      <View style={styles.customAddRow}>
+        <TextInput
+          style={styles.customAddInput}
+          value={draft}
+          onChangeText={onDraftChange}
+          placeholder="Add an item…"
+          placeholderTextColor={Colors.textMuted}
+          returnKeyType="done"
+          onSubmitEditing={() => { if (canAdd) onAdd(); }}
+          blurOnSubmit={false}
+          maxLength={80}
+        />
+        <TouchableOpacity
+          onPress={onAdd}
+          disabled={!canAdd}
+          style={[styles.customAddButton, !canAdd && styles.customAddButtonDisabled]}
+          accessibilityLabel="Add this item"
+        >
+          <Ionicons name="add" size={20} color={Colors.white} />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
 export default function PackingScreen() {
   const insets = useSafeAreaInsets();
   const [checkedItems, setCheckedItems] = useState<string[]>([]);
+  const [customItems, setCustomItems] = useState<CustomPackingItem[]>([]);
+  const [customDraft, setCustomDraft] = useState('');
   const [loading, setLoading] = useState(true);
   // Single-open tip bubble page-wide — tapping another info icon closes
   // the currently open one; tapping the same icon closes it.
@@ -156,8 +273,12 @@ export default function PackingScreen() {
 
   useEffect(() => {
     if (!guestName) { setLoading(false); return; }
-    getCheckedItems(weddingId, guestName).then((items) => {
-      setCheckedItems(items);
+    Promise.all([
+      getCheckedItems(weddingId, guestName),
+      getCustomPackingItems(weddingId, guestName),
+    ]).then(([checked, custom]) => {
+      setCheckedItems(checked);
+      setCustomItems(custom);
       setLoading(false);
     });
   }, [weddingId, guestName]);
@@ -168,11 +289,53 @@ export default function PackingScreen() {
     setCheckedItems(updated);
   };
 
-  const totalItems = filteredGuide.reduce((sum, cat) => sum + cat.items.length, 0);
-  const totalChecked = checkedItems.filter((id) =>
-    filteredGuide.some((cat) => cat.items.some((item) => item.id === id))
+  const handleAddCustom = async () => {
+    if (!guestName) return;
+    const label = customDraft.trim();
+    if (!label) return;
+    haptic.success();
+    setCustomDraft('');
+    const updated = await addCustomPackingItem(weddingId, guestName, label);
+    setCustomItems(updated);
+  };
+
+  const handleRemoveCustom = (item: CustomPackingItem) => {
+    if (!guestName) return;
+    Alert.alert(
+      'Remove this item?',
+      item.label,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            haptic.warning();
+            const { items, checkedItems: nextChecked } = await removeCustomPackingItem(
+              weddingId,
+              guestName,
+              item.id,
+            );
+            setCustomItems(items);
+            setCheckedItems(nextChecked);
+          },
+        },
+      ],
+    );
+  };
+
+  // Custom items count toward overall progress alongside built-in items.
+  const builtInCount = filteredGuide.reduce((sum, cat) => sum + cat.items.length, 0);
+  const builtInIds = new Set(
+    filteredGuide.flatMap((cat) => cat.items.map((item) => item.id)),
+  );
+  const customIds = new Set(customItems.map((c) => c.id));
+  const totalItems = builtInCount + customItems.length;
+  const totalChecked = checkedItems.filter(
+    (id) => builtInIds.has(id) || customIds.has(id),
   ).length;
-  const overallPercent = Math.round((totalChecked / totalItems) * 100);
+  const overallPercent =
+    totalItems === 0 ? 0 : Math.round((totalChecked / totalItems) * 100);
 
   if (loading) {
     return (
@@ -222,6 +385,17 @@ export default function PackingScreen() {
           onToggleTip={handleToggleTip}
         />
       ))}
+
+      {/* Per-guest additions */}
+      <CustomItemsSection
+        items={customItems}
+        checkedItems={checkedItems}
+        draft={customDraft}
+        onDraftChange={setCustomDraft}
+        onAdd={handleAddCustom}
+        onToggle={handleToggle}
+        onRemove={handleRemoveCustom}
+      />
 
       {/* Tips footer */}
       <View style={styles.tipsFooter}>
@@ -363,6 +537,43 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: Spacing.xs,
+  },
+  customCheckArea: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  customAddRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginTop: Spacing.sm,
+    paddingTop: Spacing.sm,
+    borderTopWidth: 0.5,
+    borderTopColor: Colors.divider,
+  },
+  customAddInput: {
+    flex: 1,
+    backgroundColor: Colors.surfaceWarm,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 9,
+    fontFamily: Fonts.sans,
+    fontSize: 13,
+    color: Colors.textPrimary,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+  },
+  customAddButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  customAddButtonDisabled: {
+    opacity: 0.4,
   },
   checkbox: {
     width: 21,

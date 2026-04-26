@@ -17,6 +17,8 @@ const KEYS = {
   myInfo: (weddingId: string, name: string) => `@wedding_my_info_${weddingId}_${name}`,
   packingChecklist: (weddingId: string, name: string) =>
     `@wedding_packing_checklist_${weddingId}_${name}`,
+  packingCustomItems: (weddingId: string, name: string) =>
+    `@wedding_packing_custom_items_${weddingId}_${name}`,
   photos: (weddingId: string) => `@wedding_photos_${weddingId}`,
   onboarding: (weddingId: string, name: string) =>
     `@wedding_onboarding_done_${weddingId}_${name}`,
@@ -592,6 +594,128 @@ export async function togglePackingItem(
     // Will reconcile on next load
   }
   return updated;
+}
+
+// ─── Custom packing items (per-guest personal additions) ─────────────────────
+
+export interface CustomPackingItem {
+  id: string;
+  label: string;
+}
+
+// IDs are prefixed with 'custom-' so they can never collide with built-in
+// item ids (which are short slug strings like 'mehendi-outfit'). The
+// timestamp + random suffix gives stable uniqueness even when two adds
+// land in the same millisecond.
+function newCustomItemId(): string {
+  return `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+export async function getCustomPackingItems(
+  weddingId: string,
+  guestName: string,
+): Promise<CustomPackingItem[]> {
+  try {
+    const { data, error } = await supabase
+      .from('packing_checklist')
+      .select('custom_items')
+      .eq('wedding_id', weddingId)
+      .eq('guest_name', guestName)
+      .maybeSingle();
+    if (!error) {
+      const items: CustomPackingItem[] = Array.isArray(data?.custom_items)
+        ? (data!.custom_items as CustomPackingItem[])
+        : [];
+      await AsyncStorage.setItem(
+        KEYS.packingCustomItems(weddingId, guestName),
+        JSON.stringify(items),
+      );
+      return items;
+    }
+  } catch {
+    // Network unavailable — fall through to local cache
+  }
+  const raw = await AsyncStorage.getItem(KEYS.packingCustomItems(weddingId, guestName));
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+}
+
+async function persistCustomItems(
+  weddingId: string,
+  guestName: string,
+  items: CustomPackingItem[],
+  // Optional updated checked_items list — supplied by removeCustomPackingItem
+  // so we can drop a deleted custom item's check state in the same upsert.
+  // Omitted means leave checked_items untouched (a separate read-modify-write
+  // is also fine, but bundling avoids a second round-trip).
+  checkedItems?: string[],
+): Promise<void> {
+  await AsyncStorage.setItem(
+    KEYS.packingCustomItems(weddingId, guestName),
+    JSON.stringify(items),
+  );
+  if (checkedItems !== undefined) {
+    await AsyncStorage.setItem(
+      KEYS.packingChecklist(weddingId, guestName),
+      JSON.stringify(checkedItems),
+    );
+  }
+  try {
+    const payload: {
+      wedding_id: string;
+      guest_name: string;
+      custom_items: CustomPackingItem[];
+      updated_at: string;
+      checked_items?: string[];
+    } = {
+      wedding_id: weddingId,
+      guest_name: guestName,
+      custom_items: items,
+      updated_at: new Date().toISOString(),
+    };
+    if (checkedItems !== undefined) payload.checked_items = checkedItems;
+    await supabase
+      .from('packing_checklist')
+      .upsert(payload, { onConflict: 'wedding_id,guest_name' });
+  } catch {
+    // Will reconcile on next load
+  }
+}
+
+export async function addCustomPackingItem(
+  weddingId: string,
+  guestName: string,
+  label: string,
+): Promise<CustomPackingItem[]> {
+  const trimmed = label.trim();
+  if (!trimmed) {
+    return getCustomPackingItems(weddingId, guestName);
+  }
+  const current = await getCustomPackingItems(weddingId, guestName);
+  const updated = [...current, { id: newCustomItemId(), label: trimmed }];
+  await persistCustomItems(weddingId, guestName, updated);
+  return updated;
+}
+
+export async function removeCustomPackingItem(
+  weddingId: string,
+  guestName: string,
+  itemId: string,
+): Promise<{ items: CustomPackingItem[]; checkedItems: string[] }> {
+  // Read both lists, drop the deleted item from each, write together so
+  // the row never has stale check-state pointing at a removed item.
+  const [current, checked] = await Promise.all([
+    getCustomPackingItems(weddingId, guestName),
+    getCheckedItems(weddingId, guestName),
+  ]);
+  const items = current.filter((i) => i.id !== itemId);
+  const checkedItems = checked.filter((id) => id !== itemId);
+  await persistCustomItems(weddingId, guestName, items, checkedItems);
+  return { items, checkedItems };
 }
 
 // ─── Event Time Overrides ─────────────────────────────────────────────────────
