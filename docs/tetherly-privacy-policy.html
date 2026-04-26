@@ -24,7 +24,7 @@
 </head>
 <body>
   <h1>Privacy Policy</h1>
-  <p class="updated">Last updated: April 22, 2026</p>
+  <p class="updated">Last updated: April 26, 2026</p>
 
   <p>This Privacy Policy describes how Neha Pathmanaban ("we", "us", or "our") collects, uses, and protects information in the <strong>Tetherly</strong> app ("the App"). Tetherly is a multi-tenant wedding companion app that couples use to share logistics, photos, and messages with their guests.</p>
 
@@ -41,6 +41,7 @@
     <li>Message reactions and replies</li>
     <li>Packing list status</li>
     <li>Photos you choose to upload</li>
+    <li>Questions you ask the in-app AI assistant, and the responses returned to you (stored so you can revisit them in the History view; you can delete individual entries or clear all of them at any time from within the assistant)</li>
   </ul>
 
   <h3>From couples requesting a Tetherly app</h3>
@@ -60,6 +61,8 @@
     <li>Help coordinate wedding logistics (meals, travel, music)</li>
     <li>Send push notifications with wedding updates and reminders</li>
     <li>Share memories among wedding guests</li>
+    <li>Generate AI assistant responses to your questions about the wedding, drawing on the wedding's published details (schedule, dress codes, packing list, destination guide) plus general knowledge</li>
+    <li>Allow the couple hosting your wedding to review what guests are asking, so they can update the app's information accordingly</li>
     <li>Respond to couples who request a new Tetherly app for their wedding (via email)</li>
   </ul>
   <p>We do not use your information for marketing, advertising, or any commercial purpose. We do not sell or rent your personal information.</p>
@@ -68,7 +71,8 @@
   <p>We use a small number of third-party services to operate Tetherly. They process data on our behalf and are not permitted to use it for their own purposes.</p>
   <ul>
     <li><a href="https://supabase.com" target="_blank">Supabase</a> — database, file storage (for photos), and serverless functions. All data is stored on encrypted servers.</li>
-    <li><a href="https://resend.com" target="_blank">Resend</a> — transactional email delivery (used to notify us when a couple submits the Tetherly request form, and, once a verified sender domain is in place, to send the couple a confirmation of their submission).</li>
+    <li><a href="https://resend.com" target="_blank">Resend</a> — transactional email delivery (used to notify us when a couple submits the Tetherly request form, and, once a verified sender domain is in place, to send the couple a confirmation of their submission). Also used to forward AI-response reports submitted via the in-app "Report" button to the couple hosting the wedding.</li>
+    <li><a href="https://www.anthropic.com" target="_blank">Anthropic</a> — AI processing for the in-app assistant. When you ask a question, the question, the wedding's published details (schedule, dress codes, packing list, destination guide), and a small profile tag (your guest name and role, e.g. "wedding party") are sent to Anthropic's Claude API to generate a response. Anthropic does not train its models on data submitted via the API and retains submissions only briefly for abuse monitoring. See <a href="https://www.anthropic.com/legal/privacy" target="_blank">Anthropic's privacy policy</a> for details.</li>
     <li>Apple Push Notification service — delivery of push notifications to iOS devices.</li>
   </ul>
   <p>We do not share your personal information with any other third parties.</p>

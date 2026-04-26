@@ -19,7 +19,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
 import { haptic } from '@/utils/haptics';
-import { NN_WEDDING_IDS, SenderId } from '@/constants/weddingData';
+import { SenderId } from '@/constants/weddingData';
 
 type SenderOption = {
   id: SenderId;
@@ -51,11 +51,14 @@ export default function AdminScreen() {
     );
   }
 
-  const isNN = NN_WEDDING_IDS.has(weddingId ?? '');
-  const plannerName = isNN ? 'Astrid' : 'Sophie';
+  // Planner option is only offered when this wedding has a planner_name on
+  // the weddings table. Tenants without one just see the couple sender
+  // option, which is the safe default.
   const senders: SenderOption[] = [
     { id: 'couple', label: wedding.couple_names, icon: 'heart' },
-    { id: 'planner', label: plannerName, subtitle: 'Wedding Planner', icon: 'star' },
+    ...(wedding.planner_name
+      ? [{ id: 'planner' as SenderId, label: wedding.planner_name, subtitle: 'Wedding Planner', icon: 'star' as const }]
+      : []),
   ];
   const senderLabel = senders.find((s) => s.id === sender)?.label ?? wedding.couple_names;
 

@@ -40,6 +40,13 @@ create table public.weddings (
   registry_url     text,
   hero_image_url   text,
   theme_color      text default '#8B5E6B',
+  -- Per-wedding planner name. Used in the Admin tab and supplied to
+  -- the AI assistant so it can refer to the planner accurately.
+  planner_name     text,
+  -- Public URL for the wedding's shared photo album (Google Photos by
+  -- default). Surfaced on the Photos tab and to the AI assistant so it
+  -- can direct guests to the right place when asked about sharing photos.
+  photo_album_url  text,
   created_at       timestamptz default now(),
   updated_at       timestamptz default now()
 );
@@ -190,6 +197,25 @@ create table public.event_time_overrides (
 );
 
 
+-- ─── ai_questions ────────────────────────────────────────────────────────────
+-- Backs the floating "Ask" assistant. Every question + AI answer is logged
+-- per (wedding_id, guest_name) so the chat modal can show prior threads,
+-- and so the couple has a record of what guests are actually asking.
+-- `tab_context` records which screen the question came from for analytics.
+create table public.ai_questions (
+  id            uuid primary key default gen_random_uuid(),
+  wedding_id    uuid not null references public.weddings(id) on delete cascade,
+  guest_name    text not null,
+  question      text not null,
+  answer        text not null,
+  tab_context   text,
+  created_at    timestamptz not null default now()
+);
+
+create index ai_questions_wedding_guest_idx
+  on public.ai_questions (wedding_id, guest_name, created_at desc);
+
+
 -- ─── Row Level Security ──────────────────────────────────────────────────────
 -- Guest identity is handled at the application layer (AsyncStorage-backed
 -- guest name) for now. Policies stay permissive until auth is introduced;
@@ -205,6 +231,7 @@ alter table public.notification_reactions enable row level security;
 alter table public.notification_replies   enable row level security;
 alter table public.packing_checklist      enable row level security;
 alter table public.event_time_overrides   enable row level security;
+alter table public.ai_questions           enable row level security;
 
 create policy "allow_all_weddings"               on public.weddings               for all using (true) with check (true);
 create policy "allow_all_guests"                 on public.guests                 for all using (true) with check (true);
@@ -216,6 +243,7 @@ create policy "allow_all_notification_reactions" on public.notification_reaction
 create policy "allow_all_notification_replies"   on public.notification_replies   for all using (true) with check (true);
 create policy "allow_all_packing_checklist"      on public.packing_checklist      for all using (true) with check (true);
 create policy "allow_all_event_time_overrides"   on public.event_time_overrides   for all using (true) with check (true);
+create policy "allow_all_ai_questions"           on public.ai_questions           for all using (true) with check (true);
 
 
 commit;

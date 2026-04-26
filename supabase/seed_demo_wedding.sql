@@ -43,7 +43,8 @@
 
 insert into public.weddings (
   id, invite_code, couple_names, wedding_date, location, destination_city,
-  hashtag, website, contact_email, registry_url, theme_color
+  hashtag, website, contact_email, registry_url, theme_color, planner_name,
+  photo_album_url
 ) values (
   'a0000000-0000-0000-0000-000000000002',
   'DEMO2027',
@@ -55,7 +56,9 @@ insert into public.weddings (
   'https://example.com/emma-and-james',
   'demo@tetherly.app',
   'https://example.com/registry',
-  '#8B5E6B'
+  '#8B5E6B',
+  'Sophie',
+  'https://example.com/photos'
 ) on conflict (id) do update set
   invite_code      = excluded.invite_code,
   couple_names     = excluded.couple_names,
@@ -66,7 +69,9 @@ insert into public.weddings (
   website          = excluded.website,
   contact_email    = excluded.contact_email,
   registry_url     = excluded.registry_url,
-  theme_color      = excluded.theme_color;
+  theme_color      = excluded.theme_color,
+  planner_name     = excluded.planner_name,
+  photo_album_url  = excluded.photo_album_url;
 
 
 -- ─── Guests ──────────────────────────────────────────────────────────────────
