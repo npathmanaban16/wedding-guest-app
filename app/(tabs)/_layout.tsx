@@ -1,4 +1,4 @@
-import { Tabs, Redirect } from 'expo-router';
+import { Tabs, Redirect, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
@@ -10,6 +10,31 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { isOnboardingDone, getNotifications, getMessagesLastRead, markMessagesRead } from '@/services/storage';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { AskAi } from '@/components/AskAi';
+import type { TabContext } from '@/services/aiAssistant';
+
+// Maps the current route pathname to the AskAi assistant's tab context, so
+// the chat modal surfaces the right starter prompts and the persisted Q&A
+// is tagged with the screen the guest was on. Unknown paths return null
+// (assistant falls back to its default prompts).
+function pathnameToTabContext(pathname: string): TabContext | null {
+  // Strip a trailing slash to keep the switch tidy ('/schedule/' → '/schedule').
+  const path = pathname.replace(/\/$/, '');
+  switch (path) {
+    case '':
+    case '/':
+    case '/index':
+      return 'home';
+    case '/schedule':       return 'schedule';
+    case '/switzerland':    return 'destination';
+    case '/packing':        return 'packing';
+    case '/photos':         return 'photos';
+    case '/songs':          return 'songs';
+    case '/messages':       return 'messages';
+    case '/my-info':        return 'my-info';
+    default:                return null;
+  }
+}
 
 // Guest name used by the public "Try the demo" link on /invite. Only this
 // name triggers the preview-mode affordances below; Apple reviewers signing
@@ -32,6 +57,8 @@ export default function TabLayout() {
   const { weddingId, wedding, isWeddingParty } = useWedding();
   const inWeddingParty = !!guestName && isWeddingParty(guestName);
   const insets = useSafeAreaInsets();
+  const pathname = usePathname();
+  const tabContext = pathnameToTabContext(pathname);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -182,6 +209,7 @@ export default function TabLayout() {
           />
         ))}
       </Tabs>
+      <AskAi tabContext={tabContext} />
     </View>
   );
 }
