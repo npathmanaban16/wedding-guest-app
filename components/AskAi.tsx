@@ -34,6 +34,8 @@ import { useWedding } from '@/context/WeddingContext';
 import {
   EVENTS_NN,
   EVENTS_DEMO,
+  HOTEL_LOGISTICS,
+  OFFSITE_VENUE_TRANSPORT,
   PACKING_GUIDE_NN,
   PACKING_GUIDE_DEMO,
   SWITZERLAND_GUIDE,
@@ -111,11 +113,13 @@ export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
         wedding,
         events: filterEventsForGuest(events, profile),
         packingGuide: filterPackingForGuest(packingGuide, profile),
-        // Switzerland guide ships with all weddings for now (single-destination
-        // app). When the SaaS variant grows multiple destinations this will
-        // switch on the wedding's destination_city.
+        // Switzerland guide + Montreux hotel logistics ship with all weddings
+        // for now (single-destination app). When the SaaS variant grows
+        // multiple destinations these will switch on wedding.destination_city.
         destinationGuide: SWITZERLAND_GUIDE,
         destinationCity: wedding.destination_city,
+        hotelLogistics: HOTEL_LOGISTICS,
+        offsiteVenueTransport: OFFSITE_VENUE_TRANSPORT,
         registryUrl: wedding.registry_url,
       });
     },
