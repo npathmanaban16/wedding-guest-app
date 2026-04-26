@@ -16,6 +16,7 @@ import type {
   PackingItem,
   GuideSection,
   GuideItem,
+  HotelLogistics,
 } from '@/constants/weddingData';
 
 // ─── Tab context ─────────────────────────────────────────────────────────────
@@ -71,7 +72,7 @@ export const CONTEXTUAL_PROMPTS: Record<TabContext, ContextualPrompt[]> = {
     { emoji: '🥾', label: 'Best half-day activity near the hotel?' },
     { emoji: '🍷', label: 'Recommend a wine tasting nearby' },
     { emoji: '🍽️', label: 'Where should I have a casual dinner?' },
-    { emoji: '🚆', label: 'How do I get around without a car?' },
+    { emoji: '🚶', label: 'How far is my hotel from the wedding venue?' },
   ],
   packing: [
     { emoji: '🧳', label: 'What\'s the absolute essentials list?' },
@@ -176,6 +177,10 @@ export interface BuildContextArgs {
   packingGuide: PackingCategory[];
   destinationGuide: GuideSection[];
   destinationCity: string;
+  hotelLogistics?: HotelLogistics[];
+  // Notes for any off-site event venues (e.g. a vineyard rehearsal dinner) —
+  // distance from the wedding hotel + how transport is being handled.
+  offsiteVenueTransport?: { venue: string; notes: string }[];
   registryUrl?: string | null;
 }
 
@@ -186,6 +191,8 @@ export function buildContextBlock(args: BuildContextArgs): string {
     packingGuide,
     destinationGuide,
     destinationCity,
+    hotelLogistics,
+    offsiteVenueTransport,
     registryUrl,
   } = args;
 
@@ -262,6 +269,38 @@ export function buildContextBlock(args: BuildContextArgs): string {
     if (event.tuxedoNote) lines.push(`Tux note: ${event.tuxedoNote}`);
     sections.push(lines.join('\n'));
   });
+
+  // ── Hotel logistics ───────────────────────────────────────────────────
+  // Walking times + addresses for the hotels guests pick from in My Info,
+  // so the AI can answer "how far is Mona from the Fairmont?" or "how do
+  // I get from Royal Plaza to the ceremony?" without inventing numbers.
+  if (hotelLogistics && hotelLogistics.length > 0) {
+    const hotelLines: string[] = [
+      '## Hotels & Walking Times to the Wedding Venue',
+      'Each hotel below is one of the options guests can pick in the app. Walking times are approximate Google Maps estimates to Fairmont Le Montreux Palace, where the Sangeet, ceremony, cocktail hour, and reception all take place.',
+      '',
+    ];
+    hotelLogistics.forEach((h) => {
+      hotelLines.push(`### ${h.name}`);
+      hotelLines.push(`Address: ${h.address}`);
+      if (h.walkToFairmont) {
+        hotelLines.push(
+          `Walk to Fairmont: ${h.walkToFairmont.minutes} min (~${h.walkToFairmont.meters} m). ${h.walkToFairmont.description}`,
+        );
+      }
+      if (h.transportNote) hotelLines.push(`Note: ${h.transportNote}`);
+    });
+    sections.push(hotelLines.join('\n'));
+  }
+
+  if (offsiteVenueTransport && offsiteVenueTransport.length > 0) {
+    const lines: string[] = ['## Getting to Off-Site Event Venues'];
+    offsiteVenueTransport.forEach((entry) => {
+      lines.push(`### ${entry.venue}`);
+      lines.push(entry.notes);
+    });
+    sections.push(lines.join('\n'));
+  }
 
   // ── Packing ───────────────────────────────────────────────────────────
   sections.push('## Packing Guide');

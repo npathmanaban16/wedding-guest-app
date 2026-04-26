@@ -317,6 +317,100 @@ export const EVENTS: WeddingEvent[] =
   DEFAULT_WEDDING_ID === null ? EVENTS_DEMO : EVENTS_NN;
 
 // ============================================================
+// HOTEL LOGISTICS
+// ============================================================
+// Per-hotel addresses + walking time/distance to the wedding venue
+// (Fairmont Le Montreux Palace), supplied to the AI assistant so it
+// can answer "how far is Mona from the Fairmont?" or "how do I get
+// from Royal Plaza to the ceremony?" without inventing numbers.
+//
+// Distances are approximate Google Maps walking estimates, rounded
+// to the nearest 50m / 1 min. All listed Montreux hotels are an easy
+// walk from the Fairmont — no taxi needed for the wedding events.
+// The rehearsal dinner at Le Baron Tavernier (Lavaux Vineyards) is
+// ~17 km away; transport is provided from the Fairmont, so guests
+// at other hotels should head to the Fairmont first.
+//
+// Hotel names match HOTEL_OPTIONS in components/HotelPickerField.tsx
+// exactly so the AI's profile-aware answers match the hotel a guest
+// has saved in their My Info.
+
+export interface HotelLogistics {
+  name: string;
+  address: string;
+  // Walking estimates from this hotel to the Fairmont Le Montreux Palace.
+  // Omitted when this hotel IS the Fairmont.
+  walkToFairmont?: {
+    minutes: number;
+    meters: number;
+    description: string;
+  };
+  // Optional taxi/transport note if walking isn't ideal (e.g. weather,
+  // late at night).
+  transportNote?: string;
+}
+
+export const HOTEL_LOGISTICS: HotelLogistics[] = [
+  {
+    name: 'Fairmont Le Montreux Palace',
+    address: 'Av. Claude-Nobs 2, 1820 Montreux, Switzerland',
+    transportNote:
+      'This is the wedding venue. The Sangeet, ceremony, cocktail hour, and reception all take place here.',
+  },
+  {
+    name: 'Mona Montreux',
+    address: 'Av. des Alpes 38, 1820 Montreux, Switzerland',
+    walkToFairmont: {
+      minutes: 8,
+      meters: 600,
+      description:
+        'Mostly flat walk along Avenue des Alpes and Grand-Rue, ending right at the Fairmont entrance.',
+    },
+  },
+  {
+    name: 'Villa Toscane',
+    address: 'Av. des Alpes 31, 1820 Montreux, Switzerland',
+    walkToFairmont: {
+      minutes: 9,
+      meters: 700,
+      description:
+        'Down Avenue des Alpes toward the lakefront, then a short walk along the promenade to the Fairmont.',
+    },
+  },
+  {
+    name: 'Grand Hotel Suisse Majestic',
+    address: 'Av. des Alpes 45, 1820 Montreux, Switzerland',
+    walkToFairmont: {
+      minutes: 9,
+      meters: 700,
+      description:
+        'Right next to Montreux train station. Walk down toward the lakefront, then south along the promenade to the Fairmont.',
+    },
+  },
+  {
+    name: 'Royal Plaza Montreux',
+    address: 'Avenue Claude-Nobs 17, 1820 Montreux, Switzerland',
+    walkToFairmont: {
+      minutes: 5,
+      meters: 350,
+      description:
+        'A short walk along the lakefront promenade — the Fairmont is just up the street.',
+    },
+  },
+];
+
+// Notes on getting to non-Fairmont event venues. Currently only the
+// rehearsal dinner is held off-site; if more off-site events are added
+// they'd go here too.
+export const OFFSITE_VENUE_TRANSPORT: { venue: string; notes: string }[] = [
+  {
+    venue: 'Le Baron Tavernier (Rehearsal Dinner)',
+    notes:
+      'Le Baron Tavernier is in the Lavaux Vineyards above Lake Geneva, about 17 km / a 25-minute drive from Montreux. The couple is providing transportation from the Fairmont Le Montreux Palace — guests staying elsewhere should make their way to the Fairmont first to catch the ride. Driving yourself takes about 25 minutes via the A9; trains involve a transfer at Puidoux station and take about 45 minutes.',
+  },
+];
+
+// ============================================================
 // SWITZERLAND GUIDE — Montreux
 // ============================================================
 
