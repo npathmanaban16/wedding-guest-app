@@ -59,6 +59,7 @@ export const CONTEXTUAL_PROMPTS: Record<TabContext, ContextualPrompt[]> = {
   home: [
     { emoji: '🗓️', label: 'What\'s the order of events that weekend?' },
     { emoji: '🌤️', label: 'What\'s the weather usually like?' },
+    { emoji: '🛂', label: 'What do I need to know about EES at the EU border?' },
     { emoji: '💡', label: 'What should I do the day before the wedding?' },
     { emoji: '🎁', label: 'Any tips on a thoughtful gift?' },
   ],
