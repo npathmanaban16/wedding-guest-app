@@ -16,6 +16,7 @@ import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
+  Linking,
   Modal,
   Platform,
   Pressable,
@@ -489,6 +490,33 @@ function TabPill({
   );
 }
 
+// Matches http(s) URLs but stops at whitespace, closing brackets, and the
+// usual sentence-ending punctuation so trailing periods/commas/parens
+// don't get sucked into the link target. The capturing group makes
+// `String.split` interleave URL matches into the result array at odd
+// indices, so the renderer can tell text vs. link by position alone —
+// avoiding the stateful `lastIndex` quirk of running `.test()` again.
+const URL_REGEX = /(https?:\/\/[^\s)\]]+[^\s.,!?;:)\]"'])/g;
+
+function linkify(text: string, baseStyle: object): React.ReactNode {
+  const parts = text.split(URL_REGEX);
+  if (parts.length === 1) return text;
+  return parts.map((part, i) =>
+    i % 2 === 1 ? (
+      <Text
+        key={i}
+        style={[baseStyle, styles.linkText]}
+        onPress={() => Linking.openURL(part).catch(() => {})}
+        accessibilityRole="link"
+      >
+        {part}
+      </Text>
+    ) : (
+      part
+    ),
+  );
+}
+
 function Bubble({
   message,
   onReport,
@@ -506,11 +534,12 @@ function Bubble({
       </View>
     );
   }
+  const textStyle = isUser ? styles.userText : styles.assistantText;
   return (
     <View style={[styles.bubbleRow, isUser ? styles.userRow : styles.assistantRow]}>
       <View style={styles.bubbleColumn}>
         <View style={[styles.bubble, isUser ? styles.userBubble : styles.assistantBubble]}>
-          <Text style={isUser ? styles.userText : styles.assistantText}>{message.content}</Text>
+          <Text style={textStyle}>{isUser ? message.content : linkify(message.content, textStyle)}</Text>
         </View>
         {!isUser && (
           <TouchableOpacity
@@ -774,6 +803,10 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     paddingTop: 4,
     paddingLeft: Spacing.sm,
+  },
+  linkText: {
+    color: Colors.primary,
+    textDecorationLine: 'underline',
   },
   userBubble: {
     backgroundColor: Colors.primary,
