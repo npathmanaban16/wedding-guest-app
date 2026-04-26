@@ -37,7 +37,6 @@ import {
   PACKING_GUIDE_NN,
   PACKING_GUIDE_DEMO,
   SWITZERLAND_GUIDE,
-  WEDDING,
   NN_WEDDING_IDS,
 } from '@/constants/weddingData';
 import {
@@ -98,7 +97,6 @@ export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
         // switch on the wedding's destination_city.
         destinationGuide: SWITZERLAND_GUIDE,
         destinationCity: wedding.destination_city,
-        plannerName: WEDDING.plannerName,
         registryUrl: wedding.registry_url,
       }),
     [wedding, events, packingGuide],

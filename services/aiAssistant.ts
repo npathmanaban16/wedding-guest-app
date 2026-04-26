@@ -122,7 +122,6 @@ export interface BuildContextArgs {
   packingGuide: PackingCategory[];
   destinationGuide: GuideSection[];
   destinationCity: string;
-  plannerName?: string;
   registryUrl?: string | null;
 }
 
@@ -133,13 +132,15 @@ export function buildContextBlock(args: BuildContextArgs): string {
     packingGuide,
     destinationGuide,
     destinationCity,
-    plannerName,
     registryUrl,
   } = args;
 
   const sections: string[] = [];
 
   // ── Overview ──────────────────────────────────────────────────────────
+  // Planner name is sourced from the per-wedding column on the weddings
+  // table — never from a build-variant constant — so the AI can't refer
+  // to one wedding's planner when the user is signed into another tenant.
   const weddingDate = new Date(wedding.wedding_date).toLocaleDateString('en-GB', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   });
@@ -152,7 +153,7 @@ export function buildContextBlock(args: BuildContextArgs): string {
       `Destination city: ${destinationCity}`,
       wedding.hashtag ? `Hashtag: ${wedding.hashtag}` : null,
       wedding.website ? `Website: ${wedding.website}` : null,
-      plannerName ? `Wedding planner: ${plannerName}` : null,
+      wedding.planner_name ? `Wedding planner: ${wedding.planner_name}` : null,
       registryUrl ? `Registry: ${registryUrl}` : null,
     ].filter(Boolean).join('\n'),
   );

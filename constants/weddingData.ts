@@ -22,23 +22,19 @@ export const DEFAULT_WEDDING_ID: string | null =
 
 // Fields that aren't yet modeled in the `weddings` table. Display strings
 // like coupleNames, location, destinationCity, weddingDate, hashtag, website,
-// contactEmail, and registry URL now come from WeddingContext.
+// contactEmail, registry URL, and planner name now come from WeddingContext.
 //
-// Variant-aware: the SaaS build uses a generic wedding planner name and a
-// placeholder album URL so the demo wedding's Admin screen and Photos tab
-// don't leak real-wedding content. N&N keeps the configured values.
+// Variant-aware: the SaaS build uses a placeholder album URL so the demo
+// wedding's Photos tab doesn't leak real-wedding content. N&N keeps the
+// configured values.
 export const WEDDING = DEFAULT_WEDDING_ID === null
   ? {
       heroImage: require("@/assets/images/montreux.png"),
       albumUrl: "https://example.com/photos",
-      plannerName: "Sophie",
-      plannerSubtitle: "Wedding Planner",
     }
   : {
       heroImage: require("@/assets/images/montreux.png"),
       albumUrl: "https://photos.app.goo.gl/YCMxM6i7XRNzKERd6",
-      plannerName: "Astrid",
-      plannerSubtitle: "Wedding Planner",
     };
 
 export type SenderId = "couple" | "planner";

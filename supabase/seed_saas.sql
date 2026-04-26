@@ -28,7 +28,7 @@
 
 insert into public.weddings (
   id, invite_code, couple_names, wedding_date, location, destination_city,
-  hashtag, website, contact_email, registry_url, theme_color
+  hashtag, website, contact_email, registry_url, theme_color, planner_name
 ) values (
   'a0000000-0000-0000-0000-000000000001',
   'NEHANAVEEN2026',
@@ -40,7 +40,8 @@ insert into public.weddings (
   'https://www.neha-naveen.com',
   'nehanaveen2026@gmail.com',
   'https://blissandbone.sendbirdie.com/r/neha-naveen',
-  '#8B5E6B'
+  '#8B5E6B',
+  'Astrid'
 ) on conflict (id) do nothing;
 
 
