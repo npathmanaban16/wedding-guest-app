@@ -12,7 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useWeddingSession } from '@/context/WeddingContext';
 import type { WeddingRow } from '@/services/wedding';
@@ -34,7 +34,15 @@ export default function InviteScreen() {
   const { login } = useAuth();
   const router = useRouter();
 
-  const [code, setCode] = useState('');
+  // Allow couples to share a deep link like /invite?code=NEHANAVEEN2026
+  // that pre-fills the invite code so guests only have to type their name.
+  const params = useLocalSearchParams<{ code?: string | string[] }>();
+  const initialCode = (() => {
+    const raw = Array.isArray(params.code) ? params.code[0] : params.code;
+    return typeof raw === 'string' ? raw.trim().toUpperCase() : '';
+  })();
+
+  const [code, setCode] = useState(initialCode);
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
