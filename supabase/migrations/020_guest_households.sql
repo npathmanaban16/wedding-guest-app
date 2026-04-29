@@ -11,10 +11,11 @@
 -- in a household (vendors, planner, anyone unmapped) appear as solo cards
 -- in the admin view.
 --
--- Backfill targets the N&N wedding (00000000-0000-0000-0000-000000000001)
--- using the IDs from the couple's master spreadsheet so the numbers match
--- if cross-referenced. Safe to re-run: each UPDATE is keyed on the
--- canonical name and the wedding_id, and the column add is `if not exists`.
+-- Backfill targets whichever wedding has Neha Pathmanaban as a guest, so
+-- the migration works for both the hardcoded N&N variant and the SaaS /
+-- Tetherly deployment (where the wedding_id is a fresh UUID per tenant).
+-- Safe to re-run: each UPDATE is keyed on the canonical name and the
+-- wedding_id, and the column add is `if not exists`.
 -- ============================================================
 
 begin;
@@ -25,7 +26,11 @@ alter table public.guests
 create index if not exists guests_wedding_household_idx
   on public.guests (wedding_id, household_id);
 
--- ─── Backfill: N&N wedding ───────────────────────────────────────────────────
+-- ─── Backfill: N&N wedding (looked up by Neha's row) ─────────────────────────
+-- Subquery finds the wedding_id from the bride's row so the same migration
+-- works regardless of deployment. If "Neha Pathmanaban" isn't in the table
+-- (e.g. running this on a fresh tenant before seeding), the WHERE clause
+-- matches no rows and the UPDATE no-ops cleanly.
 update public.guests AS g
    set household_id = h.household_id
   from (VALUES
@@ -149,7 +154,11 @@ update public.guests AS g
     (112, 'Asokan Selvaraj'),
     (112, 'Sujatha Asokan')
   ) AS h(household_id, canonical_name)
- where g.wedding_id = '00000000-0000-0000-0000-000000000001'
-   and g.canonical_name = h.canonical_name;
+ where g.canonical_name = h.canonical_name
+   and g.wedding_id = (
+     select wedding_id from public.guests
+      where canonical_name = 'Neha Pathmanaban'
+      limit 1
+   );
 
 commit;
