@@ -44,9 +44,6 @@ interface HouseholdGroup {
   // Stable display key. Solo guests (household_id null) get `solo:<guestName>`
   // so they each render as their own card without colliding.
   key: string;
-  // Display label shown in the card header. e.g. "Household 5" for grouped
-  // guests, undefined for solo guests where the guest name suffices.
-  label: string | null;
   members: GuestAccommodation[];
   // Earliest non-empty check-in across all members; '' if none submitted yet.
   earliestCheckIn: string;
@@ -72,10 +69,7 @@ function groupByHousehold(rows: GuestAccommodation[]): HouseholdGroup[] {
     const checkIns = members.map((m) => m.checkIn).filter(Boolean).sort();
     const earliestCheckIn = checkIns[0] ?? '';
     const allMissing = members.every((m) => !m.submitted);
-    const label = key.startsWith('hh:')
-      ? `Household ${key.slice(3)}`
-      : null;
-    groups.push({ key, label, members, earliestCheckIn, allMissing });
+    groups.push({ key, members, earliestCheckIn, allMissing });
   }
   // Earliest check-in ascending, then households-with-anything-known before
   // those with no submissions, then alphabetical by first member as tiebreak.
@@ -418,9 +412,6 @@ export default function AdminAccommodationsScreen() {
           <View key={group.key} style={styles.householdCard}>
             <View style={styles.householdHeader}>
               <View style={{ flex: 1 }}>
-                {group.label ? (
-                  <Text style={styles.householdLabel}>{group.label}</Text>
-                ) : null}
                 <Text style={styles.householdNames}>
                   {group.members.map((m) => m.guestName).join(' · ')}
                 </Text>
@@ -694,14 +685,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     marginBottom: Spacing.sm,
-  },
-  householdLabel: {
-    fontFamily: Fonts.sansMedium,
-    fontSize: 10,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    color: Colors.textMuted,
-    marginBottom: 2,
   },
   householdNames: {
     fontFamily: Fonts.serifSemiBold,
