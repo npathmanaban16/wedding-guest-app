@@ -6,12 +6,15 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
   Linking,
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as MailComposer from 'expo-mail-composer';
+import * as FileSystem from 'expo-file-system/legacy';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
@@ -22,6 +25,41 @@ import {
 import { DateField } from '@/components/DateField';
 
 const ALL_HOTELS = '__all__';
+
+const CSV_COLUMNS: Array<{ header: string; pick: (r: GuestAccommodation) => string }> = [
+  { header: 'Guest', pick: (r) => r.guestName },
+  { header: 'Hotel', pick: (r) => r.hotel },
+  { header: 'Check-in', pick: (r) => r.checkIn },
+  { header: 'Check-out', pick: (r) => r.checkOut },
+  { header: 'Arrival time', pick: (r) => r.arrivalTime },
+  { header: 'Flight', pick: (r) => r.flightNumber },
+  { header: 'Phone', pick: (r) => r.phone },
+  { header: 'Email', pick: (r) => r.email },
+  { header: 'Notes', pick: (r) => r.extraNotes },
+];
+
+// RFC 4180-ish escaping: wrap any field containing a comma, quote, or
+// newline in double quotes and double-escape internal quotes.
+function csvEscape(value: string): string {
+  if (value == null) return '';
+  const needsQuotes = /[",\r\n]/.test(value);
+  const escaped = value.replace(/"/g, '""');
+  return needsQuotes ? `"${escaped}"` : escaped;
+}
+
+function buildCsv(rows: GuestAccommodation[]): string {
+  const header = CSV_COLUMNS.map((c) => csvEscape(c.header)).join(',');
+  const body = rows
+    .map((r) => CSV_COLUMNS.map((c) => csvEscape(c.pick(r))).join(','))
+    .join('\r\n');
+  // Leading BOM so Excel opens UTF-8 cleanly (names with accents etc.).
+  return `﻿${header}\r\n${body}\r\n`;
+}
+
+function todayIso(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
 // Format a YYYY-MM-DD value into "Sat, 14 Jun 2025" for display. Returns the
 // raw string if it isn't ISO-shaped (e.g. legacy free-text values).
@@ -103,6 +141,73 @@ export default function AdminAccommodationsScreen() {
   const totalGuests = rows.length;
   const showingCount = filtered.length;
 
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
+    if (filtered.length === 0) {
+      Alert.alert('Nothing to export', 'There are no guests matching the current filters.');
+      return;
+    }
+    setExporting(true);
+    try {
+      const csv = buildCsv(filtered);
+      const filterParts: string[] = [];
+      if (hotelFilter !== ALL_HOTELS) filterParts.push(`hotel=${hotelFilter}`);
+      if (arrivalDate) filterParts.push(`check-in=${arrivalDate}`);
+      const filterSuffix = filterParts.length ? ` (${filterParts.join(', ')})` : '';
+      const subject = `Guest accommodations — ${todayIso()}${filterSuffix}`;
+      const body =
+        `${filtered.length} guest${filtered.length === 1 ? '' : 's'} attached as CSV` +
+        `${filterSuffix ? `\nFilters: ${filterParts.join(', ')}` : ''}\n`;
+
+      // Native mail composer path — opens the OS compose sheet with the CSV
+      // attached and the recipients field empty so the admin can type in
+      // whichever address they want to send it to.
+      const canMail = await MailComposer.isAvailableAsync().catch(() => false);
+      if (canMail) {
+        const fileUri = `${FileSystem.cacheDirectory ?? ''}guest-accommodations-${todayIso()}.csv`;
+        await FileSystem.writeAsStringAsync(fileUri, csv, {
+          encoding: FileSystem.EncodingType.UTF8,
+        });
+        const result = await MailComposer.composeAsync({
+          subject,
+          body,
+          attachments: [fileUri],
+        });
+        if (result.status === MailComposer.MailComposerStatus.SENT) {
+          Alert.alert('Sent', 'Email with CSV sent.');
+        }
+        return;
+      }
+
+      // Fallback: device has no configured mail app (common on simulators
+      // and web). Open a mailto: link with the CSV inlined into the body
+      // so the admin can still paste it somewhere — they fill in the
+      // recipient in their mail client.
+      const inlineLimit = 1800;
+      const inlineCsv = csv.length > inlineLimit
+        ? `${csv.slice(0, inlineLimit)}\n…(truncated — ${filtered.length} rows total)`
+        : csv;
+      const url =
+        `mailto:?subject=${encodeURIComponent(subject)}` +
+        `&body=${encodeURIComponent(`${body}\n${inlineCsv}`)}`;
+      const supported = await Linking.canOpenURL(url).catch(() => false);
+      if (!supported) {
+        Alert.alert(
+          'Email not available',
+          'No email app is configured on this device. Try on a real device with the Mail app set up.',
+        );
+        return;
+      }
+      await Linking.openURL(url);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Unknown error';
+      Alert.alert('Export failed', msg);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const callPhone = (raw: string) => {
     const tel = raw.replace(/[^+\d]/g, '');
     if (tel) Linking.openURL(`tel:${tel}`).catch(() => {});
@@ -126,6 +231,26 @@ export default function AdminAccommodationsScreen() {
         <Text style={styles.pageSubtitle}>
           Hotel and arrival info for every guest. Filter by hotel or arrival date.
         </Text>
+        <TouchableOpacity
+          style={[
+            styles.exportButton,
+            (exporting || filtered.length === 0) && styles.exportButtonDisabled,
+          ]}
+          onPress={handleExport}
+          disabled={exporting || filtered.length === 0}
+          activeOpacity={0.85}
+        >
+          {exporting ? (
+            <ActivityIndicator size="small" color={Colors.white} />
+          ) : (
+            <>
+              <Ionicons name="mail-outline" size={15} color={Colors.white} />
+              <Text style={styles.exportButtonText}>
+                Email CSV{filtered.length !== rows.length ? ` (${filtered.length} filtered)` : ''}
+              </Text>
+            </>
+          )}
+        </TouchableOpacity>
       </View>
 
       {/* Hotel filter */}
@@ -305,6 +430,25 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     color: Colors.textSecondary,
     lineHeight: 19,
+    marginBottom: Spacing.md,
+  },
+  exportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: Spacing.xs,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 10,
+    borderRadius: Radius.full,
+    minHeight: 36,
+  },
+  exportButtonDisabled: { opacity: 0.45 },
+  exportButtonText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 13,
+    color: Colors.white,
+    letterSpacing: 0.2,
   },
 
   card: {
