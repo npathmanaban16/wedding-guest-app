@@ -50,9 +50,12 @@ interface HouseholdGroup {
   members: GuestAccommodation[];
   // Earliest non-empty check-in across all members; '' if none submitted yet.
   earliestCheckIn: string;
-  // True when at least one member is still missing travel info — used to
-  // surface the "needs follow-up" badge on the household card.
-  hasMissing: boolean;
+  // True when *every* member is still missing travel info. This is the
+  // "needs full outreach" set — used by the missing-info filter and the
+  // household-level follow-up badge. A mixed household (some submitted,
+  // some not) doesn't qualify, since the couple already has a starting
+  // point from whoever did fill it out.
+  allMissing: boolean;
 }
 
 function groupByHousehold(rows: GuestAccommodation[]): HouseholdGroup[] {
@@ -68,11 +71,11 @@ function groupByHousehold(rows: GuestAccommodation[]): HouseholdGroup[] {
     members.sort((a, b) => a.guestName.localeCompare(b.guestName));
     const checkIns = members.map((m) => m.checkIn).filter(Boolean).sort();
     const earliestCheckIn = checkIns[0] ?? '';
-    const hasMissing = members.some((m) => !m.submitted);
+    const allMissing = members.every((m) => !m.submitted);
     const label = key.startsWith('hh:')
       ? `Household ${key.slice(3)}`
       : null;
-    groups.push({ key, label, members, earliestCheckIn, hasMissing });
+    groups.push({ key, label, members, earliestCheckIn, allMissing });
   }
   // Earliest check-in ascending, then households-with-anything-known before
   // those with no submissions, then alphabetical by first member as tiebreak.
@@ -177,7 +180,7 @@ export default function AdminAccommodationsScreen() {
   const groups = useMemo(() => {
     const all = groupByHousehold(rows);
     return all.filter((g) => {
-      if (missingOnly && !g.hasMissing) return false;
+      if (missingOnly && !g.allMissing) return false;
       if (hotelFilter !== ALL_HOTELS) {
         const matches = g.members.some(
           (m) => m.hotel.trim().toLowerCase() === hotelFilter.toLowerCase(),
@@ -198,8 +201,11 @@ export default function AdminAccommodationsScreen() {
   );
 
   const totalGuests = rows.length;
-  const missingCount = useMemo(
-    () => rows.filter((r) => !r.submitted).length,
+  // Households where *no one* has submitted travel info — the actual size of
+  // the missing-info filter. Computed off the unfiltered grouping so the
+  // count stays stable as the user toggles other filters on/off.
+  const allMissingHouseholdCount = useMemo(
+    () => groupByHousehold(rows).filter((g) => g.allMissing).length,
     [rows],
   );
   const showingCount = filteredGuests.length;
@@ -370,10 +376,12 @@ export default function AdminAccommodationsScreen() {
           <View style={{ flex: 1 }}>
             <Text style={styles.cardLabel}>Follow-up</Text>
             <Text style={styles.toggleTitle}>
-              {missingOnly ? 'Showing households with missing info' : 'Show only households with missing info'}
+              {missingOnly
+                ? 'Showing households with no info from anyone'
+                : 'Show only households with no info from anyone'}
             </Text>
             <Text style={styles.toggleHint}>
-              {missingCount} of {totalGuests} guest{totalGuests === 1 ? '' : 's'} haven't submitted travel details yet.
+              {allMissingHouseholdCount} household{allMissingHouseholdCount === 1 ? '' : 's'} haven't had a single member submit travel details yet.
             </Text>
           </View>
           <View style={[styles.toggleTrack, missingOnly && styles.toggleTrackActive]}>
@@ -417,7 +425,7 @@ export default function AdminAccommodationsScreen() {
                   {group.members.map((m) => m.guestName).join(' · ')}
                 </Text>
               </View>
-              {group.hasMissing ? (
+              {group.allMissing ? (
                 <View style={styles.followUpBadge}>
                   <Ionicons name="alert-circle" size={11} color={Colors.error} />
                   <Text style={styles.followUpText}>Needs follow-up</Text>
