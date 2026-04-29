@@ -65,6 +65,10 @@ create table public.guests (
   -- outfits). Always implies is_wedding_party=true; enforced by seeding.
   is_bridal_party   boolean not null default false,
   gender            text check (gender in ('male', 'female')),
+  -- Optional grouping so the admin Guest Accommodations view can pair
+  -- household members together (couples, families). Nullable; guests
+  -- without a household_id render as solo cards.
+  household_id      integer,
   created_at        timestamptz default now(),
   unique (wedding_id, canonical_name)
 );

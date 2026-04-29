@@ -7,14 +7,27 @@ import {
   TouchableOpacity,
   Linking,
   ImageBackground,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
 import { Colors, Fonts, Typography, Spacing, Radius, Shadow } from '@/constants/theme';
 import { WEDDING, EVENTS_NN, EVENTS_DEMO, NN_WEDDING_IDS } from '@/constants/weddingData';
+
+// Casual second-factor for the admin tools — gates the buttons on the home
+// tab so a guest borrowing an admin's logged-in phone can't fire pushes or
+// edit the schedule without knowing the shared word. Stored hardcoded
+// client-side: this is "you must know the word", not a security boundary
+// against a determined attacker. Rotate by editing this constant.
+const ADMIN_UNLOCK_PASSWORD = 'Duke2016';
+const adminUnlockKey = (weddingId: string) => `@admin_unlocked_${weddingId}`;
 
 function useCountdown(targetDate: Date) {
   const getTimeLeft = (target: Date) => {
@@ -67,6 +80,44 @@ export default function HomeScreen() {
   const inWeddingParty = isWeddingParty(guestName ?? '');
   const isAdminUser = !!guestName && isAdmin(guestName);
   const events = NN_WEDDING_IDS.has(wedding.id) ? EVENTS_NN : EVENTS_DEMO;
+
+  // Admin tools are hidden behind a shared password until unlocked once on
+  // this device. State is restored from AsyncStorage on mount and persists
+  // across app launches; tapping "Lock again" clears it.
+  const [adminUnlocked, setAdminUnlocked] = useState(false);
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+
+  useEffect(() => {
+    if (!isAdminUser) return;
+    AsyncStorage.getItem(adminUnlockKey(wedding.id))
+      .then((v) => { if (v === 'true') setAdminUnlocked(true); })
+      .catch(() => {});
+  }, [isAdminUser, wedding.id]);
+
+  const openPasswordPrompt = () => {
+    setPasswordInput('');
+    setPasswordError('');
+    setPasswordModalOpen(true);
+  };
+
+  const handleConfirmPassword = async () => {
+    if (passwordInput === ADMIN_UNLOCK_PASSWORD) {
+      try { await AsyncStorage.setItem(adminUnlockKey(wedding.id), 'true'); } catch {}
+      setAdminUnlocked(true);
+      setPasswordModalOpen(false);
+      setPasswordInput('');
+      setPasswordError('');
+    } else {
+      setPasswordError('Incorrect password.');
+    }
+  };
+
+  const handleLockAdmin = async () => {
+    try { await AsyncStorage.removeItem(adminUnlockKey(wedding.id)); } catch {}
+    setAdminUnlocked(false);
+  };
   const firstEvent = events.find((e) => !e.weddingPartyOnly || inWeddingParty)!
 
   return (
@@ -167,8 +218,20 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Admin: send notification + edit schedule times (only visible to admins) */}
-      {isAdminUser && (
+      {/* Admin tools — only visible to admin guests, and gated behind a
+          shared password to discourage casual access from a borrowed phone. */}
+      {isAdminUser && !adminUnlocked && (
+        <TouchableOpacity
+          style={styles.adminLockedButton}
+          onPress={openPasswordPrompt}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="lock-closed-outline" size={15} color={Colors.primary} />
+          <Text style={styles.adminLockedText}>Unlock Admin Tools</Text>
+        </TouchableOpacity>
+      )}
+
+      {isAdminUser && adminUnlocked && (
         <>
           <TouchableOpacity
             style={styles.adminButton}
@@ -186,8 +249,80 @@ export default function HomeScreen() {
             <Ionicons name="time-outline" size={15} color={Colors.white} />
             <Text style={styles.adminButtonText}>Edit Schedule Times</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.adminButton}
+            onPress={() => router.push('/admin-accommodations')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="bed-outline" size={15} color={Colors.white} />
+            <Text style={styles.adminButtonText}>Guest Accommodations</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleLockAdmin}
+            style={styles.adminLockAgain}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="lock-closed" size={11} color={Colors.textMuted} />
+            <Text style={styles.adminLockAgainText}>Lock admin tools</Text>
+          </TouchableOpacity>
         </>
       )}
+
+      <Modal
+        visible={passwordModalOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPasswordModalOpen(false)}
+      >
+        <KeyboardAvoidingView
+          style={styles.modalBackdrop}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Admin password</Text>
+            <Text style={styles.modalBody}>
+              Enter the shared admin password to unlock these tools on this device.
+            </Text>
+            <TextInput
+              style={styles.modalInput}
+              value={passwordInput}
+              onChangeText={(t) => { setPasswordInput(t); if (passwordError) setPasswordError(''); }}
+              placeholder="Password"
+              placeholderTextColor={Colors.textMuted}
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoFocus
+              returnKeyType="done"
+              onSubmitEditing={handleConfirmPassword}
+            />
+            {passwordError ? (
+              <Text style={styles.modalError}>{passwordError}</Text>
+            ) : null}
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                onPress={() => setPasswordModalOpen(false)}
+                style={[styles.modalBtn, styles.modalBtnCancel]}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.modalBtnCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleConfirmPassword}
+                disabled={!passwordInput}
+                style={[
+                  styles.modalBtn,
+                  styles.modalBtnConfirm,
+                  !passwordInput && styles.modalBtnConfirmDisabled,
+                ]}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.modalBtnConfirmText}>Unlock</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
 
     </ScrollView>
   );
@@ -459,6 +594,110 @@ const styles = StyleSheet.create({
     color: Colors.white,
     letterSpacing: 0.2,
   },
+  adminLockedButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.sm,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.full,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+  },
+  adminLockedText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 14,
+    color: Colors.primary,
+    letterSpacing: 0.2,
+  },
+  adminLockAgain: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: Spacing.sm,
+  },
+  adminLockAgainText: {
+    fontFamily: Fonts.sans,
+    fontSize: 11,
+    color: Colors.textMuted,
+  },
+
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(28, 24, 16, 0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.lg,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: Colors.white,
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
+    ...Shadow.medium,
+  },
+  modalTitle: {
+    fontFamily: Fonts.serifSemiBold,
+    fontSize: 20,
+    color: Colors.textPrimary,
+    marginBottom: Spacing.xs,
+    letterSpacing: 0.2,
+  },
+  modalBody: {
+    fontFamily: Fonts.sans,
+    fontSize: 13,
+    color: Colors.textSecondary,
+    lineHeight: 19,
+    marginBottom: Spacing.md,
+  },
+  modalInput: {
+    fontFamily: Fonts.sans,
+    fontSize: 15,
+    color: Colors.textPrimary,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 12,
+    backgroundColor: Colors.background,
+  },
+  modalError: {
+    fontFamily: Fonts.sans,
+    fontSize: 12,
+    color: Colors.error,
+    marginTop: Spacing.xs,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: Spacing.sm,
+    marginTop: Spacing.lg,
+  },
+  modalBtn: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: 10,
+    borderRadius: Radius.full,
+  },
+  modalBtnCancel: { backgroundColor: 'transparent' },
+  modalBtnCancelText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 14,
+    color: Colors.textMuted,
+  },
+  modalBtnConfirm: { backgroundColor: Colors.primary },
+  modalBtnConfirmDisabled: { opacity: 0.45 },
+  modalBtnConfirmText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 14,
+    color: Colors.white,
+    letterSpacing: 0.2,
+  },
+
   signOut: {
     alignItems: 'center',
     paddingVertical: Spacing.md,

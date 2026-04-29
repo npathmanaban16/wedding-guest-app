@@ -120,6 +120,76 @@ export async function deleteMyAccount(weddingId: string, guestName: string): Pro
   ]);
 }
 
+// Admin-only: every guest's accommodation + arrival info for this wedding.
+// Used by the admin accommodations screen to surface who has and hasn't
+// submitted travel details, so the couple can follow up with the gaps.
+//
+// Sourced from `guests` (the invite list) left-joined with `guest_info` so
+// guests who haven't logged in yet still appear, with `submitted=false`
+// and empty travel fields. `householdId` lets the screen pair couples and
+// families together.
+export interface GuestAccommodation {
+  guestName: string;
+  householdId: number | null;
+  submitted: boolean;
+  hotel: string;
+  checkIn: string;
+  checkOut: string;
+  arrivalTime: string;
+  flightNumber: string;
+  extraNotes: string;
+  phone: string;
+  email: string;
+}
+
+export async function getAllGuestAccommodations(
+  weddingId: string,
+): Promise<GuestAccommodation[]> {
+  const [guestsRes, infoRes] = await Promise.all([
+    supabase
+      .from('guests')
+      .select('canonical_name, household_id')
+      .eq('wedding_id', weddingId),
+    supabase
+      .from('guest_info')
+      .select(
+        'guest_name, hotel, check_in, check_out, arrival_time, flight_number, extra_notes, phone, email',
+      )
+      .eq('wedding_id', weddingId),
+  ]);
+  if (guestsRes.error) throw guestsRes.error;
+  if (infoRes.error) throw infoRes.error;
+
+  const infoByName = new Map<string, NonNullable<typeof infoRes.data>[number]>();
+  for (const row of infoRes.data ?? []) infoByName.set(row.guest_name, row);
+
+  return (guestsRes.data ?? []).map((g) => {
+    const info = infoByName.get(g.canonical_name);
+    const hotel = info?.hotel ?? '';
+    const checkIn = info?.check_in ?? '';
+    const checkOut = info?.check_out ?? '';
+    const arrivalTime = info?.arrival_time ?? '';
+    const flightNumber = info?.flight_number ?? '';
+    // "Submitted" = guest has entered any travel info. The seed pre-populates
+    // a guest_info row for dietary/meal choices, so existence of the row alone
+    // doesn't mean the guest has filled the My Info form.
+    const submitted = !!(hotel || checkIn || checkOut || arrivalTime || flightNumber);
+    return {
+      guestName: g.canonical_name,
+      householdId: g.household_id ?? null,
+      submitted,
+      hotel,
+      checkIn,
+      checkOut,
+      arrivalTime,
+      flightNumber,
+      extraNotes: info?.extra_notes ?? '',
+      phone: info?.phone ?? '',
+      email: info?.email ?? '',
+    };
+  });
+}
+
 export async function saveMyInfo(
   weddingId: string,
   guestName: string,
@@ -198,6 +268,61 @@ export async function sendGuestMessage(
     body: { weddingId, guestName, details: body, kind: 'message' },
   });
   if (error) throw error;
+}
+
+// Truncates a message snippet so the email body stays scannable. The full
+// message is in the app — these emails are nudges, not full transcripts.
+function snippet(text: string, max = 160): string {
+  const trimmed = (text ?? '').trim();
+  if (trimmed.length <= max) return trimmed;
+  return `${trimmed.slice(0, max).trimEnd()}…`;
+}
+
+// Fire-and-forget email when a guest reacts to a message in the feed.
+// Caller should pass the original message text + sender display name so
+// the couple has context. Demo / Preview Guest activity is silently
+// skipped so the inbox doesn't fill with simulated reactions.
+export async function notifyMessageReaction(
+  weddingId: string,
+  reactor: string,
+  emoji: string,
+  originalSender: string,
+  originalMessage: string,
+): Promise<void> {
+  if (isEphemeralGuest(reactor)) return;
+  const body = [
+    `Reactor: ${reactor}`,
+    `Reaction: ${emoji}`,
+    ``,
+    `Original message (from ${originalSender}):`,
+    snippet(originalMessage),
+  ].join('\n');
+  await supabase.functions.invoke('send-notification', {
+    body: { weddingId, guestName: reactor, details: body, kind: 'reaction' },
+  });
+}
+
+// Fire-and-forget email when a guest replies to a message in the feed.
+export async function notifyMessageReply(
+  weddingId: string,
+  replier: string,
+  replyText: string,
+  originalSender: string,
+  originalMessage: string,
+): Promise<void> {
+  if (isEphemeralGuest(replier)) return;
+  const body = [
+    `From: ${replier}`,
+    ``,
+    `Reply:`,
+    snippet(replyText, 500),
+    ``,
+    `Original message (from ${originalSender}):`,
+    snippet(originalMessage),
+  ].join('\n');
+  await supabase.functions.invoke('send-notification', {
+    body: { weddingId, guestName: replier, details: body, kind: 'reply' },
+  });
 }
 
 // ─── Push Tokens ─────────────────────────────────────────────────────────────
