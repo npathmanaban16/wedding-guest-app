@@ -120,6 +120,45 @@ export async function deleteMyAccount(weddingId: string, guestName: string): Pro
   ]);
 }
 
+// Admin-only: every guest's accommodation + arrival info for this wedding.
+// Used by the admin accommodations screen to provide a hotel/date overview
+// for transport coordination. Guests with no `guest_info` row are omitted —
+// they haven't filled in any travel details yet.
+export interface GuestAccommodation {
+  guestName: string;
+  hotel: string;
+  checkIn: string;
+  checkOut: string;
+  arrivalTime: string;
+  flightNumber: string;
+  extraNotes: string;
+  phone: string;
+  email: string;
+}
+
+export async function getAllGuestAccommodations(
+  weddingId: string,
+): Promise<GuestAccommodation[]> {
+  const { data, error } = await supabase
+    .from('guest_info')
+    .select(
+      'guest_name, hotel, check_in, check_out, arrival_time, flight_number, extra_notes, phone, email',
+    )
+    .eq('wedding_id', weddingId);
+  if (error) throw error;
+  return (data ?? []).map((row) => ({
+    guestName: row.guest_name,
+    hotel: row.hotel ?? '',
+    checkIn: row.check_in ?? '',
+    checkOut: row.check_out ?? '',
+    arrivalTime: row.arrival_time ?? '',
+    flightNumber: row.flight_number ?? '',
+    extraNotes: row.extra_notes ?? '',
+    phone: row.phone ?? '',
+    email: row.email ?? '',
+  }));
+}
+
 export async function saveMyInfo(
   weddingId: string,
   guestName: string,

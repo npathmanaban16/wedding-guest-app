@@ -186,6 +186,14 @@ export default function HomeScreen() {
             <Ionicons name="time-outline" size={15} color={Colors.white} />
             <Text style={styles.adminButtonText}>Edit Schedule Times</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.adminButton}
+            onPress={() => router.push('/admin-accommodations')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="bed-outline" size={15} color={Colors.white} />
+            <Text style={styles.adminButtonText}>Guest Accommodations</Text>
+          </TouchableOpacity>
         </>
       )}
 
