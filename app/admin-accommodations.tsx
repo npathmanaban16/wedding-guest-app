@@ -27,7 +27,9 @@ import { DateField } from '@/components/DateField';
 const ALL_HOTELS = '__all__';
 
 const CSV_COLUMNS: Array<{ header: string; pick: (r: GuestAccommodation) => string }> = [
+  { header: 'Household', pick: (r) => (r.householdId == null ? '' : String(r.householdId)) },
   { header: 'Guest', pick: (r) => r.guestName },
+  { header: 'Submitted?', pick: (r) => (r.submitted ? 'Yes' : 'No') },
   { header: 'Hotel', pick: (r) => r.hotel },
   { header: 'Check-in', pick: (r) => r.checkIn },
   { header: 'Check-out', pick: (r) => r.checkOut },
@@ -37,6 +39,53 @@ const CSV_COLUMNS: Array<{ header: string; pick: (r: GuestAccommodation) => stri
   { header: 'Email', pick: (r) => r.email },
   { header: 'Notes', pick: (r) => r.extraNotes },
 ];
+
+interface HouseholdGroup {
+  // Stable display key. Solo guests (household_id null) get `solo:<guestName>`
+  // so they each render as their own card without colliding.
+  key: string;
+  // Display label shown in the card header. e.g. "Household 5" for grouped
+  // guests, undefined for solo guests where the guest name suffices.
+  label: string | null;
+  members: GuestAccommodation[];
+  // Earliest non-empty check-in across all members; '' if none submitted yet.
+  earliestCheckIn: string;
+  // True when at least one member is still missing travel info — used to
+  // surface the "needs follow-up" badge on the household card.
+  hasMissing: boolean;
+}
+
+function groupByHousehold(rows: GuestAccommodation[]): HouseholdGroup[] {
+  const grouped = new Map<string, GuestAccommodation[]>();
+  for (const r of rows) {
+    const key = r.householdId == null ? `solo:${r.guestName}` : `hh:${r.householdId}`;
+    const list = grouped.get(key);
+    if (list) list.push(r);
+    else grouped.set(key, [r]);
+  }
+  const groups: HouseholdGroup[] = [];
+  for (const [key, members] of grouped) {
+    members.sort((a, b) => a.guestName.localeCompare(b.guestName));
+    const checkIns = members.map((m) => m.checkIn).filter(Boolean).sort();
+    const earliestCheckIn = checkIns[0] ?? '';
+    const hasMissing = members.some((m) => !m.submitted);
+    const label = key.startsWith('hh:')
+      ? `Household ${key.slice(3)}`
+      : null;
+    groups.push({ key, label, members, earliestCheckIn, hasMissing });
+  }
+  // Earliest check-in ascending, then households-with-anything-known before
+  // those with no submissions, then alphabetical by first member as tiebreak.
+  groups.sort((a, b) => {
+    if (a.earliestCheckIn && !b.earliestCheckIn) return -1;
+    if (!a.earliestCheckIn && b.earliestCheckIn) return 1;
+    if (a.earliestCheckIn !== b.earliestCheckIn) return a.earliestCheckIn.localeCompare(b.earliestCheckIn);
+    const an = a.members[0]?.guestName ?? '';
+    const bn = b.members[0]?.guestName ?? '';
+    return an.localeCompare(bn);
+  });
+  return groups;
+}
 
 // RFC 4180-ish escaping: wrap any field containing a comma, quote, or
 // newline in double quotes and double-escape internal quotes.
@@ -88,6 +137,7 @@ export default function AdminAccommodationsScreen() {
 
   const [hotelFilter, setHotelFilter] = useState<string>(ALL_HOTELS);
   const [arrivalDate, setArrivalDate] = useState<string>('');
+  const [missingOnly, setMissingOnly] = useState<boolean>(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -120,44 +170,58 @@ export default function AdminAccommodationsScreen() {
     return Array.from(seen.values()).sort((a, b) => a.localeCompare(b));
   }, [rows]);
 
-  const filtered = useMemo(() => {
-    return rows
-      .filter((r) => {
-        if (hotelFilter !== ALL_HOTELS) {
-          if (r.hotel.trim().toLowerCase() !== hotelFilter.toLowerCase()) return false;
-        }
-        if (arrivalDate && r.checkIn !== arrivalDate) return false;
-        return true;
-      })
-      .sort((a, b) => {
-        // Sort empty check-ins to the bottom so populated rows surface first.
-        if (!a.checkIn && b.checkIn) return 1;
-        if (a.checkIn && !b.checkIn) return -1;
-        if (a.checkIn !== b.checkIn) return a.checkIn.localeCompare(b.checkIn);
-        return a.guestName.localeCompare(b.guestName);
-      });
-  }, [rows, hotelFilter, arrivalDate]);
+  // Filter at the household level: a hotel match on one member keeps the
+  // whole household visible (so couples don't get split across cards), and
+  // the "missing info only" filter narrows to households with at least one
+  // unsubmitted member — exactly the follow-up list.
+  const groups = useMemo(() => {
+    const all = groupByHousehold(rows);
+    return all.filter((g) => {
+      if (missingOnly && !g.hasMissing) return false;
+      if (hotelFilter !== ALL_HOTELS) {
+        const matches = g.members.some(
+          (m) => m.hotel.trim().toLowerCase() === hotelFilter.toLowerCase(),
+        );
+        if (!matches) return false;
+      }
+      if (arrivalDate) {
+        const matches = g.members.some((m) => m.checkIn === arrivalDate);
+        if (!matches) return false;
+      }
+      return true;
+    });
+  }, [rows, hotelFilter, arrivalDate, missingOnly]);
+
+  const filteredGuests = useMemo(
+    () => groups.flatMap((g) => g.members),
+    [groups],
+  );
 
   const totalGuests = rows.length;
-  const showingCount = filtered.length;
+  const missingCount = useMemo(
+    () => rows.filter((r) => !r.submitted).length,
+    [rows],
+  );
+  const showingCount = filteredGuests.length;
 
   const [exporting, setExporting] = useState(false);
 
   const handleExport = async () => {
-    if (filtered.length === 0) {
+    if (filteredGuests.length === 0) {
       Alert.alert('Nothing to export', 'There are no guests matching the current filters.');
       return;
     }
     setExporting(true);
     try {
-      const csv = buildCsv(filtered);
+      const csv = buildCsv(filteredGuests);
       const filterParts: string[] = [];
       if (hotelFilter !== ALL_HOTELS) filterParts.push(`hotel=${hotelFilter}`);
       if (arrivalDate) filterParts.push(`check-in=${arrivalDate}`);
+      if (missingOnly) filterParts.push('missing-info-only');
       const filterSuffix = filterParts.length ? ` (${filterParts.join(', ')})` : '';
       const subject = `Guest accommodations — ${todayIso()}${filterSuffix}`;
       const body =
-        `${filtered.length} guest${filtered.length === 1 ? '' : 's'} attached as CSV` +
+        `${filteredGuests.length} guest${filteredGuests.length === 1 ? '' : 's'} attached as CSV` +
         `${filterSuffix ? `\nFilters: ${filterParts.join(', ')}` : ''}\n`;
 
       // Native mail composer path — opens the OS compose sheet with the CSV
@@ -186,7 +250,7 @@ export default function AdminAccommodationsScreen() {
       // recipient in their mail client.
       const inlineLimit = 1800;
       const inlineCsv = csv.length > inlineLimit
-        ? `${csv.slice(0, inlineLimit)}\n…(truncated — ${filtered.length} rows total)`
+        ? `${csv.slice(0, inlineLimit)}\n…(truncated — ${filteredGuests.length} rows total)`
         : csv;
       const url =
         `mailto:?subject=${encodeURIComponent(subject)}` +
@@ -234,10 +298,10 @@ export default function AdminAccommodationsScreen() {
         <TouchableOpacity
           style={[
             styles.exportButton,
-            (exporting || filtered.length === 0) && styles.exportButtonDisabled,
+            (exporting || filteredGuests.length === 0) && styles.exportButtonDisabled,
           ]}
           onPress={handleExport}
-          disabled={exporting || filtered.length === 0}
+          disabled={exporting || filteredGuests.length === 0}
           activeOpacity={0.85}
         >
           {exporting ? (
@@ -246,7 +310,7 @@ export default function AdminAccommodationsScreen() {
             <>
               <Ionicons name="mail-outline" size={15} color={Colors.white} />
               <Text style={styles.exportButtonText}>
-                Email CSV{filtered.length !== rows.length ? ` (${filtered.length} filtered)` : ''}
+                Email CSV{filteredGuests.length !== rows.length ? ` (${filteredGuests.length} filtered)` : ''}
               </Text>
             </>
           )}
@@ -296,6 +360,28 @@ export default function AdminAccommodationsScreen() {
         />
       </View>
 
+      {/* Missing-info filter — the primary follow-up lens */}
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => setMissingOnly((v) => !v)}
+        activeOpacity={0.85}
+      >
+        <View style={styles.dateHeaderRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.cardLabel}>Follow-up</Text>
+            <Text style={styles.toggleTitle}>
+              {missingOnly ? 'Showing households with missing info' : 'Show only households with missing info'}
+            </Text>
+            <Text style={styles.toggleHint}>
+              {missingCount} of {totalGuests} guest{totalGuests === 1 ? '' : 's'} haven't submitted travel details yet.
+            </Text>
+          </View>
+          <View style={[styles.toggleTrack, missingOnly && styles.toggleTrackActive]}>
+            <View style={[styles.toggleThumb, missingOnly && styles.toggleThumbActive]} />
+          </View>
+        </View>
+      </TouchableOpacity>
+
       {/* Result count */}
       <View style={styles.summaryRow}>
         <Text style={styles.summaryText}>
@@ -303,68 +389,110 @@ export default function AdminAccommodationsScreen() {
             ? 'Loading…'
             : errored
               ? 'Could not load guest info.'
-              : `Showing ${showingCount} of ${totalGuests} ${totalGuests === 1 ? 'guest' : 'guests'}`}
+              : `Showing ${groups.length} household${groups.length === 1 ? '' : 's'} · ${showingCount} of ${totalGuests} ${totalGuests === 1 ? 'guest' : 'guests'}`}
         </Text>
       </View>
 
       {loading ? (
         <ActivityIndicator color={Colors.primary} style={styles.loader} />
-      ) : filtered.length === 0 ? (
+      ) : groups.length === 0 ? (
         <View style={styles.emptyCard}>
           <Ionicons name="bed-outline" size={28} color={Colors.textMuted} />
-          <Text style={styles.emptyTitle}>No matching guests</Text>
+          <Text style={styles.emptyTitle}>No matching households</Text>
           <Text style={styles.emptyBody}>
             {totalGuests === 0
-              ? 'No guests have entered accommodation info yet.'
-              : 'Try a different hotel or clear the date filter.'}
+              ? 'No guests in this wedding yet.'
+              : 'Try a different hotel, clear the date filter, or turn off the missing-info toggle.'}
           </Text>
         </View>
       ) : (
-        filtered.map((r) => (
-          <View key={r.guestName} style={styles.guestCard}>
-            <Text style={styles.guestName}>{r.guestName}</Text>
-            <Text style={styles.guestHotel}>
-              {r.hotel || <Text style={styles.muted}>Hotel not set</Text>}
-            </Text>
-
-            <View style={styles.fieldGrid}>
-              <DetailField label="Check-in" value={formatDateDisplay(r.checkIn)} />
-              <DetailField label="Check-out" value={formatDateDisplay(r.checkOut)} />
-              <DetailField label="Arrival time" value={r.arrivalTime} />
-              <DetailField label="Flight" value={r.flightNumber} />
+        groups.map((group) => (
+          <View key={group.key} style={styles.householdCard}>
+            <View style={styles.householdHeader}>
+              <View style={{ flex: 1 }}>
+                {group.label ? (
+                  <Text style={styles.householdLabel}>{group.label}</Text>
+                ) : null}
+                <Text style={styles.householdNames}>
+                  {group.members.map((m) => m.guestName).join(' · ')}
+                </Text>
+              </View>
+              {group.hasMissing ? (
+                <View style={styles.followUpBadge}>
+                  <Ionicons name="alert-circle" size={11} color={Colors.error} />
+                  <Text style={styles.followUpText}>Needs follow-up</Text>
+                </View>
+              ) : null}
             </View>
 
-            {(r.phone || r.email) && (
-              <View style={styles.contactRow}>
-                {r.phone ? (
-                  <TouchableOpacity
-                    style={styles.contactPill}
-                    onPress={() => callPhone(r.phone)}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="call-outline" size={13} color={Colors.primary} />
-                    <Text style={styles.contactPillText}>{r.phone}</Text>
-                  </TouchableOpacity>
-                ) : null}
-                {r.email ? (
-                  <TouchableOpacity
-                    style={styles.contactPill}
-                    onPress={() => emailGuest(r.email)}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="mail-outline" size={13} color={Colors.primary} />
-                    <Text style={styles.contactPillText}>{r.email}</Text>
-                  </TouchableOpacity>
-                ) : null}
-              </View>
-            )}
+            {group.members.map((r, idx) => (
+              <View
+                key={r.guestName}
+                style={[
+                  styles.memberBlock,
+                  idx > 0 && styles.memberBlockDivider,
+                ]}
+              >
+                <View style={styles.memberHeader}>
+                  <Text style={styles.memberName}>{r.guestName}</Text>
+                  {!r.submitted ? (
+                    <View style={styles.awaitingPill}>
+                      <Text style={styles.awaitingText}>Awaiting info</Text>
+                    </View>
+                  ) : null}
+                </View>
 
-            {r.extraNotes ? (
-              <View style={styles.notesBlock}>
-                <Text style={styles.notesLabel}>Notes</Text>
-                <Text style={styles.notesBody}>{r.extraNotes}</Text>
+                {r.submitted ? (
+                  <>
+                    <Text style={styles.memberHotel}>
+                      {r.hotel || <Text style={styles.muted}>Hotel not set</Text>}
+                    </Text>
+                    <View style={styles.fieldGrid}>
+                      <DetailField label="Check-in" value={formatDateDisplay(r.checkIn)} />
+                      <DetailField label="Check-out" value={formatDateDisplay(r.checkOut)} />
+                      <DetailField label="Arrival time" value={r.arrivalTime} />
+                      <DetailField label="Flight" value={r.flightNumber} />
+                    </View>
+                  </>
+                ) : (
+                  <Text style={styles.awaitingBody}>
+                    No travel details submitted yet.
+                  </Text>
+                )}
+
+                {(r.phone || r.email) && (
+                  <View style={styles.contactRow}>
+                    {r.phone ? (
+                      <TouchableOpacity
+                        style={styles.contactPill}
+                        onPress={() => callPhone(r.phone)}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="call-outline" size={13} color={Colors.primary} />
+                        <Text style={styles.contactPillText}>{r.phone}</Text>
+                      </TouchableOpacity>
+                    ) : null}
+                    {r.email ? (
+                      <TouchableOpacity
+                        style={styles.contactPill}
+                        onPress={() => emailGuest(r.email)}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="mail-outline" size={13} color={Colors.primary} />
+                        <Text style={styles.contactPillText}>{r.email}</Text>
+                      </TouchableOpacity>
+                    ) : null}
+                  </View>
+                )}
+
+                {r.extraNotes ? (
+                  <View style={styles.notesBlock}>
+                    <Text style={styles.notesLabel}>Notes</Text>
+                    <Text style={styles.notesBody}>{r.extraNotes}</Text>
+                  </View>
+                ) : null}
               </View>
-            ) : null}
+            ))}
           </View>
         ))
       )}
@@ -544,7 +672,7 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
 
-  guestCard: {
+  householdCard: {
     backgroundColor: Colors.white,
     borderRadius: Radius.lg,
     padding: Spacing.md,
@@ -553,19 +681,122 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     ...Shadow.small,
   },
-  guestName: {
-    fontFamily: Fonts.serifSemiBold,
-    fontSize: 18,
-    color: Colors.textPrimary,
-    letterSpacing: 0.2,
+  householdHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.sm,
   },
-  guestHotel: {
+  householdLabel: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 10,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    color: Colors.textMuted,
+    marginBottom: 2,
+  },
+  householdNames: {
+    fontFamily: Fonts.serifSemiBold,
+    fontSize: 17,
+    color: Colors.textPrimary,
+    letterSpacing: 0.1,
+    lineHeight: 22,
+  },
+  followUpBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+    backgroundColor: '#FBE9E7',
+    marginLeft: Spacing.sm,
+  },
+  followUpText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 10,
+    color: Colors.error,
+    letterSpacing: 0.4,
+  },
+
+  memberBlock: {
+    paddingTop: Spacing.sm,
+  },
+  memberBlockDivider: {
+    marginTop: Spacing.sm,
+    paddingTop: Spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.divider,
+  },
+  memberHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  memberName: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 14,
+    color: Colors.textPrimary,
+    letterSpacing: 0.1,
+  },
+  memberHotel: {
     fontFamily: Fonts.sansMedium,
     fontSize: 13,
     color: Colors.primary,
-    marginTop: 2,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
+  awaitingPill: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 3,
+    borderRadius: Radius.full,
+    backgroundColor: '#FFF4E0',
+    borderWidth: 1,
+    borderColor: '#E8C36A',
+  },
+  awaitingText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 10,
+    color: '#8A5A0B',
+    letterSpacing: 0.3,
+  },
+  awaitingBody: {
+    fontFamily: Fonts.sans,
+    fontSize: 12,
+    fontStyle: 'italic',
+    color: Colors.textMuted,
+    marginTop: 2,
+  },
+
+  toggleTitle: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 14,
+    color: Colors.textPrimary,
+    marginBottom: 2,
+  },
+  toggleHint: {
+    fontFamily: Fonts.sans,
+    fontSize: 12,
+    color: Colors.textMuted,
+    lineHeight: 17,
+  },
+  toggleTrack: {
+    width: 44,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: Colors.border,
+    padding: 3,
+    justifyContent: 'center',
+    marginLeft: Spacing.md,
+  },
+  toggleTrackActive: { backgroundColor: Colors.primary },
+  toggleThumb: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: Colors.white,
+  },
+  toggleThumbActive: { transform: [{ translateX: 18 }] },
 
   fieldGrid: {
     flexDirection: 'row',

@@ -121,11 +121,17 @@ export async function deleteMyAccount(weddingId: string, guestName: string): Pro
 }
 
 // Admin-only: every guest's accommodation + arrival info for this wedding.
-// Used by the admin accommodations screen to provide a hotel/date overview
-// for transport coordination. Guests with no `guest_info` row are omitted —
-// they haven't filled in any travel details yet.
+// Used by the admin accommodations screen to surface who has and hasn't
+// submitted travel details, so the couple can follow up with the gaps.
+//
+// Sourced from `guests` (the invite list) left-joined with `guest_info` so
+// guests who haven't logged in yet still appear, with `submitted=false`
+// and empty travel fields. `householdId` lets the screen pair couples and
+// families together.
 export interface GuestAccommodation {
   guestName: string;
+  householdId: number | null;
+  submitted: boolean;
   hotel: string;
   checkIn: string;
   checkOut: string;
@@ -139,24 +145,49 @@ export interface GuestAccommodation {
 export async function getAllGuestAccommodations(
   weddingId: string,
 ): Promise<GuestAccommodation[]> {
-  const { data, error } = await supabase
-    .from('guest_info')
-    .select(
-      'guest_name, hotel, check_in, check_out, arrival_time, flight_number, extra_notes, phone, email',
-    )
-    .eq('wedding_id', weddingId);
-  if (error) throw error;
-  return (data ?? []).map((row) => ({
-    guestName: row.guest_name,
-    hotel: row.hotel ?? '',
-    checkIn: row.check_in ?? '',
-    checkOut: row.check_out ?? '',
-    arrivalTime: row.arrival_time ?? '',
-    flightNumber: row.flight_number ?? '',
-    extraNotes: row.extra_notes ?? '',
-    phone: row.phone ?? '',
-    email: row.email ?? '',
-  }));
+  const [guestsRes, infoRes] = await Promise.all([
+    supabase
+      .from('guests')
+      .select('canonical_name, household_id')
+      .eq('wedding_id', weddingId),
+    supabase
+      .from('guest_info')
+      .select(
+        'guest_name, hotel, check_in, check_out, arrival_time, flight_number, extra_notes, phone, email',
+      )
+      .eq('wedding_id', weddingId),
+  ]);
+  if (guestsRes.error) throw guestsRes.error;
+  if (infoRes.error) throw infoRes.error;
+
+  const infoByName = new Map<string, NonNullable<typeof infoRes.data>[number]>();
+  for (const row of infoRes.data ?? []) infoByName.set(row.guest_name, row);
+
+  return (guestsRes.data ?? []).map((g) => {
+    const info = infoByName.get(g.canonical_name);
+    const hotel = info?.hotel ?? '';
+    const checkIn = info?.check_in ?? '';
+    const checkOut = info?.check_out ?? '';
+    const arrivalTime = info?.arrival_time ?? '';
+    const flightNumber = info?.flight_number ?? '';
+    // "Submitted" = guest has entered any travel info. The seed pre-populates
+    // a guest_info row for dietary/meal choices, so existence of the row alone
+    // doesn't mean the guest has filled the My Info form.
+    const submitted = !!(hotel || checkIn || checkOut || arrivalTime || flightNumber);
+    return {
+      guestName: g.canonical_name,
+      householdId: g.household_id ?? null,
+      submitted,
+      hotel,
+      checkIn,
+      checkOut,
+      arrivalTime,
+      flightNumber,
+      extraNotes: info?.extra_notes ?? '',
+      phone: info?.phone ?? '',
+      email: info?.email ?? '',
+    };
+  });
 }
 
 export async function saveMyInfo(
