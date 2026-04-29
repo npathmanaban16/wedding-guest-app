@@ -33,6 +33,8 @@ import {
   getReplies,
   addReply,
   deleteReply,
+  notifyMessageReaction,
+  notifyMessageReply,
   AppNotification,
   ReactionSummary,
   NotificationReply,
@@ -459,10 +461,25 @@ export default function MessagesScreen() {
 
     try {
       await toggleReaction(weddingId, notificationId, guestName, emoji, myCurrentReaction);
+      // Email the couple only when a reaction is added or changed, not when
+      // it's removed. `myCurrentReaction === emoji` would mean the same
+      // emoji was tapped again, which the storage layer treats as a remove.
+      if (myCurrentReaction !== emoji) {
+        const original = notifications.find((n) => n.id === notificationId);
+        if (original) {
+          notifyMessageReaction(
+            weddingId,
+            guestName,
+            emoji,
+            original.sender,
+            original.message,
+          ).catch(() => {});
+        }
+      }
     } catch {
       loadData();
     }
-  }, [weddingId, guestName, reactions, loadData]);
+  }, [weddingId, guestName, reactions, notifications, loadData]);
 
   const handleReply = useCallback(async (notificationId: string, message: string) => {
     if (!guestName) return;
@@ -482,12 +499,22 @@ export default function MessagesScreen() {
 
     try {
       await addReply(weddingId, notificationId, guestName, message);
+      const original = notifications.find((n) => n.id === notificationId);
+      if (original) {
+        notifyMessageReply(
+          weddingId,
+          guestName,
+          message,
+          original.sender,
+          original.message,
+        ).catch(() => {});
+      }
       loadData();
     } catch {
       loadData();
       Alert.alert('Error', 'Could not post your reply.');
     }
-  }, [weddingId, guestName, loadData]);
+  }, [weddingId, guestName, notifications, loadData]);
 
   const handleDeleteReply = useCallback((notificationId: string, replyId: string) => {
     Alert.alert('Delete reply?', '', [

@@ -270,6 +270,61 @@ export async function sendGuestMessage(
   if (error) throw error;
 }
 
+// Truncates a message snippet so the email body stays scannable. The full
+// message is in the app — these emails are nudges, not full transcripts.
+function snippet(text: string, max = 160): string {
+  const trimmed = (text ?? '').trim();
+  if (trimmed.length <= max) return trimmed;
+  return `${trimmed.slice(0, max).trimEnd()}…`;
+}
+
+// Fire-and-forget email when a guest reacts to a message in the feed.
+// Caller should pass the original message text + sender display name so
+// the couple has context. Demo / Preview Guest activity is silently
+// skipped so the inbox doesn't fill with simulated reactions.
+export async function notifyMessageReaction(
+  weddingId: string,
+  reactor: string,
+  emoji: string,
+  originalSender: string,
+  originalMessage: string,
+): Promise<void> {
+  if (isEphemeralGuest(reactor)) return;
+  const body = [
+    `Reactor: ${reactor}`,
+    `Reaction: ${emoji}`,
+    ``,
+    `Original message (from ${originalSender}):`,
+    snippet(originalMessage),
+  ].join('\n');
+  await supabase.functions.invoke('send-notification', {
+    body: { weddingId, guestName: reactor, details: body, kind: 'reaction' },
+  });
+}
+
+// Fire-and-forget email when a guest replies to a message in the feed.
+export async function notifyMessageReply(
+  weddingId: string,
+  replier: string,
+  replyText: string,
+  originalSender: string,
+  originalMessage: string,
+): Promise<void> {
+  if (isEphemeralGuest(replier)) return;
+  const body = [
+    `From: ${replier}`,
+    ``,
+    `Reply:`,
+    snippet(replyText, 500),
+    ``,
+    `Original message (from ${originalSender}):`,
+    snippet(originalMessage),
+  ].join('\n');
+  await supabase.functions.invoke('send-notification', {
+    body: { weddingId, guestName: replier, details: body, kind: 'reply' },
+  });
+}
+
 // ─── Push Tokens ─────────────────────────────────────────────────────────────
 
 export async function savePushToken(

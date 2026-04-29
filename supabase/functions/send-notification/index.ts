@@ -21,10 +21,16 @@ Deno.serve(async (req) => {
     // travel-update path. 'message' is the explicit-Send flow on the
     // Notes field. 'ai-report' is the in-app "Report response" button on
     // assistant messages — the body holds both the question and the AI's
-    // answer so the couple can review what was problematic.
+    // answer so the couple can review what was problematic. 'reaction'
+    // and 'reply' fire when a guest reacts or replies to an admin
+    // notification in the message feed; the body holds the original
+    // message snippet plus the reactor/replier and their content so the
+    // couple can see engagement at a glance.
     const { guestName, details, kind } = await req.json();
     const isMessage = kind === 'message';
     const isAiReport = kind === 'ai-report';
+    const isReaction = kind === 'reaction';
+    const isReply = kind === 'reply';
 
     if (!RESEND_API_KEY) {
       console.error('RESEND_API_KEY secret not set');
@@ -42,6 +48,14 @@ Deno.serve(async (req) => {
       subject = `✉️ ${guestName} sent you a message`;
       heading = 'New message from a guest';
       textIntro = `${guestName} sent you a message from the wedding app:`;
+    } else if (isReaction) {
+      subject = `💬 ${guestName} reacted to your message`;
+      heading = 'New reaction';
+      textIntro = `${guestName} reacted to a message you sent in the wedding app:`;
+    } else if (isReply) {
+      subject = `💬 ${guestName} replied to your message`;
+      heading = 'New reply';
+      textIntro = `${guestName} replied to a message you sent in the wedding app:`;
     } else {
       subject = `✈️ ${guestName} updated their travel details`;
       heading = 'Travel details update';
