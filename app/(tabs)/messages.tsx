@@ -266,7 +266,11 @@ function MessageCard({
           style={styles.modalBackdrop}
           onPress={() => setReactionsModalOpen(false)}
         >
-          <Pressable style={styles.modalCard} onPress={() => {}}>
+          <View
+            style={styles.modalCard}
+            onStartShouldSetResponder={() => true}
+            onResponderRelease={(e) => e.stopPropagation()}
+          >
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Reactions</Text>
               <TouchableOpacity
@@ -277,7 +281,13 @@ function MessageCard({
                 <Ionicons name="close" size={20} color={Colors.textMuted} />
               </TouchableOpacity>
             </View>
-            <ScrollView style={styles.modalBody} contentContainerStyle={styles.modalBodyContent}>
+            <ScrollView
+              style={styles.modalBody}
+              contentContainerStyle={styles.modalBodyContent}
+              showsVerticalScrollIndicator
+              persistentScrollbar
+              nestedScrollEnabled
+            >
               {reactions.length === 0 ? (
                 <Text style={styles.modalEmptyText}>No reactions yet.</Text>
               ) : (
@@ -296,7 +306,7 @@ function MessageCard({
                 ))
               )}
             </ScrollView>
-          </Pressable>
+          </View>
         </Pressable>
       </Modal>
 
@@ -858,6 +868,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     maxHeight: '75%',
+    flexDirection: 'column',
     backgroundColor: Colors.white,
     borderRadius: Radius.lg,
     ...Shadow.small,
