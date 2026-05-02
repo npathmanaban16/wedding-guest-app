@@ -103,6 +103,21 @@ export function getTravelWindow(weddingId: string | null | undefined): TravelWin
 
 export const EVENTS_NN: WeddingEvent[] = [
   {
+    id: "ceremony-rehearsal",
+    title: "Ceremony Rehearsal",
+    emoji: "🎼",
+    date: "Thursday, 21 May 2026",
+    time: "1:00 PM – 2:00 PM",
+    startDate: "2026-05-21T11:00:00Z",
+    endDate: "2026-05-21T12:00:00Z",
+    venue: "Fairmont Le Montreux Palace | Garden",
+    address: "Av. Claude-Nobs 2, 1820 Montreux, Switzerland",
+    dressCode: "Casual — wear whatever is comfortable.",
+    description:
+      "A walkthrough of the ceremony for the wedding party. We'll run through the processional, positions, and timing so everyone feels confident on Saturday.",
+    weddingPartyOnly: true,
+  },
+  {
     id: "rehearsal-dinner",
     title: "Rehearsal Dinner",
     emoji: "🍽️",
@@ -255,6 +270,14 @@ export const EVENTS_DEMO: WeddingEvent[] = EVENTS_NN.map((event) => {
   // omitting since the field is optional on WeddingEvent.
   const base: WeddingEvent = { ...event, outfitInspirationUrl: undefined };
 
+  if (event.id === 'ceremony-rehearsal') {
+    return {
+      ...base,
+      date: "Thursday, 20 May 2027",
+      startDate: "2027-05-20T11:00:00Z",
+      endDate: "2027-05-20T12:00:00Z",
+    };
+  }
   if (event.id === 'rehearsal-dinner') {
     return {
       ...base,
