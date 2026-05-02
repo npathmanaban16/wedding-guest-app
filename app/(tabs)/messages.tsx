@@ -262,15 +262,12 @@ function MessageCard({
         animationType="fade"
         onRequestClose={() => setReactionsModalOpen(false)}
       >
-        <Pressable
-          style={styles.modalBackdrop}
-          onPress={() => setReactionsModalOpen(false)}
-        >
-          <View
-            style={styles.modalCard}
-            onStartShouldSetResponder={() => true}
-            onResponderRelease={(e) => e.stopPropagation()}
-          >
+        <View style={styles.modalBackdrop}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => setReactionsModalOpen(false)}
+          />
+          <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Reactions</Text>
               <TouchableOpacity
@@ -307,7 +304,7 @@ function MessageCard({
               )}
             </ScrollView>
           </View>
-        </Pressable>
+        </View>
       </Modal>
 
       {/* Replies */}
