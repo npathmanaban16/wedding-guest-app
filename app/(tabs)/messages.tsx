@@ -277,7 +277,7 @@ function MessageCard({
                 <Ionicons name="close" size={20} color={Colors.textMuted} />
               </TouchableOpacity>
             </View>
-            <ScrollView style={styles.modalBody}>
+            <ScrollView style={styles.modalBody} contentContainerStyle={styles.modalBodyContent}>
               {reactions.length === 0 ? (
                 <Text style={styles.modalEmptyText}>No reactions yet.</Text>
               ) : (
@@ -881,6 +881,9 @@ const styles = StyleSheet.create({
   },
   modalCloseBtn: { padding: Spacing.xs },
   modalBody: {
+    flexShrink: 1,
+  },
+  modalBodyContent: {
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
   },
