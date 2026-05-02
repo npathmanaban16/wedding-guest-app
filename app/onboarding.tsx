@@ -199,7 +199,7 @@ export default function OnboardingScreen() {
             value={flightNumber}
             onChangeText={setFlightNumber}
             icon="paper-plane-outline"
-            autoCapitalize="characters"
+            autoCapitalize="none"
           />
         </View>
 
