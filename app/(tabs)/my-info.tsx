@@ -310,7 +310,7 @@ export default function MyInfoScreen() {
             value={info.flightNumber}
             onChange={update('flightNumber')}
             placeholder="e.g. LX1234 arriving Geneva 11:30"
-            autoCapitalize="characters"
+            autoCapitalize="none"
           />
         </View>
 
