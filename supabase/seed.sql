@@ -45,7 +45,7 @@ insert into public.guests (wedding_id, canonical_name, is_wedding_party, is_brid
   ('00000000-0000-0000-0000-000000000001', 'Amar Nath',            true,  false, 'male',   5),
   ('00000000-0000-0000-0000-000000000001', 'Sandhya Nath',         true,  false, 'female', 5),
   ('00000000-0000-0000-0000-000000000001', 'Neel Nath',            true,  false, 'male',   6),
-  ('00000000-0000-0000-0000-000000000001', 'Aya Nath',             true,  false, 'female', 6),
+  ('00000000-0000-0000-0000-000000000001', 'Aya Nath',             true,  true,  'female', 6),
   ('00000000-0000-0000-0000-000000000001', 'Olivia Zhu',           true,  true,  'female', 7),
   ('00000000-0000-0000-0000-000000000001', 'Akanksha Singh',       true,  true,  'female', 8),
   ('00000000-0000-0000-0000-000000000001', 'Suhail Goyal',         true,  false, 'male',   8),
