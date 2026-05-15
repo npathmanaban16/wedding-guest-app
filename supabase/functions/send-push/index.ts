@@ -11,12 +11,17 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { weddingId, message, sender, weddingPartyOnly } = await req.json();
+    const { weddingId, message, sender, weddingPartyOnly, imageUrl } = await req.json();
     const partyOnly = weddingPartyOnly === true;
+    // `message` may be an empty string for an image-only send; the
+    // notifications row keeps `message NOT NULL` so we coerce undefined
+    // to ''. Either text or an image_url must be present.
+    const messageText = typeof message === 'string' ? message : '';
+    const imageUrlValue = typeof imageUrl === 'string' && imageUrl.length > 0 ? imageUrl : null;
 
-    if (!weddingId || !message || !sender) {
+    if (!weddingId || !sender || (!messageText && !imageUrlValue)) {
       return new Response(
-        JSON.stringify({ error: 'weddingId, message and sender are required' }),
+        JSON.stringify({ error: 'weddingId, sender, and either message or imageUrl are required' }),
         {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -87,9 +92,10 @@ Deno.serve(async (req) => {
     try {
       await supabase.from('notifications').insert({
         wedding_id: weddingId,
-        message,
+        message: messageText,
         sender,
         wedding_party_only: partyOnly,
+        image_url: imageUrlValue,
       });
     } catch (e) {
       console.error('notifications insert failed:', e);
@@ -106,15 +112,25 @@ Deno.serve(async (req) => {
     let totalSent = 0;
     let totalFailed = 0;
 
+    // Push body: if the admin sent text, use it; otherwise hint that
+    // a photo was shared. iOS gets the photo as a rich attachment via
+    // `richContent.image` (Expo proxies this to APNs); Android shows
+    // text only on stock Expo Go but supports an image attachment on
+    // dev clients / standalone builds.
+    const pushBody = messageText
+      ? `${messageText}\n\n— ${sender}`
+      : `📷 Photo from ${sender}`;
+
     for (let i = 0; i < tokens.length; i += CHUNK_SIZE) {
       const chunk = tokens.slice(i, i + CHUNK_SIZE);
       const notifications = chunk.map((token) => ({
         to: token,
         title,
-        body: `${message}\n\n— ${sender}`,
+        body: pushBody,
         sound: 'default',
         priority: 'high',
         badge: 1,
+        ...(imageUrlValue ? { richContent: { image: imageUrlValue } } : {}),
       }));
 
       const res = await fetch('https://exp.host/--/api/v2/push/send', {

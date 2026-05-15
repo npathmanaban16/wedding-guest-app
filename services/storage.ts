@@ -372,6 +372,11 @@ export interface AppNotification {
   // When true the message is only visible to wedding-party members and the
   // message sender (who is also an admin). Default false (visible to all).
   weddingPartyOnly: boolean;
+  // Public URL of an attached photo, or null for text-only messages. Set
+  // by the admin send flow via `uploadMessageImage`. Older clients that
+  // predate migration 022 will simply not render the image — they'll
+  // still see the text body.
+  imageUrl: string | null;
 }
 
 export async function getNotifications(weddingId: string): Promise<AppNotification[]> {
@@ -389,6 +394,7 @@ export async function getNotifications(weddingId: string): Promise<AppNotificati
         sentAt: n.sent_at,
         editedAt: n.edited_at ?? null,
         weddingPartyOnly: n.wedding_party_only ?? false,
+        imageUrl: n.image_url ?? null,
       }));
     }
   } catch {
@@ -429,6 +435,36 @@ export async function deleteNotification(weddingId: string, id: string): Promise
     .eq('wedding_id', weddingId)
     .eq('id', id);
   if (error) throw new Error(error.message);
+}
+
+// Uploads a local image (file:// URI from expo-image-picker) to the
+// `message-images` Supabase Storage bucket and returns its public URL.
+// Path is scoped per wedding so a bucket listing stays auditable, and the
+// filename includes a timestamp + random suffix to avoid collisions when
+// two admins send simultaneously.
+//
+// Old admin clients that predate this helper simply won't call it — they
+// keep sending text-only messages, which is fully forward-compatible.
+export async function uploadMessageImage(
+  weddingId: string,
+  localUri: string,
+  mimeType: string,
+): Promise<string> {
+  const ext = mimeType.split('/')[1]?.toLowerCase() || 'jpg';
+  const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const path = `${weddingId}/${filename}`;
+
+  // RN-safe binary read: fetch the file:// URI and pull an ArrayBuffer.
+  // Avoids a base64 round-trip and works on iOS + Android in Expo SDK 54.
+  const arrayBuffer = await fetch(localUri).then((r) => r.arrayBuffer());
+
+  const { error } = await supabase.storage
+    .from('message-images')
+    .upload(path, arrayBuffer, { contentType: mimeType, upsert: false });
+  if (error) throw new Error(error.message);
+
+  const { data } = supabase.storage.from('message-images').getPublicUrl(path);
+  return data.publicUrl;
 }
 
 // ─── Notification Reactions ───────────────────────────────────────────────────

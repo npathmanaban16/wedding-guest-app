@@ -148,6 +148,9 @@ create table public.notifications (
   -- When true the feed hides this message from non-wedding-party users
   -- and the send-push edge function only pushes to wedding-party guests.
   wedding_party_only boolean not null default false,
+  -- Public URL of an attached photo (in the `message-images` storage
+  -- bucket). NULL for text-only messages.
+  image_url          text,
   sent_at            timestamptz default now()
 );
 
