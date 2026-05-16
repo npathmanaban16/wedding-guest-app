@@ -8,18 +8,26 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
 import { haptic } from '@/utils/haptics';
+import { uploadMessageImage } from '@/services/storage';
 import { SenderId } from '@/constants/weddingData';
+
+type PickedImage = {
+  uri: string;
+  mimeType: string;
+};
 
 type SenderOption = {
   id: SenderId;
@@ -41,6 +49,10 @@ export default function AdminScreen() {
   // receive the push. Useful for wedding-party-only logistics (e.g.
   // "buses leave for the rehearsal dinner at 6 PM").
   const [weddingPartyOnly, setWeddingPartyOnly] = useState(false);
+  // Optional photo attachment. Picked locally from the library; only
+  // uploaded to Supabase Storage when the admin confirms send, so an
+  // abandoned compose doesn't leave orphan files behind.
+  const [image, setImage] = useState<PickedImage | null>(null);
 
   // Guard — should not be reachable via normal navigation, but just in case
   if (!guestName || !isAdmin(guestName)) {
@@ -62,15 +74,48 @@ export default function AdminScreen() {
   ];
   const senderLabel = senders.find((s) => s.id === sender)?.label ?? wedding.couple_names;
 
+  const handlePickImage = async () => {
+    haptic.light();
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert(
+        'Photo access needed',
+        'Allow photo library access in Settings to attach a photo.',
+      );
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+      // Photos shared to all guests benefit from compression; a 2400px
+      // long edge keeps detail without bloating the feed.
+      allowsEditing: false,
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+    const asset = result.assets[0];
+    setImage({
+      uri: asset.uri,
+      mimeType: asset.mimeType ?? 'image/jpeg',
+    });
+  };
+
+  const handleClearImage = () => {
+    haptic.light();
+    setImage(null);
+  };
+
   const handleSend = async () => {
     const trimmed = message.trim();
-    if (!trimmed) return;
+    if (!trimmed && !image) return;
     haptic.medium();
 
     const audience = weddingPartyOnly ? 'the wedding party' : 'all guests';
+    const previewBody = trimmed
+      ? `"${trimmed}"${image ? '\n\n(with photo)' : ''}`
+      : '(photo)';
     Alert.alert(
       'Send notification?',
-      `"${trimmed}"\n\nFrom: ${senderLabel}\n\nThis will be sent to ${audience}.`,
+      `${previewBody}\n\nFrom: ${senderLabel}\n\nThis will be sent to ${audience}.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -79,8 +124,16 @@ export default function AdminScreen() {
           onPress: async () => {
             setSending(true);
             try {
+              // Upload the photo first so the public URL is ready before
+              // the row is inserted. Failure here aborts the send so we
+              // never persist a notification that points at a missing
+              // file.
+              let imageUrl: string | null = null;
+              if (image) {
+                imageUrl = await uploadMessageImage(weddingId, image.uri, image.mimeType);
+              }
               const { data, error } = await supabase.functions.invoke('send-push', {
-                body: { weddingId, message: trimmed, sender: senderLabel, weddingPartyOnly },
+                body: { weddingId, message: trimmed, sender: senderLabel, weddingPartyOnly, imageUrl },
               });
               if (error) throw error;
               const sent = data?.sent ?? 0;
@@ -89,6 +142,7 @@ export default function AdminScreen() {
               Alert.alert('Sent!', detail);
               setMessage('');
               setWeddingPartyOnly(false);
+              setImage(null);
             } catch (e: unknown) {
               let msg = e instanceof Error ? e.message : 'Unknown error';
               // Try to extract the actual error body from a FunctionsHttpError
@@ -186,6 +240,35 @@ export default function AdminScreen() {
             maxLength={500}
           />
           <Text style={styles.charCount}>{message.length}/500</Text>
+
+          {/* Photo attachment row. Tapping "Add photo" opens the system
+              picker; selected image shows a thumbnail with a remove
+              button. Upload only happens on send. */}
+          {image ? (
+            <View style={styles.attachmentRow}>
+              <Image source={{ uri: image.uri }} style={styles.attachmentThumb} />
+              <View style={styles.attachmentMeta}>
+                <Text style={styles.attachmentLabel}>Photo attached</Text>
+                <Text style={styles.attachmentHint}>Will upload when you send.</Text>
+              </View>
+              <TouchableOpacity
+                onPress={handleClearImage}
+                style={styles.attachmentRemove}
+                hitSlop={8}
+              >
+                <Ionicons name="close-circle" size={22} color={Colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              onPress={handlePickImage}
+              style={styles.attachButton}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="image-outline" size={16} color={Colors.primary} />
+              <Text style={styles.attachButtonText}>Add photo</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Audience toggle — flips the message into wedding-party-only mode */}
@@ -208,7 +291,7 @@ export default function AdminScreen() {
         </TouchableOpacity>
 
         {/* Preview */}
-        {message.trim().length > 0 && (
+        {(message.trim().length > 0 || image) && (
           <View style={styles.previewCard}>
             <Text style={styles.previewLabel}>Preview</Text>
             <View style={styles.notificationBubble}>
@@ -217,7 +300,12 @@ export default function AdminScreen() {
               </View>
               <View style={styles.notificationContent}>
                 <Text style={styles.notificationSender}>{senderLabel}</Text>
-                <Text style={styles.notificationMessage}>{message.trim()}</Text>
+                {message.trim().length > 0 && (
+                  <Text style={styles.notificationMessage}>{message.trim()}</Text>
+                )}
+                {image && (
+                  <Image source={{ uri: image.uri }} style={styles.previewImage} />
+                )}
               </View>
             </View>
           </View>
@@ -227,10 +315,10 @@ export default function AdminScreen() {
         <TouchableOpacity
           style={[
             styles.sendButton,
-            (!message.trim() || sending) && styles.sendButtonDisabled,
+            (!message.trim() && !image) || sending ? styles.sendButtonDisabled : null,
           ]}
           onPress={handleSend}
-          disabled={!message.trim() || sending}
+          disabled={(!message.trim() && !image) || sending}
           activeOpacity={0.85}
         >
           {sending ? (
@@ -348,6 +436,62 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     textAlign: 'right',
     marginTop: Spacing.xs,
+  },
+
+  attachButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: Spacing.sm,
+    marginTop: Spacing.xs,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    backgroundColor: Colors.background,
+  },
+  attachButtonText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 13,
+    color: Colors.primary,
+  },
+  attachmentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: Spacing.sm,
+    padding: Spacing.sm,
+    borderRadius: Radius.md,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    backgroundColor: Colors.background,
+    gap: Spacing.sm,
+  },
+  attachmentThumb: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.border,
+  },
+  attachmentMeta: { flex: 1 },
+  attachmentLabel: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 13,
+    color: Colors.textPrimary,
+  },
+  attachmentHint: {
+    fontFamily: Fonts.sans,
+    fontSize: 11,
+    color: Colors.textMuted,
+    marginTop: 2,
+  },
+  attachmentRemove: { padding: 2 },
+  previewImage: {
+    width: '100%',
+    aspectRatio: 4 / 3,
+    marginTop: Spacing.sm,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.border,
   },
 
   previewCard: {

@@ -9,6 +9,7 @@ import {
   Alert,
   AppState,
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   LayoutAnimation,
   Modal,
@@ -222,7 +223,20 @@ function MessageCard({
           </View>
         </View>
       ) : (
-        <Text style={styles.messageText}>{notification.message}</Text>
+        <>
+          {notification.message.length > 0 && (
+            <Text style={styles.messageText}>{notification.message}</Text>
+          )}
+          {notification.imageUrl && (
+            <Image
+              source={{ uri: notification.imageUrl }}
+              style={styles.messageImage}
+              resizeMode="cover"
+              accessible
+              accessibilityLabel="Attached photo"
+            />
+          )}
+        </>
       )}
 
       <View style={styles.reactionStrip}>
@@ -809,6 +823,13 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     lineHeight: 23,
     marginBottom: Spacing.md,
+  },
+  messageImage: {
+    width: '100%',
+    aspectRatio: 4 / 3,
+    marginBottom: Spacing.md,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.border,
   },
 
   reactionStrip: {
