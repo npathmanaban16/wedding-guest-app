@@ -9,7 +9,6 @@ import {
   Alert,
   AppState,
   ActivityIndicator,
-  Image,
   KeyboardAvoidingView,
   LayoutAnimation,
   Modal,
@@ -40,6 +39,7 @@ import {
   ReactionSummary,
   NotificationReply,
 } from '@/services/storage';
+import { MessageImage } from '@/components/MessageImage';
 
 const REACTION_EMOJIS = ['❤️', '🎉', '😂', '👏', '🙌'];
 const COLLAPSED_REPLY_COUNT = 3;
@@ -228,13 +228,7 @@ function MessageCard({
             <Text style={styles.messageText}>{notification.message}</Text>
           )}
           {notification.imageUrl && (
-            <Image
-              source={{ uri: notification.imageUrl }}
-              style={styles.messageImage}
-              resizeMode="cover"
-              accessible
-              accessibilityLabel="Attached photo"
-            />
+            <MessageImage uri={notification.imageUrl} style={styles.messageImage} />
           )}
         </>
       )}
@@ -825,11 +819,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   messageImage: {
-    width: '100%',
-    aspectRatio: 4 / 3,
     marginBottom: Spacing.md,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.border,
   },
 
   reactionStrip: {
