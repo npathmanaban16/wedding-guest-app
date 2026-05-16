@@ -9,6 +9,7 @@ import {
   Alert,
   Linking,
   Platform,
+  TextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -135,6 +136,7 @@ export default function AdminAccommodationsScreen() {
   const [hotelFilter, setHotelFilter] = useState<string>(ALL_HOTELS);
   const [arrivalDate, setArrivalDate] = useState<string>('');
   const [missingOnly, setMissingOnly] = useState<boolean>(false);
+  const [nameQuery, setNameQuery] = useState<string>('');
 
   useEffect(() => {
     let cancelled = false;
@@ -173,6 +175,7 @@ export default function AdminAccommodationsScreen() {
   // unsubmitted member — exactly the follow-up list.
   const groups = useMemo(() => {
     const all = groupByHousehold(rows);
+    const q = nameQuery.trim().toLowerCase();
     return all.filter((g) => {
       if (missingOnly && !g.allMissing) return false;
       if (hotelFilter !== ALL_HOTELS) {
@@ -185,9 +188,15 @@ export default function AdminAccommodationsScreen() {
         const matches = g.members.some((m) => m.checkIn === arrivalDate);
         if (!matches) return false;
       }
+      if (q) {
+        const matches = g.members.some((m) =>
+          m.guestName.toLowerCase().includes(q),
+        );
+        if (!matches) return false;
+      }
       return true;
     });
-  }, [rows, hotelFilter, arrivalDate, missingOnly]);
+  }, [rows, hotelFilter, arrivalDate, missingOnly, nameQuery]);
 
   const filteredGuests = useMemo(
     () => groups.flatMap((g) => g.members),
@@ -218,6 +227,7 @@ export default function AdminAccommodationsScreen() {
       if (hotelFilter !== ALL_HOTELS) filterParts.push(`hotel=${hotelFilter}`);
       if (arrivalDate) filterParts.push(`check-in=${arrivalDate}`);
       if (missingOnly) filterParts.push('missing-info-only');
+      if (nameQuery.trim()) filterParts.push(`name~${nameQuery.trim()}`);
       const filterSuffix = filterParts.length ? ` (${filterParts.join(', ')})` : '';
       const subject = `Guest accommodations — ${todayIso()}${filterSuffix}`;
       const body =
@@ -317,6 +327,32 @@ export default function AdminAccommodationsScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Name search */}
+      <View style={styles.card}>
+        <View style={styles.dateHeaderRow}>
+          <Text style={styles.cardLabel}>Search by name</Text>
+          {nameQuery ? (
+            <TouchableOpacity onPress={() => setNameQuery('')}>
+              <Text style={styles.clearLink}>Clear</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+        <View style={styles.searchRow}>
+          <Ionicons name="search" size={16} color={Colors.textMuted} />
+          <TextInput
+            style={styles.searchInput}
+            value={nameQuery}
+            onChangeText={setNameQuery}
+            placeholder="Guest name"
+            placeholderTextColor={Colors.textMuted}
+            autoCapitalize="words"
+            autoCorrect={false}
+            returnKeyType="search"
+            clearButtonMode="while-editing"
+          />
+        </View>
+      </View>
+
       {/* Hotel filter */}
       <View style={styles.card}>
         <Text style={styles.cardLabel}>Filter by hotel</Text>
@@ -404,7 +440,7 @@ export default function AdminAccommodationsScreen() {
           <Text style={styles.emptyBody}>
             {totalGuests === 0
               ? 'No guests in this wedding yet.'
-              : 'Try a different hotel, clear the date filter, or turn off the missing-info toggle.'}
+              : 'Try a different name, hotel, clear the date filter, or turn off the missing-info toggle.'}
           </Text>
         </View>
       ) : (
@@ -606,6 +642,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.primary,
     textDecorationLine: 'underline',
+  },
+
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Platform.OS === 'ios' ? 10 : 4,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.background,
+  },
+  searchInput: {
+    flex: 1,
+    fontFamily: Fonts.sans,
+    fontSize: 14,
+    color: Colors.textPrimary,
+    paddingVertical: 0,
   },
 
   chipRow: {
