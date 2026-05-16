@@ -22,6 +22,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
 import { haptic } from '@/utils/haptics';
 import { uploadMessageImage } from '@/services/storage';
+import { MessageImage } from '@/components/MessageImage';
 import { SenderId } from '@/constants/weddingData';
 
 type PickedImage = {
@@ -304,7 +305,7 @@ export default function AdminScreen() {
                   <Text style={styles.notificationMessage}>{message.trim()}</Text>
                 )}
                 {image && (
-                  <Image source={{ uri: image.uri }} style={styles.previewImage} />
+                  <MessageImage uri={image.uri} style={styles.previewImage} />
                 )}
               </View>
             </View>
@@ -487,11 +488,7 @@ const styles = StyleSheet.create({
   },
   attachmentRemove: { padding: 2 },
   previewImage: {
-    width: '100%',
-    aspectRatio: 4 / 3,
     marginTop: Spacing.sm,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.border,
   },
 
   previewCard: {
