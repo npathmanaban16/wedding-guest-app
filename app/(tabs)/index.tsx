@@ -158,7 +158,7 @@ export default function HomeScreen() {
       {/* Countdown */}
       <View style={styles.countdownCard}>
         {countdown.isPast ? (
-          <Text style={styles.countdownPast}>The big day is here!</Text>
+          <Text style={styles.countdownPast}>Thank you for celebrating with us!</Text>
         ) : (
           <>
             <Text style={styles.countdownHeading}>until the wedding</Text>
