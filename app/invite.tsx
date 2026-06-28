@@ -238,7 +238,7 @@ export default function InviteScreen() {
             activeOpacity={0.7}
           >
             <Text style={styles.secondaryCtaText}>
-              Getting married? Set up your wedding →
+              Getting married? Tell us about your wedding →
             </Text>
           </TouchableOpacity>
 
