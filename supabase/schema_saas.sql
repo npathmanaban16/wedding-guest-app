@@ -197,16 +197,29 @@ create table public.packing_checklist (
 
 
 -- ─── event_time_overrides ───────────────────────────────────────────────────
--- Lets admins override the `time` string on schedule events without a code
--- deploy. Events themselves stay defined in code; this table only stores
--- the overridden `time` per (wedding_id, event_id). The schedule screen
--- merges at render time: override wins if present, else event.time.
+-- Lets admins override per-event text fields without a code deploy. Events
+-- themselves stay defined in code; this table stores per-(wedding_id,
+-- event_id) overrides for the user-editable fields. Every column except
+-- (wedding_id, event_id) is nullable — NULL means "use the value defined
+-- in code". The schedule screen merges at render time: an override wins
+-- for any field set, code defaults fill in the rest.
+--
+-- Name is historical (originally time-only); rather than rename and churn
+-- policies / call sites, treat it as the generic event-overrides table.
 create table public.event_time_overrides (
-  id          uuid primary key default gen_random_uuid(),
-  wedding_id  uuid not null references public.weddings(id) on delete cascade,
-  event_id    text not null,
-  time        text not null,
-  updated_at  timestamptz not null default now(),
+  id                  uuid primary key default gen_random_uuid(),
+  wedding_id          uuid not null references public.weddings(id) on delete cascade,
+  event_id            text not null,
+  title               text,
+  event_date          text,
+  time                text,
+  venue               text,
+  address             text,
+  dress_code          text,
+  description         text,
+  notes               text,
+  wedding_party_only  boolean,
+  updated_at          timestamptz not null default now(),
   unique (wedding_id, event_id)
 );
 

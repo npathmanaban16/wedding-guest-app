@@ -56,7 +56,12 @@ import {
   type GuestProfile,
   type TabContext,
 } from '@/services/aiAssistant';
-import { getCustomPackingItems, type CustomPackingItem } from '@/services/storage';
+import {
+  getCustomPackingItems,
+  getEventOverrides,
+  type CustomPackingItem,
+  type EventOverridePatch,
+} from '@/services/storage';
 import { haptic } from '@/utils/haptics';
 
 interface AskAiProps {
@@ -91,10 +96,17 @@ export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
   // like "did I add my contact lens solution?" can be answered. Failure to
   // load isn't fatal — the AI just won't know about custom items.
   const [customPackingItems, setCustomPackingItems] = useState<CustomPackingItem[]>([]);
+  // Admin-set per-event overrides; merged onto code-defined events below
+  // so the AI answers reflect the same text guests see on the schedule.
+  const [eventOverrides, setEventOverrides] = useState<Record<string, EventOverridePatch>>({});
   const scrollRef = useRef<ScrollView | null>(null);
 
   const isNN = NN_WEDDING_IDS.has(wedding.id);
-  const events = isNN ? EVENTS_NN : EVENTS_DEMO;
+  const baseEvents = isNN ? EVENTS_NN : EVENTS_DEMO;
+  const events = useMemo(
+    () => baseEvents.map((e) => (eventOverrides[e.id] ? { ...e, ...eventOverrides[e.id] } : e)),
+    [baseEvents, eventOverrides],
+  );
   const packingGuide = isNN ? PACKING_GUIDE_NN : PACKING_GUIDE_DEMO;
 
   const profile: GuestProfile | null = guestName
@@ -167,6 +179,15 @@ export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
       .then(setCustomPackingItems)
       .catch((err) => console.warn('[AskAi] custom packing fetch failed', err));
   }, [open, guestName, weddingId]);
+
+  // Refresh per-event admin overrides on each open so the AI doesn't quote
+  // stale event text after a recent admin edit. Best-effort.
+  useEffect(() => {
+    if (!open || !weddingId) return;
+    getEventOverrides(weddingId)
+      .then(setEventOverrides)
+      .catch((err) => console.warn('[AskAi] event overrides fetch failed', err));
+  }, [open, weddingId]);
 
   const reset = useCallback(() => {
     setMessages([]);
