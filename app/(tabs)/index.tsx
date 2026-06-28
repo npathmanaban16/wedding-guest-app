@@ -18,15 +18,15 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
+import { supabase } from '@/lib/supabase';
 import { Colors, Fonts, Typography, Spacing, Radius, Shadow } from '@/constants/theme';
 import { WEDDING, EVENTS_NN, EVENTS_DEMO, NN_WEDDING_IDS } from '@/constants/weddingData';
 
 // Casual second-factor for the admin tools — gates the buttons on the home
 // tab so a guest borrowing an admin's logged-in phone can't fire pushes or
-// edit the schedule without knowing the shared word. Stored hardcoded
-// client-side: this is "you must know the word", not a security boundary
-// against a determined attacker. Rotate by editing this constant.
-const ADMIN_UNLOCK_PASSWORD = 'Duke2016';
+// edit the schedule without knowing the shared word. The actual value lives
+// on weddings.admin_password and is verified via the check_admin_password()
+// RPC so it never round-trips to the client. Rotate by updating the row.
 const adminUnlockKey = (weddingId: string) => `@admin_unlocked_${weddingId}`;
 
 function useCountdown(targetDate: Date) {
@@ -103,7 +103,15 @@ export default function HomeScreen() {
   };
 
   const handleConfirmPassword = async () => {
-    if (passwordInput === ADMIN_UNLOCK_PASSWORD) {
+    const { data, error } = await supabase.rpc('check_admin_password', {
+      p_wedding_id: wedding.id,
+      p_password:   passwordInput,
+    });
+    if (error) {
+      setPasswordError('Could not verify password. Try again.');
+      return;
+    }
+    if (data === true) {
       try { await AsyncStorage.setItem(adminUnlockKey(wedding.id), 'true'); } catch {}
       setAdminUnlocked(true);
       setPasswordModalOpen(false);

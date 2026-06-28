@@ -53,6 +53,10 @@ create table public.weddings (
   -- default). Surfaced on the Photos tab and to the AI assistant so it
   -- can direct guests to the right place when asked about sharing photos.
   photo_album_url  text,
+  -- Soft second-factor for the home-tab admin tools. Never SELECTed by
+  -- the client; verified via the check_admin_password() RPC so the value
+  -- doesn't leak through the public weddings lookup.
+  admin_password   text,
   created_at       timestamptz default now(),
   updated_at       timestamptz default now()
 );
@@ -268,3 +272,28 @@ create policy "allow_all_notification_replies"   on public.notification_replies 
 create policy "allow_all_packing_checklist"      on public.packing_checklist      for all using (true) with check (true);
 create policy "allow_all_event_time_overrides"   on public.event_time_overrides   for all using (true) with check (true);
 create policy "allow_all_ai_questions"           on public.ai_questions           for all using (true) with check (true);
+
+
+-- ─── RPC: admin password check ───────────────────────────────────────────────
+-- Verifies the home-tab admin unlock password without ever returning the
+-- value to the client. `weddings.admin_password` is deliberately not
+-- SELECTed anywhere else.
+create or replace function public.check_admin_password(
+  p_wedding_id uuid,
+  p_password   text
+) returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.weddings
+    where id = p_wedding_id
+      and admin_password is not null
+      and admin_password = p_password
+  );
+$$;
+
+revoke all on function public.check_admin_password(uuid, text) from public;
+grant execute on function public.check_admin_password(uuid, text) to anon, authenticated;

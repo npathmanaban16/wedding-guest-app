@@ -1,8 +1,12 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? '';
-// Resend's free tier only delivers to the address that registered the
-// account, so this must match the Resend signup email until a custom
-// sender domain is verified at resend.com/domains.
-const TO_EMAIL = 'neha.pathmanaban.2016@gmail.com';
+// Per-wedding recipient is read from weddings.contact_email at request
+// time. Note: Resend's free tier only delivers to the address that
+// registered the account until a sender domain is verified at
+// resend.com/domains — so even after this routes per-wedding, emails to
+// any address other than the signup address will be silently dropped
+// until that's set up.
 const FROM_EMAIL = 'onboarding@resend.dev';
 
 Deno.serve(async (req) => {
@@ -26,7 +30,7 @@ Deno.serve(async (req) => {
     // notification in the message feed; the body holds the original
     // message snippet plus the reactor/replier and their content so the
     // couple can see engagement at a glance.
-    const { guestName, details, kind } = await req.json();
+    const { weddingId, guestName, details, kind } = await req.json();
     const isMessage = kind === 'message';
     const isAiReport = kind === 'ai-report';
     const isReaction = kind === 'reaction';
@@ -36,6 +40,35 @@ Deno.serve(async (req) => {
       console.error('RESEND_API_KEY secret not set');
       return new Response(JSON.stringify({ error: 'Email not configured' }), { status: 500 });
     }
+
+    if (!weddingId) {
+      return new Response(JSON.stringify({ error: 'weddingId is required' }), { status: 400 });
+    }
+
+    // Look up the recipient for this tenant. Uses the service role key so
+    // the function can read weddings.contact_email regardless of RLS.
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    );
+    const { data: wedding, error: weddingError } = await supabase
+      .from('weddings')
+      .select('contact_email, couple_names')
+      .eq('id', weddingId)
+      .maybeSingle();
+    if (weddingError) {
+      console.error('weddings lookup failed:', weddingError);
+      return new Response(JSON.stringify({ error: 'Wedding lookup failed' }), { status: 500 });
+    }
+    const TO_EMAIL = wedding?.contact_email?.trim();
+    if (!TO_EMAIL) {
+      console.error(`weddings.contact_email is missing for ${weddingId}`);
+      return new Response(
+        JSON.stringify({ error: 'No contact_email configured for this wedding' }),
+        { status: 400 },
+      );
+    }
+    const coupleNames = wedding?.couple_names?.trim() || 'Wedding';
 
     let subject: string;
     let heading: string;
@@ -72,7 +105,7 @@ Deno.serve(async (req) => {
         from: FROM_EMAIL,
         to: [TO_EMAIL],
         subject,
-        text: `${textIntro}\n\n${details}\n\n— Neha & Naveen Wedding App`,
+        text: `${textIntro}\n\n${details}\n\n— ${coupleNames} Wedding App`,
         html: `
           <div style="font-family: Georgia, serif; max-width: 480px; margin: 0 auto; padding: 32px; color: #1C1810;">
             <h2 style="color: #7A6A55; margin-bottom: 4px;">${heading}</h2>
@@ -80,7 +113,7 @@ Deno.serve(async (req) => {
             <hr style="border: none; border-top: 1px solid #E4D9CC; margin: 20px 0;" />
             <pre style="font-family: Georgia, serif; font-size: 15px; line-height: 1.8; white-space: pre-wrap; color: #1C1810;">${details}</pre>
             <hr style="border: none; border-top: 1px solid #E4D9CC; margin: 20px 0;" />
-            <p style="font-size: 11px; color: #9A8A78;">Sent from the Neha & Naveen wedding app</p>
+            <p style="font-size: 11px; color: #9A8A78;">Sent from the ${coupleNames} wedding app</p>
           </div>
         `,
       }),
