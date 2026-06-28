@@ -889,37 +889,99 @@ export async function removeCustomPackingItem(
   return { items, checkedItems };
 }
 
-// ─── Event Time Overrides ─────────────────────────────────────────────────────
-// Admins can override the `time` string on schedule events without a code
-// deploy. Returned as a Record<event_id, time_string>; the schedule screen
-// merges with the hardcoded events at render time.
+// ─── Event Overrides ──────────────────────────────────────────────────────────
+// Admins can override per-event text fields without a code deploy. Each
+// override row holds nullable values for the editable fields; the schedule
+// screen merges with the hardcoded events at render time (override wins
+// for any non-null field, code default fills in the rest).
+//
+// The DB table is still named `event_time_overrides` for historical reasons
+// (it originally stored only time overrides). We keep the JS-side camelCase
+// mirror of WeddingEvent's field names so call sites can spread the patch
+// directly onto an event object.
 
-export async function getEventTimeOverrides(
+export type EventOverridePatch = Partial<{
+  title:             string;
+  date:              string;
+  time:              string;
+  venue:             string;
+  address:           string;
+  dressCode:         string;
+  description:       string;
+  notes:             string;
+  weddingPartyOnly:  boolean;
+}>;
+
+interface EventOverrideRow {
+  event_id:           string;
+  title:              string | null;
+  event_date:         string | null;
+  time:               string | null;
+  venue:              string | null;
+  address:            string | null;
+  dress_code:         string | null;
+  description:        string | null;
+  notes:              string | null;
+  wedding_party_only: boolean | null;
+}
+
+const OVERRIDE_COLUMNS =
+  'event_id, title, event_date, time, venue, address, dress_code, description, notes, wedding_party_only';
+
+function rowToPatch(row: EventOverrideRow): EventOverridePatch {
+  const patch: EventOverridePatch = {};
+  if (row.title              !== null) patch.title              = row.title;
+  if (row.event_date         !== null) patch.date               = row.event_date;
+  if (row.time               !== null) patch.time               = row.time;
+  if (row.venue              !== null) patch.venue              = row.venue;
+  if (row.address            !== null) patch.address            = row.address;
+  if (row.dress_code         !== null) patch.dressCode          = row.dress_code;
+  if (row.description        !== null) patch.description        = row.description;
+  if (row.notes              !== null) patch.notes              = row.notes;
+  if (row.wedding_party_only !== null) patch.weddingPartyOnly   = row.wedding_party_only;
+  return patch;
+}
+
+export async function getEventOverrides(
   weddingId: string,
-): Promise<Record<string, string>> {
+): Promise<Record<string, EventOverridePatch>> {
   const { data, error } = await supabase
     .from('event_time_overrides')
-    .select('event_id, time')
+    .select(OVERRIDE_COLUMNS)
     .eq('wedding_id', weddingId);
   if (error) throw error;
-  const out: Record<string, string> = {};
-  for (const row of data ?? []) out[row.event_id] = row.time;
+  const out: Record<string, EventOverridePatch> = {};
+  for (const row of (data ?? []) as EventOverrideRow[]) {
+    out[row.event_id] = rowToPatch(row);
+  }
   return out;
 }
 
-export async function setEventTimeOverride(
+// Upsert a full override row. Pass nulls for fields the admin cleared back
+// to the code default; pass strings/booleans for fields they're setting.
+// We send every column on every save so a cleared field reverts cleanly.
+export async function setEventOverride(
   weddingId: string,
   eventId: string,
-  time: string,
+  patch: EventOverridePatch,
 ): Promise<void> {
+  const nullable = <T,>(v: T | undefined): T | null => (v === undefined ? null : v);
   const { error } = await supabase
     .from('event_time_overrides')
     .upsert(
       {
-        wedding_id: weddingId,
-        event_id: eventId,
-        time,
-        updated_at: new Date().toISOString(),
+        wedding_id:         weddingId,
+        event_id:           eventId,
+        title:              nullable(patch.title),
+        event_date:         nullable(patch.date),
+        time:               nullable(patch.time),
+        venue:              nullable(patch.venue),
+        address:            nullable(patch.address),
+        dress_code:         nullable(patch.dressCode),
+        description:        nullable(patch.description),
+        notes:              nullable(patch.notes),
+        wedding_party_only: nullable(patch.weddingPartyOnly),
+        updated_at:         new Date().toISOString(),
       },
       { onConflict: 'wedding_id,event_id' },
     );

@@ -21,7 +21,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
 import { FairmontMap } from '@/components/FairmontMap';
 import { haptic } from '@/utils/haptics';
-import { getEventTimeOverrides } from '@/services/storage';
+import { getEventOverrides, EventOverridePatch } from '@/services/storage';
 
 // Pass `name` when a human-readable landmark / venue exists so the maps
 // app resolves to the actual destination rather than geocoding just the
@@ -354,16 +354,18 @@ export default function ScheduleScreen() {
   const inWeddingParty = isWeddingParty(guestName ?? '');
   const events = NN_WEDDING_IDS.has(wedding.id) ? EVENTS_NN : EVENTS_DEMO;
 
-  // Admins can override event.time without a code deploy. Fetched once on
-  // mount; if an admin edits while a guest is viewing, the guest will see
-  // the update on next foreground / re-mount.
-  const [timeOverrides, setTimeOverrides] = useState<Record<string, string>>({});
+  // Admins can override per-event text fields (title, time, venue, etc.)
+  // without a code deploy. Fetched once on mount; if an admin edits while
+  // a guest is viewing, the guest sees the update on next foreground /
+  // re-mount. Visibility (`weddingPartyOnly`) is also overridable, so the
+  // per-guest filter runs against the merged event.
+  const [overrides, setOverrides] = useState<Record<string, EventOverridePatch>>({});
   useEffect(() => {
-    getEventTimeOverrides(weddingId).then(setTimeOverrides).catch(() => {});
+    getEventOverrides(weddingId).then(setOverrides).catch(() => {});
   }, [weddingId]);
 
   const visibleEvents = events
-    .map((e) => (timeOverrides[e.id] ? { ...e, time: timeOverrides[e.id] } : e))
+    .map((e) => (overrides[e.id] ? { ...e, ...overrides[e.id] } : e))
     .filter((e) => !e.weddingPartyOnly || inWeddingParty);
 
   // Accordion: at most one event expanded at a time. Tapping another event
