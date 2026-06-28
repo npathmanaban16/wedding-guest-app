@@ -12,7 +12,7 @@
 insert into public.weddings (
   id, invite_code, couple_names, wedding_date, location, destination_city,
   hashtag, website, contact_email, registry_url, theme_color, planner_name,
-  photo_album_url
+  photo_album_url, admin_password
 ) values (
   '00000000-0000-0000-0000-000000000001',
   'NEHANAVEEN2026',
@@ -26,7 +26,8 @@ insert into public.weddings (
   'https://blissandbone.sendbirdie.com/r/neha-naveen',
   '#8B5E6B',
   'Astrid',
-  'https://photos.app.goo.gl/YCMxM6i7XRNzKERd6'
+  'https://photos.app.goo.gl/YCMxM6i7XRNzKERd6',
+  'Duke2016'
 );
 
 

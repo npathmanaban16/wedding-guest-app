@@ -7,8 +7,9 @@
 -- can exercise the full app without touching real guest data.
 --
 -- Credentials for App Store Connect → App Review Information (admin path):
---   Invite code: DEMO2027
---   Guest name:  Taylor Reviewer   (also an admin for this demo)
+--   Invite code:    DEMO2027
+--   Guest name:     Taylor Reviewer   (also an admin for this demo)
+--   Admin password: demo123           (home-tab admin unlock)
 --
 -- Public-facing "Try the demo" path surfaced on the invite screen
 -- (app/invite.tsx) for curious couples who haven't signed up yet.
@@ -41,10 +42,14 @@
 -- the demo in the future means the app continues to demo sensibly after
 -- the real N&N wedding in May 2026 has passed.
 
+-- contact_email is pointed at Neha's personal Gmail (the Resend free-tier
+-- signup address) so notification emails fired from the demo actually
+-- deliver. Swap to 'demo@tetherly.app' once a Resend sender domain is
+-- verified at resend.com/domains.
 insert into public.weddings (
   id, invite_code, couple_names, wedding_date, location, destination_city,
   hashtag, website, contact_email, registry_url, theme_color, planner_name,
-  photo_album_url
+  photo_album_url, admin_password
 ) values (
   'a0000000-0000-0000-0000-000000000002',
   'DEMO2027',
@@ -54,11 +59,12 @@ insert into public.weddings (
   'Montreux',
   '#EmmaAndJames2027',
   'https://example.com/emma-and-james',
-  'demo@tetherly.app',
+  'neha.pathmanaban.2016@gmail.com',
   'https://example.com/registry',
   '#8B5E6B',
   'Sophie',
-  'https://example.com/photos'
+  'https://example.com/photos',
+  'demo123'
 ) on conflict (id) do update set
   invite_code      = excluded.invite_code,
   couple_names     = excluded.couple_names,
@@ -71,7 +77,8 @@ insert into public.weddings (
   registry_url     = excluded.registry_url,
   theme_color      = excluded.theme_color,
   planner_name     = excluded.planner_name,
-  photo_album_url  = excluded.photo_album_url;
+  photo_album_url  = excluded.photo_album_url,
+  admin_password   = excluded.admin_password;
 
 
 -- ─── Guests ──────────────────────────────────────────────────────────────────
