@@ -238,9 +238,9 @@ export default function AdminScreen() {
             onChangeText={setMessage}
             multiline
             textAlignVertical="top"
-            maxLength={500}
+            maxLength={2000}
           />
-          <Text style={styles.charCount}>{message.length}/500</Text>
+          <Text style={styles.charCount}>{message.length}/2000</Text>
 
           {/* Photo attachment row. Tapping "Add photo" opens the system
               picker; selected image shows a thumbnail with a remove

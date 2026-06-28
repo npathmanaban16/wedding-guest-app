@@ -200,7 +200,7 @@ function MessageCard({
             value={editText}
             onChangeText={setEditText}
             multiline
-            maxLength={500}
+            maxLength={2000}
             autoFocus
             textAlignVertical="top"
           />
