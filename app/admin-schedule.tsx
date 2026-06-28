@@ -52,15 +52,14 @@ const FIELDS: FieldDef[] = [
   { key: 'notes',       label: 'Notes',       placeholder: 'Optional notes shown under the description',       multiline: true },
 ];
 
-// Three-state visibility control: null = use the event's coded default,
-// true = force wedding-party-only, false = force visible to everyone.
-type VisibilityState = null | true | false;
-
 interface DraftEvent {
   // Merged code-default ⊕ saved override; this is what shows in the inputs
   // and what we diff against to know if anything changed.
   values: Record<TextField, string>;
-  visibility: VisibilityState;
+  // Effective visibility: true = wedding party only, false = everyone.
+  // Initialized from the saved override if present, else from the event's
+  // coded default. Saved as an override only when it differs from default.
+  weddingPartyOnly: boolean;
 }
 
 // Read text from a merged event for a given field.
@@ -93,8 +92,8 @@ function diffToPatch(draft: DraftEvent, codeDefault: WeddingEvent): EventOverrid
       (patch as Record<string, string>)[f.key] = current;
     }
   }
-  if (draft.visibility !== null && draft.visibility !== !!codeDefault.weddingPartyOnly) {
-    patch.weddingPartyOnly = draft.visibility;
+  if (draft.weddingPartyOnly !== !!codeDefault.weddingPartyOnly) {
+    patch.weddingPartyOnly = draft.weddingPartyOnly;
   }
   return patch;
 }
@@ -133,7 +132,7 @@ export default function AdminScheduleScreen() {
               description: eventField(merged, 'description'),
               notes:       eventField(merged, 'notes'),
             },
-            visibility: patch.weddingPartyOnly ?? null,
+            weddingPartyOnly: patch.weddingPartyOnly ?? !!e.weddingPartyOnly,
           };
           initial[e.id] = draft;
         }
@@ -162,8 +161,8 @@ export default function AdminScheduleScreen() {
     }));
   };
 
-  const setVisibility = (eventId: string, v: VisibilityState) => {
-    setDrafts((prev) => ({ ...prev, [eventId]: { ...prev[eventId], visibility: v } }));
+  const setVisibility = (eventId: string, v: boolean) => {
+    setDrafts((prev) => ({ ...prev, [eventId]: { ...prev[eventId], weddingPartyOnly: v } }));
   };
 
   const handleToggle = (eventId: string) => {
@@ -192,7 +191,7 @@ export default function AdminScheduleScreen() {
     const d = drafts[eventId];
     const s = saved[eventId];
     if (!d || !s) return false;
-    if (d.visibility !== s.visibility) return true;
+    if (d.weddingPartyOnly !== s.weddingPartyOnly) return true;
     for (const f of FIELDS) {
       if (d.values[f.key] !== s.values[f.key]) return true;
     }
@@ -276,11 +275,10 @@ export default function AdminScheduleScreen() {
                       <Text style={styles.fieldLabel}>Visibility</Text>
                       <View style={styles.visibilityRow}>
                         {([
-                          { v: null,   label: `Default (${event.weddingPartyOnly ? 'party only' : 'everyone'})` },
-                          { v: false,  label: 'Everyone' },
-                          { v: true,   label: 'Wedding party only' },
-                        ] as { v: VisibilityState; label: string }[]).map(({ v, label }) => {
-                          const active = draft.visibility === v;
+                          { v: false, label: 'Everyone' },
+                          { v: true,  label: 'Wedding party only' },
+                        ] as { v: boolean; label: string }[]).map(({ v, label }) => {
+                          const active = draft.weddingPartyOnly === v;
                           return (
                             <TouchableOpacity
                               key={String(v)}
