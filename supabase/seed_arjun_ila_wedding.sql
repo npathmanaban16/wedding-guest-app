@@ -14,8 +14,8 @@
 --                (one higher than the Emma & James demo for easy
 --                 spotting / deletion)
 -- Invite code:   ARJUNILA2026
--- Admin login:   Arjun Demo   (also seeded as an admin)
--- Admin password: arjunila123  (home-tab admin unlock)
+-- Admin logins:  Arjun Desai, Ila Lohia  (both seeded as admins)
+-- Admin password: ArjunIla   (home-tab admin unlock)
 --
 -- ⚠️ Known limitation: as of this seed, the Schedule, Guide
 -- ("switzerland" tab), and Packing tabs are still hardcoded to
@@ -66,7 +66,7 @@ insert into public.weddings (
   '#8B5E6B',
   'Sophie',
   'https://example.com/photos',
-  'arjunila123'
+  'ArjunIla'
 ) on conflict (id) do update set
   invite_code      = excluded.invite_code,
   couple_names     = excluded.couple_names,
@@ -87,12 +87,13 @@ insert into public.weddings (
 
 -- ─── Guests ──────────────────────────────────────────────────────────────────
 -- Small sample so login + the Details tab have realistic content.
--- Arjun Demo is doubled up as an admin (wedding_admins below) so the
--- pitch viewer logging in as Arjun sees both guest and admin features.
+-- Both Arjun Desai and Ila Lohia are doubled up as admins
+-- (wedding_admins below) so either of them logged in sees both guest
+-- and admin features.
 
 insert into public.guests (wedding_id, canonical_name, is_wedding_party, gender) values
-  ('a0000000-0000-0000-0000-000000000003', 'Arjun Demo',     true,  'male'),
-  ('a0000000-0000-0000-0000-000000000003', 'Ila Demo',       true,  'female'),
+  ('a0000000-0000-0000-0000-000000000003', 'Arjun Desai',    true,  'male'),
+  ('a0000000-0000-0000-0000-000000000003', 'Ila Lohia',      true,  'female'),
   ('a0000000-0000-0000-0000-000000000003', 'Priya Sharma',   true,  'female'),
   ('a0000000-0000-0000-0000-000000000003', 'Rohan Mehta',    true,  'male'),
   ('a0000000-0000-0000-0000-000000000003', 'Anjali Kapoor',  false, 'female'),
@@ -103,7 +104,8 @@ on conflict (wedding_id, canonical_name) do nothing;
 -- ─── Wedding Admins ──────────────────────────────────────────────────────────
 
 insert into public.wedding_admins (wedding_id, guest_name) values
-  ('a0000000-0000-0000-0000-000000000003', 'Arjun Demo')
+  ('a0000000-0000-0000-0000-000000000003', 'Arjun Desai'),
+  ('a0000000-0000-0000-0000-000000000003', 'Ila Lohia')
 on conflict (wedding_id, guest_name) do nothing;
 
 
@@ -114,10 +116,10 @@ on conflict (wedding_id, guest_name) do nothing;
 insert into public.guest_info
   (wedding_id, guest_name, dietary, meal_1, meal_2, meal_3, rehearsal_dinner, email)
 values
-  ('a0000000-0000-0000-0000-000000000003', 'Arjun Demo', '',
+  ('a0000000-0000-0000-0000-000000000003', 'Arjun Desai', '',
     'Burrata & Heirloom Tomato', 'Pan-Seared Halibut',
     'Filet Mignon', true, 'arjun.demo@tetherly.app'),
-  ('a0000000-0000-0000-0000-000000000003', 'Ila Demo', '',
+  ('a0000000-0000-0000-0000-000000000003', 'Ila Lohia', '',
     'Burrata & Heirloom Tomato', 'Wild Mushroom Risotto (Vegetarian)',
     'Filet Mignon', true, 'ila.demo@tetherly.app'),
   ('a0000000-0000-0000-0000-000000000003', 'Priya Sharma', '',
