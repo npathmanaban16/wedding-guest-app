@@ -351,6 +351,50 @@ export function getCodeEventsForWedding(weddingId: string): WeddingEvent[] {
 }
 
 // ============================================================
+// DESTINATION GUIDE FALLBACK
+// ============================================================
+// Code-defined destination guide bundled at build time for tenants
+// without a row in public.wedding_guides. Mirrors the WeddingGuide
+// shape so consumers can read it identically to a DB-fetched guide.
+//
+// New tenants (Arjun & Ila and beyond) live in the wedding_guides
+// table; N&N and Emma & James keep using this constant.
+
+// Single resolved-guide shape consumed by the destination tab and
+// the AI assistant. Same whether the underlying source is a
+// wedding_guides row or this in-code fallback.
+export interface WeddingGuide {
+  pageTitle: string;
+  pageSubtitleTag?: string;
+  pageSubtitle?: string;
+  // ISO 4217 code (e.g. 'CHF'). When set, the destination tab fetches
+  // live FX rates and shows them on the "currency" guide item.
+  currencyCode?: string;
+  // First entry is the "show everything" reset (typically "All").
+  filterPills: string[];
+  sections: GuideSection[];
+  quickFacts: QuickFact[];
+  // Empty means the photo strip is omitted from the page entirely.
+  photoStrip: GuidePhoto[];
+}
+
+export interface QuickFact {
+  key: string;
+  value: string;
+}
+
+// `source` is whatever the React Native <Image> accepts: a `require()`
+// module ID (for bundled assets) or a `{ uri }` object (URL from the
+// wedding_guides row). Consumers pass it straight to <Image source>.
+export interface GuidePhoto {
+  source: unknown;
+  label: string;
+}
+
+// SWITZERLAND_FULL_GUIDE + getCodeGuideForWedding live below
+// SWITZERLAND_GUIDE so the section data they reference is in scope.
+
+// ============================================================
 // HOTEL LOGISTICS
 // ============================================================
 // Per-hotel addresses + walking time/distance to the wedding venue
@@ -844,6 +888,41 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
     ],
   },
 ];
+
+// Code-defined destination guide bundled at build time for tenants
+// without a row in public.wedding_guides. Mirrors the WeddingGuide
+// shape (declared above) so consumers can read it identically to a
+// DB-fetched guide.
+export const SWITZERLAND_FULL_GUIDE: WeddingGuide = {
+  pageTitle: 'Switzerland Guide',
+  pageSubtitleTag: 'Montreux & Beyond',
+  pageSubtitle: 'Everything you need to know about Montreux and making the most of your trip',
+  currencyCode: 'CHF',
+  filterPills: ['All', 'Transport', 'Sightseeing', 'Activity', 'Restaurant', 'Bar', 'Practical'],
+  sections: SWITZERLAND_GUIDE,
+  quickFacts: [
+    { key: 'Currency',  value: 'Swiss Franc (CHF)' },
+    { key: 'Language',  value: 'French (English widely spoken)' },
+    { key: 'Time zone', value: 'CEST (UTC+2)' },
+    { key: 'Plug type', value: 'Type J (bring universal adaptor!)' },
+    { key: 'Emergency', value: 'Police 117 · Ambulance 144' },
+  ],
+  photoStrip: [
+    { source: require('@/assets/images/promenade.png'),     label: 'Montreux Promenade' },
+    { source: require('@/assets/images/lauvaux.png'),       label: 'Lavaux vineyards' },
+    { source: require('@/assets/images/narcissus_hike.png'), label: 'Narcissus hike' },
+    { source: require('@/assets/images/rochers_de_naye.png'), label: 'Rochers de Naye' },
+    { source: require('@/assets/images/narcissus.png'),     label: 'Narcissus fields in May' },
+    { source: require('@/assets/images/boat.png'),          label: 'Lake Geneva boat ride' },
+  ],
+};
+
+// Resolver for the code-defined fallback. Both N&N and Emma & James
+// currently share the Switzerland guide; per-tenant variants can be
+// added here if needed.
+export function getCodeGuideForWedding(_weddingId: string): WeddingGuide {
+  return SWITZERLAND_FULL_GUIDE;
+}
 
 // ============================================================
 // PACKING GUIDE

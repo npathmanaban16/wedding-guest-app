@@ -22,11 +22,13 @@
 --     migration 026 and seeded below), so the Arjun & Ila schedule is
 --     correct — Sangeet, Baraat, Ceremony, Reception, with the right
 --     dates, venues, and dress codes.
---   * The "switzerland" guide tab and the Packing tab are still
---     hardcoded to Montreux in constants/weddingData.ts (SWITZERLAND_GUIDE,
---     PACKING_GUIDE_*). Those are follow-up code changes — likely a
---     per-wedding-content map keyed off the wedding id, or a
---     destination_city-based switch.
+--   * The destination guide tab now reads from public.wedding_guides
+--     (added in migration 027 and seeded below), so the Arjun & Ila
+--     guide is Laguna Niguel / Orange County content rather than
+--     Montreux.
+--   * The Packing tab is still hardcoded to Montreux in
+--     constants/weddingData.ts (PACKING_GUIDE_*). That's the
+--     remaining follow-up code change — same DB-first treatment.
 --
 -- Hero image: leave hero_image_url null for now and either
 --   1. upload a Ritz-Carlton Laguna Niguel photo to the
@@ -330,3 +332,295 @@ on conflict (wedding_id, event_id) do update set
   outdoor_note       = excluded.outdoor_note,
   extras             = excluded.extras,
   updated_at         = now();
+
+
+-- ─── Destination Guide ───────────────────────────────────────────────────────
+-- Laguna Niguel / Orange County content tailored to Arjun & Ila's wedding.
+-- Stored as a single wedding_guides row (migration 027). currency_code is
+-- left null — this is a domestic US wedding and the live-FX widget isn't
+-- relevant. photo_strip is empty for now; upload Ritz / coast photos to the
+-- wedding-hero-images bucket (or a separate bucket) and update the row to
+-- show them.
+--
+-- The sections / quick_facts / filter_pills JSON below is dollar-quoted
+-- ($g$ ... $g$) so apostrophes inside descriptions don't need escaping.
+
+insert into public.wedding_guides (
+  wedding_id, page_title, page_subtitle_tag, page_subtitle,
+  currency_code, filter_pills, sections, quick_facts, photo_strip
+) values (
+  'a0000000-0000-0000-0000-000000000003',
+  'Laguna Niguel Guide',
+  'Orange County & Beyond',
+  'Everything you need to know about Laguna Niguel and making the most of your trip.',
+  null,
+  $g$["All","Transport","Sightseeing","Activity","Restaurant","Bar","Practical"]$g$::jsonb,
+  $g$[
+    {
+      "id": "getting-there",
+      "title": "Getting to Laguna Niguel",
+      "emoji": "✈️",
+      "items": [
+        {
+          "id": "flights",
+          "name": "By Air",
+          "category": "Transport",
+          "description": "John Wayne Airport (SNA) in Santa Ana is the closest — about a 25-minute drive to the Ritz-Carlton. Los Angeles International (LAX) is another option but expect 1.5 hours or more depending on traffic. Long Beach (LGB) and San Diego (SAN) are smaller alternatives.",
+          "tip": "Flying into SNA usually means a shorter, less stressful drive than LAX — worth a small price premium."
+        },
+        {
+          "id": "by-car",
+          "name": "By Car",
+          "category": "Transport",
+          "description": "Southern California is car country. Rentals are available at all airports. From SNA take the 405 South to the 73 South — about 25 minutes. From LAX take the 405 South to the 73 South — 1–2 hours depending on traffic.",
+          "tip": "Avoid driving back to LAX between 3 PM and 7 PM — traffic on the 405 is brutal."
+        },
+        {
+          "id": "rideshare",
+          "name": "Rideshare",
+          "category": "Transport",
+          "description": "Uber and Lyft operate throughout Orange County, including pickup at SNA and LAX. From SNA expect ~$50–70; from LAX ~$100–150 depending on time of day and surge pricing."
+        }
+      ]
+    },
+    {
+      "id": "things-to-do",
+      "title": "Things to Do",
+      "emoji": "🗺️",
+      "subsections": [
+        {
+          "id": "beaches-coast",
+          "title": "Beaches & Coast",
+          "emoji": "🏖️",
+          "category": "Sightseeing",
+          "items": [
+            {
+              "id": "salt-creek",
+              "name": "Salt Creek Beach",
+              "category": "Sightseeing",
+              "description": "Right below the Ritz-Carlton. Public beach with reliable surf and a long sandy stretch — hotel guests can walk straight down. Lifeguards on duty through summer.",
+              "tip": "The pathway down from the Ritz is steep — wear shoes you can comfortably walk down a bluff in.",
+              "address": "33333 S Pacific Coast Hwy, Dana Point, CA 92629"
+            },
+            {
+              "id": "dana-point-harbor",
+              "name": "Dana Point Harbor",
+              "category": "Sightseeing",
+              "description": "Working marina with restaurants, cafés, and walking paths. Sailboat charters, whale-watching tours, and harbor cruises all depart here. About 5 minutes by car from the Ritz.",
+              "tip": "Catch sunset from the breakwater — no crowds, just sailboats and pelicans.",
+              "address": "34571 Golden Lantern, Dana Point, CA 92629"
+            },
+            {
+              "id": "crystal-cove",
+              "name": "Crystal Cove State Park",
+              "category": "Sightseeing",
+              "description": "Three miles of beach, tidepools, and bluff trails — plus the historic Crystal Cove cottages built in the 1920s and 30s. About 15 minutes north of the Ritz.",
+              "tip": "Beachcomber Café inside the park is a beloved brunch spot — go early or expect a wait.",
+              "address": "8471 N Coast Hwy, Laguna Beach, CA 92651"
+            },
+            {
+              "id": "laguna-beach-downtown",
+              "name": "Downtown Laguna Beach",
+              "category": "Sightseeing",
+              "description": "Art galleries, boutiques, oceanfront cafés, and the Heisler Park bluff walk. About 15 minutes from the Ritz.",
+              "tip": "Stop at Main Beach for the lifeguard-tower photo — it is one of the most photographed spots in SoCal."
+            }
+          ]
+        },
+        {
+          "id": "activities",
+          "title": "Activities",
+          "emoji": "🏄",
+          "category": "Activity",
+          "items": [
+            {
+              "id": "surfing",
+              "name": "Surfing Lessons",
+              "category": "Activity",
+              "description": "Salt Creek and Doheny State Beach are both beginner-friendly. Local surf schools offer 1.5-hour lessons with boards and wetsuits included.",
+              "tip": "Doheny is the gentlest break for first-timers."
+            },
+            {
+              "id": "whale-watching",
+              "name": "Whale Watching",
+              "category": "Activity",
+              "description": "Dana Wharf Whale Watching runs daily tours from Dana Point Harbor. September is the tail end of blue-whale season — dolphins are almost guaranteed, whales most days.",
+              "tip": "Take a morning tour: the ocean is calmer and the wildlife more active.",
+              "links": [
+                { "label": "Dana Wharf Sportfishing & Whale Watching", "url": "https://danawharf.com/" }
+              ]
+            },
+            {
+              "id": "ritz-spa",
+              "name": "Ritz-Carlton Spa",
+              "category": "Activity",
+              "description": "On-property spa with massages, facials, and a steam-and-sauna circuit. Treatments often book a few days out.",
+              "tip": "Book before you arrive — wedding-weekend appointments fill up fast."
+            },
+            {
+              "id": "ritz-pools",
+              "name": "Ritz-Carlton Pools",
+              "category": "Activity",
+              "description": "Three oceanfront pools with cabana service. The hilltop adult pool has the best views; the family pool sits closer to the lawn."
+            }
+          ]
+        },
+        {
+          "id": "day-trips",
+          "title": "Day Trips",
+          "emoji": "🚗",
+          "category": "Sightseeing",
+          "items": [
+            {
+              "id": "disneyland",
+              "name": "Disneyland",
+              "category": "Sightseeing",
+              "description": "About 45 minutes north on the 5. Two parks (Disneyland and California Adventure) plus Downtown Disney. A full day each.",
+              "tip": "Buy tickets in advance through the Disneyland app, reserve a park, and add Genie+ for skip-the-line passes."
+            },
+            {
+              "id": "san-diego",
+              "name": "San Diego",
+              "category": "Sightseeing",
+              "description": "Roughly 1.5 hours south. Balboa Park, the Gaslamp Quarter, the Coronado ferry, and the world-famous San Diego Zoo. An easy day trip with an early start."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "restaurants",
+      "title": "Eating & Drinking",
+      "emoji": "🍽️",
+      "subsections": [
+        {
+          "id": "at-the-ritz",
+          "title": "At the Ritz",
+          "emoji": "🍷",
+          "category": "Restaurant",
+          "items": [
+            {
+              "id": "raya",
+              "name": "Raya",
+              "category": "Restaurant",
+              "description": "Coastal Mexican by Richard Sandoval, set right above the bluff. Modern Mexican plates and an ocean-view patio.",
+              "tip": "Sit on the patio for sunset cocktails."
+            },
+            {
+              "id": "eno",
+              "name": "ENO Wine, Cheese & Chocolate",
+              "category": "Bar",
+              "description": "A small tasting bar on the hotel's main level — perfect for a relaxed drink and a cheese flight after dinner."
+            }
+          ]
+        },
+        {
+          "id": "around-town",
+          "title": "Around Town",
+          "emoji": "🍴",
+          "category": "Restaurant",
+          "items": [
+            {
+              "id": "selanne-steak",
+              "name": "Selanne Steak Tavern",
+              "category": "Restaurant",
+              "description": "Upscale steakhouse from former NHL star Teemu Selänne in downtown Laguna Beach. Reservations strongly recommended.",
+              "address": "1464 S Coast Hwy, Laguna Beach, CA 92651"
+            },
+            {
+              "id": "the-deck",
+              "name": "The Deck on Laguna Beach",
+              "category": "Restaurant",
+              "description": "Coastal California cuisine on a beachfront deck in Laguna Beach. Fish tacos at lunch, sunset cocktails at dinner.",
+              "address": "627 Sleepy Hollow Ln, Laguna Beach, CA 92651"
+            },
+            {
+              "id": "sapphire-laguna",
+              "name": "Sapphire Laguna",
+              "category": "Restaurant",
+              "description": "Globally inspired California cuisine in a historic 1920s building in downtown Laguna Beach.",
+              "address": "1200 S Coast Hwy, Laguna Beach, CA 92651"
+            },
+            {
+              "id": "the-cellar",
+              "name": "The Cellar",
+              "category": "Bar",
+              "description": "Cozy underground wine bar in San Clemente with a strong by-the-glass list and small plates.",
+              "address": "156 Avenida Del Mar Suite 1, San Clemente, CA 92672"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "practical",
+      "title": "Practical Info",
+      "emoji": "💡",
+      "items": [
+        {
+          "id": "weather",
+          "name": "Weather in September",
+          "category": "Practical",
+          "description": "Warm and dry. Daytime highs 75–80°F, evenings cool to 60–65°F. Marine layer (low coastal fog) is common in the early morning and clears by mid-morning.",
+          "tip": "Pack a light layer for evenings on the bluff — it can be breezy and 15°F cooler than the afternoon."
+        },
+        {
+          "id": "timezone",
+          "name": "Time Zone",
+          "category": "Practical",
+          "description": "Pacific Daylight Time (PDT, UTC−7) through early November. Three hours behind the East Coast."
+        },
+        {
+          "id": "tipping",
+          "name": "Tipping",
+          "category": "Practical",
+          "description": "Standard US tipping: 15–20% at restaurants and bars, $1–$2 per drink at counter service, $5–$10 per night for hotel housekeeping, ~15% for rideshares.",
+          "tip": "Most restaurant checks have suggested tip amounts printed at the bottom — handy guide."
+        },
+        {
+          "id": "driving",
+          "name": "Driving",
+          "category": "Practical",
+          "description": "Driving is on the right. Right turn on red is permitted unless posted otherwise. The 73 is a toll road running north from Laguna Niguel toward Newport — about $8 each way if you take it back to SNA or LAX."
+        },
+        {
+          "id": "plug",
+          "name": "Plug Type",
+          "category": "Practical",
+          "description": "Type A / Type B sockets. 120V, 60Hz. International guests with 220V appliances should check for dual-voltage compatibility or pack a converter."
+        },
+        {
+          "id": "emergency",
+          "name": "Emergency Numbers",
+          "category": "Practical",
+          "description": "911 for police, fire, or ambulance. The nearest hospitals are Saddleback Memorial in Laguna Hills and Mission Hospital in Mission Viejo — both about 15 minutes from the Ritz."
+        },
+        {
+          "id": "water",
+          "name": "Tap Water",
+          "category": "Practical",
+          "description": "Tap water is safe to drink throughout California."
+        }
+      ]
+    }
+  ]$g$::jsonb,
+  $g$[
+    {"key": "Weather (Sep)", "value": "Sunny · 65–80°F"},
+    {"key": "Time zone",     "value": "PDT (UTC−7)"},
+    {"key": "Currency",      "value": "US Dollar ($)"},
+    {"key": "Tipping",       "value": "15–20% at restaurants"},
+    {"key": "Plug type",     "value": "Type A / B · 120V"},
+    {"key": "Emergency",     "value": "911"}
+  ]$g$::jsonb,
+  $g$[]$g$::jsonb
+) on conflict (wedding_id) do update set
+  page_title        = excluded.page_title,
+  page_subtitle_tag = excluded.page_subtitle_tag,
+  page_subtitle     = excluded.page_subtitle,
+  currency_code     = excluded.currency_code,
+  filter_pills      = excluded.filter_pills,
+  sections          = excluded.sections,
+  quick_facts       = excluded.quick_facts,
+  -- photo_strip intentionally NOT overwritten on conflict so a value set
+  -- via the dashboard isn't clobbered by re-running this seed.
+  updated_at        = now();
