@@ -33,8 +33,6 @@ import { Colors, Fonts, Radius, Shadow, Spacing, Typography } from '@/constants/
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
 import {
-  EVENTS_NN,
-  EVENTS_DEMO,
   HOTEL_LOGISTICS,
   OFFSITE_VENUE_TRANSPORT,
   PACKING_GUIDE_NN,
@@ -80,7 +78,7 @@ interface ChatMessage {
 
 export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
   const { guestName } = useAuth();
-  const { wedding, weddingId, isWeddingParty, isBridalParty, getGuestGender } = useWedding();
+  const { wedding, weddingId, isWeddingParty, isBridalParty, getGuestGender, events: baseEvents } = useWedding();
   const insets = useSafeAreaInsets();
 
   const [open, setOpen] = useState(false);
@@ -102,7 +100,6 @@ export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
   const scrollRef = useRef<ScrollView | null>(null);
 
   const isNN = NN_WEDDING_IDS.has(wedding.id);
-  const baseEvents = isNN ? EVENTS_NN : EVENTS_DEMO;
   const events = useMemo(
     () => baseEvents.map((e) => (eventOverrides[e.id] ? { ...e, ...eventOverrides[e.id] } : e)),
     [baseEvents, eventOverrides],

@@ -20,7 +20,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
 import { supabase } from '@/lib/supabase';
 import { Colors, Fonts, Typography, Spacing, Radius, Shadow } from '@/constants/theme';
-import { WEDDING, EVENTS_NN, EVENTS_DEMO, NN_WEDDING_IDS } from '@/constants/weddingData';
+import { WEDDING } from '@/constants/weddingData';
 
 // Casual second-factor for the admin tools — gates the buttons on the home
 // tab so a guest borrowing an admin's logged-in phone can't fire pushes or
@@ -71,7 +71,7 @@ function QuickCard({ title, subtitle, onPress }: QuickCardProps) {
 
 export default function HomeScreen() {
   const { guestName, logout } = useAuth();
-  const { isWeddingParty, isAdmin, wedding } = useWedding();
+  const { isWeddingParty, isAdmin, wedding, events } = useWedding();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const weddingDate = React.useMemo(() => new Date(wedding.wedding_date), [wedding.wedding_date]);
@@ -79,8 +79,6 @@ export default function HomeScreen() {
   const firstName = guestName?.split(' ')[0] ?? 'Guest';
   const inWeddingParty = isWeddingParty(guestName ?? '');
   const isAdminUser = !!guestName && isAdmin(guestName);
-  const events = NN_WEDDING_IDS.has(wedding.id) ? EVENTS_NN : EVENTS_DEMO;
-
   // Admin tools are hidden behind a shared password until unlocked once on
   // this device. State is restored from AsyncStorage on mount and persists
   // across app launches; tapping "Lock again" clears it.

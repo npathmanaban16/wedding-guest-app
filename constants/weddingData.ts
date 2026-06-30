@@ -52,8 +52,10 @@ export interface WeddingEvent {
   description: string;
   notes?: string;
   weddingPartyOnly?: boolean;
-  startDate: string; // ISO 8601
-  endDate: string;   // ISO 8601
+  startDate: string;  // ISO 8601
+  // Optional — some events have no posted end time (e.g. a Baraat).
+  // Calendar code falls back to startDate + 1h when this is missing.
+  endDate?: string;
   colorPalette?: { name: string; hex: string }[];
   outdoorNote?: string;
   outfitInspirationUrl?: string;
@@ -338,6 +340,15 @@ export const EVENTS_DEMO: WeddingEvent[] = EVENTS_NN.map((event) => {
 
 export const EVENTS: WeddingEvent[] =
   DEFAULT_WEDDING_ID === null ? EVENTS_DEMO : EVENTS_NN;
+
+// Pick the right code-default events array for a given wedding id. The
+// SaaS path also queries the wedding_events table (services/events.ts);
+// when DB rows exist for that wedding, callers prefer them over this
+// fallback. Centralised here so all consumers (home, schedule, admin,
+// AI assistant) agree on the selection rule.
+export function getCodeEventsForWedding(weddingId: string): WeddingEvent[] {
+  return NN_WEDDING_IDS.has(weddingId) ? EVENTS_NN : EVENTS_DEMO;
+}
 
 // ============================================================
 // HOTEL LOGISTICS

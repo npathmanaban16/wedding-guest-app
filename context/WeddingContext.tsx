@@ -1,7 +1,11 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DEFAULT_WEDDING_ID } from '@/constants/weddingData';
+import {
+  DEFAULT_WEDDING_ID,
+  getCodeEventsForWedding,
+  type WeddingEvent,
+} from '@/constants/weddingData';
 import { Colors } from '@/constants/theme';
 import {
   fetchAdmins,
@@ -15,6 +19,7 @@ import {
   type ResolvedWedding,
   type WeddingRow,
 } from '@/services/wedding';
+import { fetchWeddingEvents } from '@/services/events';
 
 export type { AdminRole, Gender };
 
@@ -42,6 +47,12 @@ const WeddingSessionContext = createContext<WeddingSessionContextType | null>(nu
 interface WeddingContextType {
   weddingId: string;
   wedding: WeddingRow;
+  // Resolved event schedule for this wedding. Prefers rows from the
+  // public.wedding_events table when present; falls back to the
+  // hardcoded EVENTS_NN / EVENTS_DEMO constants otherwise. Consumers
+  // (home, schedule, admin, AI) read from here so the selection rule
+  // lives in one place.
+  events: WeddingEvent[];
   isValidGuest: (name: string) => boolean;
   isValidGuestOrAdmin: (name: string) => boolean;
   getCanonicalName: (name: string) => string | null;
@@ -87,6 +98,10 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
   const [wedding, setWedding] = useState<WeddingRow | null>(null);
   const [guests, setGuests] = useState<GuestRow[]>([]);
   const [admins, setAdmins] = useState<AdminRow[]>([]);
+  // DB-backed events for this wedding; empty array means "no rows in
+  // wedding_events", in which case the resolver below falls back to the
+  // hardcoded code-defined events for this tenant.
+  const [dbEvents, setDbEvents] = useState<WeddingEvent[]>([]);
   const [loadState, setLoadState] = useState<'idle' | 'loading' | 'ready' | 'error'>(
     DEFAULT_WEDDING_ID ? 'loading' : 'idle',
   );
@@ -113,6 +128,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       setWedding(null);
       setGuests([]);
       setAdmins([]);
+      setDbEvents([]);
       return;
     }
     // Defensive: if weddingId somehow isn't a uuid-shaped string, clear it.
@@ -137,10 +153,16 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const [w, g, a] = await Promise.all([
+        const [w, g, a, e] = await Promise.all([
           fetchWedding(weddingId),
           fetchGuests(weddingId),
           fetchAdmins(weddingId),
+          // Events failing shouldn't take the whole wedding load down —
+          // we fall back to code defaults if DB events are unreachable.
+          fetchWeddingEvents(weddingId).catch((err) => {
+            console.warn('[WeddingProvider] failed to load wedding_events', err);
+            return [];
+          }),
         ]);
         if (cancelled) return;
         if (!w) {
@@ -154,6 +176,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
         setWedding(w);
         setGuests(g);
         setAdmins(a);
+        setDbEvents(e);
         setLoadState('ready');
       } catch (err) {
         console.error('[WeddingProvider] failed to load wedding data', err);
@@ -165,13 +188,22 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
 
   const applyResolvedWedding = useCallback(
     async ({ wedding: w, guests: g, admins: a }: ResolvedWedding): Promise<void> => {
-      // Pre-populate all three slices before flipping weddingId. React
-      // batches the state setters below into one render, so the provider
-      // goes straight from "no weddingId (children rendered via session
+      // Pre-populate all slices before flipping weddingId. React batches
+      // the state setters below into one render, so the provider goes
+      // straight from "no weddingId (children rendered via session
       // provider)" to "loadState=ready (children rendered via both
       // providers)". Without pre-populating, the load-effect below would
       // flip loadState to 'loading' for a render, unmounting the Stack and
       // eating any router.replace() fired by the caller.
+      //
+      // Events aren't part of the resolved bundle (the invite preview
+      // only validates wedding + guests + admins). Fetch them here so the
+      // first render after login has the right schedule; on failure we
+      // fall back to code defaults via the resolver below.
+      const e = await fetchWeddingEvents(w.id).catch((err) => {
+        console.warn('[WeddingProvider] failed to pre-load wedding_events', err);
+        return [] as WeddingEvent[];
+      });
       await AsyncStorage.setItem(WEDDING_ID_STORAGE_KEY, w.id);
       // New invite means a new tenant — discard any cached login from a
       // prior wedding so AuthContext doesn't auto-auth past /login.
@@ -179,6 +211,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       setWedding(w);
       setGuests(g);
       setAdmins(a);
+      setDbEvents(e);
       setLoadState('ready');
       setWeddingId(w.id);
     },
@@ -204,6 +237,12 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
     if (!wedding || !weddingId) return null;
     const guestByNormalized = new Map(guests.map((g) => [normalizeName(g.canonical_name), g]));
     const adminByNormalized = new Map(admins.map((a) => [normalizeName(a.guest_name), a]));
+
+    // DB rows win when present; fall back to the code-defined schedule
+    // for tenants still on the constants path (N&N, Emma & James).
+    const events: WeddingEvent[] = dbEvents.length > 0
+      ? dbEvents
+      : getCodeEventsForWedding(weddingId);
 
     const isValidGuest = (name: string) => guestByNormalized.has(normalizeName(name));
     // Raw membership in wedding_admins — used for login only. Admin-power
@@ -257,6 +296,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
     return {
       weddingId,
       wedding,
+      events,
       isValidGuest,
       isValidGuestOrAdmin,
       getCanonicalName,
@@ -266,7 +306,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       isAdmin,
       getAdminRole,
     };
-  }, [weddingId, wedding, guests, admins]);
+  }, [weddingId, wedding, guests, admins, dbEvents]);
 
   // Initial session restore — brief blank while AsyncStorage reads on SaaS.
   if (!sessionReady) {
