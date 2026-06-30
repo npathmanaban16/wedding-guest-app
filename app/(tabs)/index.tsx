@@ -134,9 +134,11 @@ export default function HomeScreen() {
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      {/* Hero header */}
+      {/* Hero header — prefers the per-wedding hero_image_url from the
+          `weddings` table when set, falls back to the bundled image so
+          tenants with no custom image still render something. */}
       <ImageBackground
-        source={WEDDING.heroImage}
+        source={wedding.hero_image_url ? { uri: wedding.hero_image_url } : WEDDING.heroImage}
         style={[styles.heroImage, { paddingTop: insets.top + Spacing.xl }]}
         resizeMode="cover"
       >
