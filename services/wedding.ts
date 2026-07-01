@@ -36,6 +36,14 @@ export interface GuestRow {
   // by the Attendees directory to hide the couple from the "who's here"
   // list (they aren't attending as guests).
   is_couple: boolean;
+  // Free-text role identifying WHY someone is in the wedding party.
+  // See migration 036 for suggested values ('bridesmaid', 'groomsman',
+  // 'family', 'partner'). Null means "no role set" — legacy rows fall
+  // through to the "show badge if is_wedding_party" backward-compat
+  // path in the Attendees directory. 'partner' explicitly suppresses
+  // the badge so spouses of party members aren't labeled Wedding
+  // party while still keeping is_wedding_party access.
+  wedding_party_role: string | null;
 }
 
 export type AdminRole = 'planner' | 'dj' | 'makeup_artist';
@@ -81,7 +89,7 @@ export async function fetchWeddingByInviteCode(inviteCode: string): Promise<Wedd
 export async function fetchGuests(weddingId: string): Promise<GuestRow[]> {
   const { data, error } = await supabase
     .from('guests')
-    .select('canonical_name, is_wedding_party, is_bridal_party, gender, profile_photo_url, bio, is_couple')
+    .select('canonical_name, is_wedding_party, is_bridal_party, gender, profile_photo_url, bio, is_couple, wedding_party_role')
     .eq('wedding_id', weddingId);
   if (error) throw error;
   return data ?? [];

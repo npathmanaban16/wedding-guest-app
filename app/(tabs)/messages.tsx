@@ -391,9 +391,24 @@ function MessageCard({
   );
 }
 
-// Attendees directory — every invited guest except the couple, sorted
-// alphabetically by canonical name. Rendered as a 2-per-row grid of
-// square cards.
+// Attendees directory — every invited guest except the couple. Named
+// wedding party members (bridesmaids/groomsmen/family) sort to the top
+// with a "Wedding party" badge; everyone else follows in alphabetical
+// order. Partners of party members (wedding_party_role='partner')
+// intentionally don't get a badge even though they carry the
+// is_wedding_party access flag. Rendered as a 2-per-row grid.
+//
+// Legacy rows with is_wedding_party=true and wedding_party_role=null
+// still show the badge (backward-compat) — customers can suppress
+// individual spouses by explicitly setting their role to 'partner'.
+function shouldShowWeddingPartyBadge(
+  attendee: ReturnType<typeof useWedding>['attendees'][number],
+): boolean {
+  if (!attendee.is_wedding_party) return false;
+  if (attendee.wedding_party_role === 'partner') return false;
+  return true;
+}
+
 function AttendeesList({
   attendees,
   currentGuestName,
@@ -401,9 +416,12 @@ function AttendeesList({
   attendees: ReturnType<typeof useWedding>['attendees'];
   currentGuestName: string | null;
 }) {
-  const visible = attendees
-    .filter((a) => !a.is_couple)
-    .sort((a, b) => a.canonical_name.localeCompare(b.canonical_name));
+  const visible = [...attendees.filter((a) => !a.is_couple)].sort((a, b) => {
+    const aWp = shouldShowWeddingPartyBadge(a);
+    const bWp = shouldShowWeddingPartyBadge(b);
+    if (aWp !== bWp) return aWp ? -1 : 1;
+    return a.canonical_name.localeCompare(b.canonical_name);
+  });
 
   if (visible.length === 0) {
     return (
@@ -418,7 +436,8 @@ function AttendeesList({
     <View style={styles.attendeesGrid}>
       {visible.map((a) => {
         const isMe = !!currentGuestName && a.canonical_name.toLowerCase() === currentGuestName.toLowerCase();
-        const badge = isMe ? 'You' : a.is_wedding_party ? 'Wedding party' : undefined;
+        const showWpBadge = shouldShowWeddingPartyBadge(a);
+        const badge = isMe ? 'You' : showWpBadge ? 'Wedding party' : undefined;
         return (
           <View key={a.canonical_name} style={styles.attendeesGridItem}>
             <AttendeeCard attendee={a} badge={badge} />
