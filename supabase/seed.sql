@@ -172,6 +172,7 @@ update public.guests
      'Goutham Subramanian',
      'Guhan Muruganandam',
      'Kevin Labagnara',
+     'Nancy Kwan',
      'Sai Avala',
      'Suhail Goyal'
    );
