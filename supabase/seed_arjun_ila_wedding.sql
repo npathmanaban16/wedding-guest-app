@@ -903,9 +903,8 @@ insert into public.wedding_packing_lists (
 
 -- ─── Schedule Page Overrides ─────────────────────────────────────────────────
 -- Sets the PDT timezone footer under the schedule timeline. venue_photo_url
--- and venue_map_image_url are left null — until you upload a Ritz-Carlton
--- exterior photo and (optionally) a venue map, the timeline just shows the
--- events and the timezone footer, no photo or map card.
+-- and venue_map_image_urls are left null / empty — until you upload photos,
+-- the timeline just shows the events and the timezone footer.
 --
 -- To add a venue photo later:
 --   1. Upload to the wedding-venue-images bucket (migration 030) at
@@ -913,15 +912,22 @@ insert into public.wedding_packing_lists (
 --   2. update public.wedding_schedule_pages
 --        set venue_photo_url = 'https://.../wedding-venue-images/.../venue.jpg'
 --        where wedding_id = 'a0000000-0000-0000-0000-000000000003';
--- Same idea for a Ritz-Carlton floor plan → venue_map_image_url.
+--
+-- To add one or more map images (guests swipe between them):
+--   update public.wedding_schedule_pages
+--     set venue_map_image_urls = array[
+--       'https://.../map-page-1.png',
+--       'https://.../map-page-2.png'
+--     ]
+--     where wedding_id = 'a0000000-0000-0000-0000-000000000003';
 
 insert into public.wedding_schedule_pages (
-  wedding_id, venue_photo_url, venue_map_image_url, venue_map_title,
+  wedding_id, venue_photo_url, venue_map_image_urls, venue_map_title,
   venue_map_legend, timezone_note
 ) values (
   'a0000000-0000-0000-0000-000000000003',
   null,
-  null,
+  '{}'::text[],
   null,
   '[]'::jsonb,
   'All times are Pacific Daylight Time (PDT / UTC−7)'

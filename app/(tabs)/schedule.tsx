@@ -422,7 +422,7 @@ export default function ScheduleScreen() {
           {schedulePage.venueMap && (
             <HotelMap
               title={schedulePage.venueMap.title}
-              image={schedulePage.venueMap.image}
+              images={schedulePage.venueMap.images}
               legend={schedulePage.venueMap.legend}
             />
           )}

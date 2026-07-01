@@ -1432,8 +1432,10 @@ export interface WeddingSchedulePage {
   venuePhoto?: unknown;
   venueMap?: {
     title: string;
-    // Hidden when both `image` and `legend` end up empty.
-    image?: unknown;
+    // Ordered list of map images the guest swipes between. Empty is
+    // fine — the card can still render a legend-only view. Each entry
+    // is either a require()'d module id or a `{ uri }` object.
+    images: unknown[];
     legend: WeddingMapLegendItem[];
   };
   // Footer note under the timeline; `undefined` hides the footer row.
@@ -1459,7 +1461,7 @@ export const FAIRMONT_SCHEDULE_PAGE_NN: WeddingSchedulePage = {
   venuePhoto: require('@/assets/images/fairmont.png'),
   venueMap: {
     title: 'Hotel Map',
-    image: require('@/assets/images/fairmont_floor_plan.png'),
+    images: [require('@/assets/images/fairmont_floor_plan.png')],
     legend: FAIRMONT_VENUES_NN,
   },
   timezoneNote: 'All times are Central European Summer Time (CEST / UTC+2)',

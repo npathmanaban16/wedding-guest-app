@@ -9,6 +9,8 @@ import {
   LayoutAnimation,
   Platform,
   UIManager,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
@@ -24,30 +26,44 @@ const animateLayout = () => {
 
 // Bundled floor plan pixel dimensions used by the Fairmont fallback so the
 // image reserves the right aspect ratio before it loads. Remote images
-// come with unknown intrinsic sizes so we let them layout naturally.
+// come with unknown intrinsic sizes so we let them layout naturally with
+// resizeMode="contain".
 const FAIRMONT_IMG_W = 888;
 const FAIRMONT_IMG_H = 1016;
 
 interface HotelMapProps {
   // Header title above the map — typically "Hotel Map" or "Venue Map".
   title: string;
-  // require()'d bundled asset or { uri } for a remote URL. Undefined
-  // hides the image (legend-only maps still render as a card).
-  image?: unknown;
+  // Ordered list of map pages the guest swipes between. Empty means the
+  // card renders legend-only (no images). Entries can be require()'d
+  // bundled assets or `{ uri }` objects for remote URLs.
+  images: unknown[];
   legend: WeddingMapLegendItem[];
 }
 
-export function HotelMap({ title, image, legend }: HotelMapProps) {
+export function HotelMap({ title, images, legend }: HotelMapProps) {
   const [open, setOpen] = useState(false);
-  const [imgW, setImgW] = useState(0);
-  // Only the bundled Fairmont plan has a known aspect ratio we want to
-  // preserve. For remote images fall back to a fixed viewport so pinch-
-  // to-zoom still works before we know the intrinsic size.
-  const imgH = imgW > 0 ? Math.round(imgW * (FAIRMONT_IMG_H / FAIRMONT_IMG_W)) : 0;
+  const [containerWidth, setContainerWidth] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
+  // Content width inside the card's horizontal padding.
+  const pageWidth = Math.max(0, containerWidth - Spacing.md * 2);
+  // Preserve the Fairmont floor-plan aspect ratio for the bundled asset
+  // path; clamp to 420 so tall images don't blow out the card.
+  const naturalH = pageWidth > 0 ? Math.round(pageWidth * (FAIRMONT_IMG_H / FAIRMONT_IMG_W)) : 0;
+  const pageHeight = pageWidth > 0 ? Math.min(naturalH, 420) : 420;
 
   const toggle = () => {
     animateLayout();
     setOpen((v) => !v);
+  };
+
+  // Snap the page indicator to the finished page after a swipe. Uses
+  // onMomentumScrollEnd rather than onScroll so we don't churn state
+  // 60 times per swipe.
+  const handleScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (pageWidth === 0) return;
+    const page = Math.round(e.nativeEvent.contentOffset.x / pageWidth);
+    if (page !== currentPage) setCurrentPage(page);
   };
 
   return (
@@ -62,31 +78,64 @@ export function HotelMap({ title, image, legend }: HotelMapProps) {
 
       {open && (
         <View>
-          {image !== undefined && (
+          {images.length > 0 && (
             <>
               <View style={s.divider} />
               <View
                 style={s.imageContainer}
-                onLayout={(e) => setImgW(Math.floor(e.nativeEvent.layout.width) - Spacing.md * 2)}
+                onLayout={(e) => setContainerWidth(Math.floor(e.nativeEvent.layout.width))}
               >
-                <ScrollView
-                  style={{ height: imgH > 0 ? Math.min(imgH, 420) : 420 }}
-                  minimumZoomScale={1}
-                  maximumZoomScale={4}
-                  centerContent
-                  bouncesZoom
-                  showsHorizontalScrollIndicator={false}
-                  showsVerticalScrollIndicator={false}
-                >
-                  {imgW > 0 && (
-                    <Image
-                      source={image as never}
-                      style={{ width: imgW, height: imgH }}
-                      resizeMode="stretch"
-                    />
-                  )}
-                </ScrollView>
-                <Text style={s.zoomHint}>Pinch to zoom</Text>
+                {pageWidth > 0 && (
+                  <>
+                    {/* Horizontal paging carousel — one map per page.
+                        Each page contains its own pinch-to-zoom scroll
+                        view so guests can zoom in on either map. */}
+                    <ScrollView
+                      horizontal
+                      pagingEnabled
+                      showsHorizontalScrollIndicator={false}
+                      onMomentumScrollEnd={handleScrollEnd}
+                      // Fixed height so images below don't shift the card.
+                      style={{ height: pageHeight }}
+                    >
+                      {images.map((img, i) => (
+                        <ScrollView
+                          key={i}
+                          style={{ width: pageWidth, height: pageHeight }}
+                          minimumZoomScale={1}
+                          maximumZoomScale={4}
+                          centerContent
+                          bouncesZoom
+                          showsHorizontalScrollIndicator={false}
+                          showsVerticalScrollIndicator={false}
+                        >
+                          <Image
+                            source={img as never}
+                            style={{ width: pageWidth, height: pageHeight }}
+                            resizeMode="contain"
+                          />
+                        </ScrollView>
+                      ))}
+                    </ScrollView>
+
+                    {images.length > 1 && (
+                      <View style={s.pageDots}>
+                        {images.map((_, i) => (
+                          <View
+                            key={i}
+                            style={[s.pageDot, i === currentPage && s.pageDotActive]}
+                          />
+                        ))}
+                      </View>
+                    )}
+
+                    <Text style={s.zoomHint}>
+                      {images.length > 1
+                        ? 'Swipe between maps · pinch to zoom'
+                        : 'Pinch to zoom'}
+                    </Text>
+                  </>
+                )}
               </View>
             </>
           )}
@@ -154,6 +203,23 @@ const s = StyleSheet.create({
   imageContainer: {
     backgroundColor: '#FFFFFF',
     padding: Spacing.md,
+  },
+  pageDots: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: Spacing.sm,
+    gap: 6,
+  },
+  pageDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Colors.divider,
+  },
+  pageDotActive: {
+    backgroundColor: Colors.primary,
+    width: 18,
   },
   zoomHint: {
     fontSize: 10,
