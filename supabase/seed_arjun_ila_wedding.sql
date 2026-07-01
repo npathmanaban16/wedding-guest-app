@@ -17,18 +17,11 @@
 -- Admin logins:  Arjun Desai, Ila Lohia  (both seeded as admins)
 -- Admin password: ArjunIla   (home-tab admin unlock)
 --
--- ⚠️ Known limitations remaining after this seed:
---   * The Schedule tab now reads from public.wedding_events (added in
---     migration 026 and seeded below), so the Arjun & Ila schedule is
---     correct — Sangeet, Baraat, Ceremony, Reception, with the right
---     dates, venues, and dress codes.
---   * The destination guide tab now reads from public.wedding_guides
---     (added in migration 027 and seeded below), so the Arjun & Ila
---     guide is Laguna Niguel / Orange County content rather than
---     Montreux.
---   * The Packing tab is still hardcoded to Montreux in
---     constants/weddingData.ts (PACKING_GUIDE_*). That's the
---     remaining follow-up code change — same DB-first treatment.
+-- All three per-wedding content tabs now read from DB tables (added
+-- in migrations 026 / 027 / 028 and seeded below):
+--   * Schedule       → public.wedding_events
+--   * Destination    → public.wedding_guides
+--   * Packing list   → public.wedding_packing_lists
 --
 -- Hero image: leave hero_image_url null for now and either
 --   1. upload a Ritz-Carlton Laguna Niguel photo to the
@@ -624,3 +617,285 @@ insert into public.wedding_guides (
   -- photo_strip intentionally NOT overwritten on conflict so a value set
   -- via the dashboard isn't clobbered by re-running this seed.
   updated_at        = now();
+
+
+-- ─── Packing List ────────────────────────────────────────────────────────────
+-- Laguna Niguel / Orange County / Indian + black-tie packing content
+-- tailored to Arjun & Ila's weekend. Stored as a single row in
+-- public.wedding_packing_lists (migration 028).
+--
+-- categories JSON items support these client-side visibility flags:
+--   * weddingPartyOnly   — only shown to wedding-party guests
+--   * excludeWeddingParty — hidden from wedding-party guests
+--   * bridalPartyOnly    — only shown to bridesmaids/bridesman
+--   * excludeBridalParty  — hidden from bridesmaids/bridesman
+--   * gender ('male' | 'female') — only shown to guests of that gender
+-- When gender is unknown on the guest row, all items show.
+
+insert into public.wedding_packing_lists (
+  wedding_id, page_title, page_subtitle_tag, page_subtitle,
+  completion_message, categories, tip_footer
+) values (
+  'a0000000-0000-0000-0000-000000000003',
+  'Packing Guide',
+  'What to Bring',
+  'Outfit ideas and everything you need for a Southern California wedding weekend.',
+  $g$You're all packed! See you at the Ritz-Carlton!$g$,
+  $g$[
+    {
+      "id": "outfits",
+      "title": "Outfits",
+      "emoji": "👗",
+      "items": [
+        {
+          "id": "sangeet-outfit-female",
+          "label": "Sangeet outfit",
+          "tip": "Vibrant and festive Indian attire — lehenga, saree, salwar kameez, or a colorful cocktail dress. Come ready to dance!",
+          "gender": "female"
+        },
+        {
+          "id": "sangeet-outfit-male",
+          "label": "Sangeet outfit",
+          "tip": "Vibrant and festive Indian attire — sherwani, kurta, or bandhgala. Come ready to dance!",
+          "gender": "male"
+        },
+        {
+          "id": "baraat-outfit-female",
+          "label": "Baraat outfit",
+          "tip": "Festive Indian attire, a touch more relaxed than the ceremony — lehenga, saree, or salwar kameez.",
+          "gender": "female"
+        },
+        {
+          "id": "baraat-outfit-male",
+          "label": "Baraat outfit",
+          "tip": "Festive Indian attire — kurta, sherwani, or bandhgala.",
+          "gender": "male"
+        },
+        {
+          "id": "ceremony-outfit-female",
+          "label": "Ceremony & Reception outfit",
+          "tip": "Indian formal or black-tie. Floor-length gown, saree, or lehenga.",
+          "gender": "female"
+        },
+        {
+          "id": "ceremony-outfit-male",
+          "label": "Ceremony & Reception outfit",
+          "tip": "Black-tie: tuxedo or black suit. Or Indian formal: sherwani or bandhgala.",
+          "gender": "male"
+        },
+        {
+          "id": "casual-outfits",
+          "label": "Casual outfits for the beach and sightseeing (1–2)"
+        },
+        {
+          "id": "swimsuit-female",
+          "label": "Swimsuit for the Ritz pools and hot tub",
+          "gender": "female"
+        },
+        {
+          "id": "swim-trunks-male",
+          "label": "Swim trunks for the Ritz pools and hot tub",
+          "gender": "male"
+        },
+        {
+          "id": "travel-outfit",
+          "label": "Comfortable travel outfit"
+        }
+      ]
+    },
+    {
+      "id": "footwear",
+      "title": "Footwear",
+      "emoji": "👠",
+      "items": [
+        {
+          "id": "sangeet-shoes-female",
+          "label": "Comfortable heels or flats for the Sangeet",
+          "tip": "You'll be dancing all night — choose shoes you can move in.",
+          "gender": "female"
+        },
+        {
+          "id": "sangeet-shoes-male",
+          "label": "Comfortable shoes for the Sangeet",
+          "tip": "Dressy but comfortable — you'll be on your feet all night.",
+          "gender": "male"
+        },
+        {
+          "id": "baraat-shoes",
+          "label": "Comfortable shoes for the Baraat",
+          "tip": "The Baraat is outdoors on grass and involves a procession — flats, wedges, or dress shoes you can move in."
+        },
+        {
+          "id": "ceremony-shoes-female",
+          "label": "Ceremony & Reception shoes",
+          "tip": "The ceremony is on an outdoor lawn — wedges or block heels won't sink into the grass the way stilettos do.",
+          "gender": "female"
+        },
+        {
+          "id": "ceremony-shoes-male",
+          "label": "Ceremony & Reception dress shoes",
+          "tip": "Polished black or oxblood pairs well with a tux or dark suit.",
+          "gender": "male"
+        },
+        {
+          "id": "sandals",
+          "label": "Sandals or flip-flops for the beach and pool"
+        },
+        {
+          "id": "walking-shoes",
+          "label": "Comfortable walking shoes for sightseeing"
+        }
+      ]
+    },
+    {
+      "id": "weather-essentials",
+      "title": "Southern California Essentials",
+      "emoji": "☀️",
+      "items": [
+        {
+          "id": "sunglasses",
+          "label": "Sunglasses"
+        },
+        {
+          "id": "sunscreen",
+          "label": "Sunscreen",
+          "tip": "The ceremony is outdoors at noon on the Bluffs Lawn — apply generously before the ceremony."
+        },
+        {
+          "id": "light-layer",
+          "label": "Light jacket, shawl, or pashmina",
+          "tip": "Ocean-front evenings in September can get breezy and 10–15°F cooler than the afternoon."
+        },
+        {
+          "id": "hair-clip-female",
+          "label": "Hair tie or clip for the outdoor ceremony",
+          "tip": "The Bluffs Lawn can be windy — a clip or spray keeps things in place for photos.",
+          "gender": "female"
+        },
+        {
+          "id": "reusable-water-bottle",
+          "label": "Reusable water bottle",
+          "tip": "Southern California is dry — easy to under-hydrate on a warm September day."
+        }
+      ]
+    },
+    {
+      "id": "attire-extras",
+      "title": "Attire Extras",
+      "emoji": "✨",
+      "items": [
+        {
+          "id": "jewelry",
+          "label": "Jewelry for each event",
+          "gender": "female"
+        },
+        {
+          "id": "safety-pins",
+          "label": "Safety pins (essential if wearing a saree)",
+          "gender": "female"
+        },
+        {
+          "id": "fashion-tape",
+          "label": "Double-sided fashion tape",
+          "gender": "female"
+        },
+        {
+          "id": "bindi",
+          "label": "Bindis and hair accessories",
+          "gender": "female"
+        },
+        {
+          "id": "bangles",
+          "label": "Bangles",
+          "gender": "female"
+        },
+        {
+          "id": "clutch",
+          "label": "Small clutch or evening bag",
+          "gender": "female"
+        },
+        {
+          "id": "bow-tie",
+          "label": "Bow tie or tie",
+          "gender": "male"
+        },
+        {
+          "id": "cufflinks",
+          "label": "Cufflinks",
+          "gender": "male"
+        },
+        {
+          "id": "belt",
+          "label": "Belt",
+          "gender": "male"
+        }
+      ]
+    },
+    {
+      "id": "grooming",
+      "title": "Grooming & Personal Care",
+      "emoji": "💄",
+      "items": [
+        { "id": "toothbrush", "label": "Toothbrush" },
+        { "id": "toothpaste", "label": "Toothpaste" },
+        { "id": "deodorant",  "label": "Deodorant" },
+        {
+          "id": "makeup-kit",
+          "label": "Makeup",
+          "gender": "female"
+        },
+        {
+          "id": "makeup-remover",
+          "label": "Makeup remover wipes",
+          "gender": "female"
+        },
+        {
+          "id": "hair-styling",
+          "label": "Hair styling tools (curler / straightener)",
+          "tip": "US outlets are 120V — dual-voltage tools work as-is; single-voltage tools from Europe or India need a converter, not just an adaptor.",
+          "gender": "female"
+        },
+        {
+          "id": "shaving-kit",
+          "label": "Shaving kit",
+          "gender": "male"
+        }
+      ]
+    },
+    {
+      "id": "essentials",
+      "title": "Travel Essentials",
+      "emoji": "🧳",
+      "items": [
+        {
+          "id": "id-passport",
+          "label": "Photo ID (US guests) or passport (international)",
+          "tip": "TSA now requires REAL ID-compliant licenses for US domestic flights. Passports work too."
+        },
+        {
+          "id": "us-plug-adaptor",
+          "label": "US plug adaptor (international guests only)",
+          "tip": "US outlets are Type A / Type B, 120V. Bring a converter too if your electronics aren't dual-voltage."
+        },
+        { "id": "phone-charger",  "label": "Phone charger" },
+        {
+          "id": "battery-pack",
+          "label": "Portable battery pack",
+          "tip": "Handy for long days at the beach, at the pool, or day-tripping to Disneyland."
+        },
+        { "id": "meds",           "label": "Personal medications" }
+      ]
+    }
+  ]$g$::jsonb,
+  $g${
+    "title": "Tip: Pack for sun by day, ocean breeze by night",
+    "text": "September in Laguna Niguel is warm and dry during the day but can be cool and windy in the evening. Pack a light layer for the outdoor ceremony and evening events by the water, and don't forget sunscreen for the noon Bluffs Lawn ceremony."
+  }$g$::jsonb
+) on conflict (wedding_id) do update set
+  page_title         = excluded.page_title,
+  page_subtitle_tag  = excluded.page_subtitle_tag,
+  page_subtitle      = excluded.page_subtitle,
+  completion_message = excluded.completion_message,
+  categories         = excluded.categories,
+  tip_footer         = excluded.tip_footer,
+  updated_at         = now();

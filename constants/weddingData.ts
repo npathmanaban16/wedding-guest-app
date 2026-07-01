@@ -1360,3 +1360,46 @@ export const PACKING_GUIDE_DEMO: PackingCategory[] = PACKING_GUIDE_NN
 
 export const PACKING_GUIDE: PackingCategory[] =
   DEFAULT_WEDDING_ID === null ? PACKING_GUIDE_DEMO : PACKING_GUIDE_NN;
+
+// Single resolved-packing-list shape consumed by the Packing tab and
+// the AI assistant. Same whether the underlying source is a
+// wedding_packing_lists row or the in-code fallback below.
+export interface WeddingPackingList {
+  pageTitle: string;
+  pageSubtitleTag?: string;
+  pageSubtitle?: string;
+  // Shown when the guest has checked off every visible item. Omit to
+  // fall back to the app default ("You're all packed!").
+  completionMessage?: string;
+  categories: PackingCategory[];
+  tipFooter?: {
+    title: string;
+    text: string;
+  };
+}
+
+// Bundled fallbacks for the legacy N&N + Emma & James tenants. New
+// tenants (Arjun & Ila and beyond) live in public.wedding_packing_lists.
+export const NN_FULL_PACKING_LIST: WeddingPackingList = {
+  pageTitle: 'Packing Guide',
+  pageSubtitleTag: 'What to Bring',
+  pageSubtitle: 'Outfit ideas and everything you need for a Swiss wedding weekend',
+  completionMessage: "You're all packed! See you in Switzerland!",
+  categories: PACKING_GUIDE_NN,
+  tipFooter: {
+    title: PACKING_TIP_FOOTER.title,
+    text: PACKING_TIP_FOOTER.text('Montreux'),
+  },
+};
+
+export const DEMO_FULL_PACKING_LIST: WeddingPackingList = {
+  ...NN_FULL_PACKING_LIST,
+  categories: PACKING_GUIDE_DEMO,
+};
+
+// Resolver for the code-defined fallback. N&N and Emma & James split
+// on NN_WEDDING_IDS so each keeps the strings its version had; every
+// other tenant should live in wedding_packing_lists.
+export function getCodePackingListForWedding(weddingId: string): WeddingPackingList {
+  return NN_WEDDING_IDS.has(weddingId) ? NN_FULL_PACKING_LIST : DEMO_FULL_PACKING_LIST;
+}

@@ -14,7 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
-import { PACKING_GUIDE_NN, PACKING_GUIDE_DEMO, PACKING_TIP_FOOTER, NN_WEDDING_IDS, PackingCategory, PackingItem } from '@/constants/weddingData';
+import type { PackingCategory, PackingItem } from '@/constants/weddingData';
 import {
   addCustomPackingItem,
   CustomPackingItem,
@@ -272,13 +272,12 @@ export default function PackingScreen() {
     setOpenTipId((cur) => (cur === id ? null : id));
   };
   const { guestName } = useAuth();
-  const { weddingId, isWeddingParty, isBridalParty, getGuestGender, wedding } = useWedding();
+  const { weddingId, isWeddingParty, isBridalParty, getGuestGender, packingList } = useWedding();
   const inWeddingParty = isWeddingParty(guestName ?? '');
   const inBridalParty = isBridalParty(guestName ?? '');
   const gender = getGuestGender(guestName ?? '');
-  const packingGuide = NN_WEDDING_IDS.has(wedding.id) ? PACKING_GUIDE_NN : PACKING_GUIDE_DEMO;
 
-  const filteredGuide = packingGuide.map((cat) => ({
+  const filteredGuide = packingList.categories.map((cat) => ({
     ...cat,
     items: cat.items.filter((item) => {
       if (item.weddingPartyOnly && !inWeddingParty) return false;
@@ -379,11 +378,13 @@ export default function PackingScreen() {
       >
       {/* Page header */}
       <View style={styles.pageHeader}>
-        <Text style={styles.pageTitle}>Packing Guide</Text>
-        <Text style={styles.pageSubtitleTag}>What to Bring</Text>
-        <Text style={styles.pageSubtitle}>
-          Outfit ideas and everything you need for a Swiss wedding weekend
-        </Text>
+        <Text style={styles.pageTitle}>{packingList.pageTitle}</Text>
+        {packingList.pageSubtitleTag && (
+          <Text style={styles.pageSubtitleTag}>{packingList.pageSubtitleTag}</Text>
+        )}
+        {packingList.pageSubtitle && (
+          <Text style={styles.pageSubtitle}>{packingList.pageSubtitle}</Text>
+        )}
       </View>
 
       {/* Overall progress */}
@@ -397,7 +398,9 @@ export default function PackingScreen() {
           {totalChecked} of {totalItems} items packed
         </Text>
         {overallPercent === 100 && (
-          <Text style={styles.allPackedText}>You're all packed! See you in Switzerland!</Text>
+          <Text style={styles.allPackedText}>
+            {packingList.completionMessage ?? "You're all packed!"}
+          </Text>
         )}
       </View>
 
@@ -425,11 +428,13 @@ export default function PackingScreen() {
         onInputFocus={handleInputFocus}
       />
 
-      {/* Tips footer */}
-      <View style={styles.tipsFooter}>
-        <Text style={styles.tipsTitle}>{PACKING_TIP_FOOTER.title}</Text>
-        <Text style={styles.tipsText}>{PACKING_TIP_FOOTER.text(wedding.destination_city)}</Text>
-      </View>
+      {/* Tips footer — hidden when the packing list ships no tip. */}
+      {packingList.tipFooter && (
+        <View style={styles.tipsFooter}>
+          <Text style={styles.tipsTitle}>{packingList.tipFooter.title}</Text>
+          <Text style={styles.tipsText}>{packingList.tipFooter.text}</Text>
+        </View>
+      )}
       </ScrollView>
     </KeyboardAvoidingView>
   );

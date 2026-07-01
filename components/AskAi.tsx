@@ -35,8 +35,6 @@ import { useWedding } from '@/context/WeddingContext';
 import {
   HOTEL_LOGISTICS,
   OFFSITE_VENUE_TRANSPORT,
-  PACKING_GUIDE_NN,
-  PACKING_GUIDE_DEMO,
   NN_WEDDING_IDS,
 } from '@/constants/weddingData';
 import {
@@ -77,7 +75,7 @@ interface ChatMessage {
 
 export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
   const { guestName } = useAuth();
-  const { wedding, weddingId, isWeddingParty, isBridalParty, getGuestGender, events: baseEvents, guide } = useWedding();
+  const { wedding, weddingId, isWeddingParty, isBridalParty, getGuestGender, events: baseEvents, guide, packingList } = useWedding();
   const insets = useSafeAreaInsets();
 
   const [open, setOpen] = useState(false);
@@ -103,7 +101,7 @@ export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
     () => baseEvents.map((e) => (eventOverrides[e.id] ? { ...e, ...eventOverrides[e.id] } : e)),
     [baseEvents, eventOverrides],
   );
-  const packingGuide = isNN ? PACKING_GUIDE_NN : PACKING_GUIDE_DEMO;
+  const packingGuide = packingList.categories;
 
   const profile: GuestProfile | null = guestName
     ? {
