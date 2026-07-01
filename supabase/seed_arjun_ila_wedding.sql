@@ -908,10 +908,10 @@ insert into public.wedding_packing_lists (
 -- events and the timezone footer, no photo or map card.
 --
 -- To add a venue photo later:
---   1. Upload to the wedding-hero-images bucket at
+--   1. Upload to the wedding-venue-images bucket (migration 030) at
 --      a0000000-0000-0000-0000-000000000003/venue.jpg
 --   2. update public.wedding_schedule_pages
---        set venue_photo_url = 'https://.../wedding-hero-images/.../venue.jpg'
+--        set venue_photo_url = 'https://.../wedding-venue-images/.../venue.jpg'
 --        where wedding_id = 'a0000000-0000-0000-0000-000000000003';
 -- Same idea for a Ritz-Carlton floor plan → venue_map_image_url.
 
