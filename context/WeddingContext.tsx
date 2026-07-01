@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, AppState, StyleSheet, Text, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   DEFAULT_WEDDING_ID,
@@ -312,6 +312,26 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
     await AsyncStorage.removeItem(WEDDING_ID_STORAGE_KEY);
     setWeddingId(null);
   }, []);
+
+  // Refetch the guest roster whenever the app returns to the
+  // foreground so profile photos / bios other guests just uploaded
+  // are visible without a full app restart. Only touches `guests` —
+  // wedding / events / guide / packing / schedule-page don't churn
+  // often enough to justify a foreground refetch. Errors are
+  // swallowed since this is a best-effort refresh; the previously
+  // loaded roster stays visible on network hiccups.
+  useEffect(() => {
+    if (!weddingId) return;
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') return;
+      fetchGuests(weddingId)
+        .then((g) => setGuests(g))
+        .catch((err) => {
+          console.warn('[WeddingProvider] foreground guest refetch failed', err);
+        });
+    });
+    return () => sub.remove();
+  }, [weddingId]);
 
   // In-memory patcher for the attendees array. Used by the Profile
   // editor on My Details to keep the Attendees directory in sync
