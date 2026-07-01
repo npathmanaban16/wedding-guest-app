@@ -19,7 +19,7 @@ import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { WeddingEvent } from '@/constants/weddingData';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
-import { FairmontMap } from '@/components/FairmontMap';
+import { HotelMap } from '@/components/HotelMap';
 import { haptic } from '@/utils/haptics';
 import { getEventOverrides, EventOverridePatch } from '@/services/storage';
 
@@ -357,7 +357,7 @@ function InfoRow({ icon, label, value }: InfoRowProps) {
 export default function ScheduleScreen() {
   const insets = useSafeAreaInsets();
   const { guestName } = useAuth();
-  const { weddingId, isWeddingParty, wedding, events } = useWedding();
+  const { weddingId, isWeddingParty, wedding, events, schedulePage } = useWedding();
   const inWeddingParty = isWeddingParty(guestName ?? '');
 
   // Admins can override per-event text fields (title, time, venue, etc.)
@@ -414,23 +414,38 @@ export default function ScheduleScreen() {
         ))}
       </View>
 
-      {/* Venue map */}
-      <View style={styles.mapSection}>
-        <FairmontMap />
-        <Image
-          source={require('@/assets/images/fairmont.png')}
-          style={styles.fairmontPhoto}
-          resizeMode="cover"
-        />
-      </View>
+      {/* Venue map + photo — each element hides independently when the
+          resolved schedule page has no content for it. The wrapping
+          section only renders when at least one is present. */}
+      {(schedulePage.venueMap || schedulePage.venuePhoto !== undefined) && (
+        <View style={styles.mapSection}>
+          {schedulePage.venueMap && (
+            <HotelMap
+              title={schedulePage.venueMap.title}
+              image={schedulePage.venueMap.image}
+              legend={schedulePage.venueMap.legend}
+            />
+          )}
+          {schedulePage.venuePhoto !== undefined && (
+            <Image
+              source={schedulePage.venuePhoto as never}
+              style={styles.fairmontPhoto}
+              resizeMode="cover"
+            />
+          )}
+        </View>
+      )}
 
-      {/* Footer note */}
-      <View style={styles.footerNote}>
-        <Ionicons name="time-outline" size={14} color={Colors.textMuted} style={{ marginRight: Spacing.xs }} />
-        <Text style={styles.footerText}>
-          All times are Central European Summer Time (CEST / UTC+2)
-        </Text>
-      </View>
+      {/* Timezone footer — hidden when the resolved schedule page has
+          no note to show (e.g. a new tenant hasn't populated one). */}
+      {schedulePage.timezoneNote && (
+        <View style={styles.footerNote}>
+          <Ionicons name="time-outline" size={14} color={Colors.textMuted} style={{ marginRight: Spacing.xs }} />
+          <Text style={styles.footerText}>
+            {schedulePage.timezoneNote}
+          </Text>
+        </View>
+      )}
     </ScrollView>
   );
 }

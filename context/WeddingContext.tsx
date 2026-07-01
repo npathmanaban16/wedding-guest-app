@@ -6,9 +6,11 @@ import {
   getCodeEventsForWedding,
   getCodeGuideForWedding,
   getCodePackingListForWedding,
+  getCodeSchedulePageForWedding,
   type WeddingEvent,
   type WeddingGuide,
   type WeddingPackingList,
+  type WeddingSchedulePage,
 } from '@/constants/weddingData';
 import { Colors } from '@/constants/theme';
 import {
@@ -26,6 +28,7 @@ import {
 import { fetchWeddingEvents } from '@/services/events';
 import { fetchWeddingGuide } from '@/services/guide';
 import { fetchWeddingPackingList } from '@/services/packing';
+import { fetchWeddingSchedulePage } from '@/services/schedulePage';
 
 export type { AdminRole, Gender };
 
@@ -67,6 +70,12 @@ interface WeddingContextType {
   // falls back to NN_FULL_PACKING_LIST / DEMO_FULL_PACKING_LIST for
   // legacy tenants. Same pattern as `guide` above.
   packingList: WeddingPackingList;
+  // Resolved schedule-page overrides — venue photo, hotel map, and
+  // timezone footer under the schedule timeline. Prefers a row in
+  // public.wedding_schedule_pages; falls back to bundled Fairmont
+  // content for legacy tenants, or an empty (all-hidden) page for
+  // new tenants without a row.
+  schedulePage: WeddingSchedulePage;
   isValidGuest: (name: string) => boolean;
   isValidGuestOrAdmin: (name: string) => boolean;
   getCanonicalName: (name: string) => string | null;
@@ -124,6 +133,11 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
   // wedding_packing_lists", in which case the resolver falls back to
   // the bundled NN/DEMO_FULL_PACKING_LIST.
   const [dbPackingList, setDbPackingList] = useState<WeddingPackingList | null>(null);
+  // DB-backed schedule-page overrides for this wedding; null means
+  // "no row in wedding_schedule_pages", in which case the resolver
+  // returns the Fairmont fallback (for N&N + Emma & James) or an
+  // empty page (for everyone else).
+  const [dbSchedulePage, setDbSchedulePage] = useState<WeddingSchedulePage | null>(null);
   const [loadState, setLoadState] = useState<'idle' | 'loading' | 'ready' | 'error'>(
     DEFAULT_WEDDING_ID ? 'loading' : 'idle',
   );
@@ -153,6 +167,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       setDbEvents([]);
       setDbGuide(null);
       setDbPackingList(null);
+      setDbSchedulePage(null);
       return;
     }
     // Defensive: if weddingId somehow isn't a uuid-shaped string, clear it.
@@ -177,13 +192,13 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const [w, g, a, e, gd, pl] = await Promise.all([
+        const [w, g, a, e, gd, pl, sp] = await Promise.all([
           fetchWedding(weddingId),
           fetchGuests(weddingId),
           fetchAdmins(weddingId),
-          // Events / guide / packing failing shouldn't take the whole
-          // wedding load down — we fall back to code defaults if any is
-          // unreachable.
+          // Events / guide / packing / schedule-page failing shouldn't
+          // take the whole wedding load down — we fall back to code
+          // defaults if any is unreachable.
           fetchWeddingEvents(weddingId).catch((err) => {
             console.warn('[WeddingProvider] failed to load wedding_events', err);
             return [];
@@ -194,6 +209,10 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
           }),
           fetchWeddingPackingList(weddingId).catch((err) => {
             console.warn('[WeddingProvider] failed to load wedding_packing_lists', err);
+            return null;
+          }),
+          fetchWeddingSchedulePage(weddingId).catch((err) => {
+            console.warn('[WeddingProvider] failed to load wedding_schedule_pages', err);
             return null;
           }),
         ]);
@@ -212,6 +231,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
         setDbEvents(e);
         setDbGuide(gd);
         setDbPackingList(pl);
+        setDbSchedulePage(sp);
         setLoadState('ready');
       } catch (err) {
         console.error('[WeddingProvider] failed to load wedding data', err);
@@ -231,12 +251,12 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       // flip loadState to 'loading' for a render, unmounting the Stack and
       // eating any router.replace() fired by the caller.
       //
-      // Events / guide / packing aren't part of the resolved bundle
-      // (the invite preview only validates wedding + guests + admins).
-      // Fetch them here so the first render after login has the right
-      // schedule, destination guide, and packing list; on failure we
-      // fall back to code defaults via the resolver below.
-      const [e, gd, pl] = await Promise.all([
+      // Events / guide / packing / schedule-page aren't part of the
+      // resolved bundle (the invite preview only validates wedding +
+      // guests + admins). Fetch them here so the first render after
+      // login has all the right content; on failure we fall back to
+      // code defaults via the resolver below.
+      const [e, gd, pl, sp] = await Promise.all([
         fetchWeddingEvents(w.id).catch((err) => {
           console.warn('[WeddingProvider] failed to pre-load wedding_events', err);
           return [] as WeddingEvent[];
@@ -247,6 +267,10 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
         }),
         fetchWeddingPackingList(w.id).catch((err) => {
           console.warn('[WeddingProvider] failed to pre-load wedding_packing_lists', err);
+          return null;
+        }),
+        fetchWeddingSchedulePage(w.id).catch((err) => {
+          console.warn('[WeddingProvider] failed to pre-load wedding_schedule_pages', err);
           return null;
         }),
       ]);
@@ -260,6 +284,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       setDbEvents(e);
       setDbGuide(gd);
       setDbPackingList(pl);
+      setDbSchedulePage(sp);
       setLoadState('ready');
       setWeddingId(w.id);
     },
@@ -294,6 +319,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
 
     const guide: WeddingGuide = dbGuide ?? getCodeGuideForWedding(weddingId);
     const packingList: WeddingPackingList = dbPackingList ?? getCodePackingListForWedding(weddingId);
+    const schedulePage: WeddingSchedulePage = dbSchedulePage ?? getCodeSchedulePageForWedding(weddingId);
 
     const isValidGuest = (name: string) => guestByNormalized.has(normalizeName(name));
     // Raw membership in wedding_admins — used for login only. Admin-power
@@ -350,6 +376,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       events,
       guide,
       packingList,
+      schedulePage,
       isValidGuest,
       isValidGuestOrAdmin,
       getCanonicalName,
@@ -359,7 +386,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       isAdmin,
       getAdminRole,
     };
-  }, [weddingId, wedding, guests, admins, dbEvents, dbGuide, dbPackingList]);
+  }, [weddingId, wedding, guests, admins, dbEvents, dbGuide, dbPackingList, dbSchedulePage]);
 
   // Initial session restore — brief blank while AsyncStorage reads on SaaS.
   if (!sessionReady) {

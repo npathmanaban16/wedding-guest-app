@@ -899,3 +899,35 @@ insert into public.wedding_packing_lists (
   categories         = excluded.categories,
   tip_footer         = excluded.tip_footer,
   updated_at         = now();
+
+
+-- ─── Schedule Page Overrides ─────────────────────────────────────────────────
+-- Sets the PDT timezone footer under the schedule timeline. venue_photo_url
+-- and venue_map_image_url are left null — until you upload a Ritz-Carlton
+-- exterior photo and (optionally) a venue map, the timeline just shows the
+-- events and the timezone footer, no photo or map card.
+--
+-- To add a venue photo later:
+--   1. Upload to the wedding-hero-images bucket at
+--      a0000000-0000-0000-0000-000000000003/venue.jpg
+--   2. update public.wedding_schedule_pages
+--        set venue_photo_url = 'https://.../wedding-hero-images/.../venue.jpg'
+--        where wedding_id = 'a0000000-0000-0000-0000-000000000003';
+-- Same idea for a Ritz-Carlton floor plan → venue_map_image_url.
+
+insert into public.wedding_schedule_pages (
+  wedding_id, venue_photo_url, venue_map_image_url, venue_map_title,
+  venue_map_legend, timezone_note
+) values (
+  'a0000000-0000-0000-0000-000000000003',
+  null,
+  null,
+  null,
+  '[]'::jsonb,
+  'All times are Pacific Daylight Time (PDT / UTC−7)'
+) on conflict (wedding_id) do update set
+  -- venue_photo_url and venue_map_* intentionally NOT overwritten on
+  -- conflict — once you set them via the dashboard, re-running the seed
+  -- shouldn't clobber those. Only the timezone note stays in sync.
+  timezone_note = excluded.timezone_note,
+  updated_at    = now();

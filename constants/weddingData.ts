@@ -1403,3 +1403,86 @@ export const DEMO_FULL_PACKING_LIST: WeddingPackingList = {
 export function getCodePackingListForWedding(weddingId: string): WeddingPackingList {
   return NN_WEDDING_IDS.has(weddingId) ? NN_FULL_PACKING_LIST : DEMO_FULL_PACKING_LIST;
 }
+
+// ============================================================
+// SCHEDULE PAGE OVERRIDES
+// ============================================================
+// Configurable per-wedding pieces at the bottom of the Schedule tab:
+// the venue photo, the hotel/venue map card (image + legend), and
+// the timezone footer note.
+//
+// Legacy tenants (N&N + Emma & James) fall back to the bundled
+// Fairmont content below. New tenants live in
+// public.wedding_schedule_pages (migration 029) with any subset of
+// fields — null hides that piece of UI.
+
+export interface WeddingMapLegendItem {
+  n: number;
+  event: string;
+  room: string;
+  when: string;
+  color: string;
+}
+
+export interface WeddingSchedulePage {
+  // Photo shown under the map. `undefined` hides the image entirely.
+  // Type is `unknown` so it can hold either a require()'d module id
+  // (bundled asset for the Fairmont fallback) or a `{ uri }` object
+  // (URL from a wedding_schedule_pages row).
+  venuePhoto?: unknown;
+  venueMap?: {
+    title: string;
+    // Hidden when both `image` and `legend` end up empty.
+    image?: unknown;
+    legend: WeddingMapLegendItem[];
+  };
+  // Footer note under the timeline; `undefined` hides the footer row.
+  timezoneNote?: string;
+}
+
+// Bundled fallback for the Fairmont Le Montreux Palace (N&N + Emma &
+// James). Uses the venue arrays that used to be hardcoded in
+// components/FairmontMap.tsx.
+const FAIRMONT_VENUES_NN: WeddingMapLegendItem[] = [
+  { n: 1, event: 'Sangeet',   room: 'La Coupole & Terrasse du Petit Palais', when: 'Fri 22 May · 6:30 PM', color: '#B81D56' },
+  { n: 2, event: 'Ceremony',  room: 'Garden',                                when: 'Sat 23 May · 5:00 PM', color: '#4A7040' },
+  { n: 3, event: 'Reception', room: 'Salle des Fêtes',                       when: 'Sat 23 May · 7:30 PM', color: '#8B5E6B' },
+];
+
+const FAIRMONT_VENUES_DEMO: WeddingMapLegendItem[] = [
+  { n: 1, event: 'Welcome Party', room: 'La Coupole & Terrasse du Petit Palais', when: 'Fri 21 May · 6:30 PM', color: '#B81D56' },
+  { n: 2, event: 'Ceremony',      room: 'Garden',                                when: 'Sat 22 May · 5:00 PM', color: '#4A7040' },
+  { n: 3, event: 'Reception',     room: 'Salle des Fêtes',                       when: 'Sat 22 May · 7:30 PM', color: '#8B5E6B' },
+];
+
+export const FAIRMONT_SCHEDULE_PAGE_NN: WeddingSchedulePage = {
+  venuePhoto: require('@/assets/images/fairmont.png'),
+  venueMap: {
+    title: 'Hotel Map',
+    image: require('@/assets/images/fairmont_floor_plan.png'),
+    legend: FAIRMONT_VENUES_NN,
+  },
+  timezoneNote: 'All times are Central European Summer Time (CEST / UTC+2)',
+};
+
+export const FAIRMONT_SCHEDULE_PAGE_DEMO: WeddingSchedulePage = {
+  ...FAIRMONT_SCHEDULE_PAGE_NN,
+  venueMap: {
+    ...FAIRMONT_SCHEDULE_PAGE_NN.venueMap!,
+    legend: FAIRMONT_VENUES_DEMO,
+  },
+};
+
+// Empty schedule page for new tenants without a wedding_schedule_pages
+// row — everything hides. The DB-row path always wins over this.
+export const EMPTY_SCHEDULE_PAGE: WeddingSchedulePage = {};
+
+// Resolver for the code-defined fallback. N&N + Emma & James at the
+// Fairmont keep their bundled floor plan and photo; every other
+// tenant either has a wedding_schedule_pages row or falls through to
+// the empty page (map + venue photo + timezone footer all hidden).
+export function getCodeSchedulePageForWedding(weddingId: string): WeddingSchedulePage {
+  if (NN_WEDDING_IDS.has(weddingId)) return FAIRMONT_SCHEDULE_PAGE_NN;
+  if (weddingId === 'a0000000-0000-0000-0000-000000000002') return FAIRMONT_SCHEDULE_PAGE_DEMO;
+  return EMPTY_SCHEDULE_PAGE;
+}
