@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useCallback, useState } from 'react';
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   ScrollView,
   TextInput,
@@ -14,14 +15,24 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
 import { DEFAULT_WEDDING_ID, getTravelWindow } from '@/constants/weddingData';
-import { getMyInfo, saveMyInfo, deleteMyAccount, sendGuestMessage, MyInfo } from '@/services/storage';
+import {
+  getMyInfo,
+  saveMyInfo,
+  deleteMyAccount,
+  sendGuestMessage,
+  uploadGuestProfileImage,
+  MyInfo,
+} from '@/services/storage';
+import { updateGuestProfile } from '@/services/wedding';
 import { HotelPickerField } from '@/components/HotelPickerField';
 import { DateField } from '@/components/DateField';
+import { haptic } from '@/utils/haptics';
 
 // Kept in sync with WeddingContext's WEDDING_ID_STORAGE_KEY. Inlined here
 // so sign-out can drop the persisted wedding id without also clearing the
@@ -74,7 +85,32 @@ export default function MyInfoScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { guestName, logout } = useAuth();
-  const { weddingId, wedding } = useWedding();
+  const { weddingId, wedding, attendees, getCanonicalName } = useWedding();
+
+  // Look up this guest's own row from the roster so we can seed the
+  // profile-photo / bio editor. `getCanonicalName` normalizes the login
+  // name so casing / whitespace differences don't miss the match.
+  const canonicalName = guestName ? getCanonicalName(guestName) : null;
+  const myRow = canonicalName
+    ? attendees.find((a) => a.canonical_name === canonicalName)
+    : undefined;
+
+  // Local copies so the field / preview stay responsive while the save
+  // completes; reconciled against the fetched row on mount and after
+  // successful save.
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(myRow?.profile_photo_url ?? null);
+  const [bio, setBio] = useState<string>(myRow?.bio ?? '');
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [profileSaveStatus, setProfileSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const bioSaveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  // Re-sync when the roster loads or the guest switches accounts.
+  useEffect(() => {
+    setProfilePhotoUrl(myRow?.profile_photo_url ?? null);
+    setBio(myRow?.bio ?? '');
+  }, [myRow?.profile_photo_url, myRow?.bio]);
+
+  useEffect(() => () => clearTimeout(bioSaveTimer.current), []);
 
   // Travel window is keyed on the actual weddingId (not the build variant)
   // so the N&N wedding always gets its 2026 window even when reached from
@@ -155,6 +191,82 @@ export default function MyInfoScreen() {
   }, [weddingId, guestName]);
 
   useEffect(() => () => clearTimeout(saveTimer.current), []);
+
+  const handlePickProfilePhoto = async () => {
+    if (!canonicalName) return;
+    haptic.light();
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert(
+        'Photo access needed',
+        'Please allow photo library access in Settings to upload a profile picture.',
+      );
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+      allowsEditing: true,
+      aspect: [1, 1],
+    });
+    if (result.canceled || !result.assets[0]) return;
+
+    const asset = result.assets[0];
+    setUploadingPhoto(true);
+    try {
+      const url = await uploadGuestProfileImage(
+        weddingId,
+        canonicalName,
+        asset.uri,
+        asset.mimeType ?? 'image/jpeg',
+      );
+      await updateGuestProfile(weddingId, canonicalName, { profile_photo_url: url });
+      setProfilePhotoUrl(url);
+      haptic.success();
+    } catch {
+      Alert.alert('Upload failed', 'Could not upload your photo. Please try again.');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const handleRemoveProfilePhoto = () => {
+    if (!canonicalName) return;
+    Alert.alert('Remove profile photo?', undefined, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: async () => {
+          haptic.warning();
+          setProfilePhotoUrl(null);
+          try {
+            await updateGuestProfile(weddingId, canonicalName, { profile_photo_url: null });
+          } catch {
+            Alert.alert('Error', 'Could not remove your photo.');
+          }
+        },
+      },
+    ]);
+  };
+
+  const handleBioChange = (value: string) => {
+    if (!canonicalName) return;
+    setBio(value);
+    setProfileSaveStatus('saving');
+    clearTimeout(bioSaveTimer.current);
+    bioSaveTimer.current = setTimeout(async () => {
+      const trimmed = value.trim();
+      try {
+        await updateGuestProfile(weddingId, canonicalName, {
+          bio: trimmed.length === 0 ? null : trimmed,
+        });
+        setProfileSaveStatus('saved');
+      } catch {
+        setProfileSaveStatus('idle');
+      }
+    }, 1000);
+  };
 
   const persist = useCallback(async (updated: MyInfo) => {
     if (!guestName) return;
@@ -239,6 +351,79 @@ export default function MyInfoScreen() {
             <Text style={styles.guestBadgeName}>{guestName}</Text>
           </View>
         </View>
+
+        {/* Profile — shown to other guests on the Attendees directory */}
+        {canonicalName && (
+          <View style={styles.sectionCard}>
+            <Text style={styles.sectionTag}>Profile</Text>
+            <Text style={styles.sectionTitle}>How you'll show up to other guests</Text>
+            <Text style={styles.sectionSubtext}>
+              Optional. A photo and a short line help other guests recognize you at events.
+            </Text>
+
+            <View style={styles.profilePhotoRow}>
+              <View style={styles.profilePhotoWrapper}>
+                {profilePhotoUrl ? (
+                  <Image source={{ uri: profilePhotoUrl }} style={styles.profilePhoto} />
+                ) : (
+                  <View style={[styles.profilePhoto, styles.profilePhotoPlaceholder]}>
+                    <Ionicons name="person" size={38} color={Colors.textMuted} />
+                  </View>
+                )}
+                {uploadingPhoto && (
+                  <View style={styles.profilePhotoOverlay}>
+                    <ActivityIndicator color={Colors.white} />
+                  </View>
+                )}
+              </View>
+              <View style={styles.profilePhotoActions}>
+                <TouchableOpacity
+                  onPress={handlePickProfilePhoto}
+                  disabled={uploadingPhoto}
+                  style={styles.profilePhotoButton}
+                  activeOpacity={0.85}
+                >
+                  <Ionicons name="image-outline" size={14} color={Colors.white} />
+                  <Text style={styles.profilePhotoButtonText}>
+                    {profilePhotoUrl ? 'Change photo' : 'Upload photo'}
+                  </Text>
+                </TouchableOpacity>
+                {profilePhotoUrl && !uploadingPhoto && (
+                  <TouchableOpacity
+                    onPress={handleRemoveProfilePhoto}
+                    style={styles.profilePhotoRemoveButton}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.profilePhotoRemoveText}>Remove</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>How you know {wedding.couple_names}</Text>
+              <TextInput
+                style={[styles.fieldInput, styles.fieldInputMultiline]}
+                value={bio}
+                onChangeText={handleBioChange}
+                placeholder="e.g. Bride's college roommate"
+                placeholderTextColor={Colors.textMuted}
+                multiline
+                numberOfLines={2}
+                maxLength={140}
+              />
+              <View style={styles.profileFooter}>
+                <Text style={styles.profileFooterCount}>{bio.length}/140</Text>
+                {profileSaveStatus === 'saving' && (
+                  <Text style={styles.profileFooterHint}>Saving…</Text>
+                )}
+                {profileSaveStatus === 'saved' && (
+                  <Text style={styles.profileFooterHint}>Saved</Text>
+                )}
+              </View>
+            </View>
+          </View>
+        )}
 
         {/* Contact section */}
         <View style={styles.sectionCard}>
@@ -561,6 +746,80 @@ const styles = StyleSheet.create({
     minHeight: 80,
     textAlignVertical: 'top',
     paddingTop: 12,
+  },
+
+  profilePhotoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    marginBottom: Spacing.md,
+  },
+  profilePhotoWrapper: {
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  profilePhoto: {
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    backgroundColor: Colors.surfaceWarm,
+  },
+  profilePhotoPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  profilePhotoOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profilePhotoActions: { flex: 1, gap: Spacing.xs },
+  profilePhotoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: Colors.primary,
+    paddingVertical: 9,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.full,
+  },
+  profilePhotoButtonText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 13,
+    color: Colors.white,
+    letterSpacing: 0.3,
+  },
+  profilePhotoRemoveButton: {
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  profilePhotoRemoveText: {
+    fontFamily: Fonts.sans,
+    fontSize: 12,
+    color: Colors.textMuted,
+    textDecorationLine: 'underline',
+  },
+  profileFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
+  profileFooterCount: {
+    fontFamily: Fonts.sans,
+    fontSize: 11,
+    color: Colors.textMuted,
+  },
+  profileFooterHint: {
+    fontFamily: Fonts.sans,
+    fontSize: 11,
+    color: Colors.textMuted,
   },
 
   readOnlyField: {

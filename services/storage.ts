@@ -467,6 +467,40 @@ export async function uploadMessageImage(
   return data.publicUrl;
 }
 
+// Uploads a guest's profile photo to the `guest-profile-images` bucket and
+// returns its public URL. Path is `<wedding_id>/<slug>-<timestamp>.<ext>`
+// where slug is a normalized version of the guest name — bucket listings
+// stay auditable per tenant, and the timestamp guarantees a fresh URL each
+// upload so cached versions in RN <Image> don't stick around.
+//
+// The caller is expected to write the returned URL back to
+// guests.profile_photo_url (via services/wedding.ts#updateGuestProfile).
+export async function uploadGuestProfileImage(
+  weddingId: string,
+  guestName: string,
+  localUri: string,
+  mimeType: string,
+): Promise<string> {
+  const ext = mimeType.split('/')[1]?.toLowerCase() || 'jpg';
+  const slug = guestName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40) || 'guest';
+  const filename = `${slug}-${Date.now()}.${ext}`;
+  const path = `${weddingId}/${filename}`;
+
+  const arrayBuffer = await fetch(localUri).then((r) => r.arrayBuffer());
+
+  const { error } = await supabase.storage
+    .from('guest-profile-images')
+    .upload(path, arrayBuffer, { contentType: mimeType, upsert: false });
+  if (error) throw new Error(error.message);
+
+  const { data } = supabase.storage.from('guest-profile-images').getPublicUrl(path);
+  return data.publicUrl;
+}
+
 // ─── Notification Reactions ───────────────────────────────────────────────────
 
 export interface ReactionSummary {

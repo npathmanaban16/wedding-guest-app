@@ -76,6 +76,13 @@ interface WeddingContextType {
   // content for legacy tenants, or an empty (all-hidden) page for
   // new tenants without a row.
   schedulePage: WeddingSchedulePage;
+  // Full guest roster for this wedding — powers the Attendees
+  // directory on the Messages tab and any future "who's here" UI.
+  // Includes canonical name, party flags, gender, and optional
+  // profile picture URL / bio. Mutable via services/wedding.ts's
+  // updateGuestProfile; callers should refresh from the DB after
+  // an edit for now (the context returns the initial load-time set).
+  attendees: GuestRow[];
   isValidGuest: (name: string) => boolean;
   isValidGuestOrAdmin: (name: string) => boolean;
   getCanonicalName: (name: string) => string | null;
@@ -377,6 +384,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       guide,
       packingList,
       schedulePage,
+      attendees: guests,
       isValidGuest,
       isValidGuestOrAdmin,
       getCanonicalName,
