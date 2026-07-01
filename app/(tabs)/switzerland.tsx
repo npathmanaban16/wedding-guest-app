@@ -15,7 +15,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
-import { SWITZERLAND_GUIDE, GuideSection, GuideSubsection, GuideItem, GuideLink } from '@/constants/weddingData';
+import type { GuideSection, GuideSubsection, GuideItem, GuideLink } from '@/constants/weddingData';
 import { useWedding } from '@/context/WeddingContext';
 import { haptic } from '@/utils/haptics';
 
@@ -26,15 +26,6 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 const animateLayout = () => {
   if (Platform.OS !== 'web') LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
 };
-
-const PHOTO_STRIP_ITEMS = [
-  { src: require('@/assets/images/promenade.png'), label: 'Montreux Promenade' },
-  { src: require('@/assets/images/lauvaux.png'), label: 'Lavaux vineyards' },
-  { src: require('@/assets/images/narcissus_hike.png'), label: 'Narcissus hike' },
-  { src: require('@/assets/images/rochers_de_naye.png'), label: 'Rochers de Naye' },
-  { src: require('@/assets/images/narcissus.png'), label: 'Narcissus fields in May' },
-  { src: require('@/assets/images/boat.png'), label: 'Lake Geneva boat ride' },
-];
 
 // Pass `name` when a human-readable landmark exists (e.g. "Glacier 3000",
 // "Rochers de Naye") so the maps app resolves to the actual destination
@@ -61,29 +52,34 @@ interface GuideItemCardProps {
   // parent — collapsed cards take half the row, and the expanded card
   // takes the full row so there's room for its body content.
   nested?: boolean;
+  // ISO 4217 code for the live-FX widget shown on the "currency" item.
+  // Skipped entirely when undefined (e.g. domestic weddings).
+  currencyCode?: string;
 }
 
-function GuideItemCard({ item, expanded, onToggle, nested = false }: GuideItemCardProps) {
+function GuideItemCard({ item, expanded, onToggle, nested = false, currencyCode }: GuideItemCardProps) {
   const [rates, setRates] = useState<ExchangeRates | null>(null);
   const [ratesLoading, setRatesLoading] = useState(false);
   const fetchedRef = useRef(false);
 
-  const isCurrency = item.id === 'currency';
+  // Only enable the live-FX widget when this guide includes a currency
+  // code AND the item is the one explicitly tagged as the currency card.
+  const isCurrency = !!currencyCode && item.id === 'currency';
 
   useEffect(() => {
     if (isCurrency && expanded && !fetchedRef.current) {
       fetchedRef.current = true;
       setRatesLoading(true);
-      fetch('https://api.frankfurter.app/latest?from=CHF&to=USD,GBP,EUR')
+      fetch(`https://api.frankfurter.app/latest?from=${currencyCode}&to=USD,GBP,EUR`)
         .then((r) => r.json())
         .then((data) => setRates(data.rates))
         .catch(() => {})
         .finally(() => setRatesLoading(false));
     }
-  }, [isCurrency, expanded]);
+  }, [isCurrency, expanded, currencyCode]);
 
   const description = isCurrency && rates
-    ? `Switzerland uses Swiss Francs (CHF). 1 CHF = $${rates.USD.toFixed(2)} / €${rates.EUR.toFixed(2)} / £${rates.GBP.toFixed(2)}.`
+    ? `1 ${currencyCode} = $${rates.USD.toFixed(2)} / €${rates.EUR.toFixed(2)} / £${rates.GBP.toFixed(2)}. ${item.description}`
     : item.description;
 
   return (
@@ -156,9 +152,10 @@ interface SubsectionBlockProps {
   subsection: GuideSubsection;
   expanded: boolean;
   onToggle: () => void;
+  currencyCode?: string;
 }
 
-function SubsectionBlock({ subsection, expanded, onToggle }: SubsectionBlockProps) {
+function SubsectionBlock({ subsection, expanded, onToggle, currencyCode }: SubsectionBlockProps) {
   // Which child item is currently open inside this subsection. One-open-
   // at-a-time scoped to this subsection — opening a sibling item collapses
   // the previous one, but doesn't close the subsection itself.
@@ -205,6 +202,7 @@ function SubsectionBlock({ subsection, expanded, onToggle }: SubsectionBlockProp
               expanded={openItemId === item.id}
               onToggle={() => toggleItem(item.id)}
               nested
+              currencyCode={currencyCode}
             />
           ))}
         </View>
@@ -220,9 +218,10 @@ interface SectionBlockProps {
   // top-level item (for items-only sections).
   openFirstLevelId: string | null;
   onToggleFirstLevel: (id: string) => void;
+  currencyCode?: string;
 }
 
-function SectionBlock({ section, openFirstLevelId, onToggleFirstLevel }: SectionBlockProps) {
+function SectionBlock({ section, openFirstLevelId, onToggleFirstLevel, currencyCode }: SectionBlockProps) {
   return (
     <View style={styles.sectionBlock}>
       <View style={styles.sectionHeader}>
@@ -235,6 +234,7 @@ function SectionBlock({ section, openFirstLevelId, onToggleFirstLevel }: Section
               subsection={sub}
               expanded={openFirstLevelId === sub.id}
               onToggle={() => onToggleFirstLevel(sub.id)}
+              currencyCode={currencyCode}
             />
           ))
         : section.items?.map((item) => (
@@ -243,22 +243,30 @@ function SectionBlock({ section, openFirstLevelId, onToggleFirstLevel }: Section
               item={item}
               expanded={openFirstLevelId === item.id}
               onToggle={() => onToggleFirstLevel(item.id)}
+              currencyCode={currencyCode}
             />
           ))}
     </View>
   );
 }
 
-function PhotoStrip() {
+interface PhotoStripProps {
+  photos: { source: unknown; label: string }[];
+}
+
+function PhotoStrip({ photos }: PhotoStripProps) {
+  if (photos.length === 0) return null;
   return (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.photoStrip}
     >
-      {PHOTO_STRIP_ITEMS.map((photo, i) => (
+      {photos.map((photo, i) => (
         <View key={i} style={styles.photoWrapper}>
-          <Image source={photo.src} style={styles.photoItem} resizeMode="cover" />
+          {/* `source` is whichever shape <Image> accepts: a require()
+              module id (bundled assets) or { uri }. */}
+          <Image source={photo.source as never} style={styles.photoItem} resizeMode="cover" />
           <Text style={styles.photoLabel}>{photo.label}</Text>
         </View>
       ))}
@@ -268,7 +276,7 @@ function PhotoStrip() {
 
 export default function SwitzerlandScreen() {
   const insets = useSafeAreaInsets();
-  const { wedding } = useWedding();
+  const { guide } = useWedding();
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   // One open first-level row page-wide. Subsections own their own
   // "which inner item is open" state so opening a nested item doesn't
@@ -279,11 +287,12 @@ export default function SwitzerlandScreen() {
     setOpenFirstLevelId((cur) => (cur === id ? null : id));
   };
 
-  const filters = ['All', 'Transport', 'Sightseeing', 'Activity', 'Restaurant', 'Bar', 'Practical'];
+  // First pill is the "show everything" reset (typically "All").
+  const resetPill = guide.filterPills[0] ?? 'All';
 
   const filteredGuide =
-    activeFilter && activeFilter !== 'All'
-      ? SWITZERLAND_GUIDE.map((section) => {
+    activeFilter && activeFilter !== resetPill
+      ? guide.sections.map((section) => {
           if (section.subsections) {
             const filteredSubs = section.subsections
               .map((sub) => ({
@@ -300,7 +309,7 @@ export default function SwitzerlandScreen() {
         }).filter((section) =>
           section.subsections ? section.subsections.length > 0 : (section.items?.length ?? 0) > 0
         )
-      : SWITZERLAND_GUIDE;
+      : guide.sections;
 
   return (
     <ScrollView
@@ -309,15 +318,17 @@ export default function SwitzerlandScreen() {
     >
       {/* Page header */}
       <View style={styles.pageHeader}>
-        <Text style={styles.pageTitle}>Switzerland Guide</Text>
-        <Text style={styles.pageSubtitleTag}>{wedding.destination_city} & Beyond</Text>
-        <Text style={styles.pageSubtitle}>
-          Everything you need to know about {wedding.destination_city} and making the most of your trip
-        </Text>
+        <Text style={styles.pageTitle}>{guide.pageTitle}</Text>
+        {guide.pageSubtitleTag && (
+          <Text style={styles.pageSubtitleTag}>{guide.pageSubtitleTag}</Text>
+        )}
+        {guide.pageSubtitle && (
+          <Text style={styles.pageSubtitle}>{guide.pageSubtitle}</Text>
+        )}
       </View>
 
-      {/* Photo strip — manual horizontal swipe. */}
-      <PhotoStrip />
+      {/* Photo strip — manual horizontal swipe. Hidden when no photos. */}
+      <PhotoStrip photos={guide.photoStrip} />
 
       {/* Filter pills */}
       <ScrollView
@@ -325,16 +336,16 @@ export default function SwitzerlandScreen() {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.filters}
       >
-        {filters.map((f) => (
+        {guide.filterPills.map((f) => (
           <TouchableOpacity
             key={f}
-            style={[styles.filterPill, (activeFilter === f || (!activeFilter && f === 'All')) && styles.filterPillActive]}
-            onPress={() => setActiveFilter(f === 'All' ? null : f)}
+            style={[styles.filterPill, (activeFilter === f || (!activeFilter && f === resetPill)) && styles.filterPillActive]}
+            onPress={() => setActiveFilter(f === resetPill ? null : f)}
           >
             <Text
               style={[
                 styles.filterText,
-                (activeFilter === f || (!activeFilter && f === 'All')) && styles.filterTextActive,
+                (activeFilter === f || (!activeFilter && f === resetPill)) && styles.filterTextActive,
               ]}
             >
               {f}
@@ -350,37 +361,25 @@ export default function SwitzerlandScreen() {
           section={section}
           openFirstLevelId={openFirstLevelId}
           onToggleFirstLevel={toggleFirstLevel}
+          currencyCode={guide.currencyCode}
         />
       ))}
 
-      {/* Quick facts */}
-      <View style={styles.quickFacts}>
-        <Text style={styles.quickFactsTitle}>Quick Facts</Text>
-        <View style={styles.factRow}>
-          <Text style={styles.factKey}>Currency</Text>
-          <Text style={styles.factValue}>Swiss Franc (CHF)</Text>
+      {/* Quick facts. Hidden when the guide ships no rows. */}
+      {guide.quickFacts.length > 0 && (
+        <View style={styles.quickFacts}>
+          <Text style={styles.quickFactsTitle}>Quick Facts</Text>
+          {guide.quickFacts.map((fact, i) => (
+            <React.Fragment key={fact.key}>
+              {i > 0 && <View style={styles.factDivider} />}
+              <View style={styles.factRow}>
+                <Text style={styles.factKey}>{fact.key}</Text>
+                <Text style={styles.factValue}>{fact.value}</Text>
+              </View>
+            </React.Fragment>
+          ))}
         </View>
-        <View style={styles.factDivider} />
-        <View style={styles.factRow}>
-          <Text style={styles.factKey}>Language</Text>
-          <Text style={styles.factValue}>French (English widely spoken)</Text>
-        </View>
-        <View style={styles.factDivider} />
-        <View style={styles.factRow}>
-          <Text style={styles.factKey}>Time zone</Text>
-          <Text style={styles.factValue}>CEST (UTC+2)</Text>
-        </View>
-        <View style={styles.factDivider} />
-        <View style={styles.factRow}>
-          <Text style={styles.factKey}>Plug type</Text>
-          <Text style={styles.factValue}>Type J (bring universal adaptor!)</Text>
-        </View>
-        <View style={styles.factDivider} />
-        <View style={styles.factRow}>
-          <Text style={styles.factKey}>Emergency</Text>
-          <Text style={styles.factValue}>Police 117 · Ambulance 144</Text>
-        </View>
-      </View>
+      )}
     </ScrollView>
   );
 }

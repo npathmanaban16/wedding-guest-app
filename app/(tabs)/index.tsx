@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -20,7 +20,41 @@ import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
 import { supabase } from '@/lib/supabase';
 import { Colors, Fonts, Typography, Spacing, Radius, Shadow } from '@/constants/theme';
-import { WEDDING, EVENTS_NN, EVENTS_DEMO, NN_WEDDING_IDS } from '@/constants/weddingData';
+import { WEDDING, type WeddingEvent } from '@/constants/weddingData';
+
+// Pick the event to feature on the home screen at the current moment.
+//   - Skips events the guest can't see (wedding-party-only when they're not).
+//   - Returns the first event whose effective end is still in the future:
+//     'now' when it's currently in progress, 'upcoming' when it hasn't
+//     started yet, null when every event has ended.
+//   - When an event has no posted end (e.g. a Baraat), the next event's
+//     start time acts as the implicit end; if it's the final event, it
+//     stays "happening now" for one hour.
+type DisplayedEvent =
+  | { kind: 'now'; event: WeddingEvent }
+  | { kind: 'upcoming'; event: WeddingEvent };
+
+function pickDisplayedEvent(
+  events: WeddingEvent[],
+  inWeddingParty: boolean,
+  now: number,
+): DisplayedEvent | null {
+  const visible = events.filter((e) => !e.weddingPartyOnly || inWeddingParty);
+  for (let i = 0; i < visible.length; i++) {
+    const e = visible[i];
+    const startMs = new Date(e.startDate).getTime();
+    const explicitEnd = e.endDate ? new Date(e.endDate).getTime() : null;
+    const implicitEnd = explicitEnd ?? (
+      visible[i + 1]
+        ? new Date(visible[i + 1].startDate).getTime()
+        : startMs + 60 * 60 * 1000
+    );
+    if (now < implicitEnd) {
+      return { kind: now >= startMs ? 'now' : 'upcoming', event: e };
+    }
+  }
+  return null;
+}
 
 // Casual second-factor for the admin tools — gates the buttons on the home
 // tab so a guest borrowing an admin's logged-in phone can't fire pushes or
@@ -71,7 +105,7 @@ function QuickCard({ title, subtitle, onPress }: QuickCardProps) {
 
 export default function HomeScreen() {
   const { guestName, logout } = useAuth();
-  const { isWeddingParty, isAdmin, wedding } = useWedding();
+  const { isWeddingParty, isAdmin, wedding, events } = useWedding();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const weddingDate = React.useMemo(() => new Date(wedding.wedding_date), [wedding.wedding_date]);
@@ -79,8 +113,6 @@ export default function HomeScreen() {
   const firstName = guestName?.split(' ')[0] ?? 'Guest';
   const inWeddingParty = isWeddingParty(guestName ?? '');
   const isAdminUser = !!guestName && isAdmin(guestName);
-  const events = NN_WEDDING_IDS.has(wedding.id) ? EVENTS_NN : EVENTS_DEMO;
-
   // Admin tools are hidden behind a shared password until unlocked once on
   // this device. State is restored from AsyncStorage on mount and persists
   // across app launches; tapping "Lock again" clears it.
@@ -126,7 +158,15 @@ export default function HomeScreen() {
     try { await AsyncStorage.removeItem(adminUnlockKey(wedding.id)); } catch {}
     setAdminUnlocked(false);
   };
-  const firstEvent = events.find((e) => !e.weddingPartyOnly || inWeddingParty)!
+  // Re-pick the featured event every countdown tick so it advances from
+  // Sangeet → Baraat → Ceremony → Reception → nothing as the weekend
+  // unfolds, without having to wire up a separate timer.
+  const displayedEvent = useMemo(
+    () => pickDisplayedEvent(events, inWeddingParty, Date.now()),
+    // countdown ticks every second, which is the trigger we want here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [events, inWeddingParty, countdown.seconds, countdown.isPast],
+  );
 
   return (
     <ScrollView
@@ -134,9 +174,11 @@ export default function HomeScreen() {
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      {/* Hero header */}
+      {/* Hero header — prefers the per-wedding hero_image_url from the
+          `weddings` table when set, falls back to the bundled image so
+          tenants with no custom image still render something. */}
       <ImageBackground
-        source={WEDDING.heroImage}
+        source={wedding.hero_image_url ? { uri: wedding.hero_image_url } : WEDDING.heroImage}
         style={[styles.heroImage, { paddingTop: insets.top + Spacing.xl }]}
         resizeMode="cover"
       >
@@ -182,16 +224,23 @@ export default function HomeScreen() {
         )}
       </View>
 
-      {/* Next event */}
-      <View style={[styles.eventCard, Shadow.small]}>
-        <Text style={styles.eventTag}>FIRST EVENT</Text>
-        <Text style={styles.eventName}>{firstEvent.title}</Text>
-        <Text style={styles.eventDetail}>{firstEvent.date}</Text>
-        <Text style={styles.eventVenue}>{firstEvent.venue}</Text>
-        <TouchableOpacity onPress={() => router.push('/(tabs)/schedule')}>
-          <Text style={styles.eventLink}>View full schedule →</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Featured event card — hidden once the last event has ended so
+          the home screen doesn't keep linking to a past schedule. While
+          the wedding is on, the tag flips to "HAPPENING NOW" for the
+          event currently in progress. */}
+      {displayedEvent && (
+        <View style={[styles.eventCard, Shadow.small]}>
+          <Text style={styles.eventTag}>
+            {displayedEvent.kind === 'now' ? 'HAPPENING NOW' : 'UP NEXT'}
+          </Text>
+          <Text style={styles.eventName}>{displayedEvent.event.title}</Text>
+          <Text style={styles.eventDetail}>{displayedEvent.event.date}</Text>
+          <Text style={styles.eventVenue}>{displayedEvent.event.venue}</Text>
+          <TouchableOpacity onPress={() => router.push('/(tabs)/schedule')}>
+            <Text style={styles.eventLink}>View full schedule →</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Explore section */}
       <Text style={styles.sectionTitle}>Explore</Text>

@@ -52,8 +52,10 @@ export interface WeddingEvent {
   description: string;
   notes?: string;
   weddingPartyOnly?: boolean;
-  startDate: string; // ISO 8601
-  endDate: string;   // ISO 8601
+  startDate: string;  // ISO 8601
+  // Optional — some events have no posted end time (e.g. a Baraat).
+  // Calendar code falls back to startDate + 1h when this is missing.
+  endDate?: string;
   colorPalette?: { name: string; hex: string }[];
   outdoorNote?: string;
   outfitInspirationUrl?: string;
@@ -338,6 +340,59 @@ export const EVENTS_DEMO: WeddingEvent[] = EVENTS_NN.map((event) => {
 
 export const EVENTS: WeddingEvent[] =
   DEFAULT_WEDDING_ID === null ? EVENTS_DEMO : EVENTS_NN;
+
+// Pick the right code-default events array for a given wedding id. The
+// SaaS path also queries the wedding_events table (services/events.ts);
+// when DB rows exist for that wedding, callers prefer them over this
+// fallback. Centralised here so all consumers (home, schedule, admin,
+// AI assistant) agree on the selection rule.
+export function getCodeEventsForWedding(weddingId: string): WeddingEvent[] {
+  return NN_WEDDING_IDS.has(weddingId) ? EVENTS_NN : EVENTS_DEMO;
+}
+
+// ============================================================
+// DESTINATION GUIDE FALLBACK
+// ============================================================
+// Code-defined destination guide bundled at build time for tenants
+// without a row in public.wedding_guides. Mirrors the WeddingGuide
+// shape so consumers can read it identically to a DB-fetched guide.
+//
+// New tenants (Arjun & Ila and beyond) live in the wedding_guides
+// table; N&N and Emma & James keep using this constant.
+
+// Single resolved-guide shape consumed by the destination tab and
+// the AI assistant. Same whether the underlying source is a
+// wedding_guides row or this in-code fallback.
+export interface WeddingGuide {
+  pageTitle: string;
+  pageSubtitleTag?: string;
+  pageSubtitle?: string;
+  // ISO 4217 code (e.g. 'CHF'). When set, the destination tab fetches
+  // live FX rates and shows them on the "currency" guide item.
+  currencyCode?: string;
+  // First entry is the "show everything" reset (typically "All").
+  filterPills: string[];
+  sections: GuideSection[];
+  quickFacts: QuickFact[];
+  // Empty means the photo strip is omitted from the page entirely.
+  photoStrip: GuidePhoto[];
+}
+
+export interface QuickFact {
+  key: string;
+  value: string;
+}
+
+// `source` is whatever the React Native <Image> accepts: a `require()`
+// module ID (for bundled assets) or a `{ uri }` object (URL from the
+// wedding_guides row). Consumers pass it straight to <Image source>.
+export interface GuidePhoto {
+  source: unknown;
+  label: string;
+}
+
+// SWITZERLAND_FULL_GUIDE + getCodeGuideForWedding live below
+// SWITZERLAND_GUIDE so the section data they reference is in scope.
 
 // ============================================================
 // HOTEL LOGISTICS
@@ -834,6 +889,41 @@ export const SWITZERLAND_GUIDE: GuideSection[] = [
   },
 ];
 
+// Code-defined destination guide bundled at build time for tenants
+// without a row in public.wedding_guides. Mirrors the WeddingGuide
+// shape (declared above) so consumers can read it identically to a
+// DB-fetched guide.
+export const SWITZERLAND_FULL_GUIDE: WeddingGuide = {
+  pageTitle: 'Switzerland Guide',
+  pageSubtitleTag: 'Montreux & Beyond',
+  pageSubtitle: 'Everything you need to know about Montreux and making the most of your trip',
+  currencyCode: 'CHF',
+  filterPills: ['All', 'Transport', 'Sightseeing', 'Activity', 'Restaurant', 'Bar', 'Practical'],
+  sections: SWITZERLAND_GUIDE,
+  quickFacts: [
+    { key: 'Currency',  value: 'Swiss Franc (CHF)' },
+    { key: 'Language',  value: 'French (English widely spoken)' },
+    { key: 'Time zone', value: 'CEST (UTC+2)' },
+    { key: 'Plug type', value: 'Type J (bring universal adaptor!)' },
+    { key: 'Emergency', value: 'Police 117 · Ambulance 144' },
+  ],
+  photoStrip: [
+    { source: require('@/assets/images/promenade.png'),     label: 'Montreux Promenade' },
+    { source: require('@/assets/images/lauvaux.png'),       label: 'Lavaux vineyards' },
+    { source: require('@/assets/images/narcissus_hike.png'), label: 'Narcissus hike' },
+    { source: require('@/assets/images/rochers_de_naye.png'), label: 'Rochers de Naye' },
+    { source: require('@/assets/images/narcissus.png'),     label: 'Narcissus fields in May' },
+    { source: require('@/assets/images/boat.png'),          label: 'Lake Geneva boat ride' },
+  ],
+};
+
+// Resolver for the code-defined fallback. Both N&N and Emma & James
+// currently share the Switzerland guide; per-tenant variants can be
+// added here if needed.
+export function getCodeGuideForWedding(_weddingId: string): WeddingGuide {
+  return SWITZERLAND_FULL_GUIDE;
+}
+
 // ============================================================
 // PACKING GUIDE
 // ============================================================
@@ -1270,3 +1360,131 @@ export const PACKING_GUIDE_DEMO: PackingCategory[] = PACKING_GUIDE_NN
 
 export const PACKING_GUIDE: PackingCategory[] =
   DEFAULT_WEDDING_ID === null ? PACKING_GUIDE_DEMO : PACKING_GUIDE_NN;
+
+// Single resolved-packing-list shape consumed by the Packing tab and
+// the AI assistant. Same whether the underlying source is a
+// wedding_packing_lists row or the in-code fallback below.
+export interface WeddingPackingList {
+  pageTitle: string;
+  pageSubtitleTag?: string;
+  pageSubtitle?: string;
+  // Shown when the guest has checked off every visible item. Omit to
+  // fall back to the app default ("You're all packed!").
+  completionMessage?: string;
+  categories: PackingCategory[];
+  tipFooter?: {
+    title: string;
+    text: string;
+  };
+}
+
+// Bundled fallbacks for the legacy N&N + Emma & James tenants. New
+// tenants (Arjun & Ila and beyond) live in public.wedding_packing_lists.
+export const NN_FULL_PACKING_LIST: WeddingPackingList = {
+  pageTitle: 'Packing Guide',
+  pageSubtitleTag: 'What to Bring',
+  pageSubtitle: 'Outfit ideas and everything you need for a Swiss wedding weekend',
+  completionMessage: "You're all packed! See you in Switzerland!",
+  categories: PACKING_GUIDE_NN,
+  tipFooter: {
+    title: PACKING_TIP_FOOTER.title,
+    text: PACKING_TIP_FOOTER.text('Montreux'),
+  },
+};
+
+export const DEMO_FULL_PACKING_LIST: WeddingPackingList = {
+  ...NN_FULL_PACKING_LIST,
+  categories: PACKING_GUIDE_DEMO,
+};
+
+// Resolver for the code-defined fallback. N&N and Emma & James split
+// on NN_WEDDING_IDS so each keeps the strings its version had; every
+// other tenant should live in wedding_packing_lists.
+export function getCodePackingListForWedding(weddingId: string): WeddingPackingList {
+  return NN_WEDDING_IDS.has(weddingId) ? NN_FULL_PACKING_LIST : DEMO_FULL_PACKING_LIST;
+}
+
+// ============================================================
+// SCHEDULE PAGE OVERRIDES
+// ============================================================
+// Configurable per-wedding pieces at the bottom of the Schedule tab:
+// the venue photo, the hotel/venue map card (image + legend), and
+// the timezone footer note.
+//
+// Legacy tenants (N&N + Emma & James) fall back to the bundled
+// Fairmont content below. New tenants live in
+// public.wedding_schedule_pages (migration 029) with any subset of
+// fields — null hides that piece of UI.
+
+export interface WeddingMapLegendItem {
+  n: number;
+  event: string;
+  room: string;
+  when: string;
+  color: string;
+}
+
+export interface WeddingSchedulePage {
+  // Photo shown under the map. `undefined` hides the image entirely.
+  // Type is `unknown` so it can hold either a require()'d module id
+  // (bundled asset for the Fairmont fallback) or a `{ uri }` object
+  // (URL from a wedding_schedule_pages row).
+  venuePhoto?: unknown;
+  venueMap?: {
+    title: string;
+    // Ordered list of map images the guest swipes between. Empty is
+    // fine — the card can still render a legend-only view. Each entry
+    // is either a require()'d module id or a `{ uri }` object.
+    images: unknown[];
+    legend: WeddingMapLegendItem[];
+  };
+  // Footer note under the timeline; `undefined` hides the footer row.
+  timezoneNote?: string;
+}
+
+// Bundled fallback for the Fairmont Le Montreux Palace (N&N + Emma &
+// James). Uses the venue arrays that used to be hardcoded in
+// components/FairmontMap.tsx.
+const FAIRMONT_VENUES_NN: WeddingMapLegendItem[] = [
+  { n: 1, event: 'Sangeet',   room: 'La Coupole & Terrasse du Petit Palais', when: 'Fri 22 May · 6:30 PM', color: '#B81D56' },
+  { n: 2, event: 'Ceremony',  room: 'Garden',                                when: 'Sat 23 May · 5:00 PM', color: '#4A7040' },
+  { n: 3, event: 'Reception', room: 'Salle des Fêtes',                       when: 'Sat 23 May · 7:30 PM', color: '#8B5E6B' },
+];
+
+const FAIRMONT_VENUES_DEMO: WeddingMapLegendItem[] = [
+  { n: 1, event: 'Welcome Party', room: 'La Coupole & Terrasse du Petit Palais', when: 'Fri 21 May · 6:30 PM', color: '#B81D56' },
+  { n: 2, event: 'Ceremony',      room: 'Garden',                                when: 'Sat 22 May · 5:00 PM', color: '#4A7040' },
+  { n: 3, event: 'Reception',     room: 'Salle des Fêtes',                       when: 'Sat 22 May · 7:30 PM', color: '#8B5E6B' },
+];
+
+export const FAIRMONT_SCHEDULE_PAGE_NN: WeddingSchedulePage = {
+  venuePhoto: require('@/assets/images/fairmont.png'),
+  venueMap: {
+    title: 'Hotel Map',
+    images: [require('@/assets/images/fairmont_floor_plan.png')],
+    legend: FAIRMONT_VENUES_NN,
+  },
+  timezoneNote: 'All times are Central European Summer Time (CEST / UTC+2)',
+};
+
+export const FAIRMONT_SCHEDULE_PAGE_DEMO: WeddingSchedulePage = {
+  ...FAIRMONT_SCHEDULE_PAGE_NN,
+  venueMap: {
+    ...FAIRMONT_SCHEDULE_PAGE_NN.venueMap!,
+    legend: FAIRMONT_VENUES_DEMO,
+  },
+};
+
+// Empty schedule page for new tenants without a wedding_schedule_pages
+// row — everything hides. The DB-row path always wins over this.
+export const EMPTY_SCHEDULE_PAGE: WeddingSchedulePage = {};
+
+// Resolver for the code-defined fallback. N&N + Emma & James at the
+// Fairmont keep their bundled floor plan and photo; every other
+// tenant either has a wedding_schedule_pages row or falls through to
+// the empty page (map + venue photo + timezone footer all hidden).
+export function getCodeSchedulePageForWedding(weddingId: string): WeddingSchedulePage {
+  if (NN_WEDDING_IDS.has(weddingId)) return FAIRMONT_SCHEDULE_PAGE_NN;
+  if (weddingId === 'a0000000-0000-0000-0000-000000000002') return FAIRMONT_SCHEDULE_PAGE_DEMO;
+  return EMPTY_SCHEDULE_PAGE;
+}

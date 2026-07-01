@@ -18,12 +18,7 @@ import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
 import { haptic } from '@/utils/haptics';
-import {
-  EVENTS_NN,
-  EVENTS_DEMO,
-  NN_WEDDING_IDS,
-  WeddingEvent,
-} from '@/constants/weddingData';
+import { WeddingEvent } from '@/constants/weddingData';
 import {
   getEventOverrides,
   setEventOverride,
@@ -102,9 +97,12 @@ export default function AdminScheduleScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { guestName } = useAuth();
-  const { weddingId, isAdmin, wedding } = useWedding();
+  const { weddingId, isAdmin, wedding, events } = useWedding();
 
-  const codeEvents: WeddingEvent[] = NN_WEDDING_IDS.has(wedding.id) ? EVENTS_NN : EVENTS_DEMO;
+  // "Base" events to apply admin overrides on top of. For tenants on
+  // wedding_events these are the DB rows; for legacy tenants they're
+  // the code constants. Either way the override flow works the same.
+  const codeEvents: WeddingEvent[] = events;
 
   const [drafts, setDrafts] = useState<Record<string, DraftEvent>>({});
   const [saved, setSaved] = useState<Record<string, DraftEvent>>({});

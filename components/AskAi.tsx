@@ -33,13 +33,8 @@ import { Colors, Fonts, Radius, Shadow, Spacing, Typography } from '@/constants/
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
 import {
-  EVENTS_NN,
-  EVENTS_DEMO,
   HOTEL_LOGISTICS,
   OFFSITE_VENUE_TRANSPORT,
-  PACKING_GUIDE_NN,
-  PACKING_GUIDE_DEMO,
-  SWITZERLAND_GUIDE,
   NN_WEDDING_IDS,
 } from '@/constants/weddingData';
 import {
@@ -80,7 +75,7 @@ interface ChatMessage {
 
 export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
   const { guestName } = useAuth();
-  const { wedding, weddingId, isWeddingParty, isBridalParty, getGuestGender } = useWedding();
+  const { wedding, weddingId, isWeddingParty, isBridalParty, getGuestGender, events: baseEvents, guide, packingList } = useWedding();
   const insets = useSafeAreaInsets();
 
   const [open, setOpen] = useState(false);
@@ -102,12 +97,11 @@ export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
   const scrollRef = useRef<ScrollView | null>(null);
 
   const isNN = NN_WEDDING_IDS.has(wedding.id);
-  const baseEvents = isNN ? EVENTS_NN : EVENTS_DEMO;
   const events = useMemo(
     () => baseEvents.map((e) => (eventOverrides[e.id] ? { ...e, ...eventOverrides[e.id] } : e)),
     [baseEvents, eventOverrides],
   );
-  const packingGuide = isNN ? PACKING_GUIDE_NN : PACKING_GUIDE_DEMO;
+  const packingGuide = packingList.categories;
 
   const profile: GuestProfile | null = guestName
     ? {
@@ -132,10 +126,11 @@ export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
         wedding,
         events: filterEventsForGuest(events, profile),
         packingGuide: filterPackingForGuest(packingGuide, profile),
-        // Switzerland guide + Montreux hotel logistics ship with all weddings
-        // for now (single-destination app). When the SaaS variant grows
-        // multiple destinations these will switch on wedding.destination_city.
-        destinationGuide: SWITZERLAND_GUIDE,
+        // Resolved per-wedding destination guide — either DB-backed
+        // (wedding_guides row) or a code-defined fallback for legacy
+        // tenants. Hotel logistics + offsite-venue transport stay
+        // Montreux-specific for now and only apply to N&N + Emma & James.
+        destinationGuide: guide.sections,
         destinationCity: wedding.destination_city,
         hotelLogistics: HOTEL_LOGISTICS,
         offsiteVenueTransport: OFFSITE_VENUE_TRANSPORT,
@@ -147,6 +142,7 @@ export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
       wedding,
       events,
       packingGuide,
+      guide,
       profile?.guestName,
       profile?.isWeddingParty,
       profile?.isBridalParty,

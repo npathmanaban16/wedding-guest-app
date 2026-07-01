@@ -16,10 +16,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Calendar from 'expo-calendar';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
-import { EVENTS_NN, EVENTS_DEMO, NN_WEDDING_IDS, WeddingEvent } from '@/constants/weddingData';
+import { WeddingEvent } from '@/constants/weddingData';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
-import { FairmontMap } from '@/components/FairmontMap';
+import { HotelMap } from '@/components/HotelMap';
 import { haptic } from '@/utils/haptics';
 import { getEventOverrides, EventOverridePatch } from '@/services/storage';
 
@@ -62,10 +62,17 @@ async function addToCalendar(event: WeddingEvent, coupleNames: string) {
   }
 
   try {
+    const startDate = new Date(event.startDate);
+    // Some events have no posted end time. Default to a 1-hour block from
+    // the start so the calendar entry isn't open-ended.
+    const endDate = event.endDate
+      ? new Date(event.endDate)
+      : new Date(startDate.getTime() + 60 * 60 * 1000);
+
     await Calendar.createEventAsync(defaultCalendar.id, {
       title: `${event.title} — ${coupleNames}'s Wedding`,
-      startDate: new Date(event.startDate),
-      endDate: new Date(event.endDate),
+      startDate,
+      endDate,
       location: `${event.venue}\n${event.address}`,
       notes: [event.description, event.dressCode ? `Dress code: ${event.dressCode}` : null, event.notes].filter(Boolean).join('\n\n'),
       timeZone: 'Europe/Zurich',
@@ -350,9 +357,8 @@ function InfoRow({ icon, label, value }: InfoRowProps) {
 export default function ScheduleScreen() {
   const insets = useSafeAreaInsets();
   const { guestName } = useAuth();
-  const { weddingId, isWeddingParty, wedding } = useWedding();
+  const { weddingId, isWeddingParty, wedding, events, schedulePage } = useWedding();
   const inWeddingParty = isWeddingParty(guestName ?? '');
-  const events = NN_WEDDING_IDS.has(wedding.id) ? EVENTS_NN : EVENTS_DEMO;
 
   // Admins can override per-event text fields (title, time, venue, etc.)
   // without a code deploy. Fetched once on mount; if an admin edits while
@@ -408,23 +414,38 @@ export default function ScheduleScreen() {
         ))}
       </View>
 
-      {/* Venue map */}
-      <View style={styles.mapSection}>
-        <FairmontMap />
-        <Image
-          source={require('@/assets/images/fairmont.png')}
-          style={styles.fairmontPhoto}
-          resizeMode="cover"
-        />
-      </View>
+      {/* Venue map + photo — each element hides independently when the
+          resolved schedule page has no content for it. The wrapping
+          section only renders when at least one is present. */}
+      {(schedulePage.venueMap || schedulePage.venuePhoto !== undefined) && (
+        <View style={styles.mapSection}>
+          {schedulePage.venueMap && (
+            <HotelMap
+              title={schedulePage.venueMap.title}
+              images={schedulePage.venueMap.images}
+              legend={schedulePage.venueMap.legend}
+            />
+          )}
+          {schedulePage.venuePhoto !== undefined && (
+            <Image
+              source={schedulePage.venuePhoto as never}
+              style={styles.fairmontPhoto}
+              resizeMode="cover"
+            />
+          )}
+        </View>
+      )}
 
-      {/* Footer note */}
-      <View style={styles.footerNote}>
-        <Ionicons name="time-outline" size={14} color={Colors.textMuted} style={{ marginRight: Spacing.xs }} />
-        <Text style={styles.footerText}>
-          All times are Central European Summer Time (CEST / UTC+2)
-        </Text>
-      </View>
+      {/* Timezone footer — hidden when the resolved schedule page has
+          no note to show (e.g. a new tenant hasn't populated one). */}
+      {schedulePage.timezoneNote && (
+        <View style={styles.footerNote}>
+          <Ionicons name="time-outline" size={14} color={Colors.textMuted} style={{ marginRight: Spacing.xs }} />
+          <Text style={styles.footerText}>
+            {schedulePage.timezoneNote}
+          </Text>
+        </View>
+      )}
     </ScrollView>
   );
 }
