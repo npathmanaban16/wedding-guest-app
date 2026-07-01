@@ -193,7 +193,13 @@ export default function MyInfoScreen() {
   useEffect(() => () => clearTimeout(saveTimer.current), []);
 
   const handlePickProfilePhoto = async () => {
-    if (!canonicalName) return;
+    if (!canonicalName) {
+      Alert.alert(
+        'Not linked to a guest row',
+        "We couldn't find your name in the guest list, so uploads aren't wired up. Contact the couple if this is unexpected.",
+      );
+      return;
+    }
     haptic.light();
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
@@ -203,15 +209,25 @@ export default function MyInfoScreen() {
       );
       return;
     }
+    // Note: matching the admin message-images picker exactly — no
+    // allowsEditing. The iOS 17+ system cropper occasionally returned
+    // a ph:// or empty URI after editing which then died silently in
+    // the fetch → arrayBuffer step. Circular avatar cropping happens
+    // at render time via CSS instead.
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 0.8,
-      allowsEditing: true,
-      aspect: [1, 1],
     });
-    if (result.canceled || !result.assets[0]) return;
+    if (result.canceled) return;
+    const asset = result.assets?.[0];
+    if (!asset?.uri) {
+      Alert.alert(
+        'No photo selected',
+        'The picker didn\'t return an image. Please try again.',
+      );
+      return;
+    }
 
-    const asset = result.assets[0];
     setUploadingPhoto(true);
     try {
       const url = await uploadGuestProfileImage(
@@ -223,8 +239,13 @@ export default function MyInfoScreen() {
       await updateGuestProfile(weddingId, canonicalName, { profile_photo_url: url });
       setProfilePhotoUrl(url);
       haptic.success();
-    } catch {
-      Alert.alert('Upload failed', 'Could not upload your photo. Please try again.');
+    } catch (err) {
+      // Surface the actual error so we can see what's going wrong — the
+      // silent catch was hiding useful signals like "Bucket not found",
+      // "row-level security", or a bad file URI.
+      const message = err instanceof Error ? err.message : String(err);
+      console.error('[profile-photo] upload failed', err);
+      Alert.alert('Upload failed', message || 'Could not upload your photo. Please try again.');
     } finally {
       setUploadingPhoto(false);
     }
