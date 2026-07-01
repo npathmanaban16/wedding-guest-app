@@ -10,6 +10,10 @@ interface AttendeeCardProps {
   badge?: string;
 }
 
+// Square-ish card rendered inside a 2-column grid on the Attendees tab.
+// Photo (or initials) sits at the top, name centered below, optional
+// badge, then bio. No "Attending" fallback text — an empty bio just
+// doesn't render.
 export function AttendeeCard({ attendee, badge }: AttendeeCardProps) {
   const initials = getInitials(attendee.canonical_name);
   const hasPhoto = !!attendee.profile_photo_url;
@@ -29,23 +33,19 @@ export function AttendeeCard({ attendee, badge }: AttendeeCardProps) {
           </View>
         )}
       </View>
-      <View style={styles.body}>
-        <View style={styles.nameRow}>
-          <Text style={styles.name} numberOfLines={1}>
-            {attendee.canonical_name}
-          </Text>
-          {badge && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{badge}</Text>
-            </View>
-          )}
+      <Text style={styles.name} numberOfLines={1}>
+        {attendee.canonical_name}
+      </Text>
+      {badge && (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{badge}</Text>
         </View>
-        {attendee.bio ? (
-          <Text style={styles.bio}>{attendee.bio}</Text>
-        ) : (
-          <Text style={styles.bioEmpty}>Attending {attendee.is_wedding_party ? '· wedding party' : ''}</Text>
-        )}
-      </View>
+      )}
+      {attendee.bio && (
+        <Text style={styles.bio} numberOfLines={3}>
+          {attendee.bio}
+        </Text>
+      )}
     </View>
   );
 }
@@ -61,51 +61,45 @@ function getInitials(name: string): string {
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.white,
     borderRadius: Radius.lg,
-    padding: Spacing.md,
-    marginBottom: Spacing.sm,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.md,
     borderWidth: 0.5,
     borderColor: Colors.border,
     ...Shadow.small,
   },
   avatarWrapper: {
-    marginRight: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   avatarImage: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: Colors.surfaceWarm,
   },
   avatarInitials: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: Colors.accentLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   initialsText: {
     fontFamily: Fonts.serifSemiBold,
-    fontSize: 18,
+    fontSize: 26,
     color: Colors.primary,
     letterSpacing: 0.4,
   },
-  body: { flex: 1 },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
   name: {
     fontFamily: Fonts.serifSemiBold,
-    fontSize: 15,
+    fontSize: 14,
     color: Colors.textPrimary,
     letterSpacing: 0.2,
-    flexShrink: 1,
+    textAlign: 'center',
+    marginBottom: 4,
   },
   badge: {
     paddingHorizontal: 6,
@@ -114,6 +108,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surfaceWarm,
     borderWidth: 0.5,
     borderColor: Colors.gold,
+    marginBottom: Spacing.xs,
   },
   badgeText: {
     fontFamily: Fonts.sansMedium,
@@ -124,16 +119,10 @@ const styles = StyleSheet.create({
   },
   bio: {
     fontFamily: Fonts.sans,
-    fontSize: 13,
-    color: Colors.textSecondary,
-    lineHeight: 18,
-    marginTop: 2,
-  },
-  bioEmpty: {
-    fontFamily: Fonts.sans,
     fontSize: 12,
-    color: Colors.textMuted,
-    fontStyle: 'italic',
+    color: Colors.textSecondary,
+    lineHeight: 17,
+    textAlign: 'center',
     marginTop: 2,
   },
 });

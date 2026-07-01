@@ -32,6 +32,10 @@ export interface GuestRow {
   // Optional short "how I know the couple" bio shown on the guest's
   // Attendees card.
   bio: string | null;
+  // True for the two rows representing the couple getting married. Used
+  // by the Attendees directory to hide the couple from the "who's here"
+  // list (they aren't attending as guests).
+  is_couple: boolean;
 }
 
 export type AdminRole = 'planner' | 'dj' | 'makeup_artist';
@@ -77,7 +81,7 @@ export async function fetchWeddingByInviteCode(inviteCode: string): Promise<Wedd
 export async function fetchGuests(weddingId: string): Promise<GuestRow[]> {
   const { data, error } = await supabase
     .from('guests')
-    .select('canonical_name, is_wedding_party, is_bridal_party, gender, profile_photo_url, bio')
+    .select('canonical_name, is_wedding_party, is_bridal_party, gender, profile_photo_url, bio, is_couple')
     .eq('wedding_id', weddingId);
   if (error) throw error;
   return data ?? [];

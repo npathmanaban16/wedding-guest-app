@@ -391,9 +391,9 @@ function MessageCard({
   );
 }
 
-// Attendees directory — every guest on the invite list, sorted with the
-// current user first, then wedding party, then everyone else alphabetically.
-// Guests without a photo/bio still appear (initials avatar + "Attending").
+// Attendees directory — every invited guest except the couple, sorted
+// alphabetically by canonical name. Rendered as a 2-per-row grid of
+// square cards.
 function AttendeesList({
   attendees,
   currentGuestName,
@@ -401,15 +401,11 @@ function AttendeesList({
   attendees: ReturnType<typeof useWedding>['attendees'];
   currentGuestName: string | null;
 }) {
-  const sorted = [...attendees].sort((a, b) => {
-    const isMe = (n: string) => currentGuestName && n.toLowerCase() === currentGuestName.toLowerCase();
-    if (isMe(a.canonical_name)) return -1;
-    if (isMe(b.canonical_name)) return 1;
-    if (a.is_wedding_party !== b.is_wedding_party) return a.is_wedding_party ? -1 : 1;
-    return a.canonical_name.localeCompare(b.canonical_name);
-  });
+  const visible = attendees
+    .filter((a) => !a.is_couple)
+    .sort((a, b) => a.canonical_name.localeCompare(b.canonical_name));
 
-  if (sorted.length === 0) {
+  if (visible.length === 0) {
     return (
       <View style={styles.empty}>
         <Ionicons name="people-outline" size={40} color={Colors.textMuted} />
@@ -419,11 +415,15 @@ function AttendeesList({
   }
 
   return (
-    <View>
-      {sorted.map((a) => {
-        const isMe = currentGuestName && a.canonical_name.toLowerCase() === currentGuestName.toLowerCase();
+    <View style={styles.attendeesGrid}>
+      {visible.map((a) => {
+        const isMe = !!currentGuestName && a.canonical_name.toLowerCase() === currentGuestName.toLowerCase();
         const badge = isMe ? 'You' : a.is_wedding_party ? 'Wedding party' : undefined;
-        return <AttendeeCard key={a.canonical_name} attendee={a} badge={badge} />;
+        return (
+          <View key={a.canonical_name} style={styles.attendeesGridItem}>
+            <AttendeeCard attendee={a} badge={badge} />
+          </View>
+        );
       })}
     </View>
   );
@@ -668,7 +668,9 @@ export default function MessagesScreen() {
         <View style={styles.pageHeader}>
           <Text style={styles.pageTitle}>Messages</Text>
           <Text style={styles.pageSubtitleTag}>
-            {activeTab === 'announcements' ? 'From the couple' : `${attendees.length} attending`}
+            {activeTab === 'announcements'
+              ? 'From the couple'
+              : `${attendees.filter((a) => !a.is_couple).length} attending`}
           </Text>
         </View>
 
@@ -763,6 +765,19 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
     borderWidth: 0.5,
     borderColor: Colors.border,
+  },
+
+  attendeesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    // Balance the negative gap-emulation margin so the row-edge cards
+    // sit flush with the ScrollView's horizontal padding.
+    marginHorizontal: -Spacing.xs,
+  },
+  attendeesGridItem: {
+    width: '50%',
+    paddingHorizontal: Spacing.xs,
+    marginBottom: Spacing.sm,
   },
   segmentedTab: {
     flex: 1,
