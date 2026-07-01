@@ -85,7 +85,7 @@ export default function MyInfoScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { guestName, logout } = useAuth();
-  const { weddingId, wedding, attendees, getCanonicalName } = useWedding();
+  const { weddingId, wedding, attendees, getCanonicalName, patchAttendeeProfile } = useWedding();
 
   // Look up this guest's own row from the roster so we can seed the
   // profile-photo / bio editor. `getCanonicalName` normalizes the login
@@ -238,6 +238,9 @@ export default function MyInfoScreen() {
       );
       await updateGuestProfile(weddingId, canonicalName, { profile_photo_url: url });
       setProfilePhotoUrl(url);
+      // Keep the in-memory attendees list in sync so the Attendees tab
+      // shows the new photo immediately without a re-fetch.
+      patchAttendeeProfile(canonicalName, { profile_photo_url: url });
       haptic.success();
     } catch (err) {
       // Surface the actual error so we can see what's going wrong — the
@@ -263,6 +266,7 @@ export default function MyInfoScreen() {
           setProfilePhotoUrl(null);
           try {
             await updateGuestProfile(weddingId, canonicalName, { profile_photo_url: null });
+            patchAttendeeProfile(canonicalName, { profile_photo_url: null });
           } catch {
             Alert.alert('Error', 'Could not remove your photo.');
           }
@@ -278,10 +282,10 @@ export default function MyInfoScreen() {
     clearTimeout(bioSaveTimer.current);
     bioSaveTimer.current = setTimeout(async () => {
       const trimmed = value.trim();
+      const nextBio = trimmed.length === 0 ? null : trimmed;
       try {
-        await updateGuestProfile(weddingId, canonicalName, {
-          bio: trimmed.length === 0 ? null : trimmed,
-        });
+        await updateGuestProfile(weddingId, canonicalName, { bio: nextBio });
+        patchAttendeeProfile(canonicalName, { bio: nextBio });
         setProfileSaveStatus('saved');
       } catch {
         setProfileSaveStatus('idle');
