@@ -391,12 +391,15 @@ function MessageCard({
   );
 }
 
-// Attendees directory — every invited guest except the couple. Named
-// wedding party members (bridesmaids/groomsmen/family) sort to the top
-// with a "Wedding party" badge; everyone else follows in alphabetical
-// order. Partners of party members (wedding_party_role='partner')
-// intentionally don't get a badge even though they carry the
-// is_wedding_party access flag. Rendered as a 2-per-row grid.
+// Attendees directory — every invited guest including the couple.
+// Named wedding party members (bridesmaids/groomsmen/family) sort to
+// the top with a "Wedding party" badge — that group includes the
+// couple themselves via is_wedding_party=true + wedding_party_role
+// null (backward-compat badge path). Everyone else follows in
+// alphabetical order. Partners of party members
+// (wedding_party_role='partner') intentionally don't get a badge
+// even though they carry the is_wedding_party access flag.
+// Rendered as a 2-per-row grid.
 //
 // Legacy rows with is_wedding_party=true and wedding_party_role=null
 // still show the badge (backward-compat) — customers can suppress
@@ -416,7 +419,7 @@ function AttendeesList({
   attendees: ReturnType<typeof useWedding>['attendees'];
   currentGuestName: string | null;
 }) {
-  const visible = [...attendees.filter((a) => !a.is_couple)].sort((a, b) => {
+  const visible = [...attendees].sort((a, b) => {
     const aWp = shouldShowWeddingPartyBadge(a);
     const bWp = shouldShowWeddingPartyBadge(b);
     if (aWp !== bWp) return aWp ? -1 : 1;
@@ -689,7 +692,7 @@ export default function MessagesScreen() {
           <Text style={styles.pageSubtitleTag}>
             {activeTab === 'announcements'
               ? 'From the couple'
-              : `${attendees.filter((a) => !a.is_couple).length} attending`}
+              : `${attendees.length} attending`}
           </Text>
         </View>
 
