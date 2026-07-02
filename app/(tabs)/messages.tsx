@@ -896,28 +896,7 @@ export default function MessagesScreen() {
             text, a photo, or both. */}
         {activeTab === 'chat' && (
           <View style={styles.chatComposer}>
-            {chatImage && (
-              <View style={styles.chatAttachmentRow}>
-                <Image source={{ uri: chatImage.uri }} style={styles.chatAttachmentThumb} />
-                <Text style={styles.chatAttachmentLabel}>Photo attached</Text>
-                <TouchableOpacity
-                  onPress={() => { haptic.light(); setChatImage(null); }}
-                  hitSlop={8}
-                  disabled={postingChat}
-                >
-                  <Ionicons name="close-circle" size={20} color={Colors.textMuted} />
-                </TouchableOpacity>
-              </View>
-            )}
             <View style={styles.chatInputRow}>
-              <TouchableOpacity
-                onPress={handlePickChatImage}
-                disabled={postingChat}
-                style={styles.chatAttachBtn}
-                hitSlop={6}
-              >
-                <Ionicons name="image-outline" size={20} color={Colors.primary} />
-              </TouchableOpacity>
               <TextInput
                 style={styles.chatInput}
                 placeholder="Message all guests..."
@@ -942,6 +921,36 @@ export default function MessagesScreen() {
                 )}
               </TouchableOpacity>
             </View>
+
+            {/* Photo attach — labeled pill matching the admin send screen,
+                swapping to a thumbnail + remove row once picked. */}
+            {chatImage ? (
+              <View style={styles.chatAttachmentRow}>
+                <Image source={{ uri: chatImage.uri }} style={styles.chatAttachmentThumb} />
+                <View style={styles.chatAttachmentMeta}>
+                  <Text style={styles.chatAttachmentLabel}>Photo attached</Text>
+                  <Text style={styles.chatAttachmentHint}>Sent with your message</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => { haptic.light(); setChatImage(null); }}
+                  hitSlop={8}
+                  disabled={postingChat}
+                  style={styles.chatAttachmentRemove}
+                >
+                  <Ionicons name="close-circle" size={20} color={Colors.textMuted} />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity
+                onPress={handlePickChatImage}
+                disabled={postingChat}
+                style={styles.chatAttachButton}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="image-outline" size={16} color={Colors.primary} />
+                <Text style={styles.chatAttachButtonText}>Add photo</Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
 
@@ -1115,35 +1124,56 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: Spacing.xs,
   },
-  chatAttachBtn: {
-    width: 32,
-    height: 32,
+  // Labeled attach pill, matching admin.tsx's attachButton so the
+  // affordance reads the same wherever photos can be added.
+  chatAttachButton: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: Spacing.sm,
+    marginTop: Spacing.xs,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    backgroundColor: Colors.background,
+  },
+  chatAttachButtonText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 13,
+    color: Colors.primary,
   },
   chatAttachmentRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-    padding: Spacing.xs,
-    marginBottom: Spacing.xs,
+    padding: Spacing.sm,
+    marginTop: Spacing.xs,
     borderRadius: Radius.md,
     borderWidth: 0.5,
     borderColor: Colors.border,
     backgroundColor: Colors.background,
   },
   chatAttachmentThumb: {
-    width: 44,
-    height: 44,
+    width: 48,
+    height: 48,
     borderRadius: Radius.sm,
     backgroundColor: Colors.border,
   },
+  chatAttachmentMeta: { flex: 1 },
   chatAttachmentLabel: {
-    flex: 1,
-    fontFamily: Fonts.sans,
-    fontSize: 12,
-    color: Colors.textMuted,
+    fontFamily: Fonts.sansMedium,
+    fontSize: 13,
+    color: Colors.textPrimary,
   },
+  chatAttachmentHint: {
+    fontFamily: Fonts.sans,
+    fontSize: 11,
+    color: Colors.textMuted,
+    marginTop: 2,
+  },
+  chatAttachmentRemove: { padding: 2 },
   chatInput: {
     flex: 1,
     fontFamily: Fonts.sans,
