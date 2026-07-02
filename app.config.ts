@@ -105,7 +105,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         NSCameraUsageDescription:             `Allow ${v.usageDescriptionSubject} to use your camera to capture memories.`,
         NSPhotoLibraryAddUsageDescription:    `Allow ${v.usageDescriptionSubject} to save photos.`,
         NSUserNotificationsUsageDescription:  `Allow ${v.usageDescriptionSubject} to send you wedding updates and reminders.`,
-        NSCalendarsFullAccessUsageDescription: `Allow ${v.usageDescriptionSubject} to add wedding events to your calendar.`,
         // Declares the app does not use non-exempt encryption, so App Store
         // submissions don't prompt the export-compliance questionnaire.
         ITSAppUsesNonExemptEncryption: false,
@@ -122,8 +121,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         'android.permission.READ_EXTERNAL_STORAGE',
         'android.permission.WRITE_EXTERNAL_STORAGE',
         'android.permission.CAMERA',
-        'android.permission.READ_CALENDAR',
-        'android.permission.WRITE_CALENDAR',
         'android.permission.RECORD_AUDIO',
       ],
     },
@@ -139,7 +136,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     plugins: [
       'expo-router',
       'expo-font',
-      'expo-calendar',
       [
         'expo-image-picker',
         {

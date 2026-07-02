@@ -10,11 +10,9 @@ import {
   UIManager,
   Linking,
   Image,
-  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as Calendar from 'expo-calendar';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { WeddingEvent } from '@/constants/weddingData';
 import { useAuth } from '@/context/AuthContext';
@@ -38,52 +36,6 @@ function openMaps(address: string, name?: string) {
   Linking.openURL(url);
 }
 
-async function addToCalendar(event: WeddingEvent, coupleNames: string) {
-  if (Platform.OS === 'web') {
-    Alert.alert('Not available', 'Add to Calendar is only available on the mobile app.');
-    return;
-  }
-
-  const { status } = await Calendar.requestCalendarPermissionsAsync();
-  if (status !== 'granted') {
-    Alert.alert('Permission needed', 'Please allow calendar access to add this event.');
-    return;
-  }
-
-  const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
-  const defaultCalendar =
-    Platform.OS === 'ios'
-      ? calendars.find((c) => c.source?.name === 'iCloud') ?? calendars.find((c) => c.allowsModifications)
-      : calendars.find((c) => c.isPrimary) ?? calendars.find((c) => c.allowsModifications);
-
-  if (!defaultCalendar) {
-    Alert.alert('No calendar found', 'Could not find a writable calendar on this device.');
-    return;
-  }
-
-  try {
-    const startDate = new Date(event.startDate);
-    // Some events have no posted end time. Default to a 1-hour block from
-    // the start so the calendar entry isn't open-ended.
-    const endDate = event.endDate
-      ? new Date(event.endDate)
-      : new Date(startDate.getTime() + 60 * 60 * 1000);
-
-    await Calendar.createEventAsync(defaultCalendar.id, {
-      title: `${event.title} — ${coupleNames}'s Wedding`,
-      startDate,
-      endDate,
-      location: `${event.venue}\n${event.address}`,
-      notes: [event.description, event.dressCode ? `Dress code: ${event.dressCode}` : null, event.notes].filter(Boolean).join('\n\n'),
-      timeZone: 'Europe/Zurich',
-      alarms: [{ relativeOffset: -60 }],
-    });
-    Alert.alert('Added', `"${event.title}" has been added to your calendar.`);
-  } catch {
-    Alert.alert('Error', 'Could not add the event to your calendar.');
-  }
-}
-
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
@@ -103,12 +55,11 @@ function BulletRow({ text }: { text: string }) {
 
 interface EventCardProps {
   event: WeddingEvent;
-  coupleNames: string;
   expanded: boolean;
   onToggle: () => void;
 }
 
-function EventCard({ event, coupleNames, expanded, onToggle }: EventCardProps) {
+function EventCard({ event, expanded, onToggle }: EventCardProps) {
   const [dressExpanded, setDressExpanded] = useState(false);
 
   // When the parent collapses this card (because another event was opened),
@@ -171,14 +122,6 @@ function EventCard({ event, coupleNames, expanded, onToggle }: EventCardProps) {
             >
               <Ionicons name="map-outline" size={14} color={Colors.gold} />
               <Text style={styles.actionBtnText}>Get Directions</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionBtn}
-              onPress={() => { haptic.medium(); addToCalendar(event, coupleNames); }}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="calendar-outline" size={14} color={Colors.gold} />
-              <Text style={styles.actionBtnText}>Add to Calendar</Text>
             </TouchableOpacity>
           </View>
 
@@ -357,7 +300,7 @@ function InfoRow({ icon, label, value }: InfoRowProps) {
 export default function ScheduleScreen() {
   const insets = useSafeAreaInsets();
   const { guestName } = useAuth();
-  const { weddingId, isWeddingParty, wedding, events, schedulePage } = useWedding();
+  const { weddingId, isWeddingParty, events, schedulePage } = useWedding();
   const inWeddingParty = isWeddingParty(guestName ?? '');
 
   // Admins can override per-event text fields (title, time, venue, etc.)
@@ -405,7 +348,6 @@ export default function ScheduleScreen() {
             <View style={styles.timelineContent}>
               <EventCard
                 event={event}
-                coupleNames={wedding.couple_names}
                 expanded={expandedEventId === event.id}
                 onToggle={() => handleToggle(event.id)}
               />
