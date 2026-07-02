@@ -78,7 +78,8 @@ function MessageCard({
   replies,
   guestName,
   isAdmin,
-  canManage,
+  canEdit,
+  canDelete,
   onReact,
   onDelete,
   onEdit,
@@ -91,9 +92,12 @@ function MessageCard({
   replies: NotificationReply[];
   guestName: string | null;
   isAdmin: boolean;
-  // Whether the current user may edit/delete this message. Admins manage
-  // announcements; on the chat tab guests also manage their own posts.
-  canManage: boolean;
+  // Edit and delete are gated separately. Editing rewrites the author's
+  // words, so it's author-only (even admins can't edit a guest's chat
+  // post). Deleting is a moderation action, so admins can delete any
+  // message in addition to authors deleting their own.
+  canEdit: boolean;
+  canDelete: boolean;
   onReact: (emoji: string) => void;
   onDelete: () => void;
   onEdit: (message: string) => Promise<boolean>;
@@ -202,14 +206,18 @@ function MessageCard({
             </View>
           )}
         </View>
-        {canManage && !editOpen && (
+        {(canEdit || canDelete) && !editOpen && (
           <View style={styles.headerActions}>
-            <TouchableOpacity onPress={handleStartEdit} style={styles.iconBtn} hitSlop={8}>
-              <Ionicons name="pencil-outline" size={15} color={Colors.textMuted} />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => { haptic.warning(); onDelete(); }} style={styles.iconBtn} hitSlop={8}>
-              <Ionicons name="trash-outline" size={16} color={Colors.textMuted} />
-            </TouchableOpacity>
+            {canEdit && (
+              <TouchableOpacity onPress={handleStartEdit} style={styles.iconBtn} hitSlop={8}>
+                <Ionicons name="pencil-outline" size={15} color={Colors.textMuted} />
+              </TouchableOpacity>
+            )}
+            {canDelete && (
+              <TouchableOpacity onPress={() => { haptic.warning(); onDelete(); }} style={styles.iconBtn} hitSlop={8}>
+                <Ionicons name="trash-outline" size={16} color={Colors.textMuted} />
+              </TouchableOpacity>
+            )}
           </View>
         )}
       </View>
@@ -957,7 +965,8 @@ export default function MessagesScreen() {
                 replies={allReplies[n.id] ?? []}
                 guestName={guestName}
                 isAdmin={isAdmin}
-                canManage={isAdmin}
+                canEdit={isAdmin}
+                canDelete={isAdmin}
                 onReact={(emoji) => handleReact(n.id, emoji)}
                 onDelete={() => handleDelete(n.id, n.message)}
                 onEdit={(msg) => handleEdit(n.id, msg)}
@@ -982,7 +991,8 @@ export default function MessagesScreen() {
               replies={allReplies[n.id] ?? []}
               guestName={guestName}
               isAdmin={isAdmin}
-              canManage={isAdmin || n.sender === guestName}
+              canEdit={n.sender === guestName}
+              canDelete={isAdmin || n.sender === guestName}
               onReact={(emoji) => handleReact(n.id, emoji)}
               onDelete={() => handleDelete(n.id, n.message)}
               onEdit={(msg) => handleEdit(n.id, msg)}
