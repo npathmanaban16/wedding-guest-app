@@ -434,14 +434,21 @@ function AttendeesList({
   attendees: ReturnType<typeof useWedding>['attendees'];
   currentGuestName: string | null;
 }) {
-  const visible = [...attendees].sort((a, b) => {
-    const aWp = shouldShowWeddingPartyBadge(a);
-    const bWp = shouldShowWeddingPartyBadge(b);
-    if (aWp !== bWp) return aWp ? -1 : 1;
-    return a.canonical_name.localeCompare(b.canonical_name);
-  });
+  // Name search. State lives here so it resets when the tab unmounts
+  // (switching tabs clears the query — each visit starts fresh).
+  const [query, setQuery] = useState('');
+  const trimmedQuery = query.trim().toLowerCase();
 
-  if (visible.length === 0) {
+  const visible = attendees
+    .filter((a) => !trimmedQuery || a.canonical_name.toLowerCase().includes(trimmedQuery))
+    .sort((a, b) => {
+      const aWp = shouldShowWeddingPartyBadge(a);
+      const bWp = shouldShowWeddingPartyBadge(b);
+      if (aWp !== bWp) return aWp ? -1 : 1;
+      return a.canonical_name.localeCompare(b.canonical_name);
+    });
+
+  if (attendees.length === 0) {
     return (
       <View style={styles.empty}>
         <Ionicons name="people-outline" size={40} color={Colors.textMuted} />
@@ -451,18 +458,47 @@ function AttendeesList({
   }
 
   return (
-    <View style={styles.attendeesGrid}>
-      {visible.map((a) => {
-        const isMe = !!currentGuestName && a.canonical_name.toLowerCase() === currentGuestName.toLowerCase();
-        const showWpBadge = shouldShowWeddingPartyBadge(a);
-        const badge = isMe ? 'You' : showWpBadge ? 'Wedding party' : undefined;
-        return (
-          <View key={a.canonical_name} style={styles.attendeesGridItem}>
-            <AttendeeCard attendee={a} badge={badge} />
-          </View>
-        );
-      })}
-    </View>
+    <>
+      <View style={styles.attendeeSearchBar}>
+        <Ionicons name="search" size={16} color={Colors.textMuted} />
+        <TextInput
+          style={styles.attendeeSearchInput}
+          placeholder="Search guests..."
+          placeholderTextColor={Colors.textMuted}
+          value={query}
+          onChangeText={setQuery}
+          autoCorrect={false}
+          autoCapitalize="none"
+          returnKeyType="search"
+        />
+        {query.length > 0 && (
+          <TouchableOpacity onPress={() => { haptic.selection(); setQuery(''); }} hitSlop={8}>
+            <Ionicons name="close-circle" size={18} color={Colors.textMuted} />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {visible.length === 0 ? (
+        <View style={styles.empty}>
+          <Ionicons name="search-outline" size={40} color={Colors.textMuted} />
+          <Text style={styles.emptyText}>No guests found</Text>
+          <Text style={styles.emptySubtext}>No one matches “{query.trim()}”</Text>
+        </View>
+      ) : (
+        <View style={styles.attendeesGrid}>
+          {visible.map((a) => {
+            const isMe = !!currentGuestName && a.canonical_name.toLowerCase() === currentGuestName.toLowerCase();
+            const showWpBadge = shouldShowWeddingPartyBadge(a);
+            const badge = isMe ? 'You' : showWpBadge ? 'Wedding party' : undefined;
+            return (
+              <View key={a.canonical_name} style={styles.attendeesGridItem}>
+                <AttendeeCard attendee={a} badge={badge} />
+              </View>
+            );
+          })}
+        </View>
+      )}
+    </>
   );
 }
 
@@ -902,6 +938,27 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
     borderWidth: 0.5,
     borderColor: Colors.border,
+  },
+
+  attendeeSearchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    backgroundColor: Colors.white,
+    borderRadius: Radius.full,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 9,
+    marginBottom: Spacing.md,
+    ...Shadow.small,
+  },
+  attendeeSearchInput: {
+    flex: 1,
+    fontFamily: Fonts.sans,
+    fontSize: 14,
+    color: Colors.textPrimary,
+    padding: 0,
   },
 
   attendeesGrid: {
