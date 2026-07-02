@@ -1053,7 +1053,7 @@ export default function MessagesScreen() {
               canDelete={isAdmin || n.sender === guestName}
               onReact={(emoji) => handleReact(n.id, emoji)}
               onDelete={() => handleDelete(n.id, n.message)}
-              onEdit={(msg) => handleEdit(n.id, msg)}
+              onEdit={(msg, removeImage) => handleEdit(n.id, msg, removeImage)}
               onReply={(msg) => handleReply(n.id, msg)}
               onDeleteReply={(replyId) => handleDeleteReply(n.id, replyId)}
               onReplyOpen={handleReplyOpen}
