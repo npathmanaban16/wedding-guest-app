@@ -1112,9 +1112,8 @@ const styles = StyleSheet.create({
   chatComposer: {
     backgroundColor: Colors.white,
     borderRadius: Radius.lg,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.sm,
-    marginBottom: Spacing.md,
+    padding: Spacing.md,
+    marginBottom: Spacing.lg,
     borderWidth: 0.5,
     borderColor: Colors.border,
     ...Shadow.small,
@@ -1122,7 +1121,7 @@ const styles = StyleSheet.create({
   chatInputRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: Spacing.xs,
+    gap: Spacing.sm,
   },
   // Labeled attach pill, matching admin.tsx's attachButton so the
   // affordance reads the same wherever photos can be added.
@@ -1132,8 +1131,8 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     gap: 6,
     paddingVertical: 8,
-    paddingHorizontal: Spacing.sm,
-    marginTop: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    marginTop: Spacing.sm,
     borderRadius: Radius.full,
     borderWidth: 1,
     borderColor: Colors.primary,
@@ -1149,7 +1148,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.sm,
     padding: Spacing.sm,
-    marginTop: Spacing.xs,
+    marginTop: Spacing.sm,
     borderRadius: Radius.md,
     borderWidth: 0.5,
     borderColor: Colors.border,
@@ -1181,7 +1180,7 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     lineHeight: 20,
     paddingHorizontal: Spacing.xs,
-    paddingVertical: 6,
+    paddingVertical: Spacing.sm,
     maxHeight: 100,
   },
 
