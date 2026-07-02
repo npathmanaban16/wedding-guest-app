@@ -16,17 +16,58 @@ import { useWedding } from '@/context/WeddingContext';
 import { haptic } from '@/utils/haptics';
 import { updateWeddingSettings } from '@/services/wedding';
 
+// The two flippable flags on the weddings row. Each renders as one
+// toggle row below; adding a future flag means adding an entry here
+// plus its column migration + gating at the consuming screens.
+type FeatureFlag = 'attendees_enabled' | 'chat_enabled';
+
+function FeatureToggleRow({
+  icon,
+  label,
+  hintOn,
+  hintOff,
+  enabled,
+  saving,
+  onToggle,
+}: {
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  label: string;
+  hintOn: string;
+  hintOff: string;
+  enabled: boolean;
+  saving: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <TouchableOpacity
+      style={styles.featureRow}
+      onPress={onToggle}
+      activeOpacity={0.8}
+      disabled={saving}
+    >
+      <View style={styles.featureIcon}>
+        <Ionicons name={icon} size={18} color={Colors.primary} />
+      </View>
+      <View style={styles.featureText}>
+        <Text style={styles.featureLabel}>{label}</Text>
+        <Text style={styles.featureHint}>{enabled ? hintOn : hintOff}</Text>
+      </View>
+      <View style={[styles.toggleTrack, enabled && styles.toggleTrackActive]}>
+        <View style={[styles.toggleThumb, enabled && styles.toggleThumbActive]} />
+      </View>
+    </TouchableOpacity>
+  );
+}
+
 // App Features — per-wedding feature flags the couple/planner can flip
-// without a code deploy. Currently just the Attendees directory; new
-// flags follow the same optimistic-toggle pattern below.
+// without a code deploy.
 export default function AdminSettingsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { guestName } = useAuth();
   const { weddingId, isAdmin, wedding, patchWedding } = useWedding();
 
-  const attendeesEnabled = wedding.attendees_enabled !== false;
-  const [savingAttendees, setSavingAttendees] = useState(false);
+  const [saving, setSaving] = useState<FeatureFlag | null>(null);
 
   // Guard — should not be reachable via normal navigation, but just in case
   if (!guestName || !isAdmin(guestName)) {
@@ -37,22 +78,22 @@ export default function AdminSettingsScreen() {
     );
   }
 
-  const handleToggleAttendees = async () => {
-    if (savingAttendees) return;
+  const handleToggle = async (flag: FeatureFlag) => {
+    if (saving) return;
     haptic.selection();
-    const next = !attendeesEnabled;
+    const next = wedding[flag] === false;
     // Optimistic: flip the in-memory wedding row so the whole app
     // (Messages tabs, My Details profile card) updates immediately,
     // then persist. Revert on failure.
-    patchWedding({ attendees_enabled: next });
-    setSavingAttendees(true);
+    patchWedding({ [flag]: next });
+    setSaving(flag);
     try {
-      await updateWeddingSettings(weddingId, { attendees_enabled: next });
+      await updateWeddingSettings(weddingId, { [flag]: next });
     } catch {
-      patchWedding({ attendees_enabled: !next });
+      patchWedding({ [flag]: !next });
       Alert.alert('Error', 'Could not save the setting. Please try again.');
     } finally {
-      setSavingAttendees(false);
+      setSaving(null);
     }
   };
 
@@ -71,33 +112,30 @@ export default function AdminSettingsScreen() {
         <Text style={styles.pageSubtitle}>Turn parts of the guest app on or off</Text>
       </View>
 
-      {/* Attendees directory + guest profiles */}
-      <TouchableOpacity
-        style={styles.featureRow}
-        onPress={handleToggleAttendees}
-        activeOpacity={0.8}
-        disabled={savingAttendees}
-      >
-        <View style={styles.featureIcon}>
-          <Ionicons name="people-outline" size={18} color={Colors.primary} />
-        </View>
-        <View style={styles.featureText}>
-          <Text style={styles.featureLabel}>Attendees & guest profiles</Text>
-          <Text style={styles.featureHint}>
-            {attendeesEnabled
-              ? 'Guests can browse the Attendees list on Messages and add a profile photo and bio on My Details.'
-              : 'The Attendees tab and the profile photo/bio editor are hidden for all guests.'}
-          </Text>
-        </View>
-        <View style={[styles.toggleTrack, attendeesEnabled && styles.toggleTrackActive]}>
-          <View style={[styles.toggleThumb, attendeesEnabled && styles.toggleThumbActive]} />
-        </View>
-      </TouchableOpacity>
+      <FeatureToggleRow
+        icon="people-outline"
+        label="Attendees & guest profiles"
+        hintOn="Guests can browse the Attendees list on Messages and add a profile photo and bio on My Details."
+        hintOff="The Attendees tab and the profile photo/bio editor are hidden for all guests."
+        enabled={wedding.attendees_enabled !== false}
+        saving={saving === 'attendees_enabled'}
+        onToggle={() => handleToggle('attendees_enabled')}
+      />
+
+      <FeatureToggleRow
+        icon="chatbubbles-outline"
+        label="Guest chat"
+        hintOn="Guests can post to everyone in the Chat tab on Messages."
+        hintOff="The Chat tab is hidden for all guests. Announcements are unaffected."
+        enabled={wedding.chat_enabled !== false}
+        saving={saving === 'chat_enabled'}
+        onToggle={() => handleToggle('chat_enabled')}
+      />
 
       <Text style={styles.footnote}>
-        Changes apply to everyone the next time their app refreshes. Guest
-        photos and bios are kept, so turning the directory back on restores
-        them.
+        Changes apply to everyone the next time their app refreshes. Nothing
+        is deleted when a feature is off — profiles and chat history come
+        back when it's turned on again.
       </Text>
     </ScrollView>
   );

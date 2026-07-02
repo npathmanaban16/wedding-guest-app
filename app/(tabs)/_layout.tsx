@@ -98,22 +98,31 @@ export default function TabLayout() {
     });
   }, [weddingId, guestName, isLoading]);
 
+  // Mirrors the Messages screen's chat gating: when the admin has chat
+  // turned off (App Features), chat rows are invisible and mustn't badge.
+  const chatEnabled = wedding.chat_enabled !== false;
+
   const refreshUnread = useCallback(async () => {
     if (!guestName) return;
     const [allNotifs, lastRead] = await Promise.all([
       getNotifications(weddingId),
       getMessagesLastRead(weddingId, guestName),
     ]);
-    // Same filter the Messages screen applies — don't badge non-wedding-
-    // party users for messages they can't see.
-    const notifs = allNotifs.filter((n) => !n.weddingPartyOnly || inWeddingParty);
+    // Same filters the Messages screen applies — don't badge users for
+    // messages they can't see (wedding-party-only, or chat when the
+    // feature is off).
+    const notifs = allNotifs.filter(
+      (n) =>
+        (!n.weddingPartyOnly || inWeddingParty) &&
+        (chatEnabled || n.kind !== 'chat'),
+    );
     if (!lastRead) {
       setUnreadCount(notifs.length);
       return;
     }
     const count = notifs.filter((n) => new Date(n.sentAt) > new Date(lastRead)).length;
     setUnreadCount(count);
-  }, [weddingId, guestName, inWeddingParty]);
+  }, [weddingId, guestName, inWeddingParty, chatEnabled]);
 
   useEffect(() => {
     refreshUnread();

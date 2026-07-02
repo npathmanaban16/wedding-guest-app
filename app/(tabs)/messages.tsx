@@ -510,21 +510,27 @@ export default function MessagesScreen() {
   const inWeddingParty = !!guestName && isWeddingParty(guestName);
   const [activeTab, setActiveTab] = useState<MessagesTab>('announcements');
 
-  // Admin-controlled feature flag (App Features screen). Anything that
+  // Admin-controlled feature flags (App Features screen). Anything that
   // isn't exactly `false` means enabled — covers databases that predate
-  // migration 038, where the column is missing.
+  // migrations 038/039, where the columns are missing.
   const attendeesEnabled = wedding.attendees_enabled !== false;
-  const visibleTabs: MessagesTab[] = attendeesEnabled
-    ? ['announcements', 'chat', 'attendees']
-    : ['announcements', 'chat'];
+  const chatEnabled = wedding.chat_enabled !== false;
+  const visibleTabs: MessagesTab[] = [
+    'announcements' as const,
+    ...(chatEnabled ? ['chat' as const] : []),
+    ...(attendeesEnabled ? ['attendees' as const] : []),
+  ];
 
-  // If an admin turns the directory off while this user is sitting on
-  // the Attendees tab, bounce them back to Announcements.
+  // If an admin turns a feature off while this user is sitting on its
+  // tab, bounce them back to Announcements.
   useEffect(() => {
-    if (!attendeesEnabled && activeTab === 'attendees') {
+    if (
+      (activeTab === 'attendees' && !attendeesEnabled) ||
+      (activeTab === 'chat' && !chatEnabled)
+    ) {
       setActiveTab('announcements');
     }
-  }, [attendeesEnabled, activeTab]);
+  }, [attendeesEnabled, chatEnabled, activeTab]);
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [reactions, setReactions] = useState<Record<string, ReactionSummary[]>>({});
@@ -814,8 +820,10 @@ export default function MessagesScreen() {
 
         {/* Segmented control — swaps between the announcement feed
             (existing behavior, kept as default), the guest Chat feed,
-            and the Attendees directory. Tabs re-render on switch since
-            re-rendering the message feed's reactions is cheap. */}
+            and the Attendees directory. Tabs the admin has turned off
+            (App Features) are omitted; with everything off only the
+            announcement feed remains and the control is hidden. */}
+        {visibleTabs.length > 1 && (
         <View style={styles.segmented}>
           {visibleTabs.map((tab) => {
             const active = tab === activeTab;
@@ -836,6 +844,7 @@ export default function MessagesScreen() {
             );
           })}
         </View>
+        )}
 
         {/* Chat composer — always visible on the Chat tab so posting
             doesn't wait on the feed load. Any signed-in guest can post. */}
