@@ -27,6 +27,7 @@ import {
   deleteMyAccount,
   sendGuestMessage,
   uploadGuestProfileImage,
+  deleteGuestProfileImage,
   MyInfo,
 } from '@/services/storage';
 import { updateGuestProfile } from '@/services/wedding';
@@ -230,6 +231,10 @@ export default function MyInfoScreen() {
       return;
     }
 
+    // Capture the previous URL before we swap — used to clean up the
+    // now-orphaned file from storage after the new one lands. Doing this
+    // BEFORE the upload so we still have the reference if state updates.
+    const previousUrl = profilePhotoUrl;
     setUploadingPhoto(true);
     try {
       const url = await uploadGuestProfileImage(
@@ -243,6 +248,14 @@ export default function MyInfoScreen() {
       // Keep the in-memory attendees list in sync so the Attendees tab
       // shows the new photo immediately without a re-fetch.
       patchAttendeeProfile(canonicalName, { profile_photo_url: url });
+      // Bonus cleanup: remove the previous file from the bucket so
+      // storage doesn't grow unbounded per guest. Failure here doesn't
+      // undo the upload — the guest already sees their new photo.
+      if (previousUrl) {
+        deleteGuestProfileImage(previousUrl).catch((err) => {
+          console.warn('[profile-photo] failed to delete previous file', err);
+        });
+      }
       haptic.success();
     } catch (err) {
       // Surface the actual error so we can see what's going wrong — the
@@ -265,10 +278,18 @@ export default function MyInfoScreen() {
         style: 'destructive',
         onPress: async () => {
           haptic.warning();
+          const previousUrl = profilePhotoUrl;
           setProfilePhotoUrl(null);
           try {
             await updateGuestProfile(weddingId, canonicalName, { profile_photo_url: null });
             patchAttendeeProfile(canonicalName, { profile_photo_url: null });
+            // Delete the removed photo from storage — otherwise "removed"
+            // photos accumulate in the bucket forever.
+            if (previousUrl) {
+              deleteGuestProfileImage(previousUrl).catch((err) => {
+                console.warn('[profile-photo] failed to delete removed file', err);
+              });
+            }
           } catch {
             Alert.alert('Error', 'Could not remove your photo.');
           }

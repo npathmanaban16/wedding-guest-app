@@ -501,6 +501,25 @@ export async function uploadGuestProfileImage(
   return data.publicUrl;
 }
 
+// Deletes a previously uploaded profile-photo file from the
+// guest-profile-images bucket. Takes the public URL that was stored on
+// guests.profile_photo_url and extracts the object path from it. No-op
+// when the URL isn't from our bucket (e.g. a manually-set external URL)
+// so callers can safely pass whatever URL they had without inspecting it.
+//
+// Errors are surfaced (thrown) so the caller can decide whether to log
+// or ignore — deleting the old file is bonus cleanup and shouldn't
+// block the user-facing "photo replaced" flow.
+export async function deleteGuestProfileImage(publicUrl: string): Promise<void> {
+  const marker = '/object/public/guest-profile-images/';
+  const idx = publicUrl.indexOf(marker);
+  if (idx === -1) return;
+  const path = publicUrl.slice(idx + marker.length);
+  if (!path) return;
+  const { error } = await supabase.storage.from('guest-profile-images').remove([path]);
+  if (error) throw new Error(error.message);
+}
+
 // ─── Notification Reactions ───────────────────────────────────────────────────
 
 export interface ReactionSummary {
