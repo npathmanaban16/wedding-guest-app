@@ -363,6 +363,12 @@ export async function markOnboardingDone(weddingId: string, guestName: string): 
 
 // ─── Notifications ───────────────────────────────────────────────────────────
 
+// Discriminates the two streams that share the notifications table:
+// 'announcement' rows are admin-sent (couple/planner, via send-push),
+// 'chat' rows are guest-authored posts from the Chat tab. Rows that
+// predate migration 037 have no kind column and map to 'announcement'.
+export type NotificationKind = 'announcement' | 'chat';
+
 export interface AppNotification {
   id: string;
   message: string;
@@ -377,6 +383,7 @@ export interface AppNotification {
   // predate migration 022 will simply not render the image — they'll
   // still see the text body.
   imageUrl: string | null;
+  kind: NotificationKind;
 }
 
 export async function getNotifications(weddingId: string): Promise<AppNotification[]> {
@@ -395,6 +402,7 @@ export async function getNotifications(weddingId: string): Promise<AppNotificati
         editedAt: n.edited_at ?? null,
         weddingPartyOnly: n.wedding_party_only ?? false,
         imageUrl: n.image_url ?? null,
+        kind: (n.kind === 'chat' ? 'chat' : 'announcement') as NotificationKind,
       }));
     }
   } catch {
@@ -403,25 +411,75 @@ export async function getNotifications(weddingId: string): Promise<AppNotificati
   return [];
 }
 
+// Posts a guest-authored chat message, visible to every guest on the
+// Messages screen's Chat tab. Inserts straight into `notifications` with
+// kind='chat' (sender = the guest's name) so reactions and replies work
+// on it unchanged. `imageUrl` is an optional photo already uploaded via
+// uploadMessageImage (same bucket the admin send flow uses); pass null
+// for text-only posts. Requires migration 037 — on an un-migrated
+// database the insert fails on the unknown column and the error surfaces
+// to the caller, which shows a "could not post" alert.
+export async function addChatMessage(
+  weddingId: string,
+  guestName: string,
+  message: string,
+  imageUrl: string | null = null,
+): Promise<AppNotification> {
+  const { data, error } = await supabase
+    .from('notifications')
+    .insert({
+      wedding_id: weddingId,
+      message,
+      sender: guestName,
+      kind: 'chat',
+      image_url: imageUrl,
+    })
+    .select()
+    .single();
+  if (error || !data) {
+    throw new Error(error?.message ?? 'Failed to post message');
+  }
+  return {
+    id: data.id,
+    message: data.message,
+    sender: data.sender,
+    sentAt: data.sent_at,
+    editedAt: data.edited_at ?? null,
+    weddingPartyOnly: data.wedding_party_only ?? false,
+    imageUrl: data.image_url ?? null,
+    kind: 'chat',
+  };
+}
+
+// `removeImage` clears the attached photo along with the text update.
+// The caller is responsible for deleting the now-orphaned file from the
+// bucket afterwards (deleteMessageImage) — DB write first, so a failed
+// cleanup never leaves a message pointing at a deleted file.
 export async function editNotification(
   weddingId: string,
   id: string,
   message: string,
+  removeImage = false,
 ): Promise<{ editedAt: string | null }> {
   const editedAt = new Date().toISOString();
   // Try with the edited_at timestamp first. If migration 007 hasn't been
   // applied yet, the column is missing — fall back to updating the message
-  // alone so the edit still saves.
+  // alone so the edit still saves. (removeImage on a pre-022 database
+  // can't happen: those messages never have a photo to remove.)
+  const patch: Record<string, string | null> = { message, edited_at: editedAt };
+  if (removeImage) patch.image_url = null;
   const { error } = await supabase
     .from('notifications')
-    .update({ message, edited_at: editedAt })
+    .update(patch)
     .eq('wedding_id', weddingId)
     .eq('id', id);
   if (!error) return { editedAt };
 
+  const fallbackPatch: Record<string, string | null> = { message };
+  if (removeImage) fallbackPatch.image_url = null;
   const { error: fallbackError } = await supabase
     .from('notifications')
-    .update({ message })
+    .update(fallbackPatch)
     .eq('wedding_id', weddingId)
     .eq('id', id);
   if (fallbackError) throw new Error(fallbackError.message);
@@ -465,6 +523,21 @@ export async function uploadMessageImage(
 
   const { data } = supabase.storage.from('message-images').getPublicUrl(path);
   return data.publicUrl;
+}
+
+// Deletes an uploaded message photo from the `message-images` bucket,
+// given the public URL stored on notifications.image_url. No-op when the
+// URL isn't from our bucket. Mirrors deleteGuestProfileImage below —
+// bonus cleanup that callers fire-and-forget AFTER the DB write clears
+// the image_url reference.
+export async function deleteMessageImage(publicUrl: string): Promise<void> {
+  const marker = '/object/public/message-images/';
+  const idx = publicUrl.indexOf(marker);
+  if (idx === -1) return;
+  const path = publicUrl.slice(idx + marker.length);
+  if (!path) return;
+  const { error } = await supabase.storage.from('message-images').remove([path]);
+  if (error) throw new Error(error.message);
 }
 
 // Uploads a guest's profile photo to the `guest-profile-images` bucket and

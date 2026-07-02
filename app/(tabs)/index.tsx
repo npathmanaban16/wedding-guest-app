@@ -317,6 +317,14 @@ export default function HomeScreen() {
             <Text style={styles.adminButtonText}>Guest Accommodations</Text>
           </TouchableOpacity>
           <TouchableOpacity
+            style={styles.adminButton}
+            onPress={() => router.push('/admin-settings')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="options-outline" size={15} color={Colors.white} />
+            <Text style={styles.adminButtonText}>App Features</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
             onPress={handleLockAdmin}
             style={styles.adminLockAgain}
             activeOpacity={0.7}

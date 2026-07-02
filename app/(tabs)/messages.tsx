@@ -9,6 +9,7 @@ import {
   Alert,
   AppState,
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   LayoutAnimation,
   Modal,
@@ -19,6 +20,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
@@ -28,13 +30,16 @@ import {
   getReactions,
   toggleReaction,
   deleteNotification,
+  deleteMessageImage,
   editNotification,
   markMessagesRead,
   getReplies,
   addReply,
+  addChatMessage,
   deleteReply,
   notifyMessageReaction,
   notifyMessageReply,
+  uploadMessageImage,
   AppNotification,
   ReactionSummary,
   NotificationReply,
@@ -45,7 +50,13 @@ import { AttendeeCard } from '@/components/AttendeeCard';
 const REACTION_EMOJIS = ['❤️', '🎉', '😂', '👏', '🙌'];
 const COLLAPSED_REPLY_COUNT = 3;
 
-type MessagesTab = 'announcements' | 'attendees';
+type MessagesTab = 'announcements' | 'chat' | 'attendees';
+
+const TAB_LABELS: Record<MessagesTab, string> = {
+  announcements: 'Announcements',
+  chat: 'Chat',
+  attendees: 'Attendees',
+};
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -68,6 +79,8 @@ function MessageCard({
   replies,
   guestName,
   isAdmin,
+  canEdit,
+  canDelete,
   onReact,
   onDelete,
   onEdit,
@@ -80,9 +93,15 @@ function MessageCard({
   replies: NotificationReply[];
   guestName: string | null;
   isAdmin: boolean;
+  // Edit and delete are gated separately. Editing rewrites the author's
+  // words, so it's author-only (even admins can't edit a guest's chat
+  // post). Deleting is a moderation action, so admins can delete any
+  // message in addition to authors deleting their own.
+  canEdit: boolean;
+  canDelete: boolean;
   onReact: (emoji: string) => void;
   onDelete: () => void;
-  onEdit: (message: string) => Promise<boolean>;
+  onEdit: (message: string, removeImage: boolean) => Promise<boolean>;
   onReply: (message: string) => void;
   onDeleteReply: (replyId: string) => void;
   onReplyOpen: (y: number) => void;
@@ -97,6 +116,9 @@ function MessageCard({
 
   const [editOpen, setEditOpen] = useState(false);
   const [editText, setEditText] = useState(notification.message);
+  // Marks the attached photo for removal on save; Undo un-marks it so
+  // nothing is touched until Save actually commits.
+  const [editRemoveImage, setEditRemoveImage] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
 
   const [reactionsModalOpen, setReactionsModalOpen] = useState(false);
@@ -147,17 +169,24 @@ function MessageCard({
   const handleStartEdit = () => {
     haptic.light();
     setEditText(notification.message);
+    setEditRemoveImage(false);
     setEditOpen(true);
   };
 
+  // A saved message must keep some content: text, or the photo if it
+  // isn't marked for removal. Empty text alone is fine for photo posts.
+  const editKeepsImage = !!notification.imageUrl && !editRemoveImage;
+  const editSaveDisabled = savingEdit || (!editText.trim() && !editKeepsImage);
+
   const handleSaveEdit = async () => {
     const trimmed = editText.trim();
-    if (!trimmed || trimmed === notification.message) {
+    if (!trimmed && !editKeepsImage) return;
+    if (trimmed === notification.message && !editRemoveImage) {
       setEditOpen(false);
       return;
     }
     setSavingEdit(true);
-    const ok = await onEdit(trimmed);
+    const ok = await onEdit(trimmed, editRemoveImage);
     setSavingEdit(false);
     if (ok) setEditOpen(false);
   };
@@ -169,7 +198,11 @@ function MessageCard({
     >
       <View style={styles.cardHeader}>
         <View style={styles.senderBadge}>
-          <Ionicons name="notifications" size={13} color={Colors.primary} />
+          <Ionicons
+            name={notification.kind === 'chat' ? 'chatbubble' : 'notifications'}
+            size={13}
+            color={Colors.primary}
+          />
         </View>
         <View style={styles.headerMeta}>
           <Text style={styles.senderName}>{notification.sender}</Text>
@@ -184,14 +217,18 @@ function MessageCard({
             </View>
           )}
         </View>
-        {isAdmin && !editOpen && (
+        {(canEdit || canDelete) && !editOpen && (
           <View style={styles.headerActions}>
-            <TouchableOpacity onPress={handleStartEdit} style={styles.iconBtn} hitSlop={8}>
-              <Ionicons name="pencil-outline" size={15} color={Colors.textMuted} />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => { haptic.warning(); onDelete(); }} style={styles.iconBtn} hitSlop={8}>
-              <Ionicons name="trash-outline" size={16} color={Colors.textMuted} />
-            </TouchableOpacity>
+            {canEdit && (
+              <TouchableOpacity onPress={handleStartEdit} style={styles.iconBtn} hitSlop={8}>
+                <Ionicons name="pencil-outline" size={15} color={Colors.textMuted} />
+              </TouchableOpacity>
+            )}
+            {canDelete && (
+              <TouchableOpacity onPress={() => { haptic.warning(); onDelete(); }} style={styles.iconBtn} hitSlop={8}>
+                <Ionicons name="trash-outline" size={16} color={Colors.textMuted} />
+              </TouchableOpacity>
+            )}
           </View>
         )}
       </View>
@@ -207,6 +244,30 @@ function MessageCard({
             autoFocus
             textAlignVertical="top"
           />
+
+          {/* Attached photo — mark for removal / undo. Nothing is
+              deleted until Save commits the edit. */}
+          {notification.imageUrl && (
+            <View style={styles.editImageRow}>
+              <Image
+                source={{ uri: notification.imageUrl }}
+                style={[styles.editImageThumb, editRemoveImage && styles.editImageThumbRemoved]}
+              />
+              <Text style={styles.editImageLabel}>
+                {editRemoveImage ? 'Photo will be removed on save' : 'Attached photo'}
+              </Text>
+              <TouchableOpacity
+                onPress={() => { haptic.light(); setEditRemoveImage((v) => !v); }}
+                hitSlop={8}
+                disabled={savingEdit}
+              >
+                <Text style={styles.editImageAction}>
+                  {editRemoveImage ? 'Undo' : 'Remove'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           <View style={styles.editActions}>
             <TouchableOpacity
               onPress={() => setEditOpen(false)}
@@ -217,8 +278,8 @@ function MessageCard({
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleSaveEdit}
-              disabled={!editText.trim() || savingEdit}
-              style={[styles.editBtn, styles.editSave, (!editText.trim() || savingEdit) && styles.editSaveDisabled]}
+              disabled={editSaveDisabled}
+              style={[styles.editBtn, styles.editSave, editSaveDisabled && styles.editSaveDisabled]}
               activeOpacity={0.7}
             >
               <Text style={styles.editSaveText}>{savingEdit ? 'Saving…' : 'Save'}</Text>
@@ -419,14 +480,21 @@ function AttendeesList({
   attendees: ReturnType<typeof useWedding>['attendees'];
   currentGuestName: string | null;
 }) {
-  const visible = [...attendees].sort((a, b) => {
-    const aWp = shouldShowWeddingPartyBadge(a);
-    const bWp = shouldShowWeddingPartyBadge(b);
-    if (aWp !== bWp) return aWp ? -1 : 1;
-    return a.canonical_name.localeCompare(b.canonical_name);
-  });
+  // Name search. State lives here so it resets when the tab unmounts
+  // (switching tabs clears the query — each visit starts fresh).
+  const [query, setQuery] = useState('');
+  const trimmedQuery = query.trim().toLowerCase();
 
-  if (visible.length === 0) {
+  const visible = attendees
+    .filter((a) => !trimmedQuery || a.canonical_name.toLowerCase().includes(trimmedQuery))
+    .sort((a, b) => {
+      const aWp = shouldShowWeddingPartyBadge(a);
+      const bWp = shouldShowWeddingPartyBadge(b);
+      if (aWp !== bWp) return aWp ? -1 : 1;
+      return a.canonical_name.localeCompare(b.canonical_name);
+    });
+
+  if (attendees.length === 0) {
     return (
       <View style={styles.empty}>
         <Ionicons name="people-outline" size={40} color={Colors.textMuted} />
@@ -436,18 +504,47 @@ function AttendeesList({
   }
 
   return (
-    <View style={styles.attendeesGrid}>
-      {visible.map((a) => {
-        const isMe = !!currentGuestName && a.canonical_name.toLowerCase() === currentGuestName.toLowerCase();
-        const showWpBadge = shouldShowWeddingPartyBadge(a);
-        const badge = isMe ? 'You' : showWpBadge ? 'Wedding party' : undefined;
-        return (
-          <View key={a.canonical_name} style={styles.attendeesGridItem}>
-            <AttendeeCard attendee={a} badge={badge} />
-          </View>
-        );
-      })}
-    </View>
+    <>
+      <View style={styles.attendeeSearchBar}>
+        <Ionicons name="search" size={16} color={Colors.textMuted} />
+        <TextInput
+          style={styles.attendeeSearchInput}
+          placeholder="Search guests..."
+          placeholderTextColor={Colors.textMuted}
+          value={query}
+          onChangeText={setQuery}
+          autoCorrect={false}
+          autoCapitalize="none"
+          returnKeyType="search"
+        />
+        {query.length > 0 && (
+          <TouchableOpacity onPress={() => { haptic.selection(); setQuery(''); }} hitSlop={8}>
+            <Ionicons name="close-circle" size={18} color={Colors.textMuted} />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {visible.length === 0 ? (
+        <View style={styles.empty}>
+          <Ionicons name="search-outline" size={40} color={Colors.textMuted} />
+          <Text style={styles.emptyText}>No guests found</Text>
+          <Text style={styles.emptySubtext}>No one matches “{query.trim()}”</Text>
+        </View>
+      ) : (
+        <View style={styles.attendeesGrid}>
+          {visible.map((a) => {
+            const isMe = !!currentGuestName && a.canonical_name.toLowerCase() === currentGuestName.toLowerCase();
+            const showWpBadge = shouldShowWeddingPartyBadge(a);
+            const badge = isMe ? 'You' : showWpBadge ? 'Wedding party' : undefined;
+            return (
+              <View key={a.canonical_name} style={styles.attendeesGridItem}>
+                <AttendeeCard attendee={a} badge={badge} />
+              </View>
+            );
+          })}
+        </View>
+      )}
+    </>
   );
 }
 
@@ -459,10 +556,45 @@ export default function MessagesScreen() {
   const inWeddingParty = !!guestName && isWeddingParty(guestName);
   const [activeTab, setActiveTab] = useState<MessagesTab>('announcements');
 
+  // Admin-controlled feature flags (App Features screen). Anything that
+  // isn't exactly `false` means enabled — covers databases that predate
+  // migrations 038/039, where the columns are missing.
+  const attendeesEnabled = wedding.attendees_enabled !== false;
+  const chatEnabled = wedding.chat_enabled !== false;
+  const visibleTabs: MessagesTab[] = [
+    'announcements' as const,
+    ...(chatEnabled ? ['chat' as const] : []),
+    ...(attendeesEnabled ? ['attendees' as const] : []),
+  ];
+
+  // If an admin turns a feature off while this user is sitting on its
+  // tab, bounce them back to Announcements.
+  useEffect(() => {
+    if (
+      (activeTab === 'attendees' && !attendeesEnabled) ||
+      (activeTab === 'chat' && !chatEnabled)
+    ) {
+      setActiveTab('announcements');
+    }
+  }, [attendeesEnabled, chatEnabled, activeTab]);
+
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [reactions, setReactions] = useState<Record<string, ReactionSummary[]>>({});
   const [allReplies, setAllReplies] = useState<Record<string, NotificationReply[]>>({});
   const [loading, setLoading] = useState(true);
+
+  // Guest chat composer (Chat tab). The optional photo is picked locally
+  // and only uploaded when the guest sends, so an abandoned compose
+  // doesn't leave orphan files in the bucket (same as the admin flow).
+  const [chatText, setChatText] = useState('');
+  const [chatImage, setChatImage] = useState<{ uri: string; mimeType: string } | null>(null);
+  const [postingChat, setPostingChat] = useState(false);
+
+  // Both streams live in `notifications` (same table, discriminated by
+  // kind) so reactions/replies/unread-badging are shared; the tabs just
+  // split the list at render time.
+  const announcements = notifications.filter((n) => n.kind !== 'chat');
+  const chatMessages = notifications.filter((n) => n.kind === 'chat');
 
   const loadData = useCallback(async () => {
     const all = await getNotifications(weddingId);
@@ -543,9 +675,11 @@ export default function MessagesScreen() {
       // Email the couple only when a reaction is added or changed, not when
       // it's removed. `myCurrentReaction === emoji` would mean the same
       // emoji was tapped again, which the storage layer treats as a remove.
+      // Guest-chat messages skip the email — reactions there are
+      // guest-to-guest chatter, not feedback on a couple announcement.
       if (myCurrentReaction !== emoji) {
         const original = notifications.find((n) => n.id === notificationId);
-        if (original) {
+        if (original && original.kind !== 'chat') {
           notifyMessageReaction(
             weddingId,
             guestName,
@@ -578,8 +712,10 @@ export default function MessagesScreen() {
 
     try {
       await addReply(weddingId, notificationId, guestName, message);
+      // Same chat carve-out as reactions: don't email the couple about
+      // guest-to-guest replies on the Chat tab.
       const original = notifications.find((n) => n.id === notificationId);
-      if (original) {
+      if (original && original.kind !== 'chat') {
         notifyMessageReply(
           weddingId,
           guestName,
@@ -640,19 +776,33 @@ export default function MessagesScreen() {
     );
   }, [weddingId, loadData]);
 
-  const handleEdit = useCallback(async (id: string, message: string): Promise<boolean> => {
+  const handleEdit = useCallback(async (
+    id: string,
+    message: string,
+    removeImage: boolean,
+  ): Promise<boolean> => {
     const previous = notifications.find((n) => n.id === id);
     const optimisticEditedAt = new Date().toISOString();
     setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, message, editedAt: optimisticEditedAt } : n)),
+      prev.map((n) =>
+        n.id === id
+          ? { ...n, message, editedAt: optimisticEditedAt, ...(removeImage ? { imageUrl: null } : {}) }
+          : n,
+      ),
     );
     try {
-      const { editedAt } = await editNotification(weddingId, id, message);
+      const { editedAt } = await editNotification(weddingId, id, message, removeImage);
       // Reconcile: if migration 007 isn't applied yet, editedAt comes back null
       if (editedAt !== optimisticEditedAt) {
         setNotifications((prev) =>
           prev.map((n) => (n.id === id ? { ...n, editedAt } : n)),
         );
+      }
+      // The DB row no longer references the file — drop it from the
+      // bucket. Fire-and-forget: a failed cleanup just leaves an
+      // orphaned file, never a broken message.
+      if (removeImage && previous?.imageUrl) {
+        deleteMessageImage(previous.imageUrl).catch(() => {});
       }
       return true;
     } catch {
@@ -663,6 +813,70 @@ export default function MessagesScreen() {
       return false;
     }
   }, [weddingId, notifications]);
+
+  const handlePickChatImage = async () => {
+    haptic.light();
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert(
+        'Photo access needed',
+        'Allow photo library access in Settings to attach a photo.',
+      );
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+    const asset = result.assets[0];
+    setChatImage({
+      uri: asset.uri,
+      mimeType: asset.mimeType ?? 'image/jpeg',
+    });
+  };
+
+  const handlePostChat = useCallback(async () => {
+    const text = chatText.trim();
+    if ((!text && !chatImage) || !guestName || postingChat) return;
+    haptic.medium();
+    setPostingChat(true);
+
+    // Optimistic prepend (feed is newest-first) using the local file URI
+    // for the photo; reconciled by loadData once the insert lands, which
+    // swaps the temp id + local URI for the real row and public URL.
+    const image = chatImage;
+    const optimistic: AppNotification = {
+      id: `temp-${Date.now()}`,
+      message: text,
+      sender: guestName,
+      sentAt: new Date().toISOString(),
+      editedAt: null,
+      weddingPartyOnly: false,
+      imageUrl: image?.uri ?? null,
+      kind: 'chat',
+    };
+    setNotifications((prev) => [optimistic, ...prev]);
+    setChatText('');
+    setChatImage(null);
+
+    try {
+      // Upload first so the row never points at a missing file.
+      let imageUrl: string | null = null;
+      if (image) {
+        imageUrl = await uploadMessageImage(weddingId, image.uri, image.mimeType);
+      }
+      await addChatMessage(weddingId, guestName, text, imageUrl);
+      loadData();
+    } catch {
+      setNotifications((prev) => prev.filter((n) => n.id !== optimistic.id));
+      setChatText(text);
+      setChatImage(image);
+      Alert.alert('Error', 'Could not post your message.');
+    } finally {
+      setPostingChat(false);
+    }
+  }, [chatText, chatImage, guestName, postingChat, weddingId, loadData]);
 
   // Scroll a message card into view so the keyboard doesn't cover its
   // reply input. Called when a guest taps "Reply" or focuses the input.
@@ -692,16 +906,20 @@ export default function MessagesScreen() {
           <Text style={styles.pageSubtitleTag}>
             {activeTab === 'announcements'
               ? 'From the couple'
-              : `${attendees.length} attending`}
+              : activeTab === 'chat'
+                ? 'Everyone can join in'
+                : `${attendees.length} attending`}
           </Text>
         </View>
 
         {/* Segmented control — swaps between the announcement feed
-            (existing behavior, kept as default) and the Attendees
-            directory. Both tabs stay mounted per switch since re-rendering
-            the message feed's reactions is cheap. */}
+            (existing behavior, kept as default), the guest Chat feed,
+            and the Attendees directory. Tabs the admin has turned off
+            (App Features) are omitted; with everything off only the
+            announcement feed remains and the control is hidden. */}
+        {visibleTabs.length > 1 && (
         <View style={styles.segmented}>
-          {(['announcements', 'attendees'] as const).map((tab) => {
+          {visibleTabs.map((tab) => {
             const active = tab === activeTab;
             return (
               <TouchableOpacity
@@ -710,25 +928,94 @@ export default function MessagesScreen() {
                 style={[styles.segmentedTab, active && styles.segmentedTabActive]}
                 activeOpacity={0.85}
               >
-                <Text style={[styles.segmentedLabel, active && styles.segmentedLabelActive]}>
-                  {tab === 'announcements' ? 'Announcements' : 'Attendees'}
+                <Text
+                  style={[styles.segmentedLabel, active && styles.segmentedLabelActive]}
+                  numberOfLines={1}
+                >
+                  {TAB_LABELS[tab]}
                 </Text>
               </TouchableOpacity>
             );
           })}
         </View>
+        )}
 
-        {activeTab === 'announcements' ? (
-          loading ? (
-            <ActivityIndicator color={Colors.primary} style={styles.loader} />
-          ) : notifications.length === 0 ? (
+        {/* Chat composer — always visible on the Chat tab so posting
+            doesn't wait on the feed load. Any signed-in guest can post
+            text, a photo, or both. */}
+        {activeTab === 'chat' && (
+          <View style={styles.chatComposer}>
+            <View style={styles.chatInputRow}>
+              <TextInput
+                style={styles.chatInput}
+                placeholder="Message all guests..."
+                placeholderTextColor={Colors.textMuted}
+                value={chatText}
+                onChangeText={setChatText}
+                multiline
+                maxLength={1000}
+              />
+              <TouchableOpacity
+                onPress={handlePostChat}
+                disabled={(!chatText.trim() && !chatImage) || postingChat}
+                style={[
+                  styles.sendBtn,
+                  ((!chatText.trim() && !chatImage) || postingChat) && styles.sendBtnDisabled,
+                ]}
+              >
+                {postingChat ? (
+                  <ActivityIndicator size="small" color={Colors.white} />
+                ) : (
+                  <Ionicons name="send" size={16} color={Colors.white} />
+                )}
+              </TouchableOpacity>
+            </View>
+
+            {/* Photo attach — labeled pill matching the admin send screen,
+                swapping to a thumbnail + remove row once picked. */}
+            {chatImage ? (
+              <View style={styles.chatAttachmentRow}>
+                <Image source={{ uri: chatImage.uri }} style={styles.chatAttachmentThumb} />
+                <View style={styles.chatAttachmentMeta}>
+                  <Text style={styles.chatAttachmentLabel}>Photo attached</Text>
+                  <Text style={styles.chatAttachmentHint}>Sent with your message</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => { haptic.light(); setChatImage(null); }}
+                  hitSlop={8}
+                  disabled={postingChat}
+                  style={styles.chatAttachmentRemove}
+                >
+                  <Ionicons name="close-circle" size={20} color={Colors.textMuted} />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity
+                onPress={handlePickChatImage}
+                disabled={postingChat}
+                style={styles.chatAttachButton}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="image-outline" size={16} color={Colors.primary} />
+                <Text style={styles.chatAttachButtonText}>Add photo</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
+        {activeTab === 'attendees' ? (
+          <AttendeesList attendees={attendees} currentGuestName={guestName} />
+        ) : loading ? (
+          <ActivityIndicator color={Colors.primary} style={styles.loader} />
+        ) : activeTab === 'announcements' ? (
+          announcements.length === 0 ? (
             <View style={styles.empty}>
               <Ionicons name="notifications-outline" size={40} color={Colors.textMuted} />
               <Text style={styles.emptyText}>No messages yet</Text>
               <Text style={styles.emptySubtext}>Updates from {wedding.couple_names} will appear here</Text>
             </View>
           ) : (
-            notifications.map((n) => (
+            announcements.map((n) => (
               <MessageCard
                 key={n.id}
                 notification={n}
@@ -736,17 +1023,42 @@ export default function MessagesScreen() {
                 replies={allReplies[n.id] ?? []}
                 guestName={guestName}
                 isAdmin={isAdmin}
+                canEdit={isAdmin}
+                canDelete={isAdmin}
                 onReact={(emoji) => handleReact(n.id, emoji)}
                 onDelete={() => handleDelete(n.id, n.message)}
-                onEdit={(msg) => handleEdit(n.id, msg)}
+                onEdit={(msg, removeImage) => handleEdit(n.id, msg, removeImage)}
                 onReply={(msg) => handleReply(n.id, msg)}
                 onDeleteReply={(replyId) => handleDeleteReply(n.id, replyId)}
                 onReplyOpen={handleReplyOpen}
               />
             ))
           )
+        ) : chatMessages.length === 0 ? (
+          <View style={styles.empty}>
+            <Ionicons name="chatbubbles-outline" size={40} color={Colors.textMuted} />
+            <Text style={styles.emptyText}>No chat messages yet</Text>
+            <Text style={styles.emptySubtext}>Say hi — every guest can see and join this chat</Text>
+          </View>
         ) : (
-          <AttendeesList attendees={attendees} currentGuestName={guestName} />
+          chatMessages.map((n) => (
+            <MessageCard
+              key={n.id}
+              notification={n}
+              reactions={reactions[n.id] ?? []}
+              replies={allReplies[n.id] ?? []}
+              guestName={guestName}
+              isAdmin={isAdmin}
+              canEdit={n.sender === guestName}
+              canDelete={isAdmin || n.sender === guestName}
+              onReact={(emoji) => handleReact(n.id, emoji)}
+              onDelete={() => handleDelete(n.id, n.message)}
+              onEdit={(msg, removeImage) => handleEdit(n.id, msg, removeImage)}
+              onReply={(msg) => handleReply(n.id, msg)}
+              onDeleteReply={(replyId) => handleDeleteReply(n.id, replyId)}
+              onReplyOpen={handleReplyOpen}
+            />
+          ))
         )}
       </ScrollView>
     </KeyboardAvoidingView>
@@ -789,6 +1101,27 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
   },
 
+  attendeeSearchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    backgroundColor: Colors.white,
+    borderRadius: Radius.full,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 9,
+    marginBottom: Spacing.md,
+    ...Shadow.small,
+  },
+  attendeeSearchInput: {
+    flex: 1,
+    fontFamily: Fonts.sans,
+    fontSize: 14,
+    color: Colors.textPrimary,
+    padding: 0,
+  },
+
   attendeesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -814,12 +1147,90 @@ const styles = StyleSheet.create({
   },
   segmentedLabel: {
     fontFamily: Fonts.sansMedium,
-    fontSize: 13,
+    // 12 (down from 13) so "Announcements" still fits with three tabs
+    // on narrow screens.
+    fontSize: 12,
     color: Colors.textMuted,
     letterSpacing: 0.3,
   },
   segmentedLabelActive: {
     color: Colors.textPrimary,
+  },
+
+  // Guest chat composer
+  chatComposer: {
+    backgroundColor: Colors.white,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    marginBottom: Spacing.lg,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    ...Shadow.small,
+  },
+  chatInputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: Spacing.sm,
+  },
+  // Labeled attach pill, matching admin.tsx's attachButton so the
+  // affordance reads the same wherever photos can be added.
+  chatAttachButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: Spacing.md,
+    marginTop: Spacing.sm,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    backgroundColor: Colors.background,
+  },
+  chatAttachButtonText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 13,
+    color: Colors.primary,
+  },
+  chatAttachmentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    padding: Spacing.sm,
+    marginTop: Spacing.sm,
+    borderRadius: Radius.md,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    backgroundColor: Colors.background,
+  },
+  chatAttachmentThumb: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.border,
+  },
+  chatAttachmentMeta: { flex: 1 },
+  chatAttachmentLabel: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 13,
+    color: Colors.textPrimary,
+  },
+  chatAttachmentHint: {
+    fontFamily: Fonts.sans,
+    fontSize: 11,
+    color: Colors.textMuted,
+    marginTop: 2,
+  },
+  chatAttachmentRemove: { padding: 2 },
+  chatInput: {
+    flex: 1,
+    fontFamily: Fonts.sans,
+    fontSize: 15,
+    color: Colors.textPrimary,
+    lineHeight: 20,
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: Spacing.sm,
+    maxHeight: 100,
   },
 
   empty: {
@@ -916,6 +1327,38 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     backgroundColor: Colors.background,
     minHeight: 80,
+  },
+  editImageRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    padding: Spacing.sm,
+    marginTop: Spacing.sm,
+    borderRadius: Radius.md,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    backgroundColor: Colors.background,
+  },
+  editImageThumb: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.border,
+  },
+  editImageThumbRemoved: {
+    opacity: 0.35,
+  },
+  editImageLabel: {
+    flex: 1,
+    fontFamily: Fonts.sans,
+    fontSize: 12,
+    color: Colors.textMuted,
+  },
+  editImageAction: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 13,
+    color: Colors.primary,
+    paddingHorizontal: Spacing.xs,
   },
   editActions: {
     flexDirection: 'row',

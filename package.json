@@ -20,7 +20,6 @@
     "@supabase/supabase-js": "^2.103.0",
     "expo": "~54.0.0",
     "expo-asset": "~12.0.12",
-    "expo-calendar": "~15.0.8",
     "expo-constants": "~18.0.13",
     "expo-device": "~8.0.10",
     "expo-file-system": "~19.0.21",

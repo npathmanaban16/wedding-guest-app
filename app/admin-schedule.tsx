@@ -237,9 +237,7 @@ export default function AdminScheduleScreen() {
                   style={styles.cardHeader}
                 >
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.eventTitle}>
-                      {event.emoji ? `${event.emoji}  ` : ''}{headerTitle}
-                    </Text>
+                    <Text style={styles.eventTitle}>{headerTitle}</Text>
                     <Text style={styles.eventDate}>{headerSub}</Text>
                   </View>
                   {dirty && <View style={styles.dirtyDot} />}
@@ -320,8 +318,8 @@ export default function AdminScheduleScreen() {
         <Text style={styles.footnote}>
           Changes apply to all guests on their next app open. Clearing a field
           reverts it to the original. Editing the displayed date does not
-          change calendar exports or the order events appear — those still
-          use the event's underlying datetime.
+          change the order events appear — that still uses the event's
+          underlying datetime.
         </Text>
 
         <View style={{ height: insets.bottom + Spacing.xxl }} />

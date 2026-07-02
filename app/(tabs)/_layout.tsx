@@ -86,9 +86,16 @@ export default function TabLayout() {
     { name: 'my-info',     title: 'Details',     icon: 'person-outline',        iconFocused: 'person' },
   ], [wedding.destination_city]);
 
+  // Admin-controlled feature flag (App Features screen): when off,
+  // guests are never redirected into the first-login onboarding form.
+  // Anything that isn't exactly `false` means enabled — covers
+  // databases that predate migration 040.
+  const onboardingEnabled = wedding.onboarding_enabled !== false;
+
   useEffect(() => {
     if (isLoading) return;
-    if (!guestName) {
+    if (!guestName || !onboardingEnabled) {
+      setNeedsOnboarding(false);
       setOnboardingChecked(true);
       return;
     }
@@ -96,7 +103,11 @@ export default function TabLayout() {
       setNeedsOnboarding(!done);
       setOnboardingChecked(true);
     });
-  }, [weddingId, guestName, isLoading]);
+  }, [weddingId, guestName, isLoading, onboardingEnabled]);
+
+  // Mirrors the Messages screen's chat gating: when the admin has chat
+  // turned off (App Features), chat rows are invisible and mustn't badge.
+  const chatEnabled = wedding.chat_enabled !== false;
 
   const refreshUnread = useCallback(async () => {
     if (!guestName) return;
@@ -104,16 +115,21 @@ export default function TabLayout() {
       getNotifications(weddingId),
       getMessagesLastRead(weddingId, guestName),
     ]);
-    // Same filter the Messages screen applies — don't badge non-wedding-
-    // party users for messages they can't see.
-    const notifs = allNotifs.filter((n) => !n.weddingPartyOnly || inWeddingParty);
+    // Same filters the Messages screen applies — don't badge users for
+    // messages they can't see (wedding-party-only, or chat when the
+    // feature is off).
+    const notifs = allNotifs.filter(
+      (n) =>
+        (!n.weddingPartyOnly || inWeddingParty) &&
+        (chatEnabled || n.kind !== 'chat'),
+    );
     if (!lastRead) {
       setUnreadCount(notifs.length);
       return;
     }
     const count = notifs.filter((n) => new Date(n.sentAt) > new Date(lastRead)).length;
     setUnreadCount(count);
-  }, [weddingId, guestName, inWeddingParty]);
+  }, [weddingId, guestName, inWeddingParty, chatEnabled]);
 
   useEffect(() => {
     refreshUnread();

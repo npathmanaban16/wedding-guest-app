@@ -93,6 +93,10 @@ interface WeddingContextType {
     canonicalName: string,
     patch: { profile_photo_url?: string | null; bio?: string | null },
   ) => void;
+  // In-place patcher for the wedding row. Call this AFTER a successful
+  // write via services/wedding.ts#updateWeddingSettings so feature-flag
+  // toggles (e.g. attendees_enabled) apply app-wide without a refetch.
+  patchWedding: (patch: Partial<WeddingRow>) => void;
   isValidGuest: (name: string) => boolean;
   isValidGuestOrAdmin: (name: string) => boolean;
   getCanonicalName: (name: string) => string | null;
@@ -354,6 +358,13 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
+  // In-memory patcher for the wedding row, mirroring patchAttendeeProfile.
+  // Used by the App Features admin screen to flip feature flags without
+  // waiting on a refetch.
+  const patchWedding = useCallback((patch: Partial<WeddingRow>) => {
+    setWedding((prev) => (prev ? { ...prev, ...patch } : prev));
+  }, []);
+
   const sessionValue = useMemo<WeddingSessionContextType>(
     () => ({
       weddingId,
@@ -437,6 +448,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       schedulePage,
       attendees: guests,
       patchAttendeeProfile,
+      patchWedding,
       isValidGuest,
       isValidGuestOrAdmin,
       getCanonicalName,
@@ -446,7 +458,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       isAdmin,
       getAdminRole,
     };
-  }, [weddingId, wedding, guests, admins, dbEvents, dbGuide, dbPackingList, dbSchedulePage, patchAttendeeProfile]);
+  }, [weddingId, wedding, guests, admins, dbEvents, dbGuide, dbPackingList, dbSchedulePage, patchAttendeeProfile, patchWedding]);
 
   // Initial session restore — brief blank while AsyncStorage reads on SaaS.
   if (!sessionReady) {
