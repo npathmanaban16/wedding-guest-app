@@ -20,7 +20,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
-import { DEFAULT_WEDDING_ID, getHotelOptionsForWedding, getTravelWindow } from '@/constants/weddingData';
+import {
+  DEFAULT_WEDDING_ID,
+  getArrivalPlaceholders,
+  getHotelOptionsForWedding,
+  getTravelWindow,
+} from '@/constants/weddingData';
 import {
   getMyInfo,
   saveMyInfo,
@@ -119,6 +124,7 @@ export default function MyInfoScreen() {
   // window is derived from the wedding row's wedding_date.
   const travel = getTravelWindow(weddingId, wedding.wedding_date);
   const hotelOptions = getHotelOptionsForWedding(weddingId);
+  const arrivalPlaceholders = getArrivalPlaceholders(weddingId, wedding.wedding_date);
 
   // SaaS: navigate to /invite explicitly and clear storage so the next
   // cold launch also routes to /invite. We do NOT call clearWeddingId()
@@ -541,13 +547,13 @@ export default function MyInfoScreen() {
             label={`Estimated arrival time in ${wedding.destination_city}`}
             value={info.arrivalTime}
             onChange={update('arrivalTime')}
-            placeholder="e.g. Thursday 3:00 PM"
+            placeholder={arrivalPlaceholders.arrivalTime}
           />
           <Field
             label="Flight number (if applicable)"
             value={info.flightNumber}
             onChange={update('flightNumber')}
-            placeholder="e.g. LX1234 arriving Geneva 11:30"
+            placeholder={arrivalPlaceholders.flightNumber}
             autoCapitalize="none"
           />
         </View>

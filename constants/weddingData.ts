@@ -177,6 +177,56 @@ export function getHotelOptionsForWedding(
   return [];
 }
 
+// ============================================================
+// ARRIVAL PLACEHOLDERS (onboarding / My Info)
+// ============================================================
+// The "How are you arriving?" card asks for a free-text arrival time
+// and flight number. The placeholder examples shown inside the inputs
+// are per-wedding so guests see hints that match their destination —
+// a Swiss LX flight into Geneva for N&N, an American Airlines flight
+// into SNA for Arjun & Ila, and a generic hint derived from the
+// travel window's check-in day for tenants without an explicit case.
+
+export interface ArrivalPlaceholders {
+  arrivalTime: string;
+  flightNumber: string;
+}
+
+const SHORT_MONTHS = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+];
+const SHORT_WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+function formatArrivalHintDate(date: Date): string {
+  return `${SHORT_WEEKDAYS[date.getDay()]} ${date.getDate()} ${SHORT_MONTHS[date.getMonth()]}`;
+}
+
+export function getArrivalPlaceholders(
+  weddingId: string | null | undefined,
+  weddingDate?: string | null,
+): ArrivalPlaceholders {
+  if (!!weddingId && NN_WEDDING_IDS.has(weddingId)) {
+    return {
+      arrivalTime: 'e.g. 2:30 PM on Thu 21 May',
+      flightNumber: 'e.g. LX1234 arriving Geneva 11:30 AM',
+    };
+  }
+  if (weddingId === ARJUN_ILA_WEDDING_ID) {
+    return {
+      arrivalTime: 'e.g. 3:00 PM on Thu 10 Sep',
+      flightNumber: 'e.g. AA1234 arriving SNA 3:00 PM',
+    };
+  }
+  // Fallback: anchor the hint on the same check-in day the travel window
+  // picker defaults to, so guests see a plausible date for their weekend.
+  const { checkInInitial } = getTravelWindow(weddingId, weddingDate);
+  return {
+    arrivalTime: `e.g. 3:00 PM on ${formatArrivalHintDate(checkInInitial)}`,
+    flightNumber: 'e.g. AA1234 arriving 3:00 PM',
+  };
+}
+
 export const EVENTS_NN: WeddingEvent[] = [
   {
     id: "ceremony-rehearsal",
