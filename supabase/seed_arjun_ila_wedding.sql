@@ -594,13 +594,6 @@ insert into public.wedding_guides (
           "description": "Pacific Daylight Time (PDT, UTC−7) through early November. Three hours behind the East Coast."
         },
         {
-          "id": "tipping",
-          "name": "Tipping",
-          "category": "Practical",
-          "description": "Standard US tipping: 15–20% at restaurants and bars, $1–$2 per drink at counter service, $5–$10 per night for hotel housekeeping, ~15% for rideshares.",
-          "tip": "Most restaurant checks have suggested tip amounts printed at the bottom — handy guide."
-        },
-        {
           "id": "driving",
           "name": "Driving",
           "category": "Practical",
@@ -631,7 +624,6 @@ insert into public.wedding_guides (
     {"key": "Weather (Sep)", "value": "Sunny · 65–80°F"},
     {"key": "Time zone",     "value": "PDT (UTC−7)"},
     {"key": "Currency",      "value": "US Dollar ($)"},
-    {"key": "Tipping",       "value": "15–20% at restaurants"},
     {"key": "Plug type",     "value": "Type A / B · 120V"},
     {"key": "Emergency",     "value": "911"}
   ]$g$::jsonb,
