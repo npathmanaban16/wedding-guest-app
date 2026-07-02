@@ -13,16 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius } from '@/constants/theme';
 
-export const HOTEL_OPTIONS = [
-  'Fairmont Le Montreux Palace',
-  'Mona Montreux',
-  'Villa Toscane',
-  'Grand Hotel Suisse Majestic',
-  'Royal Plaza Montreux',
-];
-
 const OTHER = '__other__';
-const LIST_ITEMS = [...HOTEL_OPTIONS, OTHER];
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -36,18 +27,23 @@ interface Props {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  // Per-wedding shortlist of hotels shown as tap-to-select chips above
+  // the "Somewhere else…" free-text option. Empty is fine — the picker
+  // then only exposes the free-text path.
+  options: string[];
   // Optional ref to the parent ScrollView — when provided, expanding the
   // dropdown auto-scrolls the field near the top so the options stay on screen.
   scrollRef?: React.RefObject<ScrollView | null>;
 }
 
-export function HotelPickerField({ label, value, onChange, scrollRef }: Props) {
+export function HotelPickerField({ label, value, onChange, options, scrollRef }: Props) {
   const [open, setOpen] = useState(false);
   const [otherOpen, setOtherOpen] = useState(false);
   const [otherText, setOtherText] = useState('');
   const wrapperRef = useRef<View>(null);
 
-  const isKnownHotel = HOTEL_OPTIONS.includes(value);
+  const listItems = [...options, OTHER];
+  const isKnownHotel = options.includes(value);
   const isOther = !isKnownHotel && value !== '';
   const triggerLabel = value || '';
 
@@ -158,10 +154,10 @@ export function HotelPickerField({ label, value, onChange, scrollRef }: Props) {
               </View>
             </View>
           ) : (
-            LIST_ITEMS.map((item, idx) => {
+            listItems.map((item, idx) => {
               const isSelected = item === OTHER ? isOther : value === item;
               const displayText = item === OTHER ? 'Somewhere else…' : item;
-              const isLast = idx === LIST_ITEMS.length - 1;
+              const isLast = idx === listItems.length - 1;
               return (
                 <TouchableOpacity
                   key={item}

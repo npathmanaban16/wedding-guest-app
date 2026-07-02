@@ -75,10 +75,20 @@ export const NN_WEDDING_IDS = new Set([
   'a0000000-0000-0000-0000-000000000001', // N&N in SaaS/Tetherly schema
 ]);
 
+// Arjun & Ila SaaS demo tenant — Sep 2026 wedding at The Ritz-Carlton,
+// Laguna Niguel. Uses their own per-wedding hotel list + travel window
+// below so the onboarding/My-Info form matches their weekend rather than
+// showing Montreux hotels in May.
+export const ARJUN_ILA_WEDDING_ID = 'a0000000-0000-0000-0000-000000000003';
+
 // Travel window for the travel-detail date pickers (onboarding + My Info).
 // Keyed on the actual wedding, NOT the build variant — the N&N wedding can
 // also be reached from the SaaS/Tetherly build, and in that case we still
 // want the 2026 window, not the demo's 2027 one.
+//
+// For tenants with no explicit case below, the window is derived from the
+// wedding row's `wedding_date` so new tenants (Arjun & Ila and beyond)
+// automatically get a sensible range without another code change.
 export interface TravelWindow {
   min: Date;
   max: Date;
@@ -86,21 +96,85 @@ export interface TravelWindow {
   checkOutInitial: Date;
 }
 
-export function getTravelWindow(weddingId: string | null | undefined): TravelWindow {
-  const isNN = !!weddingId && NN_WEDDING_IDS.has(weddingId);
-  return isNN
-    ? {
-        min: new Date('2026-05-18'),
-        max: new Date('2026-06-01'),
-        checkInInitial: new Date(2026, 4, 21),  // May 21 2026 — rehearsal dinner
-        checkOutInitial: new Date(2026, 4, 24), // May 24 2026 — morning after reception
-      }
-    : {
-        min: new Date('2027-05-17'),
-        max: new Date('2027-05-31'),
-        checkInInitial: new Date(2027, 4, 20),  // May 20 2027 — demo rehearsal dinner
-        checkOutInitial: new Date(2027, 4, 23), // May 23 2027 — morning after demo reception
+function addDays(base: Date, days: number): Date {
+  const d = new Date(base);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+export function getTravelWindow(
+  weddingId: string | null | undefined,
+  weddingDate?: string | null,
+): TravelWindow {
+  if (!!weddingId && NN_WEDDING_IDS.has(weddingId)) {
+    return {
+      min: new Date('2026-05-18'),
+      max: new Date('2026-06-01'),
+      checkInInitial: new Date(2026, 4, 21),  // May 21 2026 — rehearsal dinner
+      checkOutInitial: new Date(2026, 4, 24), // May 24 2026 — morning after reception
+    };
+  }
+  if (weddingId === ARJUN_ILA_WEDDING_ID) {
+    return {
+      min: new Date('2026-09-07'),
+      max: new Date('2026-09-20'),
+      checkInInitial: new Date(2026, 8, 10),  // Sep 10 2026 — day before Sangeet
+      checkOutInitial: new Date(2026, 8, 13), // Sep 13 2026 — morning after reception
+    };
+  }
+  // Fallback: derive from the wedding_date field on the wedding row.
+  // Gives new tenants a window centred on their ceremony without any
+  // per-wedding code change.
+  if (weddingDate) {
+    const ceremony = new Date(weddingDate);
+    if (!Number.isNaN(ceremony.getTime())) {
+      return {
+        min: addDays(ceremony, -5),
+        max: addDays(ceremony, 5),
+        checkInInitial: addDays(ceremony, -2),
+        checkOutInitial: addDays(ceremony, 1),
       };
+    }
+  }
+  // Ultimate fallback — matches the pre-existing demo behaviour.
+  return {
+    min: new Date('2027-05-17'),
+    max: new Date('2027-05-31'),
+    checkInInitial: new Date(2027, 4, 20),  // May 20 2027 — demo rehearsal dinner
+    checkOutInitial: new Date(2027, 4, 23), // May 23 2027 — morning after demo reception
+  };
+}
+
+// ============================================================
+// HOTEL OPTIONS (onboarding / My Info picker)
+// ============================================================
+// Per-wedding shortlist of hotels shown in the accommodation picker.
+// The picker always appends an "Other…" option so guests can free-text
+// anything not on the list, so leaving the list empty for a new tenant
+// still gives them a functional field — it just skips the shortcut chips.
+
+const HOTEL_OPTIONS_NN = [
+  'Fairmont Le Montreux Palace',
+  'Mona Montreux',
+  'Villa Toscane',
+  'Grand Hotel Suisse Majestic',
+  'Royal Plaza Montreux',
+];
+
+const HOTEL_OPTIONS_ARJUN_ILA = [
+  'The Ritz-Carlton, Laguna Niguel',
+  'Waldorf Astoria Monarch Beach Resort & Club',
+  'Laguna Cliffs Marriott Resort & Spa',
+  'Blue Lantern Inn',
+  'Marina Inn at Dana Point',
+];
+
+export function getHotelOptionsForWedding(
+  weddingId: string | null | undefined,
+): string[] {
+  if (!!weddingId && NN_WEDDING_IDS.has(weddingId)) return HOTEL_OPTIONS_NN;
+  if (weddingId === ARJUN_ILA_WEDDING_ID) return HOTEL_OPTIONS_ARJUN_ILA;
+  return [];
 }
 
 export const EVENTS_NN: WeddingEvent[] = [
@@ -409,9 +483,9 @@ export interface GuidePhoto {
 // ~17 km away; transport is provided from the Fairmont, so guests
 // at other hotels should head to the Fairmont first.
 //
-// Hotel names match HOTEL_OPTIONS in components/HotelPickerField.tsx
-// exactly so the AI's profile-aware answers match the hotel a guest
-// has saved in their My Info.
+// Hotel names match HOTEL_OPTIONS_NN in getHotelOptionsForWedding above
+// exactly so the AI's profile-aware answers match the hotel a guest has
+// saved in their My Info.
 
 export interface HotelLogistics {
   name: string;

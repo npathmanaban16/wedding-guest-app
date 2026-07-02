@@ -20,7 +20,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
-import { DEFAULT_WEDDING_ID, getTravelWindow } from '@/constants/weddingData';
+import { DEFAULT_WEDDING_ID, getHotelOptionsForWedding, getTravelWindow } from '@/constants/weddingData';
 import {
   getMyInfo,
   saveMyInfo,
@@ -115,8 +115,10 @@ export default function MyInfoScreen() {
 
   // Travel window is keyed on the actual weddingId (not the build variant)
   // so the N&N wedding always gets its 2026 window even when reached from
-  // the SaaS/Tetherly build.
-  const travel = getTravelWindow(weddingId);
+  // the SaaS/Tetherly build. For tenants without an explicit case, the
+  // window is derived from the wedding row's wedding_date.
+  const travel = getTravelWindow(weddingId, wedding.wedding_date);
+  const hotelOptions = getHotelOptionsForWedding(weddingId);
 
   // SaaS: navigate to /invite explicitly and clear storage so the next
   // cold launch also routes to /invite. We do NOT call clearWeddingId()
@@ -508,6 +510,7 @@ export default function MyInfoScreen() {
             label="Hotel or accommodation"
             value={info.hotel}
             onChange={updateImmediate('hotel')}
+            options={hotelOptions}
             scrollRef={scrollRef}
           />
           <DateField
