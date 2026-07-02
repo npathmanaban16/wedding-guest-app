@@ -17,6 +17,11 @@ export interface WeddingRow {
   theme_color: string | null;
   planner_name: string | null;
   photo_album_url: string | null;
+  // Feature flag: when false the Attendees tab (Messages screen) and the
+  // guest profile editor (My Details) are hidden. Missing/undefined on
+  // databases that predate migration 038 — consumers treat anything that
+  // isn't exactly `false` as enabled.
+  attendees_enabled?: boolean | null;
 }
 
 export interface GuestRow {
@@ -59,17 +64,29 @@ export interface AdminRow {
   role: AdminRole | null;
 }
 
-const WEDDING_COLUMNS =
+// Column list before migration 038 — kept as a fallback select so an
+// un-migrated database still loads the app (attendees_enabled comes back
+// undefined, which consumers read as "enabled").
+const WEDDING_COLUMNS_PRE_038 =
   'id, invite_code, couple_names, wedding_date, location, destination_city, hashtag, website, contact_email, registry_url, hero_image_url, theme_color, planner_name, photo_album_url';
 
-export async function fetchWedding(weddingId: string): Promise<WeddingRow | null> {
-  const { data, error } = await supabase
-    .from('weddings')
-    .select(WEDDING_COLUMNS)
-    .eq('id', weddingId)
-    .maybeSingle();
+const WEDDING_COLUMNS = `${WEDDING_COLUMNS_PRE_038}, attendees_enabled`;
+
+async function selectWedding(
+  column: 'id' | 'invite_code',
+  value: string,
+): Promise<WeddingRow | null> {
+  const query = (columns: string) =>
+    supabase.from('weddings').select(columns).eq(column, value).maybeSingle();
+  let { data, error } = await query(WEDDING_COLUMNS);
+  // Unknown-column error before migration 038 — retry with the legacy list.
+  if (error) ({ data, error } = await query(WEDDING_COLUMNS_PRE_038));
   if (error) throw error;
-  return data;
+  return data as WeddingRow | null;
+}
+
+export async function fetchWedding(weddingId: string): Promise<WeddingRow | null> {
+  return selectWedding('id', weddingId);
 }
 
 // Invite codes are stored as-entered; normalize to upper for lookup so guests
@@ -77,13 +94,24 @@ export async function fetchWedding(weddingId: string): Promise<WeddingRow | null
 export async function fetchWeddingByInviteCode(inviteCode: string): Promise<WeddingRow | null> {
   const code = inviteCode.trim().toUpperCase();
   if (!code) return null;
-  const { data, error } = await supabase
+  return selectWedding('invite_code', code);
+}
+
+// Admin-only: persists per-wedding feature flags from the App Features
+// screen. Fields left undefined aren't touched.
+export async function updateWeddingSettings(
+  weddingId: string,
+  patch: { attendees_enabled?: boolean },
+): Promise<void> {
+  const update: Record<string, boolean> = {};
+  if (patch.attendees_enabled !== undefined) update.attendees_enabled = patch.attendees_enabled;
+  if (Object.keys(update).length === 0) return;
+
+  const { error } = await supabase
     .from('weddings')
-    .select(WEDDING_COLUMNS)
-    .eq('invite_code', code)
-    .maybeSingle();
+    .update(update)
+    .eq('id', weddingId);
   if (error) throw error;
-  return data;
 }
 
 export async function fetchGuests(weddingId: string): Promise<GuestRow[]> {

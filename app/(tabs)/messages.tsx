@@ -510,6 +510,22 @@ export default function MessagesScreen() {
   const inWeddingParty = !!guestName && isWeddingParty(guestName);
   const [activeTab, setActiveTab] = useState<MessagesTab>('announcements');
 
+  // Admin-controlled feature flag (App Features screen). Anything that
+  // isn't exactly `false` means enabled — covers databases that predate
+  // migration 038, where the column is missing.
+  const attendeesEnabled = wedding.attendees_enabled !== false;
+  const visibleTabs: MessagesTab[] = attendeesEnabled
+    ? ['announcements', 'chat', 'attendees']
+    : ['announcements', 'chat'];
+
+  // If an admin turns the directory off while this user is sitting on
+  // the Attendees tab, bounce them back to Announcements.
+  useEffect(() => {
+    if (!attendeesEnabled && activeTab === 'attendees') {
+      setActiveTab('announcements');
+    }
+  }, [attendeesEnabled, activeTab]);
+
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [reactions, setReactions] = useState<Record<string, ReactionSummary[]>>({});
   const [allReplies, setAllReplies] = useState<Record<string, NotificationReply[]>>({});
@@ -801,7 +817,7 @@ export default function MessagesScreen() {
             and the Attendees directory. Tabs re-render on switch since
             re-rendering the message feed's reactions is cheap. */}
         <View style={styles.segmented}>
-          {(['announcements', 'chat', 'attendees'] as const).map((tab) => {
+          {visibleTabs.map((tab) => {
             const active = tab === activeTab;
             return (
               <TouchableOpacity

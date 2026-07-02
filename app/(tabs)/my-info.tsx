@@ -400,8 +400,10 @@ export default function MyInfoScreen() {
           </View>
         </View>
 
-        {/* Profile — shown to other guests on the Attendees directory */}
-        {canonicalName && (
+        {/* Profile — shown to other guests on the Attendees directory.
+            Hidden when the admin turns the directory off (App Features),
+            since the photo/bio have nowhere to appear. */}
+        {canonicalName && wedding.attendees_enabled !== false && (
           <View style={styles.sectionCard}>
             <Text style={styles.sectionTag}>Profile</Text>
             <Text style={styles.sectionTitle}>How you'll show up to other guests</Text>
