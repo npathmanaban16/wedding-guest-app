@@ -363,6 +363,12 @@ export async function markOnboardingDone(weddingId: string, guestName: string): 
 
 // ─── Notifications ───────────────────────────────────────────────────────────
 
+// Discriminates the two streams that share the notifications table:
+// 'announcement' rows are admin-sent (couple/planner, via send-push),
+// 'chat' rows are guest-authored posts from the Chat tab. Rows that
+// predate migration 037 have no kind column and map to 'announcement'.
+export type NotificationKind = 'announcement' | 'chat';
+
 export interface AppNotification {
   id: string;
   message: string;
@@ -377,6 +383,7 @@ export interface AppNotification {
   // predate migration 022 will simply not render the image — they'll
   // still see the text body.
   imageUrl: string | null;
+  kind: NotificationKind;
 }
 
 export async function getNotifications(weddingId: string): Promise<AppNotification[]> {
@@ -395,12 +402,49 @@ export async function getNotifications(weddingId: string): Promise<AppNotificati
         editedAt: n.edited_at ?? null,
         weddingPartyOnly: n.wedding_party_only ?? false,
         imageUrl: n.image_url ?? null,
+        kind: (n.kind === 'chat' ? 'chat' : 'announcement') as NotificationKind,
       }));
     }
   } catch {
     // offline — no local cache for notifications
   }
   return [];
+}
+
+// Posts a guest-authored chat message, visible to every guest on the
+// Messages screen's Chat tab. Inserts straight into `notifications` with
+// kind='chat' (sender = the guest's name) so reactions and replies work
+// on it unchanged. Requires migration 037 — on an un-migrated database
+// the insert fails on the unknown column and the error surfaces to the
+// caller, which shows a "could not post" alert.
+export async function addChatMessage(
+  weddingId: string,
+  guestName: string,
+  message: string,
+): Promise<AppNotification> {
+  const { data, error } = await supabase
+    .from('notifications')
+    .insert({
+      wedding_id: weddingId,
+      message,
+      sender: guestName,
+      kind: 'chat',
+    })
+    .select()
+    .single();
+  if (error || !data) {
+    throw new Error(error?.message ?? 'Failed to post message');
+  }
+  return {
+    id: data.id,
+    message: data.message,
+    sender: data.sender,
+    sentAt: data.sent_at,
+    editedAt: data.edited_at ?? null,
+    weddingPartyOnly: data.wedding_party_only ?? false,
+    imageUrl: data.image_url ?? null,
+    kind: 'chat',
+  };
 }
 
 export async function editNotification(

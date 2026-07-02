@@ -32,6 +32,7 @@ import {
   markMessagesRead,
   getReplies,
   addReply,
+  addChatMessage,
   deleteReply,
   notifyMessageReaction,
   notifyMessageReply,
@@ -45,7 +46,13 @@ import { AttendeeCard } from '@/components/AttendeeCard';
 const REACTION_EMOJIS = ['❤️', '🎉', '😂', '👏', '🙌'];
 const COLLAPSED_REPLY_COUNT = 3;
 
-type MessagesTab = 'announcements' | 'attendees';
+type MessagesTab = 'announcements' | 'chat' | 'attendees';
+
+const TAB_LABELS: Record<MessagesTab, string> = {
+  announcements: 'Announcements',
+  chat: 'Chat',
+  attendees: 'Attendees',
+};
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -68,6 +75,7 @@ function MessageCard({
   replies,
   guestName,
   isAdmin,
+  canManage,
   onReact,
   onDelete,
   onEdit,
@@ -80,6 +88,9 @@ function MessageCard({
   replies: NotificationReply[];
   guestName: string | null;
   isAdmin: boolean;
+  // Whether the current user may edit/delete this message. Admins manage
+  // announcements; on the chat tab guests also manage their own posts.
+  canManage: boolean;
   onReact: (emoji: string) => void;
   onDelete: () => void;
   onEdit: (message: string) => Promise<boolean>;
@@ -169,7 +180,11 @@ function MessageCard({
     >
       <View style={styles.cardHeader}>
         <View style={styles.senderBadge}>
-          <Ionicons name="notifications" size={13} color={Colors.primary} />
+          <Ionicons
+            name={notification.kind === 'chat' ? 'chatbubble' : 'notifications'}
+            size={13}
+            color={Colors.primary}
+          />
         </View>
         <View style={styles.headerMeta}>
           <Text style={styles.senderName}>{notification.sender}</Text>
@@ -184,7 +199,7 @@ function MessageCard({
             </View>
           )}
         </View>
-        {isAdmin && !editOpen && (
+        {canManage && !editOpen && (
           <View style={styles.headerActions}>
             <TouchableOpacity onPress={handleStartEdit} style={styles.iconBtn} hitSlop={8}>
               <Ionicons name="pencil-outline" size={15} color={Colors.textMuted} />
@@ -464,6 +479,16 @@ export default function MessagesScreen() {
   const [allReplies, setAllReplies] = useState<Record<string, NotificationReply[]>>({});
   const [loading, setLoading] = useState(true);
 
+  // Guest chat composer (Chat tab)
+  const [chatText, setChatText] = useState('');
+  const [postingChat, setPostingChat] = useState(false);
+
+  // Both streams live in `notifications` (same table, discriminated by
+  // kind) so reactions/replies/unread-badging are shared; the tabs just
+  // split the list at render time.
+  const announcements = notifications.filter((n) => n.kind !== 'chat');
+  const chatMessages = notifications.filter((n) => n.kind === 'chat');
+
   const loadData = useCallback(async () => {
     const all = await getNotifications(weddingId);
     // Hide wedding-party-only messages from non-wedding-party users.
@@ -543,9 +568,11 @@ export default function MessagesScreen() {
       // Email the couple only when a reaction is added or changed, not when
       // it's removed. `myCurrentReaction === emoji` would mean the same
       // emoji was tapped again, which the storage layer treats as a remove.
+      // Guest-chat messages skip the email — reactions there are
+      // guest-to-guest chatter, not feedback on a couple announcement.
       if (myCurrentReaction !== emoji) {
         const original = notifications.find((n) => n.id === notificationId);
-        if (original) {
+        if (original && original.kind !== 'chat') {
           notifyMessageReaction(
             weddingId,
             guestName,
@@ -578,8 +605,10 @@ export default function MessagesScreen() {
 
     try {
       await addReply(weddingId, notificationId, guestName, message);
+      // Same chat carve-out as reactions: don't email the couple about
+      // guest-to-guest replies on the Chat tab.
       const original = notifications.find((n) => n.id === notificationId);
-      if (original) {
+      if (original && original.kind !== 'chat') {
         notifyMessageReply(
           weddingId,
           guestName,
@@ -664,6 +693,39 @@ export default function MessagesScreen() {
     }
   }, [weddingId, notifications]);
 
+  const handlePostChat = useCallback(async () => {
+    const text = chatText.trim();
+    if (!text || !guestName || postingChat) return;
+    haptic.medium();
+    setPostingChat(true);
+
+    // Optimistic prepend (feed is newest-first); reconciled by loadData
+    // once the insert lands so the temp id is swapped for the real row.
+    const optimistic: AppNotification = {
+      id: `temp-${Date.now()}`,
+      message: text,
+      sender: guestName,
+      sentAt: new Date().toISOString(),
+      editedAt: null,
+      weddingPartyOnly: false,
+      imageUrl: null,
+      kind: 'chat',
+    };
+    setNotifications((prev) => [optimistic, ...prev]);
+    setChatText('');
+
+    try {
+      await addChatMessage(weddingId, guestName, text);
+      loadData();
+    } catch {
+      setNotifications((prev) => prev.filter((n) => n.id !== optimistic.id));
+      setChatText(text);
+      Alert.alert('Error', 'Could not post your message.');
+    } finally {
+      setPostingChat(false);
+    }
+  }, [chatText, guestName, postingChat, weddingId, loadData]);
+
   // Scroll a message card into view so the keyboard doesn't cover its
   // reply input. Called when a guest taps "Reply" or focuses the input.
   const scrollRef = useRef<ScrollView>(null);
@@ -692,16 +754,18 @@ export default function MessagesScreen() {
           <Text style={styles.pageSubtitleTag}>
             {activeTab === 'announcements'
               ? 'From the couple'
-              : `${attendees.length} attending`}
+              : activeTab === 'chat'
+                ? 'Everyone can join in'
+                : `${attendees.length} attending`}
           </Text>
         </View>
 
         {/* Segmented control — swaps between the announcement feed
-            (existing behavior, kept as default) and the Attendees
-            directory. Both tabs stay mounted per switch since re-rendering
-            the message feed's reactions is cheap. */}
+            (existing behavior, kept as default), the guest Chat feed,
+            and the Attendees directory. Tabs re-render on switch since
+            re-rendering the message feed's reactions is cheap. */}
         <View style={styles.segmented}>
-          {(['announcements', 'attendees'] as const).map((tab) => {
+          {(['announcements', 'chat', 'attendees'] as const).map((tab) => {
             const active = tab === activeTab;
             return (
               <TouchableOpacity
@@ -710,25 +774,53 @@ export default function MessagesScreen() {
                 style={[styles.segmentedTab, active && styles.segmentedTabActive]}
                 activeOpacity={0.85}
               >
-                <Text style={[styles.segmentedLabel, active && styles.segmentedLabelActive]}>
-                  {tab === 'announcements' ? 'Announcements' : 'Attendees'}
+                <Text
+                  style={[styles.segmentedLabel, active && styles.segmentedLabelActive]}
+                  numberOfLines={1}
+                >
+                  {TAB_LABELS[tab]}
                 </Text>
               </TouchableOpacity>
             );
           })}
         </View>
 
-        {activeTab === 'announcements' ? (
-          loading ? (
-            <ActivityIndicator color={Colors.primary} style={styles.loader} />
-          ) : notifications.length === 0 ? (
+        {/* Chat composer — always visible on the Chat tab so posting
+            doesn't wait on the feed load. Any signed-in guest can post. */}
+        {activeTab === 'chat' && (
+          <View style={styles.chatComposer}>
+            <TextInput
+              style={styles.chatInput}
+              placeholder="Message all guests..."
+              placeholderTextColor={Colors.textMuted}
+              value={chatText}
+              onChangeText={setChatText}
+              multiline
+              maxLength={1000}
+            />
+            <TouchableOpacity
+              onPress={handlePostChat}
+              disabled={!chatText.trim() || postingChat}
+              style={[styles.sendBtn, (!chatText.trim() || postingChat) && styles.sendBtnDisabled]}
+            >
+              <Ionicons name="send" size={16} color={Colors.white} />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {activeTab === 'attendees' ? (
+          <AttendeesList attendees={attendees} currentGuestName={guestName} />
+        ) : loading ? (
+          <ActivityIndicator color={Colors.primary} style={styles.loader} />
+        ) : activeTab === 'announcements' ? (
+          announcements.length === 0 ? (
             <View style={styles.empty}>
               <Ionicons name="notifications-outline" size={40} color={Colors.textMuted} />
               <Text style={styles.emptyText}>No messages yet</Text>
               <Text style={styles.emptySubtext}>Updates from {wedding.couple_names} will appear here</Text>
             </View>
           ) : (
-            notifications.map((n) => (
+            announcements.map((n) => (
               <MessageCard
                 key={n.id}
                 notification={n}
@@ -736,6 +828,7 @@ export default function MessagesScreen() {
                 replies={allReplies[n.id] ?? []}
                 guestName={guestName}
                 isAdmin={isAdmin}
+                canManage={isAdmin}
                 onReact={(emoji) => handleReact(n.id, emoji)}
                 onDelete={() => handleDelete(n.id, n.message)}
                 onEdit={(msg) => handleEdit(n.id, msg)}
@@ -745,8 +838,30 @@ export default function MessagesScreen() {
               />
             ))
           )
+        ) : chatMessages.length === 0 ? (
+          <View style={styles.empty}>
+            <Ionicons name="chatbubbles-outline" size={40} color={Colors.textMuted} />
+            <Text style={styles.emptyText}>No chat messages yet</Text>
+            <Text style={styles.emptySubtext}>Say hi — every guest can see and join this chat</Text>
+          </View>
         ) : (
-          <AttendeesList attendees={attendees} currentGuestName={guestName} />
+          chatMessages.map((n) => (
+            <MessageCard
+              key={n.id}
+              notification={n}
+              reactions={reactions[n.id] ?? []}
+              replies={allReplies[n.id] ?? []}
+              guestName={guestName}
+              isAdmin={isAdmin}
+              canManage={isAdmin || n.sender === guestName}
+              onReact={(emoji) => handleReact(n.id, emoji)}
+              onDelete={() => handleDelete(n.id, n.message)}
+              onEdit={(msg) => handleEdit(n.id, msg)}
+              onReply={(msg) => handleReply(n.id, msg)}
+              onDeleteReply={(replyId) => handleDeleteReply(n.id, replyId)}
+              onReplyOpen={handleReplyOpen}
+            />
+          ))
         )}
       </ScrollView>
     </KeyboardAvoidingView>
@@ -814,12 +929,39 @@ const styles = StyleSheet.create({
   },
   segmentedLabel: {
     fontFamily: Fonts.sansMedium,
-    fontSize: 13,
+    // 12 (down from 13) so "Announcements" still fits with three tabs
+    // on narrow screens.
+    fontSize: 12,
     color: Colors.textMuted,
     letterSpacing: 0.3,
   },
   segmentedLabelActive: {
     color: Colors.textPrimary,
+  },
+
+  // Guest chat composer
+  chatComposer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: Spacing.xs,
+    backgroundColor: Colors.white,
+    borderRadius: Radius.lg,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    marginBottom: Spacing.md,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    ...Shadow.small,
+  },
+  chatInput: {
+    flex: 1,
+    fontFamily: Fonts.sans,
+    fontSize: 15,
+    color: Colors.textPrimary,
+    lineHeight: 20,
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: 6,
+    maxHeight: 100,
   },
 
   empty: {
