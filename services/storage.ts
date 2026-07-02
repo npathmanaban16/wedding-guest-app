@@ -451,25 +451,35 @@ export async function addChatMessage(
   };
 }
 
+// `removeImage` clears the attached photo along with the text update.
+// The caller is responsible for deleting the now-orphaned file from the
+// bucket afterwards (deleteMessageImage) — DB write first, so a failed
+// cleanup never leaves a message pointing at a deleted file.
 export async function editNotification(
   weddingId: string,
   id: string,
   message: string,
+  removeImage = false,
 ): Promise<{ editedAt: string | null }> {
   const editedAt = new Date().toISOString();
   // Try with the edited_at timestamp first. If migration 007 hasn't been
   // applied yet, the column is missing — fall back to updating the message
-  // alone so the edit still saves.
+  // alone so the edit still saves. (removeImage on a pre-022 database
+  // can't happen: those messages never have a photo to remove.)
+  const patch: Record<string, string | null> = { message, edited_at: editedAt };
+  if (removeImage) patch.image_url = null;
   const { error } = await supabase
     .from('notifications')
-    .update({ message, edited_at: editedAt })
+    .update(patch)
     .eq('wedding_id', weddingId)
     .eq('id', id);
   if (!error) return { editedAt };
 
+  const fallbackPatch: Record<string, string | null> = { message };
+  if (removeImage) fallbackPatch.image_url = null;
   const { error: fallbackError } = await supabase
     .from('notifications')
-    .update({ message })
+    .update(fallbackPatch)
     .eq('wedding_id', weddingId)
     .eq('id', id);
   if (fallbackError) throw new Error(fallbackError.message);
@@ -513,6 +523,21 @@ export async function uploadMessageImage(
 
   const { data } = supabase.storage.from('message-images').getPublicUrl(path);
   return data.publicUrl;
+}
+
+// Deletes an uploaded message photo from the `message-images` bucket,
+// given the public URL stored on notifications.image_url. No-op when the
+// URL isn't from our bucket. Mirrors deleteGuestProfileImage below —
+// bonus cleanup that callers fire-and-forget AFTER the DB write clears
+// the image_url reference.
+export async function deleteMessageImage(publicUrl: string): Promise<void> {
+  const marker = '/object/public/message-images/';
+  const idx = publicUrl.indexOf(marker);
+  if (idx === -1) return;
+  const path = publicUrl.slice(idx + marker.length);
+  if (!path) return;
+  const { error } = await supabase.storage.from('message-images').remove([path]);
+  if (error) throw new Error(error.message);
 }
 
 // Uploads a guest's profile photo to the `guest-profile-images` bucket and

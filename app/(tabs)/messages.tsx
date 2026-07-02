@@ -30,6 +30,7 @@ import {
   getReactions,
   toggleReaction,
   deleteNotification,
+  deleteMessageImage,
   editNotification,
   markMessagesRead,
   getReplies,
@@ -100,7 +101,7 @@ function MessageCard({
   canDelete: boolean;
   onReact: (emoji: string) => void;
   onDelete: () => void;
-  onEdit: (message: string) => Promise<boolean>;
+  onEdit: (message: string, removeImage: boolean) => Promise<boolean>;
   onReply: (message: string) => void;
   onDeleteReply: (replyId: string) => void;
   onReplyOpen: (y: number) => void;
@@ -115,6 +116,9 @@ function MessageCard({
 
   const [editOpen, setEditOpen] = useState(false);
   const [editText, setEditText] = useState(notification.message);
+  // Marks the attached photo for removal on save; Undo un-marks it so
+  // nothing is touched until Save actually commits.
+  const [editRemoveImage, setEditRemoveImage] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
 
   const [reactionsModalOpen, setReactionsModalOpen] = useState(false);
@@ -165,17 +169,24 @@ function MessageCard({
   const handleStartEdit = () => {
     haptic.light();
     setEditText(notification.message);
+    setEditRemoveImage(false);
     setEditOpen(true);
   };
 
+  // A saved message must keep some content: text, or the photo if it
+  // isn't marked for removal. Empty text alone is fine for photo posts.
+  const editKeepsImage = !!notification.imageUrl && !editRemoveImage;
+  const editSaveDisabled = savingEdit || (!editText.trim() && !editKeepsImage);
+
   const handleSaveEdit = async () => {
     const trimmed = editText.trim();
-    if (!trimmed || trimmed === notification.message) {
+    if (!trimmed && !editKeepsImage) return;
+    if (trimmed === notification.message && !editRemoveImage) {
       setEditOpen(false);
       return;
     }
     setSavingEdit(true);
-    const ok = await onEdit(trimmed);
+    const ok = await onEdit(trimmed, editRemoveImage);
     setSavingEdit(false);
     if (ok) setEditOpen(false);
   };
@@ -233,6 +244,30 @@ function MessageCard({
             autoFocus
             textAlignVertical="top"
           />
+
+          {/* Attached photo — mark for removal / undo. Nothing is
+              deleted until Save commits the edit. */}
+          {notification.imageUrl && (
+            <View style={styles.editImageRow}>
+              <Image
+                source={{ uri: notification.imageUrl }}
+                style={[styles.editImageThumb, editRemoveImage && styles.editImageThumbRemoved]}
+              />
+              <Text style={styles.editImageLabel}>
+                {editRemoveImage ? 'Photo will be removed on save' : 'Attached photo'}
+              </Text>
+              <TouchableOpacity
+                onPress={() => { haptic.light(); setEditRemoveImage((v) => !v); }}
+                hitSlop={8}
+                disabled={savingEdit}
+              >
+                <Text style={styles.editImageAction}>
+                  {editRemoveImage ? 'Undo' : 'Remove'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           <View style={styles.editActions}>
             <TouchableOpacity
               onPress={() => setEditOpen(false)}
@@ -243,8 +278,8 @@ function MessageCard({
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleSaveEdit}
-              disabled={!editText.trim() || savingEdit}
-              style={[styles.editBtn, styles.editSave, (!editText.trim() || savingEdit) && styles.editSaveDisabled]}
+              disabled={editSaveDisabled}
+              style={[styles.editBtn, styles.editSave, editSaveDisabled && styles.editSaveDisabled]}
               activeOpacity={0.7}
             >
               <Text style={styles.editSaveText}>{savingEdit ? 'Saving…' : 'Save'}</Text>
@@ -741,19 +776,33 @@ export default function MessagesScreen() {
     );
   }, [weddingId, loadData]);
 
-  const handleEdit = useCallback(async (id: string, message: string): Promise<boolean> => {
+  const handleEdit = useCallback(async (
+    id: string,
+    message: string,
+    removeImage: boolean,
+  ): Promise<boolean> => {
     const previous = notifications.find((n) => n.id === id);
     const optimisticEditedAt = new Date().toISOString();
     setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, message, editedAt: optimisticEditedAt } : n)),
+      prev.map((n) =>
+        n.id === id
+          ? { ...n, message, editedAt: optimisticEditedAt, ...(removeImage ? { imageUrl: null } : {}) }
+          : n,
+      ),
     );
     try {
-      const { editedAt } = await editNotification(weddingId, id, message);
+      const { editedAt } = await editNotification(weddingId, id, message, removeImage);
       // Reconcile: if migration 007 isn't applied yet, editedAt comes back null
       if (editedAt !== optimisticEditedAt) {
         setNotifications((prev) =>
           prev.map((n) => (n.id === id ? { ...n, editedAt } : n)),
         );
+      }
+      // The DB row no longer references the file — drop it from the
+      // bucket. Fire-and-forget: a failed cleanup just leaves an
+      // orphaned file, never a broken message.
+      if (removeImage && previous?.imageUrl) {
+        deleteMessageImage(previous.imageUrl).catch(() => {});
       }
       return true;
     } catch {
@@ -978,7 +1027,7 @@ export default function MessagesScreen() {
                 canDelete={isAdmin}
                 onReact={(emoji) => handleReact(n.id, emoji)}
                 onDelete={() => handleDelete(n.id, n.message)}
-                onEdit={(msg) => handleEdit(n.id, msg)}
+                onEdit={(msg, removeImage) => handleEdit(n.id, msg, removeImage)}
                 onReply={(msg) => handleReply(n.id, msg)}
                 onDeleteReply={(replyId) => handleDeleteReply(n.id, replyId)}
                 onReplyOpen={handleReplyOpen}
@@ -1278,6 +1327,38 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     backgroundColor: Colors.background,
     minHeight: 80,
+  },
+  editImageRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    padding: Spacing.sm,
+    marginTop: Spacing.sm,
+    borderRadius: Radius.md,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    backgroundColor: Colors.background,
+  },
+  editImageThumb: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.border,
+  },
+  editImageThumbRemoved: {
+    opacity: 0.35,
+  },
+  editImageLabel: {
+    flex: 1,
+    fontFamily: Fonts.sans,
+    fontSize: 12,
+    color: Colors.textMuted,
+  },
+  editImageAction: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 13,
+    color: Colors.primary,
+    paddingHorizontal: Spacing.xs,
   },
   editActions: {
     flexDirection: 'row',
