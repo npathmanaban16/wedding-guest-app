@@ -18,13 +18,16 @@ export interface WeddingRow {
   planner_name: string | null;
   photo_album_url: string | null;
   // Feature flags (App Features admin screen). Missing/undefined on
-  // databases that predate migrations 038/039 — consumers treat anything
+  // databases that predate migrations 038–040 — consumers treat anything
   // that isn't exactly `false` as enabled.
   // When false, hides the Attendees tab (Messages) and the guest profile
   // editor (My Details).
   attendees_enabled?: boolean | null;
   // When false, hides the guest Chat tab (Messages).
   chat_enabled?: boolean | null;
+  // When false, guests are never redirected into the first-login
+  // onboarding (arrival details) form.
+  onboarding_enabled?: boolean | null;
 }
 
 export interface GuestRow {
@@ -67,15 +70,15 @@ export interface AdminRow {
   role: AdminRole | null;
 }
 
-// Column list before migrations 038/039 — kept as a fallback select so an
+// Column list before migrations 038–040 — kept as a fallback select so an
 // un-migrated database still loads the app (the feature flags come back
-// undefined, which consumers read as "enabled"). 038 and 039 should be
-// applied together: if only one is present, the primary select still
-// errors on the other column and this fallback drops both flags.
+// undefined, which consumers read as "enabled"). 038–040 should be
+// applied together: if only some are present, the primary select still
+// errors on the missing column and this fallback drops all the flags.
 const WEDDING_COLUMNS_PRE_038 =
   'id, invite_code, couple_names, wedding_date, location, destination_city, hashtag, website, contact_email, registry_url, hero_image_url, theme_color, planner_name, photo_album_url';
 
-const WEDDING_COLUMNS = `${WEDDING_COLUMNS_PRE_038}, attendees_enabled, chat_enabled`;
+const WEDDING_COLUMNS = `${WEDDING_COLUMNS_PRE_038}, attendees_enabled, chat_enabled, onboarding_enabled`;
 
 async function selectWedding(
   column: 'id' | 'invite_code',
@@ -106,11 +109,16 @@ export async function fetchWeddingByInviteCode(inviteCode: string): Promise<Wedd
 // screen. Fields left undefined aren't touched.
 export async function updateWeddingSettings(
   weddingId: string,
-  patch: { attendees_enabled?: boolean; chat_enabled?: boolean },
+  patch: {
+    attendees_enabled?: boolean;
+    chat_enabled?: boolean;
+    onboarding_enabled?: boolean;
+  },
 ): Promise<void> {
   const update: Record<string, boolean> = {};
   if (patch.attendees_enabled !== undefined) update.attendees_enabled = patch.attendees_enabled;
   if (patch.chat_enabled !== undefined) update.chat_enabled = patch.chat_enabled;
+  if (patch.onboarding_enabled !== undefined) update.onboarding_enabled = patch.onboarding_enabled;
   if (Object.keys(update).length === 0) return;
 
   const { error } = await supabase

@@ -19,7 +19,7 @@ import { updateWeddingSettings } from '@/services/wedding';
 // The two flippable flags on the weddings row. Each renders as one
 // toggle row below; adding a future flag means adding an entry here
 // plus its column migration + gating at the consuming screens.
-type FeatureFlag = 'attendees_enabled' | 'chat_enabled';
+type FeatureFlag = 'attendees_enabled' | 'chat_enabled' | 'onboarding_enabled';
 
 function FeatureToggleRow({
   icon,
@@ -132,10 +132,20 @@ export default function AdminSettingsScreen() {
         onToggle={() => handleToggle('chat_enabled')}
       />
 
+      <FeatureToggleRow
+        icon="airplane-outline"
+        label="Arrival details onboarding"
+        hintOn="New guests are asked for hotel and arrival details when they first sign in."
+        hintOff="Guests land straight on Home. Travel details can still be added on My Details."
+        enabled={wedding.onboarding_enabled !== false}
+        saving={saving === 'onboarding_enabled'}
+        onToggle={() => handleToggle('onboarding_enabled')}
+      />
+
       <Text style={styles.footnote}>
         Changes apply to everyone the next time their app refreshes. Nothing
-        is deleted when a feature is off — profiles and chat history come
-        back when it's turned on again.
+        is deleted when a feature is off — profiles, chat history, and any
+        submitted details come back when it's turned on again.
       </Text>
     </ScrollView>
   );

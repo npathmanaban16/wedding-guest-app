@@ -86,9 +86,16 @@ export default function TabLayout() {
     { name: 'my-info',     title: 'Details',     icon: 'person-outline',        iconFocused: 'person' },
   ], [wedding.destination_city]);
 
+  // Admin-controlled feature flag (App Features screen): when off,
+  // guests are never redirected into the first-login onboarding form.
+  // Anything that isn't exactly `false` means enabled — covers
+  // databases that predate migration 040.
+  const onboardingEnabled = wedding.onboarding_enabled !== false;
+
   useEffect(() => {
     if (isLoading) return;
-    if (!guestName) {
+    if (!guestName || !onboardingEnabled) {
+      setNeedsOnboarding(false);
       setOnboardingChecked(true);
       return;
     }
@@ -96,7 +103,7 @@ export default function TabLayout() {
       setNeedsOnboarding(!done);
       setOnboardingChecked(true);
     });
-  }, [weddingId, guestName, isLoading]);
+  }, [weddingId, guestName, isLoading, onboardingEnabled]);
 
   // Mirrors the Messages screen's chat gating: when the admin has chat
   // turned off (App Features), chat rows are invisible and mustn't badge.
