@@ -158,6 +158,25 @@ insert into public.guests (wedding_id, canonical_name, is_wedding_party, is_brid
   ('00000000-0000-0000-0000-000000000001', 'Asokan Selvaraj',      false, false, 'male',   112),
   ('00000000-0000-0000-0000-000000000001', 'Sujatha Asokan',       false, false, 'female', 112);
 
+-- Partners of bridal-party members — still in wedding_party (they attend
+-- wedding-party-only events with their spouse) but don't display with the
+-- "Wedding party" badge on the Attendees directory. wedding_party_role
+-- was added in migration 036. Runs after the INSERT above so a fresh seed
+-- picks up the roles without needing a manual UPDATE post-install.
+update public.guests
+   set wedding_party_role = 'partner'
+ where wedding_id = '00000000-0000-0000-0000-000000000001'
+   and canonical_name in (
+     'Connor Franklin',
+     'Eleni Karandreas',
+     'Goutham Subramanian',
+     'Guhan Muruganandam',
+     'Kevin Labagnara',
+     'Nancy Kwan',
+     'Sai Avala',
+     'Suhail Goyal'
+   );
+
 
 
 -- ─── Wedding Admins ───────────────────────────────────────────────────────────

@@ -26,6 +26,24 @@ export interface GuestRow {
   // packing items.
   is_bridal_party: boolean;
   gender: Gender | null;
+  // Optional profile picture URL (from the guest-profile-images bucket).
+  // Null falls back to initials in the Attendees directory.
+  profile_photo_url: string | null;
+  // Optional short "how I know the couple" bio shown on the guest's
+  // Attendees card.
+  bio: string | null;
+  // True for the two rows representing the couple getting married. Used
+  // by the Attendees directory to hide the couple from the "who's here"
+  // list (they aren't attending as guests).
+  is_couple: boolean;
+  // Free-text role identifying WHY someone is in the wedding party.
+  // See migration 036 for suggested values ('bridesmaid', 'groomsman',
+  // 'family', 'partner'). Null means "no role set" — legacy rows fall
+  // through to the "show badge if is_wedding_party" backward-compat
+  // path in the Attendees directory. 'partner' explicitly suppresses
+  // the badge so spouses of party members aren't labeled Wedding
+  // party while still keeping is_wedding_party access.
+  wedding_party_role: string | null;
 }
 
 export type AdminRole = 'planner' | 'dj' | 'makeup_artist';
@@ -71,10 +89,30 @@ export async function fetchWeddingByInviteCode(inviteCode: string): Promise<Wedd
 export async function fetchGuests(weddingId: string): Promise<GuestRow[]> {
   const { data, error } = await supabase
     .from('guests')
-    .select('canonical_name, is_wedding_party, is_bridal_party, gender')
+    .select('canonical_name, is_wedding_party, is_bridal_party, gender, profile_photo_url, bio, is_couple, wedding_party_role')
     .eq('wedding_id', weddingId);
   if (error) throw error;
   return data ?? [];
+}
+
+// Updates the profile-picture URL and/or bio for a single guest. Fields
+// left undefined by the caller aren't touched; null clears the value.
+export async function updateGuestProfile(
+  weddingId: string,
+  canonicalName: string,
+  patch: { profile_photo_url?: string | null; bio?: string | null },
+): Promise<void> {
+  const update: Record<string, string | null> = {};
+  if (patch.profile_photo_url !== undefined) update.profile_photo_url = patch.profile_photo_url;
+  if (patch.bio !== undefined) update.bio = patch.bio;
+  if (Object.keys(update).length === 0) return;
+
+  const { error } = await supabase
+    .from('guests')
+    .update(update)
+    .eq('wedding_id', weddingId)
+    .eq('canonical_name', canonicalName);
+  if (error) throw error;
 }
 
 export async function fetchAdmins(weddingId: string): Promise<AdminRow[]> {

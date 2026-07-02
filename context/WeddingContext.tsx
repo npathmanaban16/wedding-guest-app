@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, AppState, StyleSheet, Text, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   DEFAULT_WEDDING_ID,
@@ -76,6 +76,23 @@ interface WeddingContextType {
   // content for legacy tenants, or an empty (all-hidden) page for
   // new tenants without a row.
   schedulePage: WeddingSchedulePage;
+  // Full guest roster for this wedding — powers the Attendees
+  // directory on the Messages tab and any future "who's here" UI.
+  // Includes canonical name, party flags, gender, and optional
+  // profile picture URL / bio. Populated once at context load; use
+  // patchAttendeeProfile below to sync the in-memory copy after
+  // writing to the DB so consumers re-render with the new value
+  // without a round-trip.
+  attendees: GuestRow[];
+  // In-place patcher for the attendees array. Call this AFTER a
+  // successful write via services/wedding.ts#updateGuestProfile so
+  // the Attendees tab (and anything else reading from `attendees`)
+  // shows the change immediately. Undefined fields on the patch
+  // aren't touched; null explicitly clears.
+  patchAttendeeProfile: (
+    canonicalName: string,
+    patch: { profile_photo_url?: string | null; bio?: string | null },
+  ) => void;
   isValidGuest: (name: string) => boolean;
   isValidGuestOrAdmin: (name: string) => boolean;
   getCanonicalName: (name: string) => string | null;
@@ -296,6 +313,47 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
     setWeddingId(null);
   }, []);
 
+  // Refetch the guest roster whenever the app returns to the
+  // foreground so profile photos / bios other guests just uploaded
+  // are visible without a full app restart. Only touches `guests` —
+  // wedding / events / guide / packing / schedule-page don't churn
+  // often enough to justify a foreground refetch. Errors are
+  // swallowed since this is a best-effort refresh; the previously
+  // loaded roster stays visible on network hiccups.
+  useEffect(() => {
+    if (!weddingId) return;
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') return;
+      fetchGuests(weddingId)
+        .then((g) => setGuests(g))
+        .catch((err) => {
+          console.warn('[WeddingProvider] foreground guest refetch failed', err);
+        });
+    });
+    return () => sub.remove();
+  }, [weddingId]);
+
+  // In-memory patcher for the attendees array. Used by the Profile
+  // editor on My Details to keep the Attendees directory in sync
+  // with a just-saved photo/bio without re-fetching guests.
+  const patchAttendeeProfile = useCallback(
+    (canonicalName: string, patch: { profile_photo_url?: string | null; bio?: string | null }) => {
+      setGuests((prev) =>
+        prev.map((g) => {
+          if (g.canonical_name !== canonicalName) return g;
+          return {
+            ...g,
+            ...(patch.profile_photo_url !== undefined
+              ? { profile_photo_url: patch.profile_photo_url }
+              : {}),
+            ...(patch.bio !== undefined ? { bio: patch.bio } : {}),
+          };
+        }),
+      );
+    },
+    [],
+  );
+
   const sessionValue = useMemo<WeddingSessionContextType>(
     () => ({
       weddingId,
@@ -377,6 +435,8 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       guide,
       packingList,
       schedulePage,
+      attendees: guests,
+      patchAttendeeProfile,
       isValidGuest,
       isValidGuestOrAdmin,
       getCanonicalName,
@@ -386,7 +446,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       isAdmin,
       getAdminRole,
     };
-  }, [weddingId, wedding, guests, admins, dbEvents, dbGuide, dbPackingList, dbSchedulePage]);
+  }, [weddingId, wedding, guests, admins, dbEvents, dbGuide, dbPackingList, dbSchedulePage, patchAttendeeProfile]);
 
   // Initial session restore — brief blank while AsyncStorage reads on SaaS.
   if (!sessionReady) {

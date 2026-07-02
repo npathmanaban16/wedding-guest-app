@@ -84,19 +84,49 @@ insert into public.weddings (
 
 
 -- ─── Guests ──────────────────────────────────────────────────────────────────
--- Small sample so login + the Details tab have realistic content.
--- Both Arjun Desai and Ila Lohia are doubled up as admins
--- (wedding_admins below) so either of them logged in sees both guest
--- and admin features.
+-- Diverse demo attendee list showing what a real Indian-American wedding
+-- guest list often looks like — family and family friends from India,
+-- college friends, colleagues, plus in-laws and family friends across
+-- backgrounds. Both Arjun Desai and Ila Lohia are marked is_couple=true
+-- so the Attendees directory hides them from the "who's here" list; they
+-- also carry admin access via wedding_admins below.
+--
+-- On-conflict UPDATE (rather than DO NOTHING) so re-running this seed
+-- after migration 035 lands correctly backfills the is_couple flag on
+-- existing rows. profile_photo_url and bio are guest-set on-device and
+-- intentionally not touched here.
 
-insert into public.guests (wedding_id, canonical_name, is_wedding_party, gender) values
-  ('a0000000-0000-0000-0000-000000000003', 'Arjun Desai',    true,  'male'),
-  ('a0000000-0000-0000-0000-000000000003', 'Ila Lohia',      true,  'female'),
-  ('a0000000-0000-0000-0000-000000000003', 'Priya Sharma',   true,  'female'),
-  ('a0000000-0000-0000-0000-000000000003', 'Rohan Mehta',    true,  'male'),
-  ('a0000000-0000-0000-0000-000000000003', 'Anjali Kapoor',  false, 'female'),
-  ('a0000000-0000-0000-0000-000000000003', 'Vikram Singh',   false, 'male')
-on conflict (wedding_id, canonical_name) do nothing;
+-- wedding_party_role values here demonstrate the display distinction
+-- landed in migration 036:
+--   * bridesmaid / groomsman rows show the "Wedding party" badge on the
+--     Attendees directory and sort to the top of the grid.
+--   * 'partner' (see David Park below — Sarah Chen's plus-one) still
+--     carries is_wedding_party=true for access to wedding-party events,
+--     but suppresses the badge and sorts with regular attendees.
+--   * NULL role on a non-wedding-party guest just leaves them as a
+--     regular attendee.
+
+insert into public.guests
+  (wedding_id, canonical_name, is_wedding_party, is_couple, gender, wedding_party_role) values
+  ('a0000000-0000-0000-0000-000000000003', 'Arjun Desai',      true,  true,  'male',   null),
+  ('a0000000-0000-0000-0000-000000000003', 'Ila Lohia',        true,  true,  'female', null),
+  ('a0000000-0000-0000-0000-000000000003', 'Priya Sharma',     true,  false, 'female', 'bridesmaid'),
+  ('a0000000-0000-0000-0000-000000000003', 'Sarah Chen',       true,  false, 'female', 'bridesmaid'),
+  ('a0000000-0000-0000-0000-000000000003', 'Rohan Mehta',      true,  false, 'male',   'groomsman'),
+  ('a0000000-0000-0000-0000-000000000003', 'Marcus Johnson',   true,  false, 'male',   'groomsman'),
+  ('a0000000-0000-0000-0000-000000000003', 'David Park',       true,  false, 'male',   'partner'),
+  ('a0000000-0000-0000-0000-000000000003', 'Anjali Kapoor',    false, false, 'female', null),
+  ('a0000000-0000-0000-0000-000000000003', 'Vikram Singh',     false, false, 'male',   null),
+  ('a0000000-0000-0000-0000-000000000003', 'Emma O''Brien',    false, false, 'female', null),
+  ('a0000000-0000-0000-0000-000000000003', 'Sofia Rodriguez',  false, false, 'female', null),
+  ('a0000000-0000-0000-0000-000000000003', 'Tomás Almeida',    false, false, 'male',   null),
+  ('a0000000-0000-0000-0000-000000000003', 'Aisha Okonkwo',    false, false, 'female', null),
+  ('a0000000-0000-0000-0000-000000000003', 'Kenji Tanaka',     false, false, 'male',   null)
+on conflict (wedding_id, canonical_name) do update set
+  is_wedding_party   = excluded.is_wedding_party,
+  is_couple          = excluded.is_couple,
+  gender             = excluded.gender,
+  wedding_party_role = excluded.wedding_party_role;
 
 
 -- ─── Wedding Admins ──────────────────────────────────────────────────────────

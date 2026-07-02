@@ -1,0 +1,31 @@
+-- ============================================================
+-- Migration 036: guests.wedding_party_role
+-- ============================================================
+-- Nullable text column identifying WHY someone is in the wedding
+-- party. Separates the display-level concept ("Wedding party" badge
+-- on the Attendees directory) from the access-level concept
+-- (public.guests.is_wedding_party — grants access to
+-- wedding-party-only events).
+--
+-- Motivating case: bridesmaid / groomsman spouses attend wedding-
+-- party-only events (so is_wedding_party stays true) but shouldn't
+-- appear as "Wedding party" on the directory because they aren't
+-- named party members.
+--
+-- Suggested values (unenforced — free text so tenants can pick their
+-- own vocabulary; the Attendees UI only special-cases 'partner'):
+--   'bridesmaid'  — bridesmaids, maid of honor
+--   'bridesman'   — bridesman (mirrors is_bridal_party)
+--   'groomsman'   — groomsmen, best man
+--   'family'      — immediate family (parents, siblings)
+--   'partner'     — spouse/date of the above; NO badge shown
+--   NULL          — legacy rows without a role; the Attendees UI
+--                   still shows the badge for is_wedding_party=true
+--                   rows so behavior is unchanged until roles are
+--                   explicitly assigned.
+--
+-- Idempotent: safe to re-run.
+-- ============================================================
+
+alter table public.guests
+  add column if not exists wedding_party_role text;

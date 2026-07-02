@@ -40,9 +40,12 @@ import {
   NotificationReply,
 } from '@/services/storage';
 import { MessageImage } from '@/components/MessageImage';
+import { AttendeeCard } from '@/components/AttendeeCard';
 
 const REACTION_EMOJIS = ['❤️', '🎉', '😂', '👏', '🙌'];
 const COLLAPSED_REPLY_COUNT = 3;
+
+type MessagesTab = 'announcements' | 'attendees';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -388,12 +391,73 @@ function MessageCard({
   );
 }
 
+// Attendees directory — every invited guest including the couple.
+// Named wedding party members (bridesmaids/groomsmen/family) sort to
+// the top with a "Wedding party" badge — that group includes the
+// couple themselves via is_wedding_party=true + wedding_party_role
+// null (backward-compat badge path). Everyone else follows in
+// alphabetical order. Partners of party members
+// (wedding_party_role='partner') intentionally don't get a badge
+// even though they carry the is_wedding_party access flag.
+// Rendered as a 2-per-row grid.
+//
+// Legacy rows with is_wedding_party=true and wedding_party_role=null
+// still show the badge (backward-compat) — customers can suppress
+// individual spouses by explicitly setting their role to 'partner'.
+function shouldShowWeddingPartyBadge(
+  attendee: ReturnType<typeof useWedding>['attendees'][number],
+): boolean {
+  if (!attendee.is_wedding_party) return false;
+  if (attendee.wedding_party_role === 'partner') return false;
+  return true;
+}
+
+function AttendeesList({
+  attendees,
+  currentGuestName,
+}: {
+  attendees: ReturnType<typeof useWedding>['attendees'];
+  currentGuestName: string | null;
+}) {
+  const visible = [...attendees].sort((a, b) => {
+    const aWp = shouldShowWeddingPartyBadge(a);
+    const bWp = shouldShowWeddingPartyBadge(b);
+    if (aWp !== bWp) return aWp ? -1 : 1;
+    return a.canonical_name.localeCompare(b.canonical_name);
+  });
+
+  if (visible.length === 0) {
+    return (
+      <View style={styles.empty}>
+        <Ionicons name="people-outline" size={40} color={Colors.textMuted} />
+        <Text style={styles.emptyText}>Guest list coming soon</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.attendeesGrid}>
+      {visible.map((a) => {
+        const isMe = !!currentGuestName && a.canonical_name.toLowerCase() === currentGuestName.toLowerCase();
+        const showWpBadge = shouldShowWeddingPartyBadge(a);
+        const badge = isMe ? 'You' : showWpBadge ? 'Wedding party' : undefined;
+        return (
+          <View key={a.canonical_name} style={styles.attendeesGridItem}>
+            <AttendeeCard attendee={a} badge={badge} />
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 export default function MessagesScreen() {
   const insets = useSafeAreaInsets();
   const { guestName } = useAuth();
-  const { weddingId, isAdmin: isAdminCheck, isWeddingParty, wedding } = useWedding();
+  const { weddingId, isAdmin: isAdminCheck, isWeddingParty, wedding, attendees } = useWedding();
   const isAdmin = !!guestName && isAdminCheck(guestName);
   const inWeddingParty = !!guestName && isWeddingParty(guestName);
+  const [activeTab, setActiveTab] = useState<MessagesTab>('announcements');
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [reactions, setReactions] = useState<Record<string, ReactionSummary[]>>({});
@@ -625,34 +689,64 @@ export default function MessagesScreen() {
       >
         <View style={styles.pageHeader}>
           <Text style={styles.pageTitle}>Messages</Text>
-          <Text style={styles.pageSubtitleTag}>From the couple</Text>
+          <Text style={styles.pageSubtitleTag}>
+            {activeTab === 'announcements'
+              ? 'From the couple'
+              : `${attendees.length} attending`}
+          </Text>
         </View>
 
-        {loading ? (
-          <ActivityIndicator color={Colors.primary} style={styles.loader} />
-        ) : notifications.length === 0 ? (
-          <View style={styles.empty}>
-            <Ionicons name="notifications-outline" size={40} color={Colors.textMuted} />
-            <Text style={styles.emptyText}>No messages yet</Text>
-            <Text style={styles.emptySubtext}>Updates from {wedding.couple_names} will appear here</Text>
-          </View>
+        {/* Segmented control — swaps between the announcement feed
+            (existing behavior, kept as default) and the Attendees
+            directory. Both tabs stay mounted per switch since re-rendering
+            the message feed's reactions is cheap. */}
+        <View style={styles.segmented}>
+          {(['announcements', 'attendees'] as const).map((tab) => {
+            const active = tab === activeTab;
+            return (
+              <TouchableOpacity
+                key={tab}
+                onPress={() => { haptic.selection(); setActiveTab(tab); }}
+                style={[styles.segmentedTab, active && styles.segmentedTabActive]}
+                activeOpacity={0.85}
+              >
+                <Text style={[styles.segmentedLabel, active && styles.segmentedLabelActive]}>
+                  {tab === 'announcements' ? 'Announcements' : 'Attendees'}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {activeTab === 'announcements' ? (
+          loading ? (
+            <ActivityIndicator color={Colors.primary} style={styles.loader} />
+          ) : notifications.length === 0 ? (
+            <View style={styles.empty}>
+              <Ionicons name="notifications-outline" size={40} color={Colors.textMuted} />
+              <Text style={styles.emptyText}>No messages yet</Text>
+              <Text style={styles.emptySubtext}>Updates from {wedding.couple_names} will appear here</Text>
+            </View>
+          ) : (
+            notifications.map((n) => (
+              <MessageCard
+                key={n.id}
+                notification={n}
+                reactions={reactions[n.id] ?? []}
+                replies={allReplies[n.id] ?? []}
+                guestName={guestName}
+                isAdmin={isAdmin}
+                onReact={(emoji) => handleReact(n.id, emoji)}
+                onDelete={() => handleDelete(n.id, n.message)}
+                onEdit={(msg) => handleEdit(n.id, msg)}
+                onReply={(msg) => handleReply(n.id, msg)}
+                onDeleteReply={(replyId) => handleDeleteReply(n.id, replyId)}
+                onReplyOpen={handleReplyOpen}
+              />
+            ))
+          )
         ) : (
-          notifications.map((n) => (
-            <MessageCard
-              key={n.id}
-              notification={n}
-              reactions={reactions[n.id] ?? []}
-              replies={allReplies[n.id] ?? []}
-              guestName={guestName}
-              isAdmin={isAdmin}
-              onReact={(emoji) => handleReact(n.id, emoji)}
-              onDelete={() => handleDelete(n.id, n.message)}
-              onEdit={(msg) => handleEdit(n.id, msg)}
-              onReply={(msg) => handleReply(n.id, msg)}
-              onDeleteReply={(replyId) => handleDeleteReply(n.id, replyId)}
-              onReplyOpen={handleReplyOpen}
-            />
-          ))
+          <AttendeesList attendees={attendees} currentGuestName={guestName} />
         )}
       </ScrollView>
     </KeyboardAvoidingView>
@@ -683,6 +777,49 @@ const styles = StyleSheet.create({
     letterSpacing: 2.5,
     textTransform: 'uppercase',
     color: Colors.gold,
+  },
+
+  segmented: {
+    flexDirection: 'row',
+    backgroundColor: Colors.surfaceWarm,
+    borderRadius: Radius.full,
+    padding: 3,
+    marginBottom: Spacing.lg,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+  },
+
+  attendeesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    // Balance the negative gap-emulation margin so the row-edge cards
+    // sit flush with the ScrollView's horizontal padding.
+    marginHorizontal: -Spacing.xs,
+  },
+  attendeesGridItem: {
+    width: '50%',
+    paddingHorizontal: Spacing.xs,
+    marginBottom: Spacing.sm,
+  },
+  segmentedTab: {
+    flex: 1,
+    paddingVertical: 9,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  segmentedTabActive: {
+    backgroundColor: Colors.white,
+    ...Shadow.small,
+  },
+  segmentedLabel: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 13,
+    color: Colors.textMuted,
+    letterSpacing: 0.3,
+  },
+  segmentedLabelActive: {
+    color: Colors.textPrimary,
   },
 
   empty: {
