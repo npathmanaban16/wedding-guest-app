@@ -209,14 +209,16 @@ export default function MyInfoScreen() {
       );
       return;
     }
-    // Note: matching the admin message-images picker exactly — no
-    // allowsEditing. The iOS 17+ system cropper occasionally returned
-    // a ph:// or empty URI after editing which then died silently in
-    // the fetch → arrayBuffer step. Circular avatar cropping happens
-    // at render time via CSS instead.
+    // Re-trying the native square-crop step now that error surfacing
+    // is in place (the previous silent failure was a diagnostic
+    // problem, not necessarily a fundamental one). If the cropper
+    // still returns a bad URI on iOS 17+, the catch below will Alert
+    // with the specific reason instead of vanishing quietly.
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 0.8,
+      allowsEditing: true,
+      aspect: [1, 1],
     });
     if (result.canceled) return;
     const asset = result.assets?.[0];
