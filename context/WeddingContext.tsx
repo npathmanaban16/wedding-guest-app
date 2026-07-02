@@ -97,6 +97,20 @@ interface WeddingContextType {
   // write via services/wedding.ts#updateWeddingSettings so feature-flag
   // toggles (e.g. attendees_enabled) apply app-wide without a refetch.
   patchWedding: (patch: Partial<WeddingRow>) => void;
+  // In-place patcher for the destination guide's photo strip. Call this
+  // AFTER a successful write via services/guide.ts#updateWeddingGuidePhotoStrip
+  // so the Travel tab reflects the admin's changes without waiting on
+  // the next full guide refetch. No-op when the tenant is on the code-
+  // defined guide fallback (no wedding_guides row) — the strip is only
+  // editable when it's coming from the DB.
+  patchGuidePhotoStrip: (
+    photos: { url: string; label: string }[],
+  ) => void;
+  // True when the guide surfaced above is backed by a wedding_guides
+  // row (which the admin photo editor writes to). False for legacy
+  // tenants still on the SWITZERLAND_FULL_GUIDE constant — for those
+  // the photo strip can't be edited from the admin UI.
+  hasEditableGuide: boolean;
   isValidGuest: (name: string) => boolean;
   isValidGuestOrAdmin: (name: string) => boolean;
   getCanonicalName: (name: string) => string | null;
@@ -365,6 +379,22 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
     setWedding((prev) => (prev ? { ...prev, ...patch } : prev));
   }, []);
 
+  // In-memory patcher for the destination guide's photo strip. No-op
+  // when we're on the code-defined fallback (no DB row) — the strip
+  // isn't editable from the admin UI in that case.
+  const patchGuidePhotoStrip = useCallback(
+    (photos: { url: string; label: string }[]) => {
+      setDbGuide((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          photoStrip: photos.map((p) => ({ source: { uri: p.url }, label: p.label })),
+        };
+      });
+    },
+    [],
+  );
+
   const sessionValue = useMemo<WeddingSessionContextType>(
     () => ({
       weddingId,
@@ -449,6 +479,8 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       attendees: guests,
       patchAttendeeProfile,
       patchWedding,
+      patchGuidePhotoStrip,
+      hasEditableGuide: dbGuide !== null,
       isValidGuest,
       isValidGuestOrAdmin,
       getCanonicalName,
@@ -458,7 +490,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       isAdmin,
       getAdminRole,
     };
-  }, [weddingId, wedding, guests, admins, dbEvents, dbGuide, dbPackingList, dbSchedulePage, patchAttendeeProfile, patchWedding]);
+  }, [weddingId, wedding, guests, admins, dbEvents, dbGuide, dbPackingList, dbSchedulePage, patchAttendeeProfile, patchWedding, patchGuidePhotoStrip]);
 
   // Initial session restore — brief blank while AsyncStorage reads on SaaS.
   if (!sessionReady) {

@@ -302,11 +302,11 @@ export default function HomeScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.adminButton}
-            onPress={() => router.push('/admin-schedule')}
+            onPress={() => router.push('/admin-content')}
             activeOpacity={0.8}
           >
-            <Ionicons name="calendar-outline" size={15} color={Colors.white} />
-            <Text style={styles.adminButtonText}>Edit Schedule</Text>
+            <Ionicons name="create-outline" size={15} color={Colors.white} />
+            <Text style={styles.adminButtonText}>Edit App Content</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.adminButton}
