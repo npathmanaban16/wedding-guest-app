@@ -414,13 +414,16 @@ export async function getNotifications(weddingId: string): Promise<AppNotificati
 // Posts a guest-authored chat message, visible to every guest on the
 // Messages screen's Chat tab. Inserts straight into `notifications` with
 // kind='chat' (sender = the guest's name) so reactions and replies work
-// on it unchanged. Requires migration 037 — on an un-migrated database
-// the insert fails on the unknown column and the error surfaces to the
-// caller, which shows a "could not post" alert.
+// on it unchanged. `imageUrl` is an optional photo already uploaded via
+// uploadMessageImage (same bucket the admin send flow uses); pass null
+// for text-only posts. Requires migration 037 — on an un-migrated
+// database the insert fails on the unknown column and the error surfaces
+// to the caller, which shows a "could not post" alert.
 export async function addChatMessage(
   weddingId: string,
   guestName: string,
   message: string,
+  imageUrl: string | null = null,
 ): Promise<AppNotification> {
   const { data, error } = await supabase
     .from('notifications')
@@ -429,6 +432,7 @@ export async function addChatMessage(
       message,
       sender: guestName,
       kind: 'chat',
+      image_url: imageUrl,
     })
     .select()
     .single();

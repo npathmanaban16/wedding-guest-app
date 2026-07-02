@@ -9,6 +9,7 @@ import {
   Alert,
   AppState,
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   LayoutAnimation,
   Modal,
@@ -19,6 +20,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
@@ -36,6 +38,7 @@ import {
   deleteReply,
   notifyMessageReaction,
   notifyMessageReply,
+  uploadMessageImage,
   AppNotification,
   ReactionSummary,
   NotificationReply,
@@ -537,8 +540,11 @@ export default function MessagesScreen() {
   const [allReplies, setAllReplies] = useState<Record<string, NotificationReply[]>>({});
   const [loading, setLoading] = useState(true);
 
-  // Guest chat composer (Chat tab)
+  // Guest chat composer (Chat tab). The optional photo is picked locally
+  // and only uploaded when the guest sends, so an abandoned compose
+  // doesn't leave orphan files in the bucket (same as the admin flow).
   const [chatText, setChatText] = useState('');
+  const [chatImage, setChatImage] = useState<{ uri: string; mimeType: string } | null>(null);
   const [postingChat, setPostingChat] = useState(false);
 
   // Both streams live in `notifications` (same table, discriminated by
@@ -751,14 +757,38 @@ export default function MessagesScreen() {
     }
   }, [weddingId, notifications]);
 
+  const handlePickChatImage = async () => {
+    haptic.light();
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert(
+        'Photo access needed',
+        'Allow photo library access in Settings to attach a photo.',
+      );
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+    const asset = result.assets[0];
+    setChatImage({
+      uri: asset.uri,
+      mimeType: asset.mimeType ?? 'image/jpeg',
+    });
+  };
+
   const handlePostChat = useCallback(async () => {
     const text = chatText.trim();
-    if (!text || !guestName || postingChat) return;
+    if ((!text && !chatImage) || !guestName || postingChat) return;
     haptic.medium();
     setPostingChat(true);
 
-    // Optimistic prepend (feed is newest-first); reconciled by loadData
-    // once the insert lands so the temp id is swapped for the real row.
+    // Optimistic prepend (feed is newest-first) using the local file URI
+    // for the photo; reconciled by loadData once the insert lands, which
+    // swaps the temp id + local URI for the real row and public URL.
+    const image = chatImage;
     const optimistic: AppNotification = {
       id: `temp-${Date.now()}`,
       message: text,
@@ -766,23 +796,30 @@ export default function MessagesScreen() {
       sentAt: new Date().toISOString(),
       editedAt: null,
       weddingPartyOnly: false,
-      imageUrl: null,
+      imageUrl: image?.uri ?? null,
       kind: 'chat',
     };
     setNotifications((prev) => [optimistic, ...prev]);
     setChatText('');
+    setChatImage(null);
 
     try {
-      await addChatMessage(weddingId, guestName, text);
+      // Upload first so the row never points at a missing file.
+      let imageUrl: string | null = null;
+      if (image) {
+        imageUrl = await uploadMessageImage(weddingId, image.uri, image.mimeType);
+      }
+      await addChatMessage(weddingId, guestName, text, imageUrl);
       loadData();
     } catch {
       setNotifications((prev) => prev.filter((n) => n.id !== optimistic.id));
       setChatText(text);
+      setChatImage(image);
       Alert.alert('Error', 'Could not post your message.');
     } finally {
       setPostingChat(false);
     }
-  }, [chatText, guestName, postingChat, weddingId, loadData]);
+  }, [chatText, chatImage, guestName, postingChat, weddingId, loadData]);
 
   // Scroll a message card into view so the keyboard doesn't cover its
   // reply input. Called when a guest taps "Reply" or focuses the input.
@@ -847,25 +884,56 @@ export default function MessagesScreen() {
         )}
 
         {/* Chat composer — always visible on the Chat tab so posting
-            doesn't wait on the feed load. Any signed-in guest can post. */}
+            doesn't wait on the feed load. Any signed-in guest can post
+            text, a photo, or both. */}
         {activeTab === 'chat' && (
           <View style={styles.chatComposer}>
-            <TextInput
-              style={styles.chatInput}
-              placeholder="Message all guests..."
-              placeholderTextColor={Colors.textMuted}
-              value={chatText}
-              onChangeText={setChatText}
-              multiline
-              maxLength={1000}
-            />
-            <TouchableOpacity
-              onPress={handlePostChat}
-              disabled={!chatText.trim() || postingChat}
-              style={[styles.sendBtn, (!chatText.trim() || postingChat) && styles.sendBtnDisabled]}
-            >
-              <Ionicons name="send" size={16} color={Colors.white} />
-            </TouchableOpacity>
+            {chatImage && (
+              <View style={styles.chatAttachmentRow}>
+                <Image source={{ uri: chatImage.uri }} style={styles.chatAttachmentThumb} />
+                <Text style={styles.chatAttachmentLabel}>Photo attached</Text>
+                <TouchableOpacity
+                  onPress={() => { haptic.light(); setChatImage(null); }}
+                  hitSlop={8}
+                  disabled={postingChat}
+                >
+                  <Ionicons name="close-circle" size={20} color={Colors.textMuted} />
+                </TouchableOpacity>
+              </View>
+            )}
+            <View style={styles.chatInputRow}>
+              <TouchableOpacity
+                onPress={handlePickChatImage}
+                disabled={postingChat}
+                style={styles.chatAttachBtn}
+                hitSlop={6}
+              >
+                <Ionicons name="image-outline" size={20} color={Colors.primary} />
+              </TouchableOpacity>
+              <TextInput
+                style={styles.chatInput}
+                placeholder="Message all guests..."
+                placeholderTextColor={Colors.textMuted}
+                value={chatText}
+                onChangeText={setChatText}
+                multiline
+                maxLength={1000}
+              />
+              <TouchableOpacity
+                onPress={handlePostChat}
+                disabled={(!chatText.trim() && !chatImage) || postingChat}
+                style={[
+                  styles.sendBtn,
+                  ((!chatText.trim() && !chatImage) || postingChat) && styles.sendBtnDisabled,
+                ]}
+              >
+                {postingChat ? (
+                  <ActivityIndicator size="small" color={Colors.white} />
+                ) : (
+                  <Ionicons name="send" size={16} color={Colors.white} />
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         )}
 
@@ -1023,9 +1091,6 @@ const styles = StyleSheet.create({
 
   // Guest chat composer
   chatComposer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: Spacing.xs,
     backgroundColor: Colors.white,
     borderRadius: Radius.lg,
     paddingHorizontal: Spacing.sm,
@@ -1034,6 +1099,40 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: Colors.border,
     ...Shadow.small,
+  },
+  chatInputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: Spacing.xs,
+  },
+  chatAttachBtn: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chatAttachmentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    padding: Spacing.xs,
+    marginBottom: Spacing.xs,
+    borderRadius: Radius.md,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    backgroundColor: Colors.background,
+  },
+  chatAttachmentThumb: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.border,
+  },
+  chatAttachmentLabel: {
+    flex: 1,
+    fontFamily: Fonts.sans,
+    fontSize: 12,
+    color: Colors.textMuted,
   },
   chatInput: {
     flex: 1,
