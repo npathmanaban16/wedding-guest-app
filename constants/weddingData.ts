@@ -81,6 +81,11 @@ export const NN_WEDDING_IDS = new Set([
 // showing Montreux hotels in May.
 export const ARJUN_ILA_WEDDING_ID = 'a0000000-0000-0000-0000-000000000003';
 
+// Emma & James — the Tetherly demo wedding. Same venue (Fairmont Le
+// Montreux Palace) as N&N, one year forward, so the Montreux hotel
+// shortlist applies here too.
+export const EMMA_JAMES_WEDDING_ID = 'a0000000-0000-0000-0000-000000000002';
+
 // Travel window for the travel-detail date pickers (onboarding + My Info).
 // Keyed on the actual wedding, NOT the build variant — the N&N wedding can
 // also be reached from the SaaS/Tetherly build, and in that case we still
@@ -173,6 +178,7 @@ export function getHotelOptionsForWedding(
   weddingId: string | null | undefined,
 ): string[] {
   if (!!weddingId && NN_WEDDING_IDS.has(weddingId)) return HOTEL_OPTIONS_NN;
+  if (weddingId === EMMA_JAMES_WEDDING_ID) return HOTEL_OPTIONS_NN;
   if (weddingId === ARJUN_ILA_WEDDING_ID) return HOTEL_OPTIONS_ARJUN_ILA;
   return [];
 }
