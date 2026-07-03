@@ -24,6 +24,7 @@ import {
 import { getMyInfo, saveMyInfo } from '@/services/storage';
 import { HotelPickerField } from '@/components/HotelPickerField';
 import { DateField } from '@/components/DateField';
+import { awaitHeroImage, prefetchHeroImage } from '@/utils/heroImage';
 
 interface FieldProps {
   label: string;
@@ -95,6 +96,17 @@ export default function OnboardingScreen() {
     });
   }, [weddingId, guestName]);
 
+  // Re-warm the hero image cache while the user fills out the
+  // onboarding form. The initial prefetch fired on login, but by the
+  // time a first-time guest finishes typing hotel + arrival details
+  // (30s to a couple of minutes) the RN memory cache may have evicted
+  // the bytes. Firing again here means Home mounts to a warm cache
+  // instead of the visible "load happening" that shows up when the
+  // path goes login → onboarding → home.
+  useEffect(() => {
+    prefetchHeroImage(wedding.hero_image_url);
+  }, [wedding.hero_image_url]);
+
   const handleSave = async () => {
     if (!guestName) return;
     setSaving(true);
@@ -111,11 +123,20 @@ export default function OnboardingScreen() {
     } catch {
       // silently continue — data will be editable from My Details
     }
+    // Hold the button spinner until the hero image is in cache — same
+    // pattern as login.tsx. See utils/heroImage.ts for the 2.5s ceiling.
+    await awaitHeroImage(wedding.hero_image_url);
     skipOnboarding(); // marks session as done so confirm doesn't loop this session
     router.replace('/(tabs)');
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
+    // Same cache-warmup await as handleSave — skipping onboarding is
+    // the other path from here to Home, and Home flashes just as badly
+    // if we jump without waiting for the image. `saving=true` disables
+    // both buttons during the wait so a repeat tap can't queue up.
+    setSaving(true);
+    await awaitHeroImage(wedding.hero_image_url);
     skipOnboarding();
     router.replace('/(tabs)');
   };
