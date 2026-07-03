@@ -192,6 +192,27 @@ export async function setGuestGender(
   if (error) throw error;
 }
 
+// Bulk guest-flag write for CSV import. Combines is_wedding_party +
+// gender updates into a single row-scoped statement so importing 100
+// changed attendees takes 100 writes rather than 200. Fields left
+// undefined are not touched.
+export async function bulkUpdateGuestFlags(
+  weddingId: string,
+  canonicalName: string,
+  patch: { is_wedding_party?: boolean; gender?: Gender | null },
+): Promise<void> {
+  const update: Record<string, boolean | Gender | null> = {};
+  if (patch.is_wedding_party !== undefined) update.is_wedding_party = patch.is_wedding_party;
+  if (patch.gender !== undefined) update.gender = patch.gender;
+  if (Object.keys(update).length === 0) return;
+  const { error } = await supabase
+    .from('guests')
+    .update(update)
+    .eq('wedding_id', weddingId)
+    .eq('canonical_name', canonicalName);
+  if (error) throw error;
+}
+
 export async function fetchAdmins(weddingId: string): Promise<AdminRow[]> {
   const { data, error } = await supabase
     .from('wedding_admins')

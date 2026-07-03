@@ -225,3 +225,37 @@ export async function toggleGuestGroupMember(
   }
 }
 
+// Bulk membership rewrite for a single group, used by the CSV importer.
+// Deletes members that shouldn't be in the group anymore then inserts
+// the ones that should — same delete-then-insert pattern as
+// updateGuestGroupMembers but scoped to a caller-provided add/remove
+// list so we don't need to refetch the current members first.
+export async function bulkApplyGuestGroupMembership(
+  weddingId: string,
+  groupId: string,
+  add: string[],
+  remove: string[],
+): Promise<void> {
+  if (remove.length > 0) {
+    const { error } = await supabase
+      .from('guest_group_members')
+      .delete()
+      .eq('group_id', groupId)
+      .in('guest_canonical_name', remove);
+    if (error) throw error;
+  }
+  if (add.length > 0) {
+    const { error } = await supabase
+      .from('guest_group_members')
+      .upsert(
+        add.map((name) => ({
+          group_id: groupId,
+          wedding_id: weddingId,
+          guest_canonical_name: name,
+        })),
+        { onConflict: 'group_id,guest_canonical_name' },
+      );
+    if (error) throw error;
+  }
+}
+

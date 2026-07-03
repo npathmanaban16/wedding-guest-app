@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
+  Linking,
   Modal,
   Platform,
   Pressable,
@@ -12,15 +13,21 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as MailComposer from 'expo-mail-composer';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as DocumentPicker from 'expo-document-picker';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
 import { haptic } from '@/utils/haptics';
 import {
+  bulkApplyGuestGroupMembership,
   createGuestGroup,
   deleteGuestGroup,
   toggleGuestGroupMember,
@@ -28,53 +35,36 @@ import {
   type GuestGroup,
 } from '@/services/guestGroups';
 import {
+  bulkUpdateGuestFlags,
   setGuestGender,
   setGuestWeddingParty,
   type Gender,
 } from '@/services/wedding';
+import {
+  buildGuestGroupsCsv,
+  computeImportDiff,
+  type AttendeeDiff,
+  type ImportDiff,
+} from '@/utils/guestGroupsCsv';
 
 // The guest-groups admin screen is a spreadsheet: attendees down the
-// rows, groups across the columns. Cells are checkboxes. Three column
-// families are shown in a fixed order:
-//
-//   1. Wedding Party (default, always present) — bound to
-//      guests.is_wedding_party AND the "Wedding Party" guest_group if
-//      one exists in the DB. Toggling writes to both so the flag and
-//      the group stay in sync (packing + event visibility rely on the
-//      group).
-//   2. Gender (default, radio-style: Female / Male / Unknown) — bound
-//      to guests.gender. Clicking a cell sets the value (or clears
-//      when the already-selected cell is tapped again).
-//   3. User-created groups (dynamic, ordered by sort_order) — bound
-//      to guest_group_members. Column header has rename / delete.
-//
-// New weddings without any user groups still see the four default
-// columns, which is what "everyone on the roster" gets to browse out
-// of the box; admins add columns as they need them.
+// rows, groups across the columns. Cells are checkboxes. See the
+// October 2026 design notes for the full column family layout — this
+// version adds a sticky first column, a search filter, and CSV
+// export/import.
 
 const NAME_COLUMN_WIDTH = 180;
 const CELL_WIDTH = 56;
 const ROW_HEIGHT = 48;
+const HEADER_HEIGHT = 96;
 
-// Reserved names that a user-created group can't collide with. The
-// Wedding Party group we backfilled for N&N shows up as the default
-// column rather than a duplicate user column; the gender columns are
-// virtual (backed by guests.gender) and shouldn't be recreated as
-// groups either.
+// Reserved header names — user-created groups can't collide with any
+// of these. Wedding Party is the backfilled group (migration 043)
+// surfaced as the default column; gender labels are virtual columns.
 const DEFAULT_COLUMN_NAMES = new Set(
-  ['wedding party', 'female', 'male', 'unknown', 'unknown gender'].map((s) => s.toLowerCase()),
+  ['wedding party', 'female', 'male', 'unknown', 'unknown gender', 'name', 'guest', 'attendee', 'gender'].map((s) => s.toLowerCase()),
 );
-
-// The special guest_group backfilled by migration 043 that mirrors
-// is_wedding_party. Hidden from the user-columns list because it
-// surfaces as the default Wedding Party column instead — but its ID
-// is what the packing list + wedding_events reference, so cell toggles
-// keep its membership in sync.
 const WEDDING_PARTY_GROUP_NAME = 'Wedding Party';
-
-// Cell states — used by both the row renderer and the column-level
-// stats badge (X of Y selected).
-type CellState = 'on' | 'off';
 
 interface Attendee {
   canonicalName: string;
@@ -82,85 +72,15 @@ interface Attendee {
   gender: Gender | null;
 }
 
-interface AttendeeRowProps {
-  attendee: Attendee;
-  weddingPartyOn: boolean;
-  gender: Gender | null;
-  userGroups: GuestGroup[];
-  onToggleWeddingParty: (name: string, next: boolean) => void;
-  onSetGender: (name: string, next: Gender | null) => void;
-  onToggleGroup: (groupId: string, name: string, next: boolean) => void;
-  alt: boolean;
-}
-
-function AttendeeRow({
-  attendee,
-  weddingPartyOn,
-  gender,
-  userGroups,
-  onToggleWeddingParty,
-  onSetGender,
-  onToggleGroup,
-  alt,
-}: AttendeeRowProps) {
-  return (
-    <View style={[styles.row, alt && styles.rowAlt, { height: ROW_HEIGHT }]}>
-      <View style={[styles.nameCell, { width: NAME_COLUMN_WIDTH }]}>
-        <Text style={styles.nameText} numberOfLines={1}>
-          {attendee.canonicalName}
-        </Text>
-      </View>
-
-      <Cell
-        state={weddingPartyOn ? 'on' : 'off'}
-        tint={Colors.primary}
-        onPress={() => onToggleWeddingParty(attendee.canonicalName, !weddingPartyOn)}
-      />
-      <Cell
-        state={gender === 'female' ? 'on' : 'off'}
-        tint={Colors.accent}
-        onPress={() =>
-          onSetGender(attendee.canonicalName, gender === 'female' ? null : 'female')
-        }
-      />
-      <Cell
-        state={gender === 'male' ? 'on' : 'off'}
-        tint={Colors.accent}
-        onPress={() =>
-          onSetGender(attendee.canonicalName, gender === 'male' ? null : 'male')
-        }
-      />
-      <Cell
-        state={gender === null ? 'on' : 'off'}
-        tint={Colors.textMuted}
-        onPress={() =>
-          onSetGender(attendee.canonicalName, gender === null ? 'female' : null)
-        }
-      />
-
-      {userGroups.map((group) => {
-        const inGroup = group.members.includes(attendee.canonicalName);
-        return (
-          <Cell
-            key={group.id}
-            state={inGroup ? 'on' : 'off'}
-            tint={Colors.gold}
-            onPress={() => onToggleGroup(group.id, attendee.canonicalName, !inGroup)}
-          />
-        );
-      })}
-    </View>
-  );
-}
+// ─── Small components ─────────────────────────────────────────────────
 
 interface CellProps {
-  state: CellState;
+  on: boolean;
   tint: string;
   onPress: () => void;
 }
 
-function Cell({ state, tint, onPress }: CellProps) {
-  const on = state === 'on';
+function Cell({ on, tint, onPress }: CellProps) {
   return (
     <Pressable
       onPress={() => {
@@ -196,7 +116,7 @@ interface ColumnHeaderProps {
 
 function ColumnHeader({ label, sublabel, count, onEdit, onDelete }: ColumnHeaderProps) {
   return (
-    <View style={[styles.headerCell, { width: CELL_WIDTH }]}>
+    <View style={[styles.headerCell, { width: CELL_WIDTH, height: HEADER_HEIGHT }]}>
       <Text style={styles.headerLabel} numberOfLines={2}>
         {label}
       </Text>
@@ -222,8 +142,6 @@ function ColumnHeader({ label, sublabel, count, onEdit, onDelete }: ColumnHeader
   );
 }
 
-// Small modal for creating or renaming a user column. Reused for both
-// so the create + rename flows share styling.
 interface GroupNameModalProps {
   visible: boolean;
   title: string;
@@ -307,6 +225,155 @@ function GroupNameModal({
   );
 }
 
+interface ImportPreviewModalProps {
+  visible: boolean;
+  diff: ImportDiff | null;
+  applying: boolean;
+  onCancel: () => void;
+  onApply: () => void;
+}
+
+function ImportPreviewModal({ visible, diff, applying, onCancel, onApply }: ImportPreviewModalProps) {
+  const insets = useSafeAreaInsets();
+  if (!diff) return null;
+  const changeCount = diff.attendeeDiffs.length;
+  const canApply = changeCount > 0 && diff.errors.length === 0 && !applying;
+  return (
+    <Modal visible={visible} animationType="slide" onRequestClose={onCancel}>
+      <View style={[styles.importRoot, { paddingTop: insets.top + Spacing.md }]}>
+        <View style={styles.importHeader}>
+          <TouchableOpacity onPress={onCancel} disabled={applying} hitSlop={8}>
+            <Text style={[styles.editorCancel, applying && styles.editorCancelDisabled]}>
+              Cancel
+            </Text>
+          </TouchableOpacity>
+          <Text style={styles.editorTitle}>Import preview</Text>
+          <TouchableOpacity onPress={onApply} disabled={!canApply} hitSlop={8}>
+            {applying ? (
+              <ActivityIndicator color={Colors.primary} size="small" />
+            ) : (
+              <Text style={[styles.editorSave, !canApply && styles.editorSaveDisabled]}>
+                Apply
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView
+          style={styles.importScroll}
+          contentContainerStyle={styles.importContent}
+        >
+          {diff.errors.length > 0 ? (
+            <View style={[styles.importCard, styles.importCardError]}>
+              <Text style={styles.importCardTitle}>Can't apply this file</Text>
+              {diff.errors.map((e, i) => (
+                <Text key={i} style={styles.importErrorLine}>• {e}</Text>
+              ))}
+            </View>
+          ) : (
+            <>
+              <View style={styles.importSummaryRow}>
+                <View style={styles.importStatTile}>
+                  <Text style={styles.importStatValue}>{changeCount}</Text>
+                  <Text style={styles.importStatLabel}>
+                    attendee{changeCount === 1 ? '' : 's'} to update
+                  </Text>
+                </View>
+                <View style={styles.importStatTile}>
+                  <Text style={styles.importStatValue}>{diff.csvRowCount}</Text>
+                  <Text style={styles.importStatLabel}>
+                    row{diff.csvRowCount === 1 ? '' : 's'} in file
+                  </Text>
+                </View>
+              </View>
+
+              {diff.unknownNames.length > 0 ? (
+                <View style={[styles.importCard, styles.importCardWarn]}>
+                  <Text style={styles.importCardTitle}>
+                    Names not on the guest list ({diff.unknownNames.length})
+                  </Text>
+                  <Text style={styles.importCardBody}>
+                    These rows will be ignored. Add them to the wedding first, then re-upload.
+                  </Text>
+                  {diff.unknownNames.slice(0, 10).map((n) => (
+                    <Text key={n} style={styles.importListItem}>• {n}</Text>
+                  ))}
+                  {diff.unknownNames.length > 10 ? (
+                    <Text style={styles.importListItem}>
+                      … and {diff.unknownNames.length - 10} more
+                    </Text>
+                  ) : null}
+                </View>
+              ) : null}
+
+              {diff.unknownColumns.length > 0 ? (
+                <View style={[styles.importCard, styles.importCardWarn]}>
+                  <Text style={styles.importCardTitle}>
+                    Unknown columns ({diff.unknownColumns.length})
+                  </Text>
+                  <Text style={styles.importCardBody}>
+                    These columns won't be applied. Create a group with that name first, then re-upload.
+                  </Text>
+                  {diff.unknownColumns.map((c) => (
+                    <Text key={c} style={styles.importListItem}>• {c}</Text>
+                  ))}
+                </View>
+              ) : null}
+
+              {changeCount === 0 ? (
+                <View style={styles.importCard}>
+                  <Text style={styles.importCardTitle}>Nothing to change</Text>
+                  <Text style={styles.importCardBody}>
+                    Every attendee in the file already matches the current spreadsheet.
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.importCard}>
+                  <Text style={styles.importCardTitle}>Changes to apply</Text>
+                  {diff.attendeeDiffs.slice(0, 40).map((d) => (
+                    <View key={d.canonicalName} style={styles.importDiffRow}>
+                      <Text style={styles.importDiffName}>{d.canonicalName}</Text>
+                      <Text style={styles.importDiffBody}>{summarizeDiff(d)}</Text>
+                    </View>
+                  ))}
+                  {diff.attendeeDiffs.length > 40 ? (
+                    <Text style={styles.importListItem}>
+                      … and {diff.attendeeDiffs.length - 40} more
+                    </Text>
+                  ) : null}
+                </View>
+              )}
+            </>
+          )}
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+}
+
+function summarizeDiff(d: AttendeeDiff): string {
+  const parts: string[] = [];
+  if (d.weddingParty) {
+    parts.push(`Wedding Party ${d.weddingParty.from ? 'Yes' : 'No'} → ${d.weddingParty.to ? 'Yes' : 'No'}`);
+  }
+  if (d.gender) {
+    parts.push(
+      `Gender ${genderLabel(d.gender.from)} → ${genderLabel(d.gender.to)}`,
+    );
+  }
+  for (const g of d.addedTo) parts.push(`+ ${g.groupName}`);
+  for (const g of d.removedFrom) parts.push(`− ${g.groupName}`);
+  return parts.join(' · ');
+}
+
+function genderLabel(g: Gender | null): string {
+  if (g === 'female') return 'Female';
+  if (g === 'male') return 'Male';
+  return 'Unknown';
+}
+
+// ─── Main screen ─────────────────────────────────────────────────────
+
 export default function AdminGuestGroupsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -321,10 +388,28 @@ export default function AdminGuestGroupsScreen() {
     patchGuestGroups,
   } = useWedding();
 
+  const [search, setSearch] = useState('');
   const [creatingGroup, setCreatingGroup] = useState(false);
   const [creating, setCreating] = useState(false);
   const [renamingGroupId, setRenamingGroupId] = useState<string | null>(null);
   const [renaming, setRenaming] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [applyingImport, setApplyingImport] = useState(false);
+  const [importDiff, setImportDiff] = useState<ImportDiff | null>(null);
+
+  // ScrollView refs used to keep the sticky name column locked to the
+  // main cell area's vertical scroll, and the header row's horizontal
+  // scroll locked to the cells' horizontal scroll. Each direction has
+  // a "programmatic" flag that suppresses the responding scroll's
+  // onScroll callback while we programmatically drive it, so the sync
+  // doesn't feedback-loop forever.
+  const leftVerticalRef = useRef<ScrollView>(null);
+  const rightVerticalRef = useRef<ScrollView>(null);
+  const headerHorizontalRef = useRef<ScrollView>(null);
+  const cellsHorizontalRef = useRef<ScrollView>(null);
+  const isProgrammaticVertical = useRef(false);
+  const isProgrammaticHorizontal = useRef(false);
 
   if (!guestName || !isAdmin(guestName)) {
     return (
@@ -337,7 +422,7 @@ export default function AdminGuestGroupsScreen() {
   const sortedAttendees: Attendee[] = useMemo(
     () =>
       [...attendees]
-        .filter((a) => !a.is_couple) // couples aren't guests to gate; leave them off the roster
+        .filter((a) => !a.is_couple)
         .sort((a, b) => a.canonical_name.localeCompare(b.canonical_name))
         .map((a) => ({
           canonicalName: a.canonical_name,
@@ -347,11 +432,14 @@ export default function AdminGuestGroupsScreen() {
     [attendees],
   );
 
-  // The Wedding Party guest_group (if the backfill migration ran)
-  // isn't shown as its own user column — the default column above
-  // covers it. But its ID is what wedding_events + wedding_packing_lists
-  // reference, so cell toggles on the Wedding Party column keep its
-  // membership in sync with is_wedding_party.
+  const filteredAttendees = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return sortedAttendees;
+    return sortedAttendees.filter((a) =>
+      a.canonicalName.toLowerCase().includes(q),
+    );
+  }, [sortedAttendees, search]);
+
   const weddingPartyGroup = useMemo(
     () => guestGroups.find((g) => g.name === WEDDING_PARTY_GROUP_NAME) ?? null,
     [guestGroups],
@@ -365,17 +453,19 @@ export default function AdminGuestGroupsScreen() {
     [guestGroups],
   );
 
-  const countBy = (predicate: (a: Attendee) => boolean): number =>
-    sortedAttendees.reduce((sum, a) => sum + (predicate(a) ? 1 : 0), 0);
+  // Column counts are computed off the full unfiltered attendee list so
+  // the badges reflect wedding-wide totals regardless of what the
+  // search box is currently filtered to.
+  const weddingPartyCount = sortedAttendees.filter((a) => a.isWeddingParty).length;
+  const femaleCount = sortedAttendees.filter((a) => a.gender === 'female').length;
+  const maleCount = sortedAttendees.filter((a) => a.gender === 'male').length;
+  const unknownCount = sortedAttendees.filter((a) => a.gender === null).length;
 
-  const weddingPartyCount = countBy((a) => a.isWeddingParty);
-  const femaleCount = countBy((a) => a.gender === 'female');
-  const maleCount = countBy((a) => a.gender === 'male');
-  const unknownCount = countBy((a) => a.gender === null);
-
-  // ─── Write handlers ────────────────────────────────────────────────
-  // Optimistic patch first for snappy UI, then write. On failure we roll
-  // back the in-memory state and surface an alert so the admin can retry.
+  // ─── Cell writes ────────────────────────────────────────────────────
+  // Every cell write follows the same optimistic-then-rollback pattern:
+  // patch the in-memory state first so the checkbox flips instantly,
+  // then persist, and on failure reverse the patch and surface an alert
+  // so the admin can retry.
 
   const handleToggleWeddingParty = async (canonicalName: string, next: boolean) => {
     patchAttendeeFlag(canonicalName, { is_wedding_party: next });
@@ -383,8 +473,6 @@ export default function AdminGuestGroupsScreen() {
     if (groupId) patchGuestGroupMembership(groupId, canonicalName, next);
     try {
       await setGuestWeddingParty(weddingId, canonicalName, next);
-      // Sync the backfilled group's membership so downstream visibility
-      // filters (which read via guest_group_members) match the flag.
       if (groupId) {
         await toggleGuestGroupMember(weddingId, groupId, canonicalName, next);
       }
@@ -445,7 +533,6 @@ export default function AdminGuestGroupsScreen() {
     const group = guestGroups.find((g) => g.id === groupId);
     if (!group) return;
     setRenaming(true);
-    // Optimistic
     patchGuestGroups({ type: 'rename', groupId, name });
     try {
       await updateGuestGroupMetadata(groupId, {
@@ -473,7 +560,6 @@ export default function AdminGuestGroupsScreen() {
           style: 'destructive',
           onPress: async () => {
             haptic.warning();
-            // Optimistic remove; put it back if the delete fails.
             patchGuestGroups({ type: 'remove', groupId: group.id });
             try {
               await deleteGuestGroup(group.id);
@@ -487,8 +573,6 @@ export default function AdminGuestGroupsScreen() {
     );
   };
 
-  // Collision check used by the name modal — excludes the current
-  // group when renaming so a no-op rename doesn't collide with itself.
   const collisionCheck = (excludingId: string | null) => (candidate: string) => {
     const lower = candidate.toLowerCase();
     if (DEFAULT_COLUMN_NAMES.has(lower)) return true;
@@ -501,106 +585,471 @@ export default function AdminGuestGroupsScreen() {
     ? guestGroups.find((g) => g.id === renamingGroupId) ?? null
     : null;
 
+  // ─── CSV export ─────────────────────────────────────────────────────
+  // Mirrors the accommodations export path: build CSV, open mail
+  // composer with the file attached, fall back to a mailto link so
+  // guests without a configured mail app can still get the data out.
+
+  const handleExport = async () => {
+    if (sortedAttendees.length === 0) {
+      Alert.alert('Nothing to export', 'This wedding has no attendees on the guest list.');
+      return;
+    }
+    setExporting(true);
+    try {
+      const csv = buildGuestGroupsCsv(sortedAttendees, userColumns);
+      const stamp = todayIso();
+      const subject = `Guest groups — ${stamp}`;
+      const body =
+        `${sortedAttendees.length} attendee${sortedAttendees.length === 1 ? '' : 's'} attached as CSV.\n\n` +
+        `Columns: Name, Wedding Party, Gender${userColumns.length ? `, ${userColumns.map((g) => g.name).join(', ')}` : ''}\n`;
+
+      const canMail = await MailComposer.isAvailableAsync().catch(() => false);
+      if (canMail) {
+        const fileUri = `${FileSystem.cacheDirectory ?? ''}guest-groups-${stamp}.csv`;
+        await FileSystem.writeAsStringAsync(fileUri, csv, {
+          encoding: FileSystem.EncodingType.UTF8,
+        });
+        const result = await MailComposer.composeAsync({
+          subject,
+          body,
+          attachments: [fileUri],
+        });
+        if (result.status === MailComposer.MailComposerStatus.SENT) {
+          Alert.alert('Sent', 'Email with CSV sent.');
+        }
+        return;
+      }
+
+      // Fallback: inline (potentially truncated) CSV into a mailto so
+      // simulators / devices without a mail app can still forward.
+      const inlineLimit = 1800;
+      const inlineCsv = csv.length > inlineLimit
+        ? `${csv.slice(0, inlineLimit)}\n…(truncated — ${sortedAttendees.length} rows total)`
+        : csv;
+      const url =
+        `mailto:?subject=${encodeURIComponent(subject)}` +
+        `&body=${encodeURIComponent(`${body}\n${inlineCsv}`)}`;
+      const supported = await Linking.canOpenURL(url).catch(() => false);
+      if (!supported) {
+        Alert.alert(
+          'Email not available',
+          'No email app is configured on this device.',
+        );
+        return;
+      }
+      await Linking.openURL(url);
+    } catch (e) {
+      Alert.alert('Export failed', errorMessage(e));
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // ─── CSV import ─────────────────────────────────────────────────────
+  // Pick file → read → compute diff → show preview → apply on confirm.
+  // Applying batches by attendee (one flags write) and by group (one
+  // bulk membership rewrite), so a 100-row / 5-group import is at most
+  // ~200 network calls rather than one per changed cell.
+
+  const handleImportPick = async () => {
+    setImporting(true);
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['text/csv', 'text/comma-separated-values', 'application/csv', '*/*'],
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
+      if (result.canceled || !result.assets?.[0]) return;
+      const asset = result.assets[0];
+      const csvText = await FileSystem.readAsStringAsync(asset.uri, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+      const diff = computeImportDiff(
+        csvText,
+        sortedAttendees.map((a) => ({
+          canonicalName: a.canonicalName,
+          isWeddingParty: a.isWeddingParty,
+          gender: a.gender,
+        })),
+        userColumns,
+      );
+      setImportDiff(diff);
+    } catch (e) {
+      Alert.alert('Import failed', errorMessage(e));
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const handleApplyImport = async () => {
+    if (!importDiff) return;
+    setApplyingImport(true);
+    const weddingPartyGroupId = weddingPartyGroup?.id ?? null;
+    // Bucket group membership changes so we can apply them per group
+    // in one bulkApplyGuestGroupMembership call each — cleaner and
+    // cheaper than one write per (guest × group) cell.
+    const groupAdditions = new Map<string, string[]>();
+    const groupRemovals = new Map<string, string[]>();
+    let weddingPartyAdds: string[] = [];
+    let weddingPartyRemoves: string[] = [];
+    for (const d of importDiff.attendeeDiffs) {
+      if (d.weddingParty && weddingPartyGroupId) {
+        if (d.weddingParty.to) weddingPartyAdds.push(d.canonicalName);
+        else weddingPartyRemoves.push(d.canonicalName);
+      }
+      for (const g of d.addedTo) {
+        const list = groupAdditions.get(g.groupId);
+        if (list) list.push(d.canonicalName);
+        else groupAdditions.set(g.groupId, [d.canonicalName]);
+      }
+      for (const g of d.removedFrom) {
+        const list = groupRemovals.get(g.groupId);
+        if (list) list.push(d.canonicalName);
+        else groupRemovals.set(g.groupId, [d.canonicalName]);
+      }
+    }
+
+    try {
+      // Phase 1: flags on guests. One PATCH per attendee (couldn't find
+      // a friendly bulk-update-by-list path in postgrest without an
+      // RPC). Runs concurrently — the guests table is per-row and
+      // there's no cross-row constraint being touched.
+      await Promise.all(
+        importDiff.attendeeDiffs.map((d) => {
+          const patch: { is_wedding_party?: boolean; gender?: Gender | null } = {};
+          if (d.weddingParty) patch.is_wedding_party = d.weddingParty.to;
+          if (d.gender) patch.gender = d.gender.to;
+          if (Object.keys(patch).length === 0) return Promise.resolve();
+          return bulkUpdateGuestFlags(weddingId, d.canonicalName, patch);
+        }),
+      );
+
+      // Phase 2: group memberships. One bulk call per group (delete +
+      // upsert of the add/remove lists we accumulated above).
+      const groupIds = new Set([
+        ...groupAdditions.keys(),
+        ...groupRemovals.keys(),
+      ]);
+      await Promise.all(
+        [...groupIds].map((gid) =>
+          bulkApplyGuestGroupMembership(
+            weddingId,
+            gid,
+            groupAdditions.get(gid) ?? [],
+            groupRemovals.get(gid) ?? [],
+          ),
+        ),
+      );
+
+      // Phase 3: sync the mirror Wedding Party group when the flag moved.
+      if (weddingPartyGroupId && (weddingPartyAdds.length || weddingPartyRemoves.length)) {
+        await bulkApplyGuestGroupMembership(
+          weddingId,
+          weddingPartyGroupId,
+          weddingPartyAdds,
+          weddingPartyRemoves,
+        );
+      }
+
+      // Success — sync the in-memory context so the sheet reflects
+      // everything without waiting on a refetch.
+      for (const d of importDiff.attendeeDiffs) {
+        if (d.weddingParty || d.gender) {
+          patchAttendeeFlag(d.canonicalName, {
+            ...(d.weddingParty ? { is_wedding_party: d.weddingParty.to } : {}),
+            ...(d.gender ? { gender: d.gender.to } : {}),
+          });
+        }
+        for (const g of d.addedTo) patchGuestGroupMembership(g.groupId, d.canonicalName, true);
+        for (const g of d.removedFrom) patchGuestGroupMembership(g.groupId, d.canonicalName, false);
+        if (d.weddingParty && weddingPartyGroupId) {
+          patchGuestGroupMembership(weddingPartyGroupId, d.canonicalName, d.weddingParty.to);
+        }
+      }
+      setImportDiff(null);
+      Alert.alert('Imported', `${importDiff.attendeeDiffs.length} attendee${importDiff.attendeeDiffs.length === 1 ? '' : 's'} updated.`);
+    } catch (e) {
+      Alert.alert('Import failed', errorMessage(e));
+    } finally {
+      setApplyingImport(false);
+    }
+  };
+
+  // ─── Scroll sync handlers ────────────────────────────────────────────
+  // The sheet layout is:
+  //   [ name header | header ScrollView (horizontal only) ]
+  //   [ name column ScrollView (vertical) | cells ScrollView (vertical AND horizontal) ]
+  //
+  // Two-directional sync between the horizontal scrolls (header ↔ cells)
+  // and between the vertical scrolls (name column ↔ cells). isProgrammatic
+  // flags stop the scrollTo we fire in response from re-firing onScroll
+  // and looping.
+
+  const onVerticalScroll = (source: 'left' | 'right') =>
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (isProgrammaticVertical.current) {
+        isProgrammaticVertical.current = false;
+        return;
+      }
+      const y = e.nativeEvent.contentOffset.y;
+      const target = source === 'left' ? rightVerticalRef : leftVerticalRef;
+      isProgrammaticVertical.current = true;
+      target.current?.scrollTo({ y, animated: false });
+    };
+
+  const onHorizontalScroll = (source: 'header' | 'cells') =>
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (isProgrammaticHorizontal.current) {
+        isProgrammaticHorizontal.current = false;
+        return;
+      }
+      const x = e.nativeEvent.contentOffset.x;
+      const target = source === 'header' ? cellsHorizontalRef : headerHorizontalRef;
+      isProgrammaticHorizontal.current = true;
+      target.current?.scrollTo({ x, animated: false });
+    };
+
   return (
     <View style={styles.root}>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={[styles.headerContent, { paddingTop: insets.top + Spacing.md }]}
-      >
-        <View style={styles.pageHeader}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={20} color={Colors.textMuted} />
-            <Text style={styles.backText}>Back</Text>
-          </TouchableOpacity>
-          <Text style={styles.pageTitle}>Guest Groups</Text>
-          <Text style={styles.pageSubtitle}>
-            Rows are attendees, columns are groups. Tap a cell to add or remove that guest from the group.
-            Wedding Party + gender columns are built-in; add your own by tapping New group.
-          </Text>
-        </View>
-      </ScrollView>
+      {/* Page header with padding above the sheet */}
+      <View style={[styles.pageHeader, { paddingTop: insets.top + Spacing.md }]}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={20} color={Colors.textMuted} />
+          <Text style={styles.backText}>Back</Text>
+        </TouchableOpacity>
+        <Text style={styles.pageTitle}>Guest Groups & Access</Text>
+        <Text style={styles.pageSubtitle}>
+          Rows are attendees, columns are groups. Wedding Party + gender are built-in; add your own with New group.
+        </Text>
 
-      {/* Spreadsheet — two nested ScrollViews so the header + name column
-          stay put while the cells scroll independently. */}
+        {/* Toolbar row: search + export + import */}
+        <View style={styles.toolbar}>
+          <View style={styles.searchRow}>
+            <Ionicons name="search" size={16} color={Colors.textMuted} />
+            <TextInput
+              style={styles.searchInput}
+              value={search}
+              onChangeText={setSearch}
+              placeholder="Search attendees"
+              placeholderTextColor={Colors.textMuted}
+              autoCapitalize="words"
+              autoCorrect={false}
+              returnKeyType="search"
+              clearButtonMode="while-editing"
+            />
+            {search ? (
+              <TouchableOpacity onPress={() => setSearch('')} hitSlop={6}>
+                <Ionicons name="close-circle" size={16} color={Colors.textMuted} />
+              </TouchableOpacity>
+            ) : null}
+          </View>
+          <TouchableOpacity
+            onPress={handleExport}
+            disabled={exporting}
+            style={[styles.toolbarBtn, exporting && styles.toolbarBtnDisabled]}
+            activeOpacity={0.85}
+          >
+            {exporting ? (
+              <ActivityIndicator size="small" color={Colors.primary} />
+            ) : (
+              <>
+                <Ionicons name="mail-outline" size={14} color={Colors.primary} />
+                <Text style={styles.toolbarBtnText}>Export</Text>
+              </>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleImportPick}
+            disabled={importing}
+            style={[styles.toolbarBtn, importing && styles.toolbarBtnDisabled]}
+            activeOpacity={0.85}
+          >
+            {importing ? (
+              <ActivityIndicator size="small" color={Colors.primary} />
+            ) : (
+              <>
+                <Ionicons name="cloud-upload-outline" size={14} color={Colors.primary} />
+                <Text style={styles.toolbarBtnText}>Import</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        {search.trim() ? (
+          <Text style={styles.filterHint}>
+            Showing {filteredAttendees.length} of {sortedAttendees.length} attendees
+          </Text>
+        ) : null}
+      </View>
+
+      {/* Sheet */}
       <View style={styles.sheet}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator
-          stickyHeaderIndices={undefined}
-          contentContainerStyle={styles.sheetHorizontalContent}
-          bounces={false}
-        >
-          <View>
-            {/* Header row */}
-            <View style={styles.headerRow}>
-              <View style={[styles.nameHeaderCell, { width: NAME_COLUMN_WIDTH }]}>
-                <Text style={styles.nameHeaderText}>
-                  {sortedAttendees.length} attendee{sortedAttendees.length === 1 ? '' : 's'}
+        {/* Header row: fixed name-column header + horizontally scrollable group headers */}
+        <View style={[styles.headerRow, { height: HEADER_HEIGHT }]}>
+          <View style={[styles.nameHeaderCell, { width: NAME_COLUMN_WIDTH, height: HEADER_HEIGHT }]}>
+            <Text style={styles.nameHeaderText}>
+              {sortedAttendees.length} attendee{sortedAttendees.length === 1 ? '' : 's'}
+            </Text>
+          </View>
+          <ScrollView
+            horizontal
+            ref={headerHorizontalRef}
+            onScroll={onHorizontalScroll('header')}
+            scrollEventThrottle={16}
+            showsHorizontalScrollIndicator={false}
+            bounces={false}
+          >
+            <ColumnHeader label="Wedding Party" sublabel="default" count={weddingPartyCount} />
+            <ColumnHeader label="Female" sublabel="gender" count={femaleCount} />
+            <ColumnHeader label="Male" sublabel="gender" count={maleCount} />
+            <ColumnHeader label="Unknown" sublabel="gender" count={unknownCount} />
+            {userColumns.map((group) => (
+              <ColumnHeader
+                key={group.id}
+                label={group.name}
+                count={group.members.length}
+                onEdit={() => setRenamingGroupId(group.id)}
+                onDelete={() => handleDeleteGroup(group)}
+              />
+            ))}
+            <TouchableOpacity
+              style={[styles.addColumnBtn, { height: HEADER_HEIGHT }]}
+              onPress={() => {
+                haptic.light();
+                setCreatingGroup(true);
+              }}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="add" size={18} color={Colors.primary} />
+              <Text style={styles.addColumnBtnText}>New group</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+
+        {/* Body: sticky name column ScrollView + horizontally scrollable cells ScrollView */}
+        <View style={styles.bodyRow}>
+          <ScrollView
+            ref={leftVerticalRef}
+            onScroll={onVerticalScroll('left')}
+            scrollEventThrottle={16}
+            showsVerticalScrollIndicator={false}
+            style={[styles.nameColumn, { width: NAME_COLUMN_WIDTH }]}
+            contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xxl }}
+            bounces={false}
+          >
+            {filteredAttendees.length === 0 ? (
+              <View style={[styles.nameCell, { width: NAME_COLUMN_WIDTH, height: ROW_HEIGHT }]}>
+                <Text style={styles.emptyText}>
+                  {search.trim() ? 'No matches' : 'No attendees'}
                 </Text>
               </View>
+            ) : (
+              filteredAttendees.map((a, idx) => (
+                <View
+                  key={a.canonicalName}
+                  style={[
+                    styles.nameCell,
+                    { width: NAME_COLUMN_WIDTH, height: ROW_HEIGHT },
+                    idx % 2 === 1 && styles.rowAlt,
+                  ]}
+                >
+                  <Text style={styles.nameText} numberOfLines={1}>
+                    {a.canonicalName}
+                  </Text>
+                </View>
+              ))
+            )}
+          </ScrollView>
 
-              <ColumnHeader
-                label="Wedding Party"
-                sublabel="default"
-                count={weddingPartyCount}
-              />
-              <ColumnHeader label="Female" sublabel="gender" count={femaleCount} />
-              <ColumnHeader label="Male" sublabel="gender" count={maleCount} />
-              <ColumnHeader label="Unknown" sublabel="gender" count={unknownCount} />
-
-              {userColumns.map((group) => (
-                <ColumnHeader
-                  key={group.id}
-                  label={group.name}
-                  count={group.members.length}
-                  onEdit={() => setRenamingGroupId(group.id)}
-                  onDelete={() => handleDeleteGroup(group)}
-                />
-              ))}
-
-              <TouchableOpacity
-                style={styles.addColumnBtn}
-                onPress={() => {
-                  haptic.light();
-                  setCreatingGroup(true);
-                }}
-                activeOpacity={0.85}
-              >
-                <Ionicons name="add" size={18} color={Colors.primary} />
-                <Text style={styles.addColumnBtnText}>New group</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Body rows */}
+          <ScrollView
+            horizontal
+            ref={cellsHorizontalRef}
+            onScroll={onHorizontalScroll('cells')}
+            scrollEventThrottle={16}
+            showsHorizontalScrollIndicator
+            bounces={false}
+          >
             <ScrollView
-              style={styles.bodyScroll}
+              ref={rightVerticalRef}
+              onScroll={onVerticalScroll('right')}
+              scrollEventThrottle={16}
+              showsVerticalScrollIndicator={false}
               contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xxl }}
-              nestedScrollEnabled
+              bounces={false}
             >
-              {sortedAttendees.length === 0 ? (
-                <View style={styles.emptyRow}>
+              {filteredAttendees.length === 0 ? (
+                <View style={[styles.emptyCellRow, { height: ROW_HEIGHT }]}>
                   <Text style={styles.emptyText}>
-                    No attendees yet — add guests to this wedding first.
+                    {search.trim() ? 'Try a different name.' : 'Add guests to this wedding first.'}
                   </Text>
                 </View>
               ) : (
-                sortedAttendees.map((a, idx) => (
-                  <AttendeeRow
+                filteredAttendees.map((a, idx) => (
+                  <View
                     key={a.canonicalName}
-                    attendee={a}
-                    weddingPartyOn={a.isWeddingParty}
-                    gender={a.gender}
-                    userGroups={userColumns}
-                    onToggleWeddingParty={handleToggleWeddingParty}
-                    onSetGender={handleSetGender}
-                    onToggleGroup={handleToggleGroup}
-                    alt={idx % 2 === 1}
-                  />
+                    style={[styles.cellRow, { height: ROW_HEIGHT }, idx % 2 === 1 && styles.rowAlt]}
+                  >
+                    <Cell
+                      on={a.isWeddingParty}
+                      tint={Colors.primary}
+                      onPress={() =>
+                        handleToggleWeddingParty(a.canonicalName, !a.isWeddingParty)
+                      }
+                    />
+                    <Cell
+                      on={a.gender === 'female'}
+                      tint={Colors.accent}
+                      onPress={() =>
+                        handleSetGender(
+                          a.canonicalName,
+                          a.gender === 'female' ? null : 'female',
+                        )
+                      }
+                    />
+                    <Cell
+                      on={a.gender === 'male'}
+                      tint={Colors.accent}
+                      onPress={() =>
+                        handleSetGender(
+                          a.canonicalName,
+                          a.gender === 'male' ? null : 'male',
+                        )
+                      }
+                    />
+                    <Cell
+                      on={a.gender === null}
+                      tint={Colors.textMuted}
+                      onPress={() =>
+                        handleSetGender(
+                          a.canonicalName,
+                          a.gender === null ? 'female' : null,
+                        )
+                      }
+                    />
+                    {userColumns.map((group) => {
+                      const inGroup = group.members.includes(a.canonicalName);
+                      return (
+                        <Cell
+                          key={group.id}
+                          on={inGroup}
+                          tint={Colors.gold}
+                          onPress={() =>
+                            handleToggleGroup(group.id, a.canonicalName, !inGroup)
+                          }
+                        />
+                      );
+                    })}
+                    {/* Spacer under the "New group" header column so the
+                        cell area matches the header width. Empty view;
+                        never interactive. */}
+                    <View style={{ width: 80 }} />
+                  </View>
                 ))
               )}
             </ScrollView>
-          </View>
-        </ScrollView>
+          </ScrollView>
+        </View>
       </View>
 
       <GroupNameModal
@@ -623,6 +1072,13 @@ export default function AdminGuestGroupsScreen() {
         onClose={() => (renaming ? undefined : setRenamingGroupId(null))}
         collisionCheck={collisionCheck(renamingGroupId)}
       />
+      <ImportPreviewModal
+        visible={!!importDiff}
+        diff={importDiff}
+        applying={applyingImport}
+        onCancel={() => (applyingImport ? undefined : setImportDiff(null))}
+        onApply={handleApplyImport}
+      />
     </View>
   );
 }
@@ -631,15 +1087,23 @@ function errorMessage(e: unknown): string {
   return e instanceof Error ? e.message : 'Unknown error';
 }
 
+function todayIso(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
-  container: { maxHeight: 200 },
-  headerContent: { paddingHorizontal: Spacing.lg },
 
   guard: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   guardText: { fontFamily: Fonts.sans, color: Colors.textMuted },
 
-  pageHeader: { marginBottom: Spacing.md },
+  pageHeader: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.md,
+    backgroundColor: Colors.background,
+    borderBottomWidth: 0,
+  },
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -663,6 +1127,56 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     color: Colors.textSecondary,
     lineHeight: 18,
+    marginBottom: Spacing.md,
+  },
+
+  toolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  searchRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Platform.OS === 'ios' ? 10 : 4,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.white,
+  },
+  searchInput: {
+    flex: 1,
+    fontFamily: Fonts.sans,
+    fontSize: 14,
+    color: Colors.textPrimary,
+    paddingVertical: 0,
+  },
+  toolbarBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 8,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    backgroundColor: Colors.white,
+    minHeight: 36,
+  },
+  toolbarBtnDisabled: { opacity: 0.5 },
+  toolbarBtnText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 12,
+    color: Colors.primary,
+  },
+  filterHint: {
+    fontFamily: Fonts.sans,
+    fontSize: 11,
+    color: Colors.textMuted,
+    marginTop: Spacing.xs,
   },
 
   sheet: {
@@ -671,14 +1185,12 @@ const styles = StyleSheet.create({
     borderTopWidth: 0.5,
     borderTopColor: Colors.border,
   },
-  sheetHorizontalContent: { flexGrow: 1 },
 
   headerRow: {
     flexDirection: 'row',
     backgroundColor: Colors.surfaceWarm,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
-    minHeight: 88,
   },
   nameHeaderCell: {
     justifyContent: 'flex-end',
@@ -729,9 +1241,7 @@ const styles = StyleSheet.create({
     gap: 4,
     marginTop: 4,
   },
-  headerAction: {
-    padding: 2,
-  },
+  headerAction: { padding: 2 },
 
   addColumnBtn: {
     flexDirection: 'column',
@@ -751,8 +1261,27 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  bodyScroll: { flex: 1 },
-  row: {
+  bodyRow: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  nameColumn: {
+    borderRightWidth: 0.5,
+    borderRightColor: Colors.border,
+    backgroundColor: Colors.white,
+  },
+  nameCell: {
+    paddingHorizontal: Spacing.md,
+    justifyContent: 'center',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.divider,
+  },
+  nameText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 13,
+    color: Colors.textPrimary,
+  },
+  cellRow: {
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -760,17 +1289,6 @@ const styles = StyleSheet.create({
   },
   rowAlt: {
     backgroundColor: Colors.surfaceWarm,
-  },
-  nameCell: {
-    paddingHorizontal: Spacing.md,
-    justifyContent: 'center',
-    borderRightWidth: 0.5,
-    borderRightColor: Colors.border,
-  },
-  nameText: {
-    fontFamily: Fonts.sansMedium,
-    fontSize: 13,
-    color: Colors.textPrimary,
   },
   cell: {
     alignItems: 'center',
@@ -790,18 +1308,18 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
   },
 
-  emptyRow: {
-    padding: Spacing.xl,
-    alignItems: 'center',
+  emptyCellRow: {
+    paddingHorizontal: Spacing.md,
+    justifyContent: 'center',
   },
   emptyText: {
     fontFamily: Fonts.sans,
-    fontSize: 13,
+    fontSize: 12,
     color: Colors.textMuted,
-    textAlign: 'center',
+    textAlign: 'left',
   },
 
-  // ─── Modal ───────────────────────────────────────────────────────
+  // ─── Modals ───────────────────────────────────────────────────────
   modalBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(28, 24, 16, 0.45)',
@@ -865,5 +1383,131 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sansMedium,
     fontSize: 14,
     color: Colors.white,
+  },
+
+  // Import preview modal — full-screen slide-up so long change lists
+  // are scrollable. Header row mirrors the group-editor modal from the
+  // v1 UI so admins get a familiar cancel/confirm shape.
+  importRoot: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  importHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.divider,
+    backgroundColor: Colors.white,
+  },
+  editorCancel: {
+    fontFamily: Fonts.sans,
+    fontSize: 15,
+    color: Colors.textMuted,
+  },
+  editorCancelDisabled: { opacity: 0.5 },
+  editorTitle: {
+    fontFamily: Fonts.serifSemiBold,
+    fontSize: 18,
+    color: Colors.textPrimary,
+  },
+  editorSave: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 15,
+    color: Colors.primary,
+  },
+  editorSaveDisabled: { opacity: 0.45 },
+
+  importScroll: { flex: 1 },
+  importContent: {
+    padding: Spacing.lg,
+  },
+  importSummaryRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    marginBottom: Spacing.md,
+  },
+  importStatTile: {
+    flex: 1,
+    backgroundColor: Colors.white,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    ...Shadow.small,
+  },
+  importStatValue: {
+    fontFamily: Fonts.serifSemiBold,
+    fontSize: 30,
+    color: Colors.primary,
+  },
+  importStatLabel: {
+    fontFamily: Fonts.sans,
+    fontSize: 11,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    marginTop: 2,
+  },
+
+  importCard: {
+    backgroundColor: Colors.white,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    ...Shadow.small,
+  },
+  importCardError: {
+    borderColor: Colors.error,
+    backgroundColor: '#FBE9E7',
+  },
+  importCardWarn: {
+    borderColor: '#E8C36A',
+    backgroundColor: '#FFF8E6',
+  },
+  importCardTitle: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 13,
+    color: Colors.textPrimary,
+    marginBottom: 4,
+  },
+  importCardBody: {
+    fontFamily: Fonts.sans,
+    fontSize: 12,
+    color: Colors.textSecondary,
+    lineHeight: 17,
+    marginBottom: 6,
+  },
+  importErrorLine: {
+    fontFamily: Fonts.sans,
+    fontSize: 12,
+    color: Colors.error,
+    lineHeight: 17,
+  },
+  importListItem: {
+    fontFamily: Fonts.sans,
+    fontSize: 12,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+  },
+  importDiffRow: {
+    paddingVertical: 6,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.divider,
+  },
+  importDiffName: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 13,
+    color: Colors.textPrimary,
+  },
+  importDiffBody: {
+    fontFamily: Fonts.sans,
+    fontSize: 12,
+    color: Colors.textMuted,
+    marginTop: 2,
   },
 });

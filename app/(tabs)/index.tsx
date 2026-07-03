@@ -327,7 +327,7 @@ export default function HomeScreen() {
             activeOpacity={0.8}
           >
             <Ionicons name="people-outline" size={15} color={Colors.white} />
-            <Text style={styles.adminButtonText}>Guest Groups</Text>
+            <Text style={styles.adminButtonText}>Guest Groups & Access</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.adminButton}
