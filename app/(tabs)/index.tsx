@@ -318,6 +318,14 @@ export default function HomeScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.adminButton}
+            onPress={() => router.push('/admin-guest-groups')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="people-outline" size={15} color={Colors.white} />
+            <Text style={styles.adminButtonText}>Guest Groups</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.adminButton}
             onPress={() => router.push('/admin-settings')}
             activeOpacity={0.8}
           >
