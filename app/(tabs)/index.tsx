@@ -404,6 +404,11 @@ const styles = StyleSheet.create({
     height: 380,
     justifyContent: 'flex-end',
     marginBottom: Spacing.lg,
+    // Placeholder color for the brief window before the photo paints
+    // (fresh cache miss, or the first frame after mount). Uses the app
+    // cream so it reads as part of the background rather than a dark
+    // flash — the earlier `Colors.textPrimary` version looked bad here.
+    backgroundColor: Colors.background,
   },
   heroOverlay: {
     ...StyleSheet.absoluteFillObject,

@@ -17,6 +17,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
 import { DEFAULT_WEDDING_ID } from '@/constants/weddingData';
 import { Colors, Fonts, Typography, Spacing, Radius } from '@/constants/theme';
+import { awaitHeroImage } from '@/utils/heroImage';
 
 export default function LoginScreen() {
   // SaaS builds should never land on /login — the invite screen
@@ -64,6 +65,13 @@ function LoginScreenInner() {
     setLoading(true);
     const canonical = getCanonicalName(trimmed) ?? trimmed;
     await login(canonical);
+    // Hold the Enter spinner until the hero image is in cache so the
+    // Home tab renders with the photo already there instead of flashing
+    // the placeholder. WeddingContext started this prefetch when the
+    // wedding row loaded, so on a normal network this resolves in a
+    // fraction of a second; awaitHeroImage caps the wait at 2.5s so a
+    // slow connection can't strand the user on the button.
+    await awaitHeroImage(wedding.hero_image_url);
     setLoading(false);
     router.replace('/(tabs)');
   };
