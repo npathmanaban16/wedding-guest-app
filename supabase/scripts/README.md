@@ -11,6 +11,24 @@ bundled `SWITZERLAND_FULL_GUIDE` constant in
 Arjun & Ila already has), so the admin **Edit App Content → Travel
 Photos** editor works for them.
 
+There are two ways to run the migration — pick whichever you prefer.
+Both leave the DB and Storage bucket in the same state.
+
+### Option A — Supabase dashboard only (no CLI)
+
+1. Upload the six PNGs from `assets/images/` to the
+   `wedding-guide-images` bucket in the Supabase dashboard, once
+   into each of two folders (multi-select all six from your local
+   `assets/images/` to do each folder in one shot):
+   - `a0000000-0000-0000-0000-000000000001/`  (N&N SaaS)
+   - `a0000000-0000-0000-0000-000000000002/`  (Emma & James)
+2. Open `supabase/seed_nn_ej_switzerland_guide.sql`, replace every
+   `<SUPABASE_URL>` with your project URL (e.g.
+   `https://xxxxxxxx.supabase.co`), paste the whole file into the
+   SQL Editor and Run.
+
+### Option B — Node script (uploads + row upsert in one command)
+
 Run once per Supabase project, from the repo root:
 
 ```sh
