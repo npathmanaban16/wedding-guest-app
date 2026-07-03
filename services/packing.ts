@@ -33,3 +33,35 @@ export async function fetchWeddingPackingList(
     tipFooter: data.tip_footer ?? undefined,
   };
 }
+
+// Admin write path — used by the packing-list editor. Full-replace
+// (not partial-per-column) because the editor always holds the whole
+// intended state client-side and writing the full row keeps the DB in
+// lockstep with a single upsert. Assumes the tenant already has a row;
+// callers should check hasEditablePackingList on WeddingContext before
+// offering the editor.
+export async function updateWeddingPackingList(
+  weddingId: string,
+  patch: {
+    pageTitle: string;
+    pageSubtitleTag: string | null;
+    pageSubtitle: string | null;
+    completionMessage: string | null;
+    categories: PackingCategory[];
+    tipFooter: { title: string; text: string } | null;
+  },
+): Promise<void> {
+  const { error } = await supabase
+    .from('wedding_packing_lists')
+    .update({
+      page_title: patch.pageTitle,
+      page_subtitle_tag: patch.pageSubtitleTag,
+      page_subtitle: patch.pageSubtitle,
+      completion_message: patch.completionMessage,
+      categories: patch.categories,
+      tip_footer: patch.tipFooter,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('wedding_id', weddingId);
+  if (error) throw error;
+}

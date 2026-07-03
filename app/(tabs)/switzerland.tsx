@@ -222,30 +222,32 @@ interface SectionBlockProps {
 }
 
 function SectionBlock({ section, openFirstLevelId, onToggleFirstLevel, currencyCode }: SectionBlockProps) {
+  // Items and subsections can coexist within a section. Items render
+  // first (as top-level cards) and subsections after (as grouped
+  // accordions). Either array may be empty.
   return (
     <View style={styles.sectionBlock}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>{section.title}</Text>
       </View>
-      {section.subsections
-        ? section.subsections.map((sub) => (
-            <SubsectionBlock
-              key={sub.id}
-              subsection={sub}
-              expanded={openFirstLevelId === sub.id}
-              onToggle={() => onToggleFirstLevel(sub.id)}
-              currencyCode={currencyCode}
-            />
-          ))
-        : section.items?.map((item) => (
-            <GuideItemCard
-              key={item.id}
-              item={item}
-              expanded={openFirstLevelId === item.id}
-              onToggle={() => onToggleFirstLevel(item.id)}
-              currencyCode={currencyCode}
-            />
-          ))}
+      {section.items?.map((item) => (
+        <GuideItemCard
+          key={item.id}
+          item={item}
+          expanded={openFirstLevelId === item.id}
+          onToggle={() => onToggleFirstLevel(item.id)}
+          currencyCode={currencyCode}
+        />
+      ))}
+      {section.subsections?.map((sub) => (
+        <SubsectionBlock
+          key={sub.id}
+          subsection={sub}
+          expanded={openFirstLevelId === sub.id}
+          onToggle={() => onToggleFirstLevel(sub.id)}
+          currencyCode={currencyCode}
+        />
+      ))}
     </View>
   );
 }
@@ -290,25 +292,28 @@ export default function SwitzerlandScreen() {
   // First pill is the "show everything" reset (typically "All").
   const resetPill = guide.filterPills[0] ?? 'All';
 
+  // Filter items and subsections independently so a section that mixes
+  // both still filters correctly. A section is kept if either its
+  // top-level items OR any of its subsection items match the filter.
   const filteredGuide =
     activeFilter && activeFilter !== resetPill
-      ? guide.sections.map((section) => {
-          if (section.subsections) {
+      ? guide.sections
+          .map((section) => {
+            const filteredItems =
+              section.items?.filter((item) => item.category === activeFilter) ?? undefined;
             const filteredSubs = section.subsections
-              .map((sub) => ({
+              ?.map((sub) => ({
                 ...sub,
                 items: sub.items.filter((item) => item.category === activeFilter),
               }))
               .filter((sub) => sub.items.length > 0);
-            return { ...section, subsections: filteredSubs, items: undefined };
-          }
-          return {
-            ...section,
-            items: section.items?.filter((item) => item.category === activeFilter) ?? [],
-          };
-        }).filter((section) =>
-          section.subsections ? section.subsections.length > 0 : (section.items?.length ?? 0) > 0
-        )
+            return { ...section, items: filteredItems, subsections: filteredSubs };
+          })
+          .filter(
+            (section) =>
+              (section.items?.length ?? 0) > 0 ||
+              (section.subsections?.length ?? 0) > 0,
+          )
       : guide.sections;
 
   return (

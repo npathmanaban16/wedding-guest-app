@@ -7,6 +7,8 @@ import {
   getCodeGuideForWedding,
   getCodePackingListForWedding,
   getCodeSchedulePageForWedding,
+  type GuideSection,
+  type QuickFact,
   type WeddingEvent,
   type WeddingGuide,
   type WeddingPackingList,
@@ -97,6 +99,43 @@ interface WeddingContextType {
   // write via services/wedding.ts#updateWeddingSettings so feature-flag
   // toggles (e.g. attendees_enabled) apply app-wide without a refetch.
   patchWedding: (patch: Partial<WeddingRow>) => void;
+  // In-place patcher for the destination guide's photo strip. Call this
+  // AFTER a successful write via services/guide.ts#updateWeddingGuidePhotoStrip
+  // so the Travel tab reflects the admin's changes without waiting on
+  // the next full guide refetch. No-op when the tenant is on the code-
+  // defined guide fallback (no wedding_guides row) — the strip is only
+  // editable when it's coming from the DB.
+  patchGuidePhotoStrip: (
+    photos: { url: string; label: string }[],
+  ) => void;
+  // In-place patcher for the rest of the destination guide (page copy,
+  // filter pills, sections tree, quick facts, currency code) — the
+  // fields the admin content editor produces. Mirrors patchPackingList
+  // and is likewise a no-op on the code-defined fallback path.
+  patchGuideContent: (patch: {
+    pageTitle: string;
+    pageSubtitleTag: string | null;
+    pageSubtitle: string | null;
+    currencyCode: string | null;
+    filterPills: string[];
+    sections: GuideSection[];
+    quickFacts: QuickFact[];
+  }) => void;
+  // True when the guide surfaced above is backed by a wedding_guides
+  // row (which the admin photo editor writes to). False for legacy
+  // tenants still on the SWITZERLAND_FULL_GUIDE constant — for those
+  // the photo strip can't be edited from the admin UI.
+  hasEditableGuide: boolean;
+  // In-place patcher for the packing list. Call this AFTER a successful
+  // write via services/packing.ts#updateWeddingPackingList so the
+  // Packing tab reflects the admin's edits without waiting on the next
+  // refetch. No-op when the tenant is on the code-defined packing-list
+  // fallback (no wedding_packing_lists row).
+  patchPackingList: (list: WeddingPackingList) => void;
+  // True when the packing list is backed by a wedding_packing_lists
+  // row (which the admin editor writes to). False for legacy tenants
+  // still on NN_FULL_PACKING_LIST / DEMO_FULL_PACKING_LIST.
+  hasEditablePackingList: boolean;
   isValidGuest: (name: string) => boolean;
   isValidGuestOrAdmin: (name: string) => boolean;
   getCanonicalName: (name: string) => string | null;
@@ -365,6 +404,60 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
     setWedding((prev) => (prev ? { ...prev, ...patch } : prev));
   }, []);
 
+  // In-memory patcher for the destination guide's photo strip. No-op
+  // when we're on the code-defined fallback (no DB row) — the strip
+  // isn't editable from the admin UI in that case.
+  const patchGuidePhotoStrip = useCallback(
+    (photos: { url: string; label: string }[]) => {
+      setDbGuide((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          photoStrip: photos.map((p) => ({ source: { uri: p.url }, label: p.label })),
+        };
+      });
+    },
+    [],
+  );
+
+  // In-memory patcher for the packing list. Same shape as
+  // patchGuidePhotoStrip — no-op when the tenant is on the code-defined
+  // packing-list fallback.
+  const patchPackingList = useCallback((list: WeddingPackingList) => {
+    setDbPackingList((prev) => (prev ? list : prev));
+  }, []);
+
+  // In-memory patcher for the destination guide's editable content
+  // (everything except the photo strip). Merges the patch into dbGuide
+  // so the photoStrip already in memory survives — the admin content
+  // editor never touches photo_strip.
+  const patchGuideContent = useCallback(
+    (patch: {
+      pageTitle: string;
+      pageSubtitleTag: string | null;
+      pageSubtitle: string | null;
+      currencyCode: string | null;
+      filterPills: string[];
+      sections: GuideSection[];
+      quickFacts: QuickFact[];
+    }) => {
+      setDbGuide((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          pageTitle: patch.pageTitle,
+          pageSubtitleTag: patch.pageSubtitleTag ?? undefined,
+          pageSubtitle: patch.pageSubtitle ?? undefined,
+          currencyCode: patch.currencyCode ?? undefined,
+          filterPills: patch.filterPills,
+          sections: patch.sections,
+          quickFacts: patch.quickFacts,
+        };
+      });
+    },
+    [],
+  );
+
   const sessionValue = useMemo<WeddingSessionContextType>(
     () => ({
       weddingId,
@@ -449,6 +542,11 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       attendees: guests,
       patchAttendeeProfile,
       patchWedding,
+      patchGuidePhotoStrip,
+      patchGuideContent,
+      hasEditableGuide: dbGuide !== null,
+      patchPackingList,
+      hasEditablePackingList: dbPackingList !== null,
       isValidGuest,
       isValidGuestOrAdmin,
       getCanonicalName,
@@ -458,7 +556,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       isAdmin,
       getAdminRole,
     };
-  }, [weddingId, wedding, guests, admins, dbEvents, dbGuide, dbPackingList, dbSchedulePage, patchAttendeeProfile, patchWedding]);
+  }, [weddingId, wedding, guests, admins, dbEvents, dbGuide, dbPackingList, dbSchedulePage, patchAttendeeProfile, patchWedding, patchGuidePhotoStrip, patchGuideContent, patchPackingList]);
 
   // Initial session restore — brief blank while AsyncStorage reads on SaaS.
   if (!sessionReady) {

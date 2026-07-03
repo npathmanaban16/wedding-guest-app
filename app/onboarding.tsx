@@ -16,7 +16,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
-import { getTravelWindow } from '@/constants/weddingData';
+import {
+  getArrivalPlaceholders,
+  getHotelOptionsForWedding,
+  getTravelWindow,
+} from '@/constants/weddingData';
 import { getMyInfo, saveMyInfo } from '@/services/storage';
 import { HotelPickerField } from '@/components/HotelPickerField';
 import { DateField } from '@/components/DateField';
@@ -59,8 +63,11 @@ export default function OnboardingScreen() {
 
   // Travel window is keyed on the actual weddingId (not the build variant)
   // so the N&N wedding always gets its 2026 window even when reached from
-  // the SaaS/Tetherly build.
-  const travel = getTravelWindow(weddingId);
+  // the SaaS/Tetherly build. For tenants without an explicit case, the
+  // window is derived from the wedding row's wedding_date.
+  const travel = getTravelWindow(weddingId, wedding.wedding_date);
+  const hotelOptions = getHotelOptionsForWedding(weddingId);
+  const arrivalPlaceholders = getArrivalPlaceholders(weddingId, wedding.wedding_date);
 
   const [hotel, setHotel] = useState('');
   const [checkIn, setCheckIn] = useState('');
@@ -158,6 +165,7 @@ export default function OnboardingScreen() {
             label="Hotel or accommodation"
             value={hotel}
             onChange={setHotel}
+            options={hotelOptions}
             scrollRef={scrollRef}
           />
           <DateField
@@ -188,14 +196,14 @@ export default function OnboardingScreen() {
           </View>
           <Field
             label={`Arrival time in ${wedding.destination_city}`}
-            placeholder="e.g. 2:30 PM on 21 May"
+            placeholder={arrivalPlaceholders.arrivalTime}
             value={arrivalTime}
             onChangeText={setArrivalTime}
             icon="time-outline"
           />
           <Field
             label="Flight number (optional)"
-            placeholder="e.g. LX1234"
+            placeholder={arrivalPlaceholders.flightNumber}
             value={flightNumber}
             onChangeText={setFlightNumber}
             icon="paper-plane-outline"

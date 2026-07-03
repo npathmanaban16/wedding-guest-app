@@ -75,10 +75,25 @@ export const NN_WEDDING_IDS = new Set([
   'a0000000-0000-0000-0000-000000000001', // N&N in SaaS/Tetherly schema
 ]);
 
+// Arjun & Ila SaaS demo tenant — Sep 2026 wedding at The Ritz-Carlton,
+// Laguna Niguel. Uses their own per-wedding hotel list + travel window
+// below so the onboarding/My-Info form matches their weekend rather than
+// showing Montreux hotels in May.
+export const ARJUN_ILA_WEDDING_ID = 'a0000000-0000-0000-0000-000000000003';
+
+// Emma & James — the Tetherly demo wedding. Same venue (Fairmont Le
+// Montreux Palace) as N&N, one year forward, so the Montreux hotel
+// shortlist applies here too.
+export const EMMA_JAMES_WEDDING_ID = 'a0000000-0000-0000-0000-000000000002';
+
 // Travel window for the travel-detail date pickers (onboarding + My Info).
 // Keyed on the actual wedding, NOT the build variant — the N&N wedding can
 // also be reached from the SaaS/Tetherly build, and in that case we still
 // want the 2026 window, not the demo's 2027 one.
+//
+// For tenants with no explicit case below, the window is derived from the
+// wedding row's `wedding_date` so new tenants (Arjun & Ila and beyond)
+// automatically get a sensible range without another code change.
 export interface TravelWindow {
   min: Date;
   max: Date;
@@ -86,21 +101,136 @@ export interface TravelWindow {
   checkOutInitial: Date;
 }
 
-export function getTravelWindow(weddingId: string | null | undefined): TravelWindow {
-  const isNN = !!weddingId && NN_WEDDING_IDS.has(weddingId);
-  return isNN
-    ? {
-        min: new Date('2026-05-18'),
-        max: new Date('2026-06-01'),
-        checkInInitial: new Date(2026, 4, 21),  // May 21 2026 — rehearsal dinner
-        checkOutInitial: new Date(2026, 4, 24), // May 24 2026 — morning after reception
-      }
-    : {
-        min: new Date('2027-05-17'),
-        max: new Date('2027-05-31'),
-        checkInInitial: new Date(2027, 4, 20),  // May 20 2027 — demo rehearsal dinner
-        checkOutInitial: new Date(2027, 4, 23), // May 23 2027 — morning after demo reception
+function addDays(base: Date, days: number): Date {
+  const d = new Date(base);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+export function getTravelWindow(
+  weddingId: string | null | undefined,
+  weddingDate?: string | null,
+): TravelWindow {
+  if (!!weddingId && NN_WEDDING_IDS.has(weddingId)) {
+    return {
+      min: new Date('2026-05-18'),
+      max: new Date('2026-06-01'),
+      checkInInitial: new Date(2026, 4, 21),  // May 21 2026 — rehearsal dinner
+      checkOutInitial: new Date(2026, 4, 24), // May 24 2026 — morning after reception
+    };
+  }
+  if (weddingId === ARJUN_ILA_WEDDING_ID) {
+    return {
+      min: new Date('2026-09-07'),
+      max: new Date('2026-09-20'),
+      checkInInitial: new Date(2026, 8, 10),  // Sep 10 2026 — day before Sangeet
+      checkOutInitial: new Date(2026, 8, 13), // Sep 13 2026 — morning after reception
+    };
+  }
+  // Fallback: derive from the wedding_date field on the wedding row.
+  // Gives new tenants a window centred on their ceremony without any
+  // per-wedding code change.
+  if (weddingDate) {
+    const ceremony = new Date(weddingDate);
+    if (!Number.isNaN(ceremony.getTime())) {
+      return {
+        min: addDays(ceremony, -5),
+        max: addDays(ceremony, 5),
+        checkInInitial: addDays(ceremony, -2),
+        checkOutInitial: addDays(ceremony, 1),
       };
+    }
+  }
+  // Ultimate fallback — matches the pre-existing demo behaviour.
+  return {
+    min: new Date('2027-05-17'),
+    max: new Date('2027-05-31'),
+    checkInInitial: new Date(2027, 4, 20),  // May 20 2027 — demo rehearsal dinner
+    checkOutInitial: new Date(2027, 4, 23), // May 23 2027 — morning after demo reception
+  };
+}
+
+// ============================================================
+// HOTEL OPTIONS (onboarding / My Info picker)
+// ============================================================
+// Per-wedding shortlist of hotels shown in the accommodation picker.
+// The picker always appends an "Other…" option so guests can free-text
+// anything not on the list, so leaving the list empty for a new tenant
+// still gives them a functional field — it just skips the shortcut chips.
+
+const HOTEL_OPTIONS_NN = [
+  'Fairmont Le Montreux Palace',
+  'Mona Montreux',
+  'Villa Toscane',
+  'Grand Hotel Suisse Majestic',
+  'Royal Plaza Montreux',
+];
+
+const HOTEL_OPTIONS_ARJUN_ILA = [
+  'The Ritz-Carlton, Laguna Niguel',
+  'Waldorf Astoria Monarch Beach Resort & Club',
+  'Laguna Cliffs Marriott Resort & Spa',
+  'Blue Lantern Inn',
+  'Marina Inn at Dana Point',
+];
+
+export function getHotelOptionsForWedding(
+  weddingId: string | null | undefined,
+): string[] {
+  if (!!weddingId && NN_WEDDING_IDS.has(weddingId)) return HOTEL_OPTIONS_NN;
+  if (weddingId === EMMA_JAMES_WEDDING_ID) return HOTEL_OPTIONS_NN;
+  if (weddingId === ARJUN_ILA_WEDDING_ID) return HOTEL_OPTIONS_ARJUN_ILA;
+  return [];
+}
+
+// ============================================================
+// ARRIVAL PLACEHOLDERS (onboarding / My Info)
+// ============================================================
+// The "How are you arriving?" card asks for a free-text arrival time
+// and flight number. The placeholder examples shown inside the inputs
+// are per-wedding so guests see hints that match their destination —
+// a Swiss LX flight into Geneva for N&N, an American Airlines flight
+// into SNA for Arjun & Ila, and a generic hint derived from the
+// travel window's check-in day for tenants without an explicit case.
+
+export interface ArrivalPlaceholders {
+  arrivalTime: string;
+  flightNumber: string;
+}
+
+const SHORT_MONTHS = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+];
+const SHORT_WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+function formatArrivalHintDate(date: Date): string {
+  return `${SHORT_WEEKDAYS[date.getDay()]} ${date.getDate()} ${SHORT_MONTHS[date.getMonth()]}`;
+}
+
+export function getArrivalPlaceholders(
+  weddingId: string | null | undefined,
+  weddingDate?: string | null,
+): ArrivalPlaceholders {
+  if (!!weddingId && NN_WEDDING_IDS.has(weddingId)) {
+    return {
+      arrivalTime: 'e.g. 2:30 PM on Thu 21 May',
+      flightNumber: 'e.g. LX1234 arriving Geneva 11:30 AM',
+    };
+  }
+  if (weddingId === ARJUN_ILA_WEDDING_ID) {
+    return {
+      arrivalTime: 'e.g. 3:00 PM on Thu 10 Sep',
+      flightNumber: 'e.g. AA1234 arriving SNA 3:00 PM',
+    };
+  }
+  // Fallback: anchor the hint on the same check-in day the travel window
+  // picker defaults to, so guests see a plausible date for their weekend.
+  const { checkInInitial } = getTravelWindow(weddingId, weddingDate);
+  return {
+    arrivalTime: `e.g. 3:00 PM on ${formatArrivalHintDate(checkInInitial)}`,
+    flightNumber: 'e.g. AA1234 arriving 3:00 PM',
+  };
 }
 
 export const EVENTS_NN: WeddingEvent[] = [
@@ -409,9 +539,9 @@ export interface GuidePhoto {
 // ~17 km away; transport is provided from the Fairmont, so guests
 // at other hotels should head to the Fairmont first.
 //
-// Hotel names match HOTEL_OPTIONS in components/HotelPickerField.tsx
-// exactly so the AI's profile-aware answers match the hotel a guest
-// has saved in their My Info.
+// Hotel names match HOTEL_OPTIONS_NN in getHotelOptionsForWedding above
+// exactly so the AI's profile-aware answers match the hotel a guest has
+// saved in their My Info.
 
 export interface HotelLogistics {
   name: string;
