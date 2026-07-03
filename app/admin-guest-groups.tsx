@@ -505,6 +505,17 @@ export default function AdminGuestGroupsScreen() {
     [guestGroups],
   );
 
+  // Width of the horizontally-scrollable region: 4 default columns
+  // (Wedding Party + Female/Male/Unknown) + one column per user group +
+  // the "New group" affordance at the far right. Applied to the body's
+  // inner vertical ScrollView so its rows aren't clipped to the outer
+  // horizontal ScrollView's viewport width — RN's default nested-
+  // ScrollView behavior does exactly that, which shows up visually as
+  // the body columns not extending as far as the header row.
+  const NEW_GROUP_HEADER_WIDTH = 80;
+  const totalCellsWidth =
+    (4 + userColumns.length) * CELL_WIDTH + NEW_GROUP_HEADER_WIDTH;
+
   // Column counts are computed off the full unfiltered attendee list so
   // the badges reflect wedding-wide totals regardless of what the
   // search box is currently filtered to.
@@ -1140,11 +1151,15 @@ export default function AdminGuestGroupsScreen() {
               onScroll={onVerticalScroll('right')}
               scrollEventThrottle={16}
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xxl }}
+              style={{ width: totalCellsWidth }}
+              contentContainerStyle={{
+                width: totalCellsWidth,
+                paddingBottom: insets.bottom + Spacing.xxl,
+              }}
               bounces={false}
             >
               {filteredAttendees.length === 0 ? (
-                <View style={[styles.emptyCellRow, { minHeight: ROW_HEIGHT * 2 }]}>
+                <View style={[styles.emptyCellRow, { minHeight: ROW_HEIGHT * 2, width: totalCellsWidth }]}>
                   {search.trim() ? (
                     <Text style={styles.emptyText}>Try a different name.</Text>
                   ) : (
