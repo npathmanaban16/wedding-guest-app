@@ -18,6 +18,7 @@ import { useWeddingSession } from '@/context/WeddingContext';
 import type { WeddingRow } from '@/services/wedding';
 import { supabase } from '@/lib/supabase';
 import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
+import { awaitHeroImage, prefetchHeroImage } from '@/utils/heroImage';
 
 // Shared normalization — mirrors WeddingContext so invite-screen validation
 // agrees with the validation the provider applies after login.
@@ -86,6 +87,11 @@ export default function InviteScreen() {
         shake();
         return;
       }
+      // Kick off the hero-image fetch the moment we know the URL, in
+      // parallel with the name check + applyResolvedWedding round-trips
+      // below. On slow networks this can save an extra second before
+      // the Home tab renders with the photo.
+      prefetchHeroImage(resolved.wedding.hero_image_url);
       const n = normalize(trimmedName);
       const canonical =
         resolved.guests.find((g) => normalize(g.canonical_name) === n)?.canonical_name ??
@@ -99,6 +105,9 @@ export default function InviteScreen() {
       }
       await applyResolvedWedding(resolved);
       await login(canonical);
+      // Hold the Enter spinner until the hero image is in cache — see
+      // login.tsx for the rationale. Capped at 2.5s inside the helper.
+      await awaitHeroImage(resolved.wedding.hero_image_url);
       router.replace('/(tabs)');
     } catch {
       setError("Couldn't reach the server. Please check your connection and try again.");
