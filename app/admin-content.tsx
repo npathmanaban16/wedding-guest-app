@@ -28,6 +28,12 @@ const LINKS = [
     hint: 'Edit the text shown for each wedding event — title, date, venue, dress code, and more.',
   },
   {
+    href: '/admin-packing',
+    icon: 'briefcase-outline',
+    label: 'Packing List',
+    hint: 'Edit categories and items on the Packing tab, including per-guest visibility flags.',
+  },
+  {
     href: '/admin-guide-photos',
     icon: 'images-outline',
     label: 'Travel Photos',

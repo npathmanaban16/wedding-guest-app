@@ -111,6 +111,16 @@ interface WeddingContextType {
   // tenants still on the SWITZERLAND_FULL_GUIDE constant — for those
   // the photo strip can't be edited from the admin UI.
   hasEditableGuide: boolean;
+  // In-place patcher for the packing list. Call this AFTER a successful
+  // write via services/packing.ts#updateWeddingPackingList so the
+  // Packing tab reflects the admin's edits without waiting on the next
+  // refetch. No-op when the tenant is on the code-defined packing-list
+  // fallback (no wedding_packing_lists row).
+  patchPackingList: (list: WeddingPackingList) => void;
+  // True when the packing list is backed by a wedding_packing_lists
+  // row (which the admin editor writes to). False for legacy tenants
+  // still on NN_FULL_PACKING_LIST / DEMO_FULL_PACKING_LIST.
+  hasEditablePackingList: boolean;
   isValidGuest: (name: string) => boolean;
   isValidGuestOrAdmin: (name: string) => boolean;
   getCanonicalName: (name: string) => string | null;
@@ -395,6 +405,13 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
+  // In-memory patcher for the packing list. Same shape as
+  // patchGuidePhotoStrip — no-op when the tenant is on the code-defined
+  // packing-list fallback.
+  const patchPackingList = useCallback((list: WeddingPackingList) => {
+    setDbPackingList((prev) => (prev ? list : prev));
+  }, []);
+
   const sessionValue = useMemo<WeddingSessionContextType>(
     () => ({
       weddingId,
@@ -481,6 +498,8 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       patchWedding,
       patchGuidePhotoStrip,
       hasEditableGuide: dbGuide !== null,
+      patchPackingList,
+      hasEditablePackingList: dbPackingList !== null,
       isValidGuest,
       isValidGuestOrAdmin,
       getCanonicalName,
@@ -490,7 +509,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       isAdmin,
       getAdminRole,
     };
-  }, [weddingId, wedding, guests, admins, dbEvents, dbGuide, dbPackingList, dbSchedulePage, patchAttendeeProfile, patchWedding, patchGuidePhotoStrip]);
+  }, [weddingId, wedding, guests, admins, dbEvents, dbGuide, dbPackingList, dbSchedulePage, patchAttendeeProfile, patchWedding, patchGuidePhotoStrip, patchPackingList]);
 
   // Initial session restore — brief blank while AsyncStorage reads on SaaS.
   if (!sessionReady) {
