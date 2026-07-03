@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -96,13 +97,8 @@ export default function OnboardingScreen() {
     });
   }, [weddingId, guestName]);
 
-  // Re-warm the hero image cache while the user fills out the
-  // onboarding form. The initial prefetch fired on login, but by the
-  // time a first-time guest finishes typing hotel + arrival details
-  // (30s to a couple of minutes) the RN memory cache may have evicted
-  // the bytes. Firing again here means Home mounts to a warm cache
-  // instead of the visible "load happening" that shows up when the
-  // path goes login → onboarding → home.
+  // Kick off a fresh byte-cache warm-up when the screen mounts — cheap
+  // safety net alongside the hidden <Image> pre-decode below.
   useEffect(() => {
     prefetchHeroImage(wedding.hero_image_url);
   }, [wedding.hero_image_url]);
@@ -154,6 +150,31 @@ export default function OnboardingScreen() {
       style={styles.root}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      {/* Off-screen pre-decode of the Home hero. `Image.prefetch` primes
+          the byte cache but doesn't decode; mounting a real <Image> at
+          the same display dimensions (100% wide × 380 tall — matches
+          styles.heroImage on the Home tab) forces the JPEG through
+          decode + GPU upload at the exact size the size-keyed image
+          cache will look up on Home mount. This bitmap stays warm for
+          however long the user takes on the form, so the login →
+          onboarding → home path lands on the same instant cache hit
+          the direct login → home path already gets. Positioned way
+          off-screen with pointerEvents=none + accessibilityElementsHidden
+          so it never intercepts touches or shows up in screen readers. */}
+      {wedding.hero_image_url && (
+        <View
+          style={styles.heroPreDecode}
+          pointerEvents="none"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          <Image
+            source={{ uri: wedding.hero_image_url }}
+            style={styles.heroPreDecodeImage}
+            resizeMode="cover"
+          />
+        </View>
+      )}
       <ScrollView
         ref={scrollRef}
         style={styles.container}
@@ -269,6 +290,19 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
   container: { flex: 1 },
   loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.background },
+  // Off-screen pre-decode container for the Home hero — see the
+  // comment where this is rendered. Height matches styles.heroImage
+  // on the Home tab so RN's size-keyed image cache stores the exact
+  // decoded bitmap Home will look up.
+  heroPreDecode: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: -9999,
+    height: 380,
+    opacity: 0,
+  },
+  heroPreDecodeImage: { width: '100%', height: '100%' },
   content: {
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xxl,
