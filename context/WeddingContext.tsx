@@ -31,6 +31,7 @@ import { fetchWeddingEvents } from '@/services/events';
 import { fetchWeddingGuide } from '@/services/guide';
 import { fetchWeddingPackingList } from '@/services/packing';
 import { fetchWeddingSchedulePage } from '@/services/schedulePage';
+import { prefetchHeroImage } from '@/utils/heroImage';
 
 export type { AdminRole, Gender };
 
@@ -355,6 +356,16 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
     await AsyncStorage.removeItem(WEDDING_ID_STORAGE_KEY);
     setWeddingId(null);
   }, []);
+
+  // Warm the hero image cache as soon as the wedding row is loaded.
+  // On the N&N build this fires while the user is still on the login
+  // screen typing their name; on SaaS it fires the instant the invite
+  // is resolved. Either way, by the time the Home tab mounts the
+  // <ImageBackground> hit is served from the RN memory cache instead
+  // of blocking on a fresh HTTPS round-trip.
+  useEffect(() => {
+    prefetchHeroImage(wedding?.hero_image_url);
+  }, [wedding?.hero_image_url]);
 
   // Refetch the guest roster whenever the app returns to the
   // foreground so profile photos / bios other guests just uploaded
