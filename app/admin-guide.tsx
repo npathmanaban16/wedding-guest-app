@@ -58,11 +58,9 @@ interface DraftSection {
   id: string;
   title: string;
   emoji: string;
-  // A section holds EITHER items directly (like "Getting There") OR
-  // subsections (like "Things to Do"). The Draft keeps both arrays but
-  // the editor shows one or the other based on `mode`, so admins don't
-  // accidentally build an invalid mixed section.
-  mode: 'items' | 'subsections';
+  // Sections can hold items directly, subsections, or both — the guest
+  // view renders items first and then subsections. Either array may be
+  // empty.
   items: DraftItem[];
   subsections: DraftSubsection[];
   expanded: boolean;
@@ -109,12 +107,10 @@ function subsectionToDraft(sub: GuideSubsection): DraftSubsection {
   };
 }
 function sectionToDraft(sec: GuideSection): DraftSection {
-  const hasSubs = !!sec.subsections && sec.subsections.length > 0;
   return {
     id: sec.id,
     title: sec.title,
     emoji: sec.emoji,
-    mode: hasSubs ? 'subsections' : 'items',
     items: (sec.items ?? []).map(itemToDraft),
     subsections: (sec.subsections ?? []).map(subsectionToDraft),
     expanded: false,
@@ -174,11 +170,10 @@ function sectionFromDraft(d: DraftSection): GuideSection {
     title: d.title.trim(),
     emoji: d.emoji,
   };
-  if (d.mode === 'subsections') {
-    out.subsections = d.subsections.map(subsectionFromDraft);
-  } else {
-    out.items = d.items.map(itemFromDraft);
-  }
+  // Emit each list only when non-empty so the DB row stays a tidy
+  // diff and matches how the code fallbacks are shaped.
+  if (d.items.length > 0) out.items = d.items.map(itemFromDraft);
+  if (d.subsections.length > 0) out.subsections = d.subsections.map(subsectionFromDraft);
   return out;
 }
 
@@ -217,7 +212,6 @@ function normalize(draft: Draft): string {
       id: s.id,
       title: s.title,
       emoji: s.emoji,
-      mode: s.mode,
       items: s.items.map(stripItem),
       subsections: s.subsections.map((sub) => ({
         id: sub.id,
@@ -315,7 +309,6 @@ export default function AdminGuideScreen() {
           id: makeId('section'),
           title: '',
           emoji: '',
-          mode: 'items',
           items: [],
           subsections: [],
           expanded: true,
@@ -850,17 +843,21 @@ interface SectionCardProps {
 
 function SectionCard(props: SectionCardProps) {
   const s = props.section;
-  const count = s.mode === 'subsections' ? s.subsections.length : s.items.length;
-  const label = s.mode === 'subsections' ? 'subsection' : 'item';
+  // Human summary of what's inside — matches the guest ordering
+  // (items first, then subsections).
+  const summary = (() => {
+    const parts: string[] = [];
+    if (s.items.length > 0) parts.push(`${s.items.length} item${s.items.length === 1 ? '' : 's'}`);
+    if (s.subsections.length > 0)
+      parts.push(`${s.subsections.length} subsection${s.subsections.length === 1 ? '' : 's'}`);
+    return parts.join(' · ') || 'empty';
+  })();
   return (
     <View style={styles.card}>
       <TouchableOpacity style={styles.cardHeader} onPress={props.onToggle} activeOpacity={0.7}>
         <View style={{ flex: 1 }}>
           <Text style={styles.cardTitle}>{s.title || 'Untitled section'}</Text>
-          <Text style={styles.cardSub}>
-            {count} {label}
-            {count === 1 ? '' : 's'}
-          </Text>
+          <Text style={styles.cardSub}>{summary}</Text>
         </View>
         <Ionicons name={s.expanded ? 'chevron-up' : 'chevron-down'} size={18} color={Colors.textMuted} />
       </TouchableOpacity>
@@ -873,89 +870,60 @@ function SectionCard(props: SectionCardProps) {
             onChangeText={(v) => props.onPatch({ title: v })}
             placeholder="e.g. Getting Around"
           />
-          {s.items.length === 0 && s.subsections.length === 0 && (
-            <View style={styles.modeChooser}>
-              <Text style={styles.fieldLabel}>Structure</Text>
-              <View style={styles.chipRow}>
-                <TouchableOpacity
-                  onPress={() => props.onPatch({ mode: 'items' })}
-                  style={[styles.chip, s.mode === 'items' && styles.chipActive]}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.chipText, s.mode === 'items' && styles.chipTextActive]}>
-                    Items directly
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => props.onPatch({ mode: 'subsections' })}
-                  style={[styles.chip, s.mode === 'subsections' && styles.chipActive]}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.chipText, s.mode === 'subsections' && styles.chipTextActive]}>
-                    Grouped into subsections
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              <Text style={styles.helpText}>
-                Choose once — the mode locks in when you add content.
-              </Text>
-            </View>
-          )}
 
-          {s.mode === 'items' && (
-            <>
-              {s.items.map((it, itIdx) => (
-                <ItemEditor
-                  key={it.id}
-                  item={it}
-                  isFirst={itIdx === 0}
-                  isLast={itIdx === s.items.length - 1}
-                  onToggle={() => props.onPatchItem(itIdx, { expanded: !it.expanded })}
-                  onPatch={(p) => props.onPatchItem(itIdx, p)}
-                  onMoveUp={() => props.onMoveItemUp(itIdx)}
-                  onMoveDown={() => props.onMoveItemDown(itIdx)}
-                  onRemove={() => props.onRemoveItem(itIdx)}
-                  onPatchLinks={(links) => props.onPatchLinks(itIdx, links)}
-                />
-              ))}
-              <TouchableOpacity onPress={props.onAddItem} style={styles.addItemBtn} activeOpacity={0.85}>
-                <Ionicons name="add" size={16} color={Colors.primary} />
-                <Text style={styles.addItemBtnText}>Add item</Text>
-              </TouchableOpacity>
-            </>
-          )}
+          {/* Items directly under the section. Rendered first to match
+              the guest view's ordering. */}
+          {s.items.length > 0 && <Text style={styles.groupLabel}>Items</Text>}
+          {s.items.map((it, itIdx) => (
+            <ItemEditor
+              key={it.id}
+              item={it}
+              isFirst={itIdx === 0}
+              isLast={itIdx === s.items.length - 1}
+              onToggle={() => props.onPatchItem(itIdx, { expanded: !it.expanded })}
+              onPatch={(p) => props.onPatchItem(itIdx, p)}
+              onMoveUp={() => props.onMoveItemUp(itIdx)}
+              onMoveDown={() => props.onMoveItemDown(itIdx)}
+              onRemove={() => props.onRemoveItem(itIdx)}
+              onPatchLinks={(links) => props.onPatchLinks(itIdx, links)}
+            />
+          ))}
+          <TouchableOpacity onPress={props.onAddItem} style={styles.addItemBtn} activeOpacity={0.85}>
+            <Ionicons name="add" size={16} color={Colors.primary} />
+            <Text style={styles.addItemBtnText}>Add item</Text>
+          </TouchableOpacity>
 
-          {s.mode === 'subsections' && (
-            <>
-              {s.subsections.map((sub, subIdx) => (
-                <SubsectionCard
-                  key={sub.id}
-                  sub={sub}
-                  isFirst={subIdx === 0}
-                  isLast={subIdx === s.subsections.length - 1}
-                  onToggle={() => props.onPatchSubsection(subIdx, { expanded: !sub.expanded })}
-                  onPatch={(p) => props.onPatchSubsection(subIdx, p)}
-                  onMoveUp={() => props.onMoveSubsectionUp(subIdx)}
-                  onMoveDown={() => props.onMoveSubsectionDown(subIdx)}
-                  onRemove={() => props.onRemoveSubsection(subIdx)}
-                  onAddItem={() => props.onAddSubItem(subIdx)}
-                  onPatchItem={(itIdx, p) => props.onPatchSubItem(subIdx, itIdx, p)}
-                  onMoveItemUp={(itIdx) => props.onMoveSubItemUp(subIdx, itIdx)}
-                  onMoveItemDown={(itIdx) => props.onMoveSubItemDown(subIdx, itIdx)}
-                  onRemoveItem={(itIdx) => props.onRemoveSubItem(subIdx, itIdx)}
-                  onPatchLinks={(itIdx, links) => props.onPatchSubLinks(subIdx, itIdx, links)}
-                />
-              ))}
-              <TouchableOpacity
-                onPress={props.onAddSubsection}
-                style={styles.addItemBtn}
-                activeOpacity={0.85}
-              >
-                <Ionicons name="add" size={16} color={Colors.primary} />
-                <Text style={styles.addItemBtnText}>Add subsection</Text>
-              </TouchableOpacity>
-            </>
+          {/* Subsections below any direct items. */}
+          {s.subsections.length > 0 && (
+            <Text style={[styles.groupLabel, { marginTop: Spacing.md }]}>Subsections</Text>
           )}
+          {s.subsections.map((sub, subIdx) => (
+            <SubsectionCard
+              key={sub.id}
+              sub={sub}
+              isFirst={subIdx === 0}
+              isLast={subIdx === s.subsections.length - 1}
+              onToggle={() => props.onPatchSubsection(subIdx, { expanded: !sub.expanded })}
+              onPatch={(p) => props.onPatchSubsection(subIdx, p)}
+              onMoveUp={() => props.onMoveSubsectionUp(subIdx)}
+              onMoveDown={() => props.onMoveSubsectionDown(subIdx)}
+              onRemove={() => props.onRemoveSubsection(subIdx)}
+              onAddItem={() => props.onAddSubItem(subIdx)}
+              onPatchItem={(itIdx, p) => props.onPatchSubItem(subIdx, itIdx, p)}
+              onMoveItemUp={(itIdx) => props.onMoveSubItemUp(subIdx, itIdx)}
+              onMoveItemDown={(itIdx) => props.onMoveSubItemDown(subIdx, itIdx)}
+              onRemoveItem={(itIdx) => props.onRemoveSubItem(subIdx, itIdx)}
+              onPatchLinks={(itIdx, links) => props.onPatchSubLinks(subIdx, itIdx, links)}
+            />
+          ))}
+          <TouchableOpacity
+            onPress={props.onAddSubsection}
+            style={styles.addItemBtn}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="add" size={16} color={Colors.primary} />
+            <Text style={styles.addItemBtnText}>Add subsection</Text>
+          </TouchableOpacity>
 
           <View style={styles.categoryFooter}>
             <TouchableOpacity
@@ -1365,7 +1333,14 @@ const styles = StyleSheet.create({
     borderTopColor: Colors.divider,
   },
 
-  modeChooser: { marginBottom: Spacing.md },
+  groupLabel: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 10,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    color: Colors.textMuted,
+    marginBottom: Spacing.xs,
+  },
 
   fieldRow: { marginBottom: Spacing.md },
   fieldLabel: {
