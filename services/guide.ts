@@ -116,3 +116,37 @@ export async function updateWeddingGuidePhotoStrip(
     .eq('wedding_id', weddingId);
   if (error) throw error;
 }
+
+// Overwrites the guide's page copy + filter pills + sections tree +
+// quick facts + currency code — everything the admin destination-guide
+// editor produces. photo_strip is intentionally NOT written here: the
+// dedicated photo editor owns that field so the two editors don't
+// stomp on each other's writes. Same full-replace pattern as
+// updateWeddingGuidePhotoStrip and updateWeddingPackingList — the
+// editor holds the full intended state locally.
+export async function updateWeddingGuideContent(
+  weddingId: string,
+  patch: {
+    pageTitle: string;
+    pageSubtitleTag: string | null;
+    pageSubtitle: string | null;
+    currencyCode: string | null;
+    filterPills: string[];
+    sections: GuideSection[];
+    quickFacts: QuickFact[];
+  },
+): Promise<void> {
+  const { error } = await supabase
+    .from('wedding_guides')
+    .update({
+      page_title: patch.pageTitle,
+      page_subtitle_tag: patch.pageSubtitleTag,
+      page_subtitle: patch.pageSubtitle,
+      currency_code: patch.currencyCode,
+      filter_pills: patch.filterPills,
+      sections: patch.sections,
+      quick_facts: patch.quickFacts,
+    })
+    .eq('wedding_id', weddingId);
+  if (error) throw error;
+}

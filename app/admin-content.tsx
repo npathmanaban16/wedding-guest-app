@@ -34,6 +34,12 @@ const LINKS = [
     hint: 'Edit categories and items on the Packing tab, including per-guest visibility flags.',
   },
   {
+    href: '/admin-guide',
+    icon: 'map-outline',
+    label: 'Travel Guide',
+    hint: 'Edit page copy, filter pills, quick facts, and the sections tree on the Travel tab.',
+  },
+  {
     href: '/admin-guide-photos',
     icon: 'images-outline',
     label: 'Travel Photos',

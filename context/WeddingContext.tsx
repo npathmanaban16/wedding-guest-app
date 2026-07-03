@@ -7,6 +7,8 @@ import {
   getCodeGuideForWedding,
   getCodePackingListForWedding,
   getCodeSchedulePageForWedding,
+  type GuideSection,
+  type QuickFact,
   type WeddingEvent,
   type WeddingGuide,
   type WeddingPackingList,
@@ -106,6 +108,19 @@ interface WeddingContextType {
   patchGuidePhotoStrip: (
     photos: { url: string; label: string }[],
   ) => void;
+  // In-place patcher for the rest of the destination guide (page copy,
+  // filter pills, sections tree, quick facts, currency code) — the
+  // fields the admin content editor produces. Mirrors patchPackingList
+  // and is likewise a no-op on the code-defined fallback path.
+  patchGuideContent: (patch: {
+    pageTitle: string;
+    pageSubtitleTag: string | null;
+    pageSubtitle: string | null;
+    currencyCode: string | null;
+    filterPills: string[];
+    sections: GuideSection[];
+    quickFacts: QuickFact[];
+  }) => void;
   // True when the guide surfaced above is backed by a wedding_guides
   // row (which the admin photo editor writes to). False for legacy
   // tenants still on the SWITZERLAND_FULL_GUIDE constant — for those
@@ -412,6 +427,37 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
     setDbPackingList((prev) => (prev ? list : prev));
   }, []);
 
+  // In-memory patcher for the destination guide's editable content
+  // (everything except the photo strip). Merges the patch into dbGuide
+  // so the photoStrip already in memory survives — the admin content
+  // editor never touches photo_strip.
+  const patchGuideContent = useCallback(
+    (patch: {
+      pageTitle: string;
+      pageSubtitleTag: string | null;
+      pageSubtitle: string | null;
+      currencyCode: string | null;
+      filterPills: string[];
+      sections: GuideSection[];
+      quickFacts: QuickFact[];
+    }) => {
+      setDbGuide((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          pageTitle: patch.pageTitle,
+          pageSubtitleTag: patch.pageSubtitleTag ?? undefined,
+          pageSubtitle: patch.pageSubtitle ?? undefined,
+          currencyCode: patch.currencyCode ?? undefined,
+          filterPills: patch.filterPills,
+          sections: patch.sections,
+          quickFacts: patch.quickFacts,
+        };
+      });
+    },
+    [],
+  );
+
   const sessionValue = useMemo<WeddingSessionContextType>(
     () => ({
       weddingId,
@@ -497,6 +543,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       patchAttendeeProfile,
       patchWedding,
       patchGuidePhotoStrip,
+      patchGuideContent,
       hasEditableGuide: dbGuide !== null,
       patchPackingList,
       hasEditablePackingList: dbPackingList !== null,
@@ -509,7 +556,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       isAdmin,
       getAdminRole,
     };
-  }, [weddingId, wedding, guests, admins, dbEvents, dbGuide, dbPackingList, dbSchedulePage, patchAttendeeProfile, patchWedding, patchGuidePhotoStrip, patchPackingList]);
+  }, [weddingId, wedding, guests, admins, dbEvents, dbGuide, dbPackingList, dbSchedulePage, patchAttendeeProfile, patchWedding, patchGuidePhotoStrip, patchGuideContent, patchPackingList]);
 
   // Initial session restore — brief blank while AsyncStorage reads on SaaS.
   if (!sessionReady) {
