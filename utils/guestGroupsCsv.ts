@@ -75,7 +75,28 @@ export function buildGuestGroupsCsv(
     return cells.join(',');
   });
   // Leading BOM so Excel opens UTF-8 cleanly (names with accents etc.).
-  return `﻿${headers.map(csvEscape).join(',')}\r\n${rows.join('\r\n')}\r\n`;
+  // LF line endings (not CRLF) — Numbers.app and Gmail preview both
+  // treat CR and LF as separate line breaks, so an RFC 4180 CRLF file
+  // renders with a blank row between every entry. Every modern
+  // spreadsheet importer handles LF just fine.
+  return `﻿${headers.map(csvEscape).join(',')}\n${rows.join('\n')}\n`;
+}
+
+// Blank guest-list template for couples doing an initial upload. Two
+// example rows demonstrate the format (Name / Wedding Party / Gender
+// values); admins replace them with real names. Kept intentionally
+// simple — the built-in Wedding Party + Gender columns are the only
+// dimensions the initial upload needs to set; custom groups can be
+// added via the sheet after the first import.
+export function buildGuestListTemplateCsv(): string {
+  const headers = ['Name', 'Wedding Party', 'Gender'];
+  const exampleRows = [
+    ['Ada Lovelace', 'Yes', 'Female'],
+    ['Alan Turing', '', 'Male'],
+    ['Grace Hopper', '', 'Female'],
+  ];
+  const body = exampleRows.map((r) => r.map(csvEscape).join(',')).join('\n');
+  return `﻿${headers.map(csvEscape).join(',')}\n${body}\n`;
 }
 
 // ─── CSV parsing (import) ───────────────────────────────────────────
@@ -187,12 +208,29 @@ export interface AttendeeDiff {
   removedFrom: { groupId: string; groupName: string }[];
 }
 
+// A CSV row whose name doesn't match any existing guest — surfaced so
+// the admin can either fix a typo (cancel + edit + re-upload) or add
+// them all to the guest list from the same import (initial-upload
+// flow for a fresh wedding). Carries the parsed cells so the insert
+// step can populate is_wedding_party / gender / group memberships in
+// one pass.
+export interface UnknownAttendeeRow {
+  name: string;
+  isWeddingParty: boolean;
+  gender: Gender | null;
+  // Guest group IDs the CSV puts this attendee into. Only groups that
+  // already exist in the DB are captured — creating new groups from a
+  // template upload is out of scope; add unknown columns via the
+  // sheet first if needed.
+  groups: { groupId: string; groupName: string }[];
+}
+
 export interface ImportDiff {
   attendeeDiffs: AttendeeDiff[];
-  // Names that appeared in the CSV but don't match any current guest
-  // (case-insensitive on canonical_name). Surfaced to the admin so
-  // typos don't silently no-op.
-  unknownNames: string[];
+  // Rows in the CSV whose name doesn't match any current guest. The
+  // preview modal offers an "Add these as new attendees" toggle so
+  // the same file can seed a fresh wedding's guest list.
+  unknownAttendees: UnknownAttendeeRow[];
   // Column headers that aren't one of the reserved names (Name,
   // Wedding Party, Gender) and don't match any current group name.
   unknownColumns: string[];
@@ -230,7 +268,7 @@ export function computeImportDiff(
   if (rows.length === 0) {
     return {
       attendeeDiffs: [],
-      unknownNames: [],
+      unknownAttendees: [],
       unknownColumns: [],
       errors: ['The uploaded file is empty.'],
       csvRowCount: 0,
@@ -270,7 +308,7 @@ export function computeImportDiff(
     errors.push('The CSV is missing a "Name" column.');
     return {
       attendeeDiffs: [],
-      unknownNames: [],
+      unknownAttendees: [],
       unknownColumns: columns.filter((c) => c.kind === 'unknown').map((c) => c.headerLabel),
       errors,
       csvRowCount: 0,
@@ -283,7 +321,10 @@ export function computeImportDiff(
     .filter((label, i, arr) => arr.indexOf(label) === i);
 
   const attendeeDiffs: AttendeeDiff[] = [];
-  const unknownNames: string[] = [];
+  const unknownAttendees: UnknownAttendeeRow[] = [];
+  // Dedup unknown names as we go — a spreadsheet with a duplicate name
+  // shouldn't create the same attendee twice on apply.
+  const seenUnknown = new Set<string>();
   let csvRowCount = 0;
 
   for (const row of dataRows) {
@@ -292,7 +333,27 @@ export function computeImportDiff(
     csvRowCount++;
     const attendee = attendeeByName.get(normalizeName(rawName));
     if (!attendee) {
-      unknownNames.push(rawName);
+      const key = normalizeName(rawName);
+      if (seenUnknown.has(key)) continue;
+      seenUnknown.add(key);
+      // Capture what the CSV wants for this new attendee so the
+      // insert step can seed is_wedding_party / gender + memberships
+      // in one pass.
+      let isWeddingParty = false;
+      let gender: Gender | null = null;
+      const groups: UnknownAttendeeRow['groups'] = [];
+      for (let colIdx = 0; colIdx < columns.length; colIdx++) {
+        const col = columns[colIdx];
+        const raw = row[colIdx] ?? '';
+        if (col.kind === 'weddingParty') {
+          isWeddingParty = cellToBool(raw);
+        } else if (col.kind === 'gender') {
+          gender = cellToGender(raw);
+        } else if (col.kind === 'group' && col.group && cellToBool(raw)) {
+          groups.push({ groupId: col.group.id, groupName: col.group.name });
+        }
+      }
+      unknownAttendees.push({ name: rawName, isWeddingParty, gender, groups });
       continue;
     }
 
@@ -338,7 +399,7 @@ export function computeImportDiff(
 
   return {
     attendeeDiffs,
-    unknownNames: unknownNames.filter((n, i, arr) => arr.indexOf(n) === i),
+    unknownAttendees,
     unknownColumns,
     errors,
     csvRowCount,

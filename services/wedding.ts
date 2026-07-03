@@ -213,6 +213,38 @@ export async function bulkUpdateGuestFlags(
   if (error) throw error;
 }
 
+// Bulk insert of new guests, used by the CSV importer when the admin
+// opts in to creating attendees for unknown names in the file (the
+// initial-upload flow for a fresh wedding). Skips names that already
+// exist via ON CONFLICT DO NOTHING so partial retries after a
+// network hiccup don't error. Returns every attempted row shaped as
+// GuestRow so the caller can splice them into the in-memory attendees
+// list without a refetch.
+export async function createGuestsBulk(
+  weddingId: string,
+  guests: {
+    canonicalName: string;
+    isWeddingParty: boolean;
+    gender: Gender | null;
+  }[],
+): Promise<GuestRow[]> {
+  if (guests.length === 0) return [];
+  const rows = guests.map((g) => ({
+    wedding_id: weddingId,
+    canonical_name: g.canonicalName,
+    is_wedding_party: g.isWeddingParty,
+    gender: g.gender,
+  }));
+  const { data, error } = await supabase
+    .from('guests')
+    .upsert(rows, { onConflict: 'wedding_id,canonical_name', ignoreDuplicates: true })
+    .select('canonical_name, is_wedding_party, is_bridal_party, gender, profile_photo_url, bio, is_couple, wedding_party_role');
+  if (error) throw error;
+  // Postgrest returns `null` for the select when ignoreDuplicates is
+  // set and every row conflicted; treat that as an empty result.
+  return (data as GuestRow[] | null) ?? [];
+}
+
 export async function fetchAdmins(weddingId: string): Promise<AdminRow[]> {
   const { data, error } = await supabase
     .from('wedding_admins')

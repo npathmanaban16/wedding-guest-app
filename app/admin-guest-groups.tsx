@@ -36,12 +36,15 @@ import {
 } from '@/services/guestGroups';
 import {
   bulkUpdateGuestFlags,
+  createGuestsBulk,
   setGuestGender,
   setGuestWeddingParty,
   type Gender,
+  type GuestRow,
 } from '@/services/wedding';
 import {
   buildGuestGroupsCsv,
+  buildGuestListTemplateCsv,
   computeImportDiff,
   type AttendeeDiff,
   type ImportDiff,
@@ -229,15 +232,26 @@ interface ImportPreviewModalProps {
   visible: boolean;
   diff: ImportDiff | null;
   applying: boolean;
+  addUnknown: boolean;
+  onToggleAddUnknown: (next: boolean) => void;
   onCancel: () => void;
   onApply: () => void;
 }
 
-function ImportPreviewModal({ visible, diff, applying, onCancel, onApply }: ImportPreviewModalProps) {
+function ImportPreviewModal({
+  visible,
+  diff,
+  applying,
+  addUnknown,
+  onToggleAddUnknown,
+  onCancel,
+  onApply,
+}: ImportPreviewModalProps) {
   const insets = useSafeAreaInsets();
   if (!diff) return null;
   const changeCount = diff.attendeeDiffs.length;
-  const canApply = changeCount > 0 && diff.errors.length === 0 && !applying;
+  const willAdd = addUnknown ? diff.unknownAttendees.length : 0;
+  const canApply = (changeCount > 0 || willAdd > 0) && diff.errors.length === 0 && !applying;
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onCancel}>
       <View style={[styles.importRoot, { paddingTop: insets.top + Spacing.md }]}>
@@ -280,6 +294,12 @@ function ImportPreviewModal({ visible, diff, applying, onCancel, onApply }: Impo
                   </Text>
                 </View>
                 <View style={styles.importStatTile}>
+                  <Text style={styles.importStatValue}>{willAdd}</Text>
+                  <Text style={styles.importStatLabel}>
+                    to add
+                  </Text>
+                </View>
+                <View style={styles.importStatTile}>
                   <Text style={styles.importStatValue}>{diff.csvRowCount}</Text>
                   <Text style={styles.importStatLabel}>
                     row{diff.csvRowCount === 1 ? '' : 's'} in file
@@ -287,20 +307,41 @@ function ImportPreviewModal({ visible, diff, applying, onCancel, onApply }: Impo
                 </View>
               </View>
 
-              {diff.unknownNames.length > 0 ? (
+              {diff.unknownAttendees.length > 0 ? (
                 <View style={[styles.importCard, styles.importCardWarn]}>
                   <Text style={styles.importCardTitle}>
-                    Names not on the guest list ({diff.unknownNames.length})
+                    Names not on the guest list ({diff.unknownAttendees.length})
                   </Text>
                   <Text style={styles.importCardBody}>
-                    These rows will be ignored. Add them to the wedding first, then re-upload.
+                    Toggle the switch below to add all of them as new attendees.
+                    Leave it off to ignore these rows (safer if the file was meant
+                    as an update to existing guests).
                   </Text>
-                  {diff.unknownNames.slice(0, 10).map((n) => (
-                    <Text key={n} style={styles.importListItem}>• {n}</Text>
+
+                  <TouchableOpacity
+                    style={styles.addUnknownRow}
+                    onPress={() => onToggleAddUnknown(!addUnknown)}
+                    activeOpacity={0.85}
+                  >
+                    <View style={styles.addUnknownText}>
+                      <Text style={styles.addUnknownLabel}>
+                        Add these {diff.unknownAttendees.length} as new attendees
+                      </Text>
+                      <Text style={styles.addUnknownHint}>
+                        Creates new guest rows with the file's Wedding Party and Gender values.
+                      </Text>
+                    </View>
+                    <View style={[styles.toggleTrack, addUnknown && styles.toggleTrackActive]}>
+                      <View style={[styles.toggleThumb, addUnknown && styles.toggleThumbActive]} />
+                    </View>
+                  </TouchableOpacity>
+
+                  {diff.unknownAttendees.slice(0, 10).map((u) => (
+                    <Text key={u.name} style={styles.importListItem}>• {u.name}</Text>
                   ))}
-                  {diff.unknownNames.length > 10 ? (
+                  {diff.unknownAttendees.length > 10 ? (
                     <Text style={styles.importListItem}>
-                      … and {diff.unknownNames.length - 10} more
+                      … and {diff.unknownAttendees.length - 10} more
                     </Text>
                   ) : null}
                 </View>
@@ -320,14 +361,18 @@ function ImportPreviewModal({ visible, diff, applying, onCancel, onApply }: Impo
                 </View>
               ) : null}
 
-              {changeCount === 0 ? (
+              {changeCount === 0 && willAdd === 0 ? (
                 <View style={styles.importCard}>
                   <Text style={styles.importCardTitle}>Nothing to change</Text>
                   <Text style={styles.importCardBody}>
-                    Every attendee in the file already matches the current spreadsheet.
+                    {diff.unknownAttendees.length > 0
+                      ? 'Toggle "Add these as new attendees" above to seed them, or cancel if the names are typos.'
+                      : 'Every attendee in the file already matches the current spreadsheet.'}
                   </Text>
                 </View>
-              ) : (
+              ) : null}
+
+              {changeCount > 0 ? (
                 <View style={styles.importCard}>
                   <Text style={styles.importCardTitle}>Changes to apply</Text>
                   {diff.attendeeDiffs.slice(0, 40).map((d) => (
@@ -342,7 +387,7 @@ function ImportPreviewModal({ visible, diff, applying, onCancel, onApply }: Impo
                     </Text>
                   ) : null}
                 </View>
-              )}
+              ) : null}
             </>
           )}
         </ScrollView>
@@ -386,6 +431,7 @@ export default function AdminGuestGroupsScreen() {
     patchAttendeeFlag,
     patchGuestGroupMembership,
     patchGuestGroups,
+    appendAttendees,
   } = useWedding();
 
   const [search, setSearch] = useState('');
@@ -395,8 +441,14 @@ export default function AdminGuestGroupsScreen() {
   const [renaming, setRenaming] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [emailingTemplate, setEmailingTemplate] = useState(false);
   const [applyingImport, setApplyingImport] = useState(false);
   const [importDiff, setImportDiff] = useState<ImportDiff | null>(null);
+  // When true, the preview modal will insert unknownAttendees as fresh
+  // guests before applying the rest of the diff. Off by default so a
+  // stray typo in an existing-guest sheet doesn't accidentally seed a
+  // rogue row; opting in surfaces the confirmation.
+  const [addUnknownAttendees, setAddUnknownAttendees] = useState(false);
 
   // ScrollView refs used to keep the sticky name column locked to the
   // main cell area's vertical scroll, and the header row's horizontal
@@ -585,10 +637,70 @@ export default function AdminGuestGroupsScreen() {
     ? guestGroups.find((g) => g.id === renamingGroupId) ?? null
     : null;
 
-  // ─── CSV export ─────────────────────────────────────────────────────
+  // ─── CSV export + template ──────────────────────────────────────────
   // Mirrors the accommodations export path: build CSV, open mail
   // composer with the file attached, fall back to a mailto link so
   // guests without a configured mail app can still get the data out.
+  // The template variant emails a blank sheet with example rows so
+  // couples doing an initial upload don't have to guess the format.
+
+  const emailCsv = async (
+    csv: string,
+    subject: string,
+    body: string,
+    filename: string,
+  ) => {
+    const canMail = await MailComposer.isAvailableAsync().catch(() => false);
+    if (canMail) {
+      const fileUri = `${FileSystem.cacheDirectory ?? ''}${filename}`;
+      await FileSystem.writeAsStringAsync(fileUri, csv, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+      const result = await MailComposer.composeAsync({
+        subject,
+        body,
+        attachments: [fileUri],
+      });
+      if (result.status === MailComposer.MailComposerStatus.SENT) {
+        Alert.alert('Sent', 'Email sent.');
+      }
+      return;
+    }
+    const inlineLimit = 1800;
+    const inlineCsv = csv.length > inlineLimit
+      ? `${csv.slice(0, inlineLimit)}\n…(truncated)`
+      : csv;
+    const url =
+      `mailto:?subject=${encodeURIComponent(subject)}` +
+      `&body=${encodeURIComponent(`${body}\n${inlineCsv}`)}`;
+    const supported = await Linking.canOpenURL(url).catch(() => false);
+    if (!supported) {
+      Alert.alert('Email not available', 'No email app is configured on this device.');
+      return;
+    }
+    await Linking.openURL(url);
+  };
+
+  const handleEmailTemplate = async () => {
+    setEmailingTemplate(true);
+    try {
+      const csv = buildGuestListTemplateCsv();
+      const subject = 'Guest list template';
+      const body =
+        'Fill out this template with your full guest list, then upload it via ' +
+        '"Import" on the Guest Groups & Access screen.\n\n' +
+        'Columns:\n' +
+        '  • Name — full name (e.g. "Ada Lovelace")\n' +
+        '  • Wedding Party — "Yes" for wedding-party members, blank otherwise\n' +
+        '  • Gender — "Female", "Male", or blank\n\n' +
+        'The example rows can be replaced or deleted.\n';
+      await emailCsv(csv, subject, body, `guest-list-template-${todayIso()}.csv`);
+    } catch (e) {
+      Alert.alert('Could not email template', errorMessage(e));
+    } finally {
+      setEmailingTemplate(false);
+    }
+  };
 
   const handleExport = async () => {
     if (sortedAttendees.length === 0) {
@@ -603,42 +715,7 @@ export default function AdminGuestGroupsScreen() {
       const body =
         `${sortedAttendees.length} attendee${sortedAttendees.length === 1 ? '' : 's'} attached as CSV.\n\n` +
         `Columns: Name, Wedding Party, Gender${userColumns.length ? `, ${userColumns.map((g) => g.name).join(', ')}` : ''}\n`;
-
-      const canMail = await MailComposer.isAvailableAsync().catch(() => false);
-      if (canMail) {
-        const fileUri = `${FileSystem.cacheDirectory ?? ''}guest-groups-${stamp}.csv`;
-        await FileSystem.writeAsStringAsync(fileUri, csv, {
-          encoding: FileSystem.EncodingType.UTF8,
-        });
-        const result = await MailComposer.composeAsync({
-          subject,
-          body,
-          attachments: [fileUri],
-        });
-        if (result.status === MailComposer.MailComposerStatus.SENT) {
-          Alert.alert('Sent', 'Email with CSV sent.');
-        }
-        return;
-      }
-
-      // Fallback: inline (potentially truncated) CSV into a mailto so
-      // simulators / devices without a mail app can still forward.
-      const inlineLimit = 1800;
-      const inlineCsv = csv.length > inlineLimit
-        ? `${csv.slice(0, inlineLimit)}\n…(truncated — ${sortedAttendees.length} rows total)`
-        : csv;
-      const url =
-        `mailto:?subject=${encodeURIComponent(subject)}` +
-        `&body=${encodeURIComponent(`${body}\n${inlineCsv}`)}`;
-      const supported = await Linking.canOpenURL(url).catch(() => false);
-      if (!supported) {
-        Alert.alert(
-          'Email not available',
-          'No email app is configured on this device.',
-        );
-        return;
-      }
-      await Linking.openURL(url);
+      await emailCsv(csv, subject, body, `guest-groups-${stamp}.csv`);
     } catch (e) {
       Alert.alert('Export failed', errorMessage(e));
     } finally {
@@ -674,6 +751,13 @@ export default function AdminGuestGroupsScreen() {
         })),
         userColumns,
       );
+      // Default the add-unknown checkbox to ON when the CSV looks
+      // like a first-time upload — nothing on the guest list yet AND
+      // the file has new names to add. Anything else keeps it off so
+      // typos in an update sheet don't silently create attendees.
+      setAddUnknownAttendees(
+        sortedAttendees.length === 0 && diff.unknownAttendees.length > 0,
+      );
       setImportDiff(diff);
     } catch (e) {
       Alert.alert('Import failed', errorMessage(e));
@@ -686,13 +770,18 @@ export default function AdminGuestGroupsScreen() {
     if (!importDiff) return;
     setApplyingImport(true);
     const weddingPartyGroupId = weddingPartyGroup?.id ?? null;
+    // Whether to also insert unknown-name rows as fresh guests.
+    // Anchored on the sheet-level flag so the checkbox in the preview
+    // toggles it in real time.
+    const includeUnknown = addUnknownAttendees && importDiff.unknownAttendees.length > 0;
+
     // Bucket group membership changes so we can apply them per group
     // in one bulkApplyGuestGroupMembership call each — cleaner and
     // cheaper than one write per (guest × group) cell.
     const groupAdditions = new Map<string, string[]>();
     const groupRemovals = new Map<string, string[]>();
-    let weddingPartyAdds: string[] = [];
-    let weddingPartyRemoves: string[] = [];
+    const weddingPartyAdds: string[] = [];
+    const weddingPartyRemoves: string[] = [];
     for (const d of importDiff.attendeeDiffs) {
       if (d.weddingParty && weddingPartyGroupId) {
         if (d.weddingParty.to) weddingPartyAdds.push(d.canonicalName);
@@ -710,11 +799,44 @@ export default function AdminGuestGroupsScreen() {
       }
     }
 
+    // Newly-inserted attendees also need their group memberships +
+    // (if Wedding Party is on) the mirror-group entry seeded, folded
+    // into the same buckets we're already building for the update
+    // path so phases 2 + 3 pick them up in one sweep.
+    if (includeUnknown) {
+      for (const u of importDiff.unknownAttendees) {
+        if (u.isWeddingParty && weddingPartyGroupId) {
+          weddingPartyAdds.push(u.name);
+        }
+        for (const g of u.groups) {
+          const list = groupAdditions.get(g.groupId);
+          if (list) list.push(u.name);
+          else groupAdditions.set(g.groupId, [u.name]);
+        }
+      }
+    }
+
     try {
-      // Phase 1: flags on guests. One PATCH per attendee (couldn't find
-      // a friendly bulk-update-by-list path in postgrest without an
-      // RPC). Runs concurrently — the guests table is per-row and
-      // there's no cross-row constraint being touched.
+      // Phase 0: create fresh guests if the admin opted in. Done
+      // before Phase 1 so any downstream membership writes hit rows
+      // that already exist (the composite FK on guest_group_members
+      // requires the guests row).
+      let insertedRows: GuestRow[] = [];
+      if (includeUnknown) {
+        insertedRows = await createGuestsBulk(
+          weddingId,
+          importDiff.unknownAttendees.map((u) => ({
+            canonicalName: u.name,
+            isWeddingParty: u.isWeddingParty,
+            gender: u.gender,
+          })),
+        );
+      }
+
+      // Phase 1: flags on existing guests. One PATCH per attendee
+      // (postgrest doesn't have a friendly bulk-update-by-list path
+      // without a custom RPC). Runs concurrently — the guests table
+      // is per-row and there's no cross-row constraint being touched.
       await Promise.all(
         importDiff.attendeeDiffs.map((d) => {
           const patch: { is_wedding_party?: boolean; gender?: Gender | null } = {};
@@ -742,7 +864,8 @@ export default function AdminGuestGroupsScreen() {
         ),
       );
 
-      // Phase 3: sync the mirror Wedding Party group when the flag moved.
+      // Phase 3: sync the mirror Wedding Party group when the flag moved
+      // (or when a new wedding-party attendee was created above).
       if (weddingPartyGroupId && (weddingPartyAdds.length || weddingPartyRemoves.length)) {
         await bulkApplyGuestGroupMembership(
           weddingId,
@@ -754,6 +877,20 @@ export default function AdminGuestGroupsScreen() {
 
       // Success — sync the in-memory context so the sheet reflects
       // everything without waiting on a refetch.
+      if (insertedRows.length > 0) {
+        appendAttendees(insertedRows);
+        // Also register each new attendee's group memberships in the
+        // in-memory guestGroups roster so the sheet column counts +
+        // cell states stay accurate without a refetch.
+        for (const u of importDiff.unknownAttendees) {
+          for (const g of u.groups) {
+            patchGuestGroupMembership(g.groupId, u.name, true);
+          }
+          if (u.isWeddingParty && weddingPartyGroupId) {
+            patchGuestGroupMembership(weddingPartyGroupId, u.name, true);
+          }
+        }
+      }
       for (const d of importDiff.attendeeDiffs) {
         if (d.weddingParty || d.gender) {
           patchAttendeeFlag(d.canonicalName, {
@@ -768,7 +905,13 @@ export default function AdminGuestGroupsScreen() {
         }
       }
       setImportDiff(null);
-      Alert.alert('Imported', `${importDiff.attendeeDiffs.length} attendee${importDiff.attendeeDiffs.length === 1 ? '' : 's'} updated.`);
+      setAddUnknownAttendees(false);
+      const updated = importDiff.attendeeDiffs.length;
+      const inserted = insertedRows.length;
+      const parts: string[] = [];
+      if (inserted > 0) parts.push(`${inserted} attendee${inserted === 1 ? '' : 's'} added`);
+      if (updated > 0) parts.push(`${updated} updated`);
+      Alert.alert('Imported', parts.length ? parts.join(' · ') : 'Nothing changed.');
     } catch (e) {
       Alert.alert('Import failed', errorMessage(e));
     } finally {
@@ -823,27 +966,49 @@ export default function AdminGuestGroupsScreen() {
           Rows are attendees, columns are groups. Wedding Party + gender are built-in; add your own with New group.
         </Text>
 
-        {/* Toolbar row: search + export + import */}
-        <View style={styles.toolbar}>
-          <View style={styles.searchRow}>
-            <Ionicons name="search" size={16} color={Colors.textMuted} />
-            <TextInput
-              style={styles.searchInput}
-              value={search}
-              onChangeText={setSearch}
-              placeholder="Search attendees"
-              placeholderTextColor={Colors.textMuted}
-              autoCapitalize="words"
-              autoCorrect={false}
-              returnKeyType="search"
-              clearButtonMode="while-editing"
-            />
-            {search ? (
-              <TouchableOpacity onPress={() => setSearch('')} hitSlop={6}>
-                <Ionicons name="close-circle" size={16} color={Colors.textMuted} />
-              </TouchableOpacity>
-            ) : null}
-          </View>
+        {/* Toolbar rows: search on top, action buttons below so the
+            names of the actions have room to breathe and the search
+            box has full width. */}
+        <View style={styles.searchRow}>
+          <Ionicons name="search" size={16} color={Colors.textMuted} />
+          <TextInput
+            style={styles.searchInput}
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Search attendees"
+            placeholderTextColor={Colors.textMuted}
+            autoCapitalize="words"
+            autoCorrect={false}
+            returnKeyType="search"
+            clearButtonMode="while-editing"
+          />
+          {search ? (
+            <TouchableOpacity onPress={() => setSearch('')} hitSlop={6}>
+              <Ionicons name="close-circle" size={16} color={Colors.textMuted} />
+            </TouchableOpacity>
+          ) : null}
+        </View>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.actionRow}
+        >
+          <TouchableOpacity
+            onPress={handleEmailTemplate}
+            disabled={emailingTemplate}
+            style={[styles.toolbarBtn, emailingTemplate && styles.toolbarBtnDisabled]}
+            activeOpacity={0.85}
+          >
+            {emailingTemplate ? (
+              <ActivityIndicator size="small" color={Colors.primary} />
+            ) : (
+              <>
+                <Ionicons name="document-text-outline" size={14} color={Colors.primary} />
+                <Text style={styles.toolbarBtnText}>Email template</Text>
+              </>
+            )}
+          </TouchableOpacity>
           <TouchableOpacity
             onPress={handleExport}
             disabled={exporting}
@@ -855,7 +1020,7 @@ export default function AdminGuestGroupsScreen() {
             ) : (
               <>
                 <Ionicons name="mail-outline" size={14} color={Colors.primary} />
-                <Text style={styles.toolbarBtnText}>Export</Text>
+                <Text style={styles.toolbarBtnText}>Export CSV</Text>
               </>
             )}
           </TouchableOpacity>
@@ -870,11 +1035,11 @@ export default function AdminGuestGroupsScreen() {
             ) : (
               <>
                 <Ionicons name="cloud-upload-outline" size={14} color={Colors.primary} />
-                <Text style={styles.toolbarBtnText}>Import</Text>
+                <Text style={styles.toolbarBtnText}>Import CSV</Text>
               </>
             )}
           </TouchableOpacity>
-        </View>
+        </ScrollView>
 
         {search.trim() ? (
           <Text style={styles.filterHint}>
@@ -939,9 +1104,9 @@ export default function AdminGuestGroupsScreen() {
             bounces={false}
           >
             {filteredAttendees.length === 0 ? (
-              <View style={[styles.nameCell, { width: NAME_COLUMN_WIDTH, height: ROW_HEIGHT }]}>
+              <View style={[styles.nameCell, { width: NAME_COLUMN_WIDTH, minHeight: ROW_HEIGHT * 2, alignItems: 'flex-start' }]}>
                 <Text style={styles.emptyText}>
-                  {search.trim() ? 'No matches' : 'No attendees'}
+                  {search.trim() ? 'No matches' : 'No attendees yet'}
                 </Text>
               </View>
             ) : (
@@ -979,10 +1144,31 @@ export default function AdminGuestGroupsScreen() {
               bounces={false}
             >
               {filteredAttendees.length === 0 ? (
-                <View style={[styles.emptyCellRow, { height: ROW_HEIGHT }]}>
-                  <Text style={styles.emptyText}>
-                    {search.trim() ? 'Try a different name.' : 'Add guests to this wedding first.'}
-                  </Text>
+                <View style={[styles.emptyCellRow, { minHeight: ROW_HEIGHT * 2 }]}>
+                  {search.trim() ? (
+                    <Text style={styles.emptyText}>Try a different name.</Text>
+                  ) : (
+                    <View style={{ padding: Spacing.md, maxWidth: 320 }}>
+                      <Text style={styles.emptyText}>
+                        Get started by emailing yourself a blank guest-list template. Fill it in, then import it here to populate the sheet.
+                      </Text>
+                      <TouchableOpacity
+                        onPress={handleEmailTemplate}
+                        disabled={emailingTemplate}
+                        style={styles.emptyPrimaryBtn}
+                        activeOpacity={0.85}
+                      >
+                        {emailingTemplate ? (
+                          <ActivityIndicator color={Colors.white} size="small" />
+                        ) : (
+                          <>
+                            <Ionicons name="document-text-outline" size={14} color={Colors.white} />
+                            <Text style={styles.emptyPrimaryBtnText}>Email me a template</Text>
+                          </>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  )}
                 </View>
               ) : (
                 filteredAttendees.map((a, idx) => (
@@ -1076,7 +1262,13 @@ export default function AdminGuestGroupsScreen() {
         visible={!!importDiff}
         diff={importDiff}
         applying={applyingImport}
-        onCancel={() => (applyingImport ? undefined : setImportDiff(null))}
+        addUnknown={addUnknownAttendees}
+        onToggleAddUnknown={setAddUnknownAttendees}
+        onCancel={() => {
+          if (applyingImport) return;
+          setImportDiff(null);
+          setAddUnknownAttendees(false);
+        }}
         onApply={handleApplyImport}
       />
     </View>
@@ -1130,13 +1322,14 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
 
-  toolbar: {
+  actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
+    marginTop: Spacing.sm,
+    paddingRight: Spacing.md,
   },
   searchRow: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
@@ -1314,10 +1507,69 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontFamily: Fonts.sans,
-    fontSize: 12,
+    fontSize: 13,
     color: Colors.textMuted,
     textAlign: 'left',
+    lineHeight: 19,
   },
+  emptyPrimaryBtn: {
+    marginTop: Spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.full,
+    paddingVertical: 10,
+    paddingHorizontal: Spacing.md,
+    alignSelf: 'flex-start',
+  },
+  emptyPrimaryBtnText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 13,
+    color: Colors.white,
+  },
+
+  addUnknownRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.white,
+    borderRadius: Radius.md,
+    padding: Spacing.sm,
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.sm,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+  },
+  addUnknownText: { flex: 1, marginRight: Spacing.md },
+  addUnknownLabel: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 13,
+    color: Colors.textPrimary,
+    marginBottom: 2,
+  },
+  addUnknownHint: {
+    fontFamily: Fonts.sans,
+    fontSize: 11,
+    color: Colors.textMuted,
+    lineHeight: 15,
+  },
+  toggleTrack: {
+    width: 44,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: Colors.border,
+    padding: 3,
+    justifyContent: 'center',
+  },
+  toggleTrackActive: { backgroundColor: Colors.primary },
+  toggleThumb: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: Colors.white,
+  },
+  toggleThumbActive: { transform: [{ translateX: 18 }] },
 
   // ─── Modals ───────────────────────────────────────────────────────
   modalBackdrop: {
