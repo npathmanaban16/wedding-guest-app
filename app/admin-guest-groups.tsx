@@ -450,17 +450,15 @@ export default function AdminGuestGroupsScreen() {
   // rogue row; opting in surfaces the confirmation.
   const [addUnknownAttendees, setAddUnknownAttendees] = useState(false);
 
-  // ScrollView refs used to keep the sticky name column locked to the
-  // main cell area's vertical scroll, and the header row's horizontal
-  // scroll locked to the cells' horizontal scroll. Each direction has
-  // a "programmatic" flag that suppresses the responding scroll's
-  // onScroll callback while we programmatically drive it, so the sync
-  // doesn't feedback-loop forever.
-  const leftVerticalRef = useRef<ScrollView>(null);
-  const rightVerticalRef = useRef<ScrollView>(null);
+  // ScrollView refs for the two horizontally-scrollable strips —
+  // header row (column labels) and body rows (cells). One vertical
+  // scroll wraps the entire body (name column + cells side by side)
+  // so vertical sync isn't needed; only the horizontal scrolls
+  // between header and body have to stay locked to each other. The
+  // programmatic flag suppresses the responding scroll's onScroll
+  // callback while we drive it, breaking the sync feedback loop.
   const headerHorizontalRef = useRef<ScrollView>(null);
   const cellsHorizontalRef = useRef<ScrollView>(null);
-  const isProgrammaticVertical = useRef(false);
   const isProgrammaticHorizontal = useRef(false);
 
   if (!guestName || !isAdmin(guestName)) {
@@ -932,25 +930,14 @@ export default function AdminGuestGroupsScreen() {
 
   // ─── Scroll sync handlers ────────────────────────────────────────────
   // The sheet layout is:
-  //   [ name header | header ScrollView (horizontal only) ]
-  //   [ name column ScrollView (vertical) | cells ScrollView (vertical AND horizontal) ]
+  //   [ name header | header ScrollView (horizontal) ]         ← fixed
+  //   [ name column | cells ScrollView (horizontal) ] inside a  ← scrolls
+  //     single vertical ScrollView                                vertically
   //
-  // Two-directional sync between the horizontal scrolls (header ↔ cells)
-  // and between the vertical scrolls (name column ↔ cells). isProgrammatic
-  // flags stop the scrollTo we fire in response from re-firing onScroll
-  // and looping.
-
-  const onVerticalScroll = (source: 'left' | 'right') =>
-    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-      if (isProgrammaticVertical.current) {
-        isProgrammaticVertical.current = false;
-        return;
-      }
-      const y = e.nativeEvent.contentOffset.y;
-      const target = source === 'left' ? rightVerticalRef : leftVerticalRef;
-      isProgrammaticVertical.current = true;
-      target.current?.scrollTo({ y, animated: false });
-    };
+  // The single vertical scroll around the body means the name column
+  // stays stuck to the top-left and follows the cells vertically for
+  // free — no vertical sync required. Horizontal sync between the
+  // header row and the body's cells is the only mirror we still need.
 
   const onHorizontalScroll = (source: 'header' | 'cells') =>
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -1075,6 +1062,7 @@ export default function AdminGuestGroupsScreen() {
             scrollEventThrottle={16}
             showsHorizontalScrollIndicator={false}
             bounces={false}
+            contentContainerStyle={{ width: totalCellsWidth }}
           >
             <ColumnHeader label="Wedding Party" sublabel="default" count={weddingPartyCount} />
             <ColumnHeader label="Female" sublabel="gender" count={femaleCount} />
@@ -1103,154 +1091,152 @@ export default function AdminGuestGroupsScreen() {
           </ScrollView>
         </View>
 
-        {/* Body: sticky name column ScrollView + horizontally scrollable cells ScrollView */}
-        <View style={styles.bodyRow}>
-          <ScrollView
-            ref={leftVerticalRef}
-            onScroll={onVerticalScroll('left')}
-            scrollEventThrottle={16}
-            showsVerticalScrollIndicator={false}
-            style={[styles.nameColumn, { width: NAME_COLUMN_WIDTH }]}
-            contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xxl }}
-            bounces={false}
-          >
-            {filteredAttendees.length === 0 ? (
-              <View style={[styles.nameCell, { width: NAME_COLUMN_WIDTH, minHeight: ROW_HEIGHT * 2, alignItems: 'flex-start' }]}>
-                <Text style={styles.emptyText}>
-                  {search.trim() ? 'No matches' : 'No attendees yet'}
-                </Text>
-              </View>
-            ) : (
-              filteredAttendees.map((a, idx) => (
-                <View
-                  key={a.canonicalName}
-                  style={[
-                    styles.nameCell,
-                    { width: NAME_COLUMN_WIDTH, height: ROW_HEIGHT },
-                    idx % 2 === 1 && styles.rowAlt,
-                  ]}
-                >
-                  <Text style={styles.nameText} numberOfLines={1}>
-                    {a.canonicalName}
-                  </Text>
-                </View>
-              ))
-            )}
-          </ScrollView>
-
-          <ScrollView
-            horizontal
-            ref={cellsHorizontalRef}
-            onScroll={onHorizontalScroll('cells')}
-            scrollEventThrottle={16}
-            showsHorizontalScrollIndicator
-            bounces={false}
-          >
-            <ScrollView
-              ref={rightVerticalRef}
-              onScroll={onVerticalScroll('right')}
-              scrollEventThrottle={16}
-              showsVerticalScrollIndicator={false}
-              style={{ width: totalCellsWidth }}
-              contentContainerStyle={{
-                width: totalCellsWidth,
-                paddingBottom: insets.bottom + Spacing.xxl,
-              }}
-              bounces={false}
-            >
+        {/* Body: one vertical ScrollView holding both the fixed name
+            column and the horizontally-scrollable cells strip. Because
+            they're siblings inside the same vertical scroll, the name
+            column stays lined up with its row's cells for free — no
+            vertical sync required. */}
+        <ScrollView
+          style={styles.bodyScroll}
+          contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xxl }}
+          showsVerticalScrollIndicator
+          bounces={false}
+        >
+          <View style={styles.bodyRow}>
+            {/* Fixed left name column */}
+            <View style={[styles.nameColumn, { width: NAME_COLUMN_WIDTH }]}>
               {filteredAttendees.length === 0 ? (
-                <View style={[styles.emptyCellRow, { minHeight: ROW_HEIGHT * 2, width: totalCellsWidth }]}>
-                  {search.trim() ? (
-                    <Text style={styles.emptyText}>Try a different name.</Text>
-                  ) : (
-                    <View style={{ padding: Spacing.md, maxWidth: 320 }}>
-                      <Text style={styles.emptyText}>
-                        Get started by emailing yourself a blank guest-list template. Fill it in, then import it here to populate the sheet.
-                      </Text>
-                      <TouchableOpacity
-                        onPress={handleEmailTemplate}
-                        disabled={emailingTemplate}
-                        style={styles.emptyPrimaryBtn}
-                        activeOpacity={0.85}
-                      >
-                        {emailingTemplate ? (
-                          <ActivityIndicator color={Colors.white} size="small" />
-                        ) : (
-                          <>
-                            <Ionicons name="document-text-outline" size={14} color={Colors.white} />
-                            <Text style={styles.emptyPrimaryBtnText}>Email me a template</Text>
-                          </>
-                        )}
-                      </TouchableOpacity>
-                    </View>
-                  )}
+                <View style={[styles.nameCell, { width: NAME_COLUMN_WIDTH, minHeight: ROW_HEIGHT * 2, alignItems: 'flex-start' }]}>
+                  <Text style={styles.emptyText}>
+                    {search.trim() ? 'No matches' : 'No attendees yet'}
+                  </Text>
                 </View>
               ) : (
                 filteredAttendees.map((a, idx) => (
                   <View
                     key={a.canonicalName}
-                    style={[styles.cellRow, { height: ROW_HEIGHT }, idx % 2 === 1 && styles.rowAlt]}
+                    style={[
+                      styles.nameCell,
+                      { width: NAME_COLUMN_WIDTH, height: ROW_HEIGHT },
+                      idx % 2 === 1 && styles.rowAlt,
+                    ]}
                   >
-                    <Cell
-                      on={a.isWeddingParty}
-                      tint={Colors.primary}
-                      onPress={() =>
-                        handleToggleWeddingParty(a.canonicalName, !a.isWeddingParty)
-                      }
-                    />
-                    <Cell
-                      on={a.gender === 'female'}
-                      tint={Colors.accent}
-                      onPress={() =>
-                        handleSetGender(
-                          a.canonicalName,
-                          a.gender === 'female' ? null : 'female',
-                        )
-                      }
-                    />
-                    <Cell
-                      on={a.gender === 'male'}
-                      tint={Colors.accent}
-                      onPress={() =>
-                        handleSetGender(
-                          a.canonicalName,
-                          a.gender === 'male' ? null : 'male',
-                        )
-                      }
-                    />
-                    <Cell
-                      on={a.gender === null}
-                      tint={Colors.textMuted}
-                      onPress={() =>
-                        handleSetGender(
-                          a.canonicalName,
-                          a.gender === null ? 'female' : null,
-                        )
-                      }
-                    />
-                    {userColumns.map((group) => {
-                      const inGroup = group.members.includes(a.canonicalName);
-                      return (
-                        <Cell
-                          key={group.id}
-                          on={inGroup}
-                          tint={Colors.gold}
-                          onPress={() =>
-                            handleToggleGroup(group.id, a.canonicalName, !inGroup)
-                          }
-                        />
-                      );
-                    })}
-                    {/* Spacer under the "New group" header column so the
-                        cell area matches the header width. Empty view;
-                        never interactive. */}
-                    <View style={{ width: 80 }} />
+                    <Text style={styles.nameText} numberOfLines={1}>
+                      {a.canonicalName}
+                    </Text>
                   </View>
                 ))
               )}
+            </View>
+
+            {/* Horizontally-scrollable cells strip. contentContainerStyle
+                pins the inner content to totalCellsWidth so RN doesn't
+                collapse it to the viewport (which was the bug that
+                misaligned columns). */}
+            <ScrollView
+              horizontal
+              ref={cellsHorizontalRef}
+              onScroll={onHorizontalScroll('cells')}
+              scrollEventThrottle={16}
+              showsHorizontalScrollIndicator
+              bounces={false}
+              contentContainerStyle={{ width: totalCellsWidth }}
+            >
+              <View style={{ width: totalCellsWidth }}>
+                {filteredAttendees.length === 0 ? (
+                  <View style={[styles.emptyCellRow, { minHeight: ROW_HEIGHT * 2, width: totalCellsWidth }]}>
+                    {search.trim() ? (
+                      <Text style={styles.emptyText}>Try a different name.</Text>
+                    ) : (
+                      <View style={{ padding: Spacing.md, maxWidth: 320 }}>
+                        <Text style={styles.emptyText}>
+                          Get started by emailing yourself a blank guest-list template. Fill it in, then import it here to populate the sheet.
+                        </Text>
+                        <TouchableOpacity
+                          onPress={handleEmailTemplate}
+                          disabled={emailingTemplate}
+                          style={styles.emptyPrimaryBtn}
+                          activeOpacity={0.85}
+                        >
+                          {emailingTemplate ? (
+                            <ActivityIndicator color={Colors.white} size="small" />
+                          ) : (
+                            <>
+                              <Ionicons name="document-text-outline" size={14} color={Colors.white} />
+                              <Text style={styles.emptyPrimaryBtnText}>Email me a template</Text>
+                            </>
+                          )}
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+                ) : (
+                  filteredAttendees.map((a, idx) => (
+                    <View
+                      key={a.canonicalName}
+                      style={[styles.cellRow, { height: ROW_HEIGHT, width: totalCellsWidth }, idx % 2 === 1 && styles.rowAlt]}
+                    >
+                      <Cell
+                        on={a.isWeddingParty}
+                        tint={Colors.primary}
+                        onPress={() =>
+                          handleToggleWeddingParty(a.canonicalName, !a.isWeddingParty)
+                        }
+                      />
+                      <Cell
+                        on={a.gender === 'female'}
+                        tint={Colors.accent}
+                        onPress={() =>
+                          handleSetGender(
+                            a.canonicalName,
+                            a.gender === 'female' ? null : 'female',
+                          )
+                        }
+                      />
+                      <Cell
+                        on={a.gender === 'male'}
+                        tint={Colors.accent}
+                        onPress={() =>
+                          handleSetGender(
+                            a.canonicalName,
+                            a.gender === 'male' ? null : 'male',
+                          )
+                        }
+                      />
+                      <Cell
+                        on={a.gender === null}
+                        tint={Colors.textMuted}
+                        onPress={() =>
+                          handleSetGender(
+                            a.canonicalName,
+                            a.gender === null ? 'female' : null,
+                          )
+                        }
+                      />
+                      {userColumns.map((group) => {
+                        const inGroup = group.members.includes(a.canonicalName);
+                        return (
+                          <Cell
+                            key={group.id}
+                            on={inGroup}
+                            tint={Colors.gold}
+                            onPress={() =>
+                              handleToggleGroup(group.id, a.canonicalName, !inGroup)
+                            }
+                          />
+                        );
+                      })}
+                      {/* Spacer under the "New group" header column so the
+                          cell area matches the header width. Empty view;
+                          never interactive. */}
+                      <View style={{ width: NEW_GROUP_HEADER_WIDTH }} />
+                    </View>
+                  ))
+                )}
+              </View>
             </ScrollView>
-          </ScrollView>
-        </View>
+          </View>
+        </ScrollView>
       </View>
 
       <GroupNameModal
@@ -1469,8 +1455,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  bodyRow: {
+  bodyScroll: {
     flex: 1,
+  },
+  bodyRow: {
     flexDirection: 'row',
   },
   nameColumn: {
