@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, AppState, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, AppState, Image, StyleSheet, Text, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   DEFAULT_WEDDING_ID,
@@ -609,6 +609,32 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
   return (
     <WeddingSessionContext.Provider value={sessionValue}>
       <WeddingContext.Provider value={weddingValue}>
+        {/* Persistent off-screen pre-decode of the Home hero. `Image.prefetch`
+            only primes the byte cache; a mounted <Image> at the target
+            display size forces JPEG decode + GPU upload and keeps the
+            decoded bitmap in RN's memory cache. Placing this inside
+            WeddingProvider means it stays mounted for the entire signed-in
+            session — across login → onboarding → home — so the Home tab
+            paints from a warm bitmap cache no matter which path the user
+            took to get there. Dimensions match styles.heroImage in
+            app/(tabs)/index.tsx (100% × 380) so the size-keyed cache
+            entry matches what Home will look up. Positioned way
+            off-screen with pointerEvents=none + accessibilityElementsHidden
+            so it never intercepts touches or shows up in screen readers. */}
+        {weddingValue.wedding.hero_image_url && (
+          <View
+            style={styles.heroPreDecode}
+            pointerEvents="none"
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          >
+            <Image
+              source={{ uri: weddingValue.wedding.hero_image_url }}
+              style={styles.heroPreDecodeImage}
+              resizeMode="cover"
+            />
+          </View>
+        )}
         {children}
       </WeddingContext.Provider>
     </WeddingSessionContext.Provider>
@@ -635,6 +661,19 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
     padding: 24,
   },
+  // Off-screen container for the persistent hero-image pre-decode.
+  // Height matches styles.heroImage on the Home tab so the decoded
+  // bitmap keyed by (url, size) matches what the Home ImageBackground
+  // looks up on mount.
+  heroPreDecode: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: -9999,
+    height: 380,
+    opacity: 0,
+  },
+  heroPreDecodeImage: { width: '100%', height: '100%' },
   errorText: {
     color: Colors.textPrimary,
     textAlign: 'center',
