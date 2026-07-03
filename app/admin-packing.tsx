@@ -38,6 +38,12 @@ interface DraftItem {
   excludeBridalParty: boolean;
   excludeWeddingParty: boolean;
   gender: 'male' | 'female' | null;
+  // Guest_groups.id values that gate this item. Preserved through the
+  // editor even though the current UI doesn't expose group editing —
+  // otherwise saving a group-gated item after editing its label would
+  // silently strip the group filter. A future revision can wire this
+  // to a group picker; until then we round-trip it untouched.
+  visibleToGroups: string[];
   // Track whether this row is expanded — the compact row shows label +
   // visibility chip; expanding reveals tip / flags / advanced controls.
   expanded: boolean;
@@ -86,6 +92,7 @@ function toDraft(list: WeddingPackingList): Draft {
         excludeWeddingParty: !!it.excludeWeddingParty,
         excludeBridalParty: !!it.excludeBridalParty,
         gender: it.gender ?? null,
+        visibleToGroups: it.visible_to_groups ?? [],
         expanded: false,
       })),
     })),
@@ -121,6 +128,7 @@ function fromDraft(draft: Draft): {
       if (it.excludeWeddingParty) clean.excludeWeddingParty = true;
       if (it.excludeBridalParty) clean.excludeBridalParty = true;
       if (it.gender) clean.gender = it.gender;
+      if (it.visibleToGroups.length > 0) clean.visible_to_groups = it.visibleToGroups;
       return clean;
     }),
   }));
@@ -265,6 +273,7 @@ export default function AdminPackingScreen() {
                   excludeBridalParty: false,
                   excludeWeddingParty: false,
                   gender: null,
+                  visibleToGroups: [],
                   expanded: true,
                 },
               ],

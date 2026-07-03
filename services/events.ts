@@ -18,6 +18,10 @@ export interface WeddingEventRow {
   description: string;
   notes: string | null;
   wedding_party_only: boolean;
+  // Guest_groups.id values. When non-empty, only guests in one of these
+  // groups see the event; combined with wedding_party_only as an AND
+  // filter so both remain enforceable at once. Added by migration 042.
+  visible_to_groups: string[];
   start_at: string;
   end_at: string | null;
   outdoor_note: string | null;
@@ -33,17 +37,31 @@ export interface WeddingEventExtras {
   blackTieGuide?: { men: string; women: string };
 }
 
-const COLUMNS =
+// New column list including visible_to_groups (migration 042). Retry with
+// the pre-042 list on unknown-column so an un-migrated database still
+// loads events — visible_to_groups falls back to [] and the client
+// filter behaves exactly as it did before.
+const COLUMNS_PRE_042 =
   'wedding_id, event_id, sort_order, title, emoji, date_label, time_label, venue, address, dress_code, description, notes, wedding_party_only, start_at, end_at, outdoor_note, extras';
+const COLUMNS = `${COLUMNS_PRE_042}, visible_to_groups`;
 
 export async function fetchWeddingEvents(weddingId: string): Promise<WeddingEvent[]> {
-  const { data, error } = await supabase
-    .from('wedding_events')
-    .select(COLUMNS)
-    .eq('wedding_id', weddingId)
-    .order('sort_order', { ascending: true });
+  const query = (columns: string) =>
+    supabase
+      .from('wedding_events')
+      .select(columns)
+      .eq('wedding_id', weddingId)
+      .order('sort_order', { ascending: true });
+  let { data, error } = await query(COLUMNS);
+  if (error) ({ data, error } = await query(COLUMNS_PRE_042));
   if (error) throw error;
-  return (data ?? []).map(rowToWeddingEvent);
+  // Supabase's typed select can't infer a shape from a runtime string,
+  // so `data` comes back as unknown[]. The two column lists above are
+  // both compatible with WeddingEventRow (visible_to_groups is
+  // optional at runtime via the fallback in rowToWeddingEvent), so a
+  // cast is safe.
+  const rows = (data ?? []) as unknown as WeddingEventRow[];
+  return rows.map(rowToWeddingEvent);
 }
 
 function rowToWeddingEvent(row: WeddingEventRow): WeddingEvent {
@@ -60,6 +78,9 @@ function rowToWeddingEvent(row: WeddingEventRow): WeddingEvent {
     description: row.description,
     notes: row.notes ?? undefined,
     weddingPartyOnly: row.wedding_party_only,
+    // Falls back to [] for un-migrated databases so the client filter's
+    // "empty means no group gating" branch takes over cleanly.
+    visibleToGroups: row.visible_to_groups ?? [],
     startDate: row.start_at,
     endDate: row.end_at ?? undefined,
     outdoorNote: row.outdoor_note ?? undefined,

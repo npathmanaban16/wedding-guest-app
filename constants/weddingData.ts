@@ -52,6 +52,11 @@ export interface WeddingEvent {
   description: string;
   notes?: string;
   weddingPartyOnly?: boolean;
+  // Guest_groups.id values. When non-empty, only guests in one of these
+  // groups see the event. Combined with weddingPartyOnly as an AND
+  // filter (see isEventVisible in constants/visibility.ts). Empty or
+  // omitted = no group gating from this dimension.
+  visibleToGroups?: string[];
   startDate: string;  // ISO 8601
   // Optional — some events have no posted end time (e.g. a Baraat).
   // Calendar code falls back to startDate + 1h when this is missing.
@@ -1084,6 +1089,12 @@ export interface PackingItem {
    * Guests whose gender is unknown see all items regardless.
    */
   gender?: 'male' | 'female';
+  // Guest_groups.id values. When non-empty, only guests in one of these
+  // groups see the item. Combined with the legacy flags above as an
+  // AND filter (see isPackingItemVisible in constants/visibility.ts).
+  // Serialized as JSON snake_case since it lives inside the JSONB
+  // wedding_packing_lists.categories column.
+  visible_to_groups?: string[];
 }
 
 export const PACKING_GUIDE_NN: PackingCategory[] = [

@@ -31,6 +31,7 @@ import { fetchWeddingEvents } from '@/services/events';
 import { fetchWeddingGuide } from '@/services/guide';
 import { fetchWeddingPackingList } from '@/services/packing';
 import { fetchWeddingSchedulePage } from '@/services/schedulePage';
+import { fetchGuestGroups, type GuestGroup } from '@/services/guestGroups';
 import { prefetchHeroImage } from '@/utils/heroImage';
 
 export type { AdminRole, Gender };
@@ -145,6 +146,14 @@ interface WeddingContextType {
   // surface bridal-party-only items.
   isBridalParty: (name: string) => boolean;
   getGuestGender: (name: string) => Gender | null;
+  // Guest_groups.id values the named guest belongs to. Used by the
+  // shared visibility helpers (constants/visibility.ts) to gate events
+  // + packing items on group membership. Empty set for admin-only
+  // logins, unknown names, or a wedding whose groups list is still
+  // loading — the visibility filter treats an empty set as "not in any
+  // group", which pairs correctly with the "empty visible_to_groups
+  // means no gating" branch on the item side.
+  getUserGroupIds: (name: string) => ReadonlySet<string>;
   // True only for admins with full powers (no role, or role='planner').
   // Vendor-role admins like DJs return false — they have login access but
   // no admin-ui surfaces. Membership in wedding_admins is still checked
@@ -199,6 +208,11 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
   // returns the Fairmont fallback (for N&N + Emma & James) or an
   // empty page (for everyone else).
   const [dbSchedulePage, setDbSchedulePage] = useState<WeddingSchedulePage | null>(null);
+  // Guest groups for this wedding, each with its member roster. Powers
+  // the visibility filters on schedule + packing. Empty array means
+  // "no groups yet" (default for new tenants until an admin creates
+  // any), which the visibility filter treats as "no group gating".
+  const [guestGroups, setGuestGroups] = useState<GuestGroup[]>([]);
   const [loadState, setLoadState] = useState<'idle' | 'loading' | 'ready' | 'error'>(
     DEFAULT_WEDDING_ID ? 'loading' : 'idle',
   );
@@ -229,6 +243,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       setDbGuide(null);
       setDbPackingList(null);
       setDbSchedulePage(null);
+      setGuestGroups([]);
       return;
     }
     // Defensive: if weddingId somehow isn't a uuid-shaped string, clear it.
@@ -253,13 +268,13 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const [w, g, a, e, gd, pl, sp] = await Promise.all([
+        const [w, g, a, e, gd, pl, sp, gg] = await Promise.all([
           fetchWedding(weddingId),
           fetchGuests(weddingId),
           fetchAdmins(weddingId),
-          // Events / guide / packing / schedule-page failing shouldn't
-          // take the whole wedding load down — we fall back to code
-          // defaults if any is unreachable.
+          // Events / guide / packing / schedule-page / groups failing
+          // shouldn't take the whole wedding load down — we fall back
+          // to code defaults / no gating if any is unreachable.
           fetchWeddingEvents(weddingId).catch((err) => {
             console.warn('[WeddingProvider] failed to load wedding_events', err);
             return [];
@@ -275,6 +290,10 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
           fetchWeddingSchedulePage(weddingId).catch((err) => {
             console.warn('[WeddingProvider] failed to load wedding_schedule_pages', err);
             return null;
+          }),
+          fetchGuestGroups(weddingId).catch((err) => {
+            console.warn('[WeddingProvider] failed to load guest_groups', err);
+            return [] as GuestGroup[];
           }),
         ]);
         if (cancelled) return;
@@ -293,6 +312,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
         setDbGuide(gd);
         setDbPackingList(pl);
         setDbSchedulePage(sp);
+        setGuestGroups(gg);
         setLoadState('ready');
       } catch (err) {
         console.error('[WeddingProvider] failed to load wedding data', err);
@@ -317,7 +337,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       // guests + admins). Fetch them here so the first render after
       // login has all the right content; on failure we fall back to
       // code defaults via the resolver below.
-      const [e, gd, pl, sp] = await Promise.all([
+      const [e, gd, pl, sp, gg] = await Promise.all([
         fetchWeddingEvents(w.id).catch((err) => {
           console.warn('[WeddingProvider] failed to pre-load wedding_events', err);
           return [] as WeddingEvent[];
@@ -334,6 +354,10 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
           console.warn('[WeddingProvider] failed to pre-load wedding_schedule_pages', err);
           return null;
         }),
+        fetchGuestGroups(w.id).catch((err) => {
+          console.warn('[WeddingProvider] failed to pre-load guest_groups', err);
+          return [] as GuestGroup[];
+        }),
       ]);
       await AsyncStorage.setItem(WEDDING_ID_STORAGE_KEY, w.id);
       // New invite means a new tenant — discard any cached login from a
@@ -346,6 +370,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       setDbGuide(gd);
       setDbPackingList(pl);
       setDbSchedulePage(sp);
+      setGuestGroups(gg);
       setLoadState('ready');
       setWeddingId(w.id);
     },
@@ -382,6 +407,16 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
         .then((g) => setGuests(g))
         .catch((err) => {
           console.warn('[WeddingProvider] foreground guest refetch failed', err);
+        });
+      // Groups can change out-of-band (an admin adds a guest to a
+      // group from another device). Refetching alongside guests keeps
+      // schedule + packing visibility in sync without a hard app
+      // restart. Same best-effort pattern — errors leave the previous
+      // roster in place.
+      fetchGuestGroups(weddingId)
+        .then((gg) => setGuestGroups(gg))
+        .catch((err) => {
+          console.warn('[WeddingProvider] foreground guest-groups refetch failed', err);
         });
     });
     return () => sub.remove();
@@ -543,6 +578,25 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       return adminByNormalized.get(n)?.gender ?? null;
     };
 
+    // Precompute name → Set<group_id> once per memo cycle so per-render
+    // visibility checks are O(1). Normalized-name keys mirror the rest
+    // of the identity lookups here — spouses of admins etc. hit the
+    // same canonicalisation. Group membership is only meaningful for
+    // guests (not admin-only users); the getter returns an empty set
+    // for anyone not in the guests table.
+    const groupIdsByGuest = new Map<string, Set<string>>();
+    for (const group of guestGroups) {
+      for (const memberName of group.members) {
+        const key = normalizeName(memberName);
+        const set = groupIdsByGuest.get(key);
+        if (set) set.add(group.id);
+        else groupIdsByGuest.set(key, new Set([group.id]));
+      }
+    }
+    const emptyGroupSet: ReadonlySet<string> = new Set();
+    const getUserGroupIds = (name: string): ReadonlySet<string> =>
+      groupIdsByGuest.get(normalizeName(name)) ?? emptyGroupSet;
+
     return {
       weddingId,
       wedding,
@@ -564,10 +618,11 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       isWeddingParty,
       isBridalParty,
       getGuestGender,
+      getUserGroupIds,
       isAdmin,
       getAdminRole,
     };
-  }, [weddingId, wedding, guests, admins, dbEvents, dbGuide, dbPackingList, dbSchedulePage, patchAttendeeProfile, patchWedding, patchGuidePhotoStrip, patchGuideContent, patchPackingList]);
+  }, [weddingId, wedding, guests, admins, dbEvents, dbGuide, dbPackingList, dbSchedulePage, guestGroups, patchAttendeeProfile, patchWedding, patchGuidePhotoStrip, patchGuideContent, patchPackingList]);
 
   // Initial session restore — brief blank while AsyncStorage reads on SaaS.
   if (!sessionReady) {

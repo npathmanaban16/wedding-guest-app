@@ -26,6 +26,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
 import { haptic } from '@/utils/haptics';
+import { isPackingItemVisible } from '@/constants/visibility';
 
 function PackingItemRow({
   item,
@@ -272,23 +273,16 @@ export default function PackingScreen() {
     setOpenTipId((cur) => (cur === id ? null : id));
   };
   const { guestName } = useAuth();
-  const { weddingId, isWeddingParty, isBridalParty, getGuestGender, packingList } = useWedding();
+  const { weddingId, isWeddingParty, isBridalParty, getGuestGender, getUserGroupIds, packingList } = useWedding();
   const inWeddingParty = isWeddingParty(guestName ?? '');
   const inBridalParty = isBridalParty(guestName ?? '');
   const gender = getGuestGender(guestName ?? '');
+  const userGroupIds = getUserGroupIds(guestName ?? '');
 
+  const visibilityCtx = { inWeddingParty, inBridalParty, gender, userGroupIds };
   const filteredGuide = packingList.categories.map((cat) => ({
     ...cat,
-    items: cat.items.filter((item) => {
-      if (item.weddingPartyOnly && !inWeddingParty) return false;
-      if (item.bridalPartyOnly && !inBridalParty) return false;
-      if (item.excludeBridalParty && inBridalParty) return false;
-      if (item.excludeWeddingParty && inWeddingParty) return false;
-      // If gender is unknown, show everything. Otherwise only show items
-      // that match the guest's gender (or have no gender tag).
-      if (item.gender && gender && item.gender !== gender) return false;
-      return true;
-    }),
+    items: cat.items.filter((item) => isPackingItemVisible(item, visibilityCtx)),
   })).filter((cat) => cat.items.length > 0);
 
   useEffect(() => {
