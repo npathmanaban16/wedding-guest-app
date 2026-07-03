@@ -503,16 +503,16 @@ export default function AdminGuestGroupsScreen() {
     [guestGroups],
   );
 
-  // Width of the horizontally-scrollable region: 4 default columns
-  // (Wedding Party + Female/Male/Unknown) + one column per user group +
-  // the "New group" affordance at the far right. Applied to the body's
-  // inner vertical ScrollView so its rows aren't clipped to the outer
-  // horizontal ScrollView's viewport width — RN's default nested-
-  // ScrollView behavior does exactly that, which shows up visually as
-  // the body columns not extending as far as the header row.
+  // Width of the horizontally-scrollable region: 3 default columns
+  // (Female + Male + Wedding Party) + one column per user group +
+  // the "New group" affordance at the far right. Pinned on both the
+  // header row's ScrollView and the body's cells ScrollView so their
+  // horizontal extents match exactly (otherwise header + body would
+  // scroll independently and misalign).
+  const DEFAULT_COLUMN_COUNT = 3;
   const NEW_GROUP_HEADER_WIDTH = 80;
   const totalCellsWidth =
-    (4 + userColumns.length) * CELL_WIDTH + NEW_GROUP_HEADER_WIDTH;
+    (DEFAULT_COLUMN_COUNT + userColumns.length) * CELL_WIDTH + NEW_GROUP_HEADER_WIDTH;
 
   // Column counts are computed off the full unfiltered attendee list so
   // the badges reflect wedding-wide totals regardless of what the
@@ -520,7 +520,6 @@ export default function AdminGuestGroupsScreen() {
   const weddingPartyCount = sortedAttendees.filter((a) => a.isWeddingParty).length;
   const femaleCount = sortedAttendees.filter((a) => a.gender === 'female').length;
   const maleCount = sortedAttendees.filter((a) => a.gender === 'male').length;
-  const unknownCount = sortedAttendees.filter((a) => a.gender === null).length;
 
   // ─── Cell writes ────────────────────────────────────────────────────
   // Every cell write follows the same optimistic-then-rollback pattern:
@@ -705,12 +704,15 @@ export default function AdminGuestGroupsScreen() {
       const body =
         'Fill out this template with your full guest list, then upload it via ' +
         '"Import CSV" on the Guest Groups & Access screen.\n\n' +
-        'Columns:\n' +
+        'Every column after Name uses "Yes" or blank cells:\n' +
         '  • Name — full name (e.g. "Ada Lovelace")\n' +
+        '  • Female — "Yes" if the guest is female, blank otherwise\n' +
+        '  • Male — "Yes" if the guest is male, blank otherwise\n' +
         '  • Wedding Party — "Yes" for wedding-party members, blank otherwise\n' +
-        '  • Gender — "Female", "Male", or blank\n' +
         existingGroupsLine +
         '\n' +
+        'Female and Male are mutually exclusive — mark one or leave both blank ' +
+        'for "unknown".\n\n' +
         'To add a new group, insert a column with the group\'s name as the ' +
         'header (e.g. "Bridesmaids"). Any Yes in that column adds the guest ' +
         'to that group. Note: the group has to already exist in the app — ' +
@@ -1078,10 +1080,9 @@ export default function AdminGuestGroupsScreen() {
             bounces={false}
             contentContainerStyle={{ width: totalCellsWidth }}
           >
-            <ColumnHeader label="Wedding Party" sublabel="default" count={weddingPartyCount} />
             <ColumnHeader label="Female" sublabel="gender" count={femaleCount} />
             <ColumnHeader label="Male" sublabel="gender" count={maleCount} />
-            <ColumnHeader label="Unknown" sublabel="gender" count={unknownCount} />
+            <ColumnHeader label="Wedding Party" sublabel="default" count={weddingPartyCount} />
             {userColumns.map((group) => (
               <ColumnHeader
                 key={group.id}
@@ -1191,13 +1192,6 @@ export default function AdminGuestGroupsScreen() {
                       style={[styles.cellRow, { height: ROW_HEIGHT, width: totalCellsWidth }, idx % 2 === 1 && styles.rowAlt]}
                     >
                       <Cell
-                        on={a.isWeddingParty}
-                        tint={Colors.primary}
-                        onPress={() =>
-                          handleToggleWeddingParty(a.canonicalName, !a.isWeddingParty)
-                        }
-                      />
-                      <Cell
                         on={a.gender === 'female'}
                         tint={Colors.accent}
                         onPress={() =>
@@ -1218,13 +1212,10 @@ export default function AdminGuestGroupsScreen() {
                         }
                       />
                       <Cell
-                        on={a.gender === null}
-                        tint={Colors.textMuted}
+                        on={a.isWeddingParty}
+                        tint={Colors.primary}
                         onPress={() =>
-                          handleSetGender(
-                            a.canonicalName,
-                            a.gender === null ? 'female' : null,
-                          )
+                          handleToggleWeddingParty(a.canonicalName, !a.isWeddingParty)
                         }
                       />
                       {userColumns.map((group) => {

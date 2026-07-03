@@ -48,17 +48,16 @@ function boolToCell(value: boolean): string {
   return value ? 'Yes' : '';
 }
 
-function genderToCell(g: Gender | null): string {
-  if (g === 'female') return 'Female';
-  if (g === 'male') return 'Male';
-  return '';
-}
-
 export function buildGuestGroupsCsv(
   attendees: CsvAttendee[],
   userGroups: GuestGroup[],
 ): string {
-  const headers = ['Name', 'Wedding Party', 'Gender', ...userGroups.map((g) => g.name)];
+  // Column order mirrors the sheet UI: Female + Male (radio-style
+  // gender), Wedding Party, then user groups. No Unknown column —
+  // absence of Female AND Male encodes "gender unknown". Yes/blank
+  // cells across every non-name column so the file scans as a
+  // consistent spreadsheet grid.
+  const headers = ['Name', 'Female', 'Male', 'Wedding Party', ...userGroups.map((g) => g.name)];
   const membershipByGroup = new Map<string, Set<string>>();
   for (const g of userGroups) {
     membershipByGroup.set(g.id, new Set(g.members));
@@ -66,8 +65,9 @@ export function buildGuestGroupsCsv(
   const rows = attendees.map((a) => {
     const cells = [
       csvEscape(a.canonicalName),
+      csvEscape(boolToCell(a.gender === 'female')),
+      csvEscape(boolToCell(a.gender === 'male')),
       csvEscape(boolToCell(a.isWeddingParty)),
-      csvEscape(genderToCell(a.gender)),
       ...userGroups.map((g) =>
         csvEscape(boolToCell(membershipByGroup.get(g.id)?.has(a.canonicalName) ?? false)),
       ),
@@ -95,15 +95,20 @@ export function buildGuestGroupsCsv(
 export function buildGuestListTemplateCsv(
   userGroups: GuestGroup[] = [],
 ): string {
-  const headers = ['Name', 'Wedding Party', 'Gender', ...userGroups.map((g) => g.name)];
+  const headers = ['Name', 'Female', 'Male', 'Wedding Party', ...userGroups.map((g) => g.name)];
   const emptyGroupCells = userGroups.map(() => '');
-  // First example lives in the wedding party AND every user group so
-  // admins can see what a "Yes" looks like across every column.
+  // First example lives in every user group so admins can see what a
+  // "Yes" looks like across every column.
   const groupYesCells = userGroups.map(() => 'Yes');
   const exampleRows: string[][] = [
-    ['Ada Lovelace', 'Yes', 'Female', ...groupYesCells],
-    ['Alan Turing', '', 'Male', ...emptyGroupCells],
-    ['Grace Hopper', '', 'Female', ...emptyGroupCells],
+    // Female wedding-party member in every group.
+    ['Ada Lovelace', 'Yes', '', 'Yes', ...groupYesCells],
+    // Male, not in the wedding party.
+    ['Alan Turing', '', 'Yes', '', ...emptyGroupCells],
+    // Female, not in the wedding party. Third row leaves both gender
+    // cells blank to demonstrate the "unknown" state (neither
+    // selected).
+    ['Grace Hopper', '', '', '', ...emptyGroupCells],
   ];
   const body = exampleRows.map((r) => r.map(csvEscape).join(',')).join('\n');
   return `﻿${headers.map(csvEscape).join(',')}\n${body}\n`;
