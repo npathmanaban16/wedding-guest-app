@@ -313,7 +313,7 @@ export default function AdminPackingScreen() {
       ...prev,
       categories: [
         ...prev.categories,
-        { id, title: '', emoji: '📦', items: [], expanded: true },
+        { id, title: '', emoji: '', items: [], expanded: true },
       ],
     }));
   };
@@ -504,7 +504,6 @@ export default function AdminPackingScreen() {
               }
               activeOpacity={0.7}
             >
-              <Text style={styles.categoryEmoji}>{cat.emoji || '📦'}</Text>
               <View style={{ flex: 1 }}>
                 <Text style={styles.cardTitle}>{cat.title || 'Untitled category'}</Text>
                 <Text style={styles.cardSub}>
@@ -520,24 +519,12 @@ export default function AdminPackingScreen() {
 
             {cat.expanded && (
               <View style={styles.cardBody}>
-                <View style={styles.rowSplit}>
-                  <View style={{ flex: 3, marginRight: Spacing.sm }}>
-                    <LabeledInput
-                      label="Category title"
-                      value={cat.title}
-                      onChangeText={(v) => patchCategory(cIdx, { title: v })}
-                      placeholder="e.g. Outfits"
-                    />
-                  </View>
-                  <View style={{ width: 80 }}>
-                    <LabeledInput
-                      label="Emoji"
-                      value={cat.emoji}
-                      onChangeText={(v) => patchCategory(cIdx, { emoji: v })}
-                      placeholder="👗"
-                    />
-                  </View>
-                </View>
+                <LabeledInput
+                  label="Category title"
+                  value={cat.title}
+                  onChangeText={(v) => patchCategory(cIdx, { title: v })}
+                  placeholder="e.g. Outfits"
+                />
 
                 {/* Items */}
                 {cat.items.map((item, iIdx) => (
@@ -912,10 +899,6 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: Colors.divider,
   },
-
-  categoryEmoji: { fontSize: 22 },
-
-  rowSplit: { flexDirection: 'row' },
 
   fieldRow: { marginBottom: Spacing.md },
   fieldLabel: {
