@@ -157,6 +157,41 @@ export async function updateGuestProfile(
   if (error) throw error;
 }
 
+// Admin write path for the guest-groups spreadsheet — flips a single
+// guest's is_wedding_party flag. Sits alongside the group-membership
+// writes since the "Wedding Party" default column in the spreadsheet
+// syncs both dimensions so the legacy flag stays lined up with the
+// group (which schedule + packing already read through).
+export async function setGuestWeddingParty(
+  weddingId: string,
+  canonicalName: string,
+  value: boolean,
+): Promise<void> {
+  const { error } = await supabase
+    .from('guests')
+    .update({ is_wedding_party: value })
+    .eq('wedding_id', weddingId)
+    .eq('canonical_name', canonicalName);
+  if (error) throw error;
+}
+
+// Admin write path for the guest-groups spreadsheet — sets a single
+// guest's gender to male / female / null (unknown). The gender columns
+// are radio-style: clicking a cell either picks that value or clears
+// back to null if it was already selected.
+export async function setGuestGender(
+  weddingId: string,
+  canonicalName: string,
+  gender: Gender | null,
+): Promise<void> {
+  const { error } = await supabase
+    .from('guests')
+    .update({ gender })
+    .eq('wedding_id', weddingId)
+    .eq('canonical_name', canonicalName);
+  if (error) throw error;
+}
+
 export async function fetchAdmins(weddingId: string): Promise<AdminRow[]> {
   const { data, error } = await supabase
     .from('wedding_admins')

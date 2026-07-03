@@ -34,7 +34,7 @@ import { fetchWeddingSchedulePage } from '@/services/schedulePage';
 import { fetchGuestGroups, type GuestGroup } from '@/services/guestGroups';
 import { prefetchHeroImage } from '@/utils/heroImage';
 
-export type { AdminRole, Gender };
+export type { AdminRole, Gender, GuestGroup };
 
 // ─── Session: always available while WeddingProvider is mounted ──────────────
 // Tracks which wedding this install is attached to. Null on the SaaS variant
@@ -88,6 +88,10 @@ interface WeddingContextType {
   // writing to the DB so consumers re-render with the new value
   // without a round-trip.
   attendees: GuestRow[];
+  // Guest groups for this wedding with each group's member roster.
+  // Used by the admin guest-groups spreadsheet (rows=attendees,
+  // columns=groups) and by getUserGroupIds/visibility filters below.
+  guestGroups: GuestGroup[];
   // In-place patcher for the attendees array. Call this AFTER a
   // successful write via services/wedding.ts#updateGuestProfile so
   // the Attendees tab (and anything else reading from `attendees`)
@@ -101,6 +105,29 @@ interface WeddingContextType {
   // write via services/wedding.ts#updateWeddingSettings so feature-flag
   // toggles (e.g. attendees_enabled) apply app-wide without a refetch.
   patchWedding: (patch: Partial<WeddingRow>) => void;
+  // In-place patchers for the guest-groups admin spreadsheet. Called
+  // after a successful write so the whole app (packing filter, event
+  // visibility, gender-based item gating) reflects the change without
+  // a refetch. `patchAttendeeFlag` covers is_wedding_party and gender;
+  // `patchGuestGroupMembership` covers the many-to-many toggles.
+  patchAttendeeFlag: (
+    canonicalName: string,
+    patch: { is_wedding_party?: boolean; gender?: Gender | null },
+  ) => void;
+  patchGuestGroupMembership: (
+    groupId: string,
+    canonicalName: string,
+    include: boolean,
+  ) => void;
+  // Add/remove/update on the guest_groups list itself, called by the
+  // admin spreadsheet when a new column is created, renamed, or
+  // deleted. Membership updates use patchGuestGroupMembership above.
+  patchGuestGroups: (
+    action:
+      | { type: 'add'; group: GuestGroup }
+      | { type: 'rename'; groupId: string; name: string }
+      | { type: 'remove'; groupId: string }
+  ) => void;
   // In-place patcher for the destination guide's photo strip. Call this
   // AFTER a successful write via services/guide.ts#updateWeddingGuidePhotoStrip
   // so the Travel tab reflects the admin's changes without waiting on
@@ -450,6 +477,79 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
     setWedding((prev) => (prev ? { ...prev, ...patch } : prev));
   }, []);
 
+  // In-memory patcher for is_wedding_party / gender on a single guest.
+  // Called by the guest-groups spreadsheet after a successful write so
+  // downstream consumers (packing filter, event visibility) reflect
+  // the change immediately.
+  const patchAttendeeFlag = useCallback(
+    (canonicalName: string, patch: { is_wedding_party?: boolean; gender?: Gender | null }) => {
+      setGuests((prev) =>
+        prev.map((g) => {
+          if (g.canonical_name !== canonicalName) return g;
+          return {
+            ...g,
+            ...(patch.is_wedding_party !== undefined
+              ? { is_wedding_party: patch.is_wedding_party }
+              : {}),
+            ...(patch.gender !== undefined ? { gender: patch.gender } : {}),
+          };
+        }),
+      );
+    },
+    [],
+  );
+
+  // In-memory patcher for a single membership row on the guest_groups
+  // spreadsheet. Add or remove a canonical name from a group's members
+  // list without a refetch.
+  const patchGuestGroupMembership = useCallback(
+    (groupId: string, canonicalName: string, include: boolean) => {
+      setGuestGroups((prev) =>
+        prev.map((g) => {
+          if (g.id !== groupId) return g;
+          const inList = g.members.includes(canonicalName);
+          if (include && !inList) {
+            return {
+              ...g,
+              members: [...g.members, canonicalName].sort((a, b) => a.localeCompare(b)),
+            };
+          }
+          if (!include && inList) {
+            return { ...g, members: g.members.filter((n) => n !== canonicalName) };
+          }
+          return g;
+        }),
+      );
+    },
+    [],
+  );
+
+  // In-memory patcher for the guest_groups list itself. Add a newly
+  // created column, rename an existing one, or drop a deleted one so
+  // the spreadsheet reflects the change immediately.
+  const patchGuestGroups = useCallback(
+    (
+      action:
+        | { type: 'add'; group: GuestGroup }
+        | { type: 'rename'; groupId: string; name: string }
+        | { type: 'remove'; groupId: string }
+    ) => {
+      setGuestGroups((prev) => {
+        switch (action.type) {
+          case 'add':
+            return [...prev, action.group];
+          case 'rename':
+            return prev.map((g) =>
+              g.id === action.groupId ? { ...g, name: action.name } : g,
+            );
+          case 'remove':
+            return prev.filter((g) => g.id !== action.groupId);
+        }
+      });
+    },
+    [],
+  );
+
   // In-memory patcher for the destination guide's photo strip. No-op
   // when we're on the code-defined fallback (no DB row) — the strip
   // isn't editable from the admin UI in that case.
@@ -612,6 +712,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       hasEditableGuide: dbGuide !== null,
       patchPackingList,
       hasEditablePackingList: dbPackingList !== null,
+      guestGroups,
       isValidGuest,
       isValidGuestOrAdmin,
       getCanonicalName,
@@ -621,8 +722,11 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       getUserGroupIds,
       isAdmin,
       getAdminRole,
+      patchAttendeeFlag,
+      patchGuestGroupMembership,
+      patchGuestGroups,
     };
-  }, [weddingId, wedding, guests, admins, dbEvents, dbGuide, dbPackingList, dbSchedulePage, guestGroups, patchAttendeeProfile, patchWedding, patchGuidePhotoStrip, patchGuideContent, patchPackingList]);
+  }, [weddingId, wedding, guests, admins, dbEvents, dbGuide, dbPackingList, dbSchedulePage, guestGroups, patchAttendeeProfile, patchWedding, patchGuidePhotoStrip, patchGuideContent, patchPackingList, patchAttendeeFlag, patchGuestGroupMembership, patchGuestGroups]);
 
   // Initial session restore — brief blank while AsyncStorage reads on SaaS.
   if (!sessionReady) {

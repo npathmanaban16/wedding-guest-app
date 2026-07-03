@@ -189,3 +189,39 @@ export async function deleteGuestGroup(groupId: string): Promise<void> {
     .eq('id', groupId);
   if (error) throw error;
 }
+
+// Single-cell toggle for the spreadsheet admin view: add or remove one
+// guest from one group. Kept as its own service call (rather than
+// routing through updateGuestGroupMembers) so a single checkbox flip
+// is one network round-trip, not two.
+//
+// Idempotent: an add on an existing membership no-ops via ON CONFLICT,
+// a remove on a missing membership deletes zero rows.
+export async function toggleGuestGroupMember(
+  weddingId: string,
+  groupId: string,
+  canonicalName: string,
+  include: boolean,
+): Promise<void> {
+  if (include) {
+    const { error } = await supabase
+      .from('guest_group_members')
+      .upsert(
+        {
+          group_id: groupId,
+          wedding_id: weddingId,
+          guest_canonical_name: canonicalName,
+        },
+        { onConflict: 'group_id,guest_canonical_name' },
+      );
+    if (error) throw error;
+  } else {
+    const { error } = await supabase
+      .from('guest_group_members')
+      .delete()
+      .eq('group_id', groupId)
+      .eq('guest_canonical_name', canonicalName);
+    if (error) throw error;
+  }
+}
+

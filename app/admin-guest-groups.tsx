@@ -5,6 +5,7 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -22,96 +23,308 @@ import { haptic } from '@/utils/haptics';
 import {
   createGuestGroup,
   deleteGuestGroup,
-  fetchGuestGroups,
-  updateGuestGroupMembers,
+  toggleGuestGroupMember,
   updateGuestGroupMetadata,
   type GuestGroup,
 } from '@/services/guestGroups';
+import {
+  setGuestGender,
+  setGuestWeddingParty,
+  type Gender,
+} from '@/services/wedding';
 
-// Icon palette for the group picker. Keeping the list short + curated
-// (rather than exposing the full Ionicons set) keeps the picker scannable
-// and lets the admin see every option at once without scrolling. Adding
-// new suggestions is a matter of appending here.
-type IconName = React.ComponentProps<typeof Ionicons>['name'];
+// The guest-groups admin screen is a spreadsheet: attendees down the
+// rows, groups across the columns. Cells are checkboxes. Three column
+// families are shown in a fixed order:
+//
+//   1. Wedding Party (default, always present) — bound to
+//      guests.is_wedding_party AND the "Wedding Party" guest_group if
+//      one exists in the DB. Toggling writes to both so the flag and
+//      the group stay in sync (packing + event visibility rely on the
+//      group).
+//   2. Gender (default, radio-style: Female / Male / Unknown) — bound
+//      to guests.gender. Clicking a cell sets the value (or clears
+//      when the already-selected cell is tapped again).
+//   3. User-created groups (dynamic, ordered by sort_order) — bound
+//      to guest_group_members. Column header has rename / delete.
+//
+// New weddings without any user groups still see the four default
+// columns, which is what "everyone on the roster" gets to browse out
+// of the box; admins add columns as they need them.
 
-interface IconOption { key: string; icon: IconName; label: string }
-const ICON_OPTIONS: IconOption[] = [
-  { key: 'people',   icon: 'people',            label: 'Group' },
-  { key: 'heart',    icon: 'heart',             label: 'Wedding party' },
-  { key: 'flower',   icon: 'flower',            label: 'Bridesmaids' },
-  { key: 'shirt',    icon: 'shirt',             label: 'Groomsmen' },
-  { key: 'home',     icon: 'home',              label: 'Family' },
-  { key: 'school',   icon: 'school',            label: 'Friends' },
-  { key: 'briefcase',icon: 'briefcase',         label: 'Work' },
-  { key: 'star',     icon: 'star',              label: 'VIP' },
-  { key: 'globe',    icon: 'globe-outline',     label: 'Travel' },
-  { key: 'sparkles', icon: 'sparkles',          label: 'Special' },
-];
+const NAME_COLUMN_WIDTH = 180;
+const CELL_WIDTH = 56;
+const ROW_HEIGHT = 48;
 
-const DEFAULT_ICON: IconName = 'people';
+// Reserved names that a user-created group can't collide with. The
+// Wedding Party group we backfilled for N&N shows up as the default
+// column rather than a duplicate user column; the gender columns are
+// virtual (backed by guests.gender) and shouldn't be recreated as
+// groups either.
+const DEFAULT_COLUMN_NAMES = new Set(
+  ['wedding party', 'female', 'male', 'unknown', 'unknown gender'].map((s) => s.toLowerCase()),
+);
 
-function iconFromKey(key: string | null): IconName {
-  if (!key) return DEFAULT_ICON;
-  const match = ICON_OPTIONS.find((o) => o.key === key);
-  return match?.icon ?? DEFAULT_ICON;
+// The special guest_group backfilled by migration 043 that mirrors
+// is_wedding_party. Hidden from the user-columns list because it
+// surfaces as the default Wedding Party column instead — but its ID
+// is what the packing list + wedding_events reference, so cell toggles
+// keep its membership in sync.
+const WEDDING_PARTY_GROUP_NAME = 'Wedding Party';
+
+// Cell states — used by both the row renderer and the column-level
+// stats badge (X of Y selected).
+type CellState = 'on' | 'off';
+
+interface Attendee {
+  canonicalName: string;
+  isWeddingParty: boolean;
+  gender: Gender | null;
 }
 
-// Draft state used by both "create" (starts empty) and "edit" (pre-filled
-// from the group being edited). Kept as its own object so the modal open/
-// close/reset logic doesn't have to touch four separate useStates.
-interface GroupDraft {
-  name: string;
-  description: string;
-  iconKey: string;
-  members: Set<string>;
+interface AttendeeRowProps {
+  attendee: Attendee;
+  weddingPartyOn: boolean;
+  gender: Gender | null;
+  userGroups: GuestGroup[];
+  onToggleWeddingParty: (name: string, next: boolean) => void;
+  onSetGender: (name: string, next: Gender | null) => void;
+  onToggleGroup: (groupId: string, name: string, next: boolean) => void;
+  alt: boolean;
 }
 
-const EMPTY_DRAFT: GroupDraft = {
-  name: '',
-  description: '',
-  iconKey: 'people',
-  members: new Set(),
-};
+function AttendeeRow({
+  attendee,
+  weddingPartyOn,
+  gender,
+  userGroups,
+  onToggleWeddingParty,
+  onSetGender,
+  onToggleGroup,
+  alt,
+}: AttendeeRowProps) {
+  return (
+    <View style={[styles.row, alt && styles.rowAlt, { height: ROW_HEIGHT }]}>
+      <View style={[styles.nameCell, { width: NAME_COLUMN_WIDTH }]}>
+        <Text style={styles.nameText} numberOfLines={1}>
+          {attendee.canonicalName}
+        </Text>
+      </View>
 
-function draftFromGroup(group: GuestGroup): GroupDraft {
-  return {
-    name: group.name,
-    description: group.description ?? '',
-    iconKey: group.icon ?? 'people',
-    members: new Set(group.members),
-  };
+      <Cell
+        state={weddingPartyOn ? 'on' : 'off'}
+        tint={Colors.primary}
+        onPress={() => onToggleWeddingParty(attendee.canonicalName, !weddingPartyOn)}
+      />
+      <Cell
+        state={gender === 'female' ? 'on' : 'off'}
+        tint={Colors.accent}
+        onPress={() =>
+          onSetGender(attendee.canonicalName, gender === 'female' ? null : 'female')
+        }
+      />
+      <Cell
+        state={gender === 'male' ? 'on' : 'off'}
+        tint={Colors.accent}
+        onPress={() =>
+          onSetGender(attendee.canonicalName, gender === 'male' ? null : 'male')
+        }
+      />
+      <Cell
+        state={gender === null ? 'on' : 'off'}
+        tint={Colors.textMuted}
+        onPress={() =>
+          onSetGender(attendee.canonicalName, gender === null ? 'female' : null)
+        }
+      />
+
+      {userGroups.map((group) => {
+        const inGroup = group.members.includes(attendee.canonicalName);
+        return (
+          <Cell
+            key={group.id}
+            state={inGroup ? 'on' : 'off'}
+            tint={Colors.gold}
+            onPress={() => onToggleGroup(group.id, attendee.canonicalName, !inGroup)}
+          />
+        );
+      })}
+    </View>
+  );
+}
+
+interface CellProps {
+  state: CellState;
+  tint: string;
+  onPress: () => void;
+}
+
+function Cell({ state, tint, onPress }: CellProps) {
+  const on = state === 'on';
+  return (
+    <Pressable
+      onPress={() => {
+        haptic.selection();
+        onPress();
+      }}
+      style={({ pressed }) => [
+        styles.cell,
+        { width: CELL_WIDTH, height: ROW_HEIGHT },
+        pressed && styles.cellPressed,
+      ]}
+      hitSlop={2}
+    >
+      <View
+        style={[
+          styles.checkbox,
+          on && { backgroundColor: tint, borderColor: tint },
+        ]}
+      >
+        {on ? <Ionicons name="checkmark" size={14} color={Colors.white} /> : null}
+      </View>
+    </Pressable>
+  );
+}
+
+interface ColumnHeaderProps {
+  label: string;
+  sublabel?: string;
+  count?: number;
+  onEdit?: () => void;
+  onDelete?: () => void;
+}
+
+function ColumnHeader({ label, sublabel, count, onEdit, onDelete }: ColumnHeaderProps) {
+  return (
+    <View style={[styles.headerCell, { width: CELL_WIDTH }]}>
+      <Text style={styles.headerLabel} numberOfLines={2}>
+        {label}
+      </Text>
+      {sublabel ? <Text style={styles.headerSublabel}>{sublabel}</Text> : null}
+      {count !== undefined ? (
+        <Text style={styles.headerCount}>{count}</Text>
+      ) : null}
+      {onEdit || onDelete ? (
+        <View style={styles.headerActionRow}>
+          {onEdit ? (
+            <TouchableOpacity onPress={onEdit} hitSlop={6} style={styles.headerAction}>
+              <Ionicons name="create-outline" size={12} color={Colors.textMuted} />
+            </TouchableOpacity>
+          ) : null}
+          {onDelete ? (
+            <TouchableOpacity onPress={onDelete} hitSlop={6} style={styles.headerAction}>
+              <Ionicons name="close-circle-outline" size={13} color={Colors.textMuted} />
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+// Small modal for creating or renaming a user column. Reused for both
+// so the create + rename flows share styling.
+interface GroupNameModalProps {
+  visible: boolean;
+  title: string;
+  initialValue: string;
+  submitLabel: string;
+  saving: boolean;
+  onSubmit: (value: string) => void;
+  onClose: () => void;
+  collisionCheck: (value: string) => boolean;
+}
+
+function GroupNameModal({
+  visible,
+  title,
+  initialValue,
+  submitLabel,
+  saving,
+  onSubmit,
+  onClose,
+  collisionCheck,
+}: GroupNameModalProps) {
+  const [value, setValue] = useState(initialValue);
+  useEffect(() => {
+    if (visible) setValue(initialValue);
+  }, [visible, initialValue]);
+
+  const trimmed = value.trim();
+  const collision = trimmed.length > 0 && collisionCheck(trimmed);
+  const canSubmit = trimmed.length > 0 && !collision && !saving;
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <KeyboardAvoidingView
+        style={styles.modalBackdrop}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <View style={styles.modalCard}>
+          <Text style={styles.modalTitle}>{title}</Text>
+          <TextInput
+            style={styles.modalInput}
+            value={value}
+            onChangeText={setValue}
+            placeholder="e.g. Bridesmaids"
+            placeholderTextColor={Colors.textMuted}
+            autoCapitalize="words"
+            autoFocus
+            maxLength={60}
+            returnKeyType="done"
+            onSubmitEditing={() => canSubmit && onSubmit(trimmed)}
+          />
+          {collision ? (
+            <Text style={styles.modalError}>Another column already has this name.</Text>
+          ) : null}
+          <View style={styles.modalActions}>
+            <TouchableOpacity
+              onPress={onClose}
+              disabled={saving}
+              style={[styles.modalBtn, styles.modalBtnCancel]}
+            >
+              <Text style={styles.modalBtnCancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => canSubmit && onSubmit(trimmed)}
+              disabled={!canSubmit}
+              style={[
+                styles.modalBtn,
+                styles.modalBtnConfirm,
+                !canSubmit && styles.modalBtnConfirmDisabled,
+              ]}
+            >
+              {saving ? (
+                <ActivityIndicator size="small" color={Colors.white} />
+              ) : (
+                <Text style={styles.modalBtnConfirmText}>{submitLabel}</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
 }
 
 export default function AdminGuestGroupsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { guestName } = useAuth();
-  const { weddingId, isAdmin, attendees } = useWedding();
+  const {
+    weddingId,
+    isAdmin,
+    attendees,
+    guestGroups,
+    patchAttendeeFlag,
+    patchGuestGroupMembership,
+    patchGuestGroups,
+  } = useWedding();
 
-  const [groups, setGroups] = useState<GuestGroup[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [errored, setErrored] = useState(false);
-
-  const [editorOpen, setEditorOpen] = useState(false);
-  // Non-null when editing an existing group; null when creating a new one.
-  const [editingGroup, setEditingGroup] = useState<GuestGroup | null>(null);
-  const [draft, setDraft] = useState<GroupDraft>(EMPTY_DRAFT);
-  const [memberQuery, setMemberQuery] = useState('');
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setErrored(false);
-    fetchGuestGroups(weddingId)
-      .then((data) => { if (!cancelled) setGroups(data); })
-      .catch((err) => {
-        console.warn('[admin-guest-groups] load failed', err);
-        if (!cancelled) setErrored(true);
-      })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, [weddingId]);
+  const [creatingGroup, setCreatingGroup] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [renamingGroupId, setRenamingGroupId] = useState<string | null>(null);
+  const [renaming, setRenaming] = useState(false);
 
   if (!guestName || !isAdmin(guestName)) {
     return (
@@ -121,123 +334,138 @@ export default function AdminGuestGroupsScreen() {
     );
   }
 
-  // Guest picker — sorted alphabetically by canonical name and filtered by
-  // the search box in the modal. Couples appear in the list too so groups
-  // like "Family" that include the couple's parents can name the couple
-  // themselves if the admin wants.
-  const rosterSorted = useMemo(
-    () => [...attendees].sort((a, b) => a.canonical_name.localeCompare(b.canonical_name)),
+  const sortedAttendees: Attendee[] = useMemo(
+    () =>
+      [...attendees]
+        .filter((a) => !a.is_couple) // couples aren't guests to gate; leave them off the roster
+        .sort((a, b) => a.canonical_name.localeCompare(b.canonical_name))
+        .map((a) => ({
+          canonicalName: a.canonical_name,
+          isWeddingParty: a.is_wedding_party,
+          gender: a.gender,
+        })),
     [attendees],
   );
 
-  const filteredRoster = useMemo(() => {
-    const q = memberQuery.trim().toLowerCase();
-    if (!q) return rosterSorted;
-    return rosterSorted.filter((g) => g.canonical_name.toLowerCase().includes(q));
-  }, [rosterSorted, memberQuery]);
+  // The Wedding Party guest_group (if the backfill migration ran)
+  // isn't shown as its own user column — the default column above
+  // covers it. But its ID is what wedding_events + wedding_packing_lists
+  // reference, so cell toggles on the Wedding Party column keep its
+  // membership in sync with is_wedding_party.
+  const weddingPartyGroup = useMemo(
+    () => guestGroups.find((g) => g.name === WEDDING_PARTY_GROUP_NAME) ?? null,
+    [guestGroups],
+  );
 
-  const openCreate = () => {
-    haptic.light();
-    setEditingGroup(null);
-    setDraft(EMPTY_DRAFT);
-    setMemberQuery('');
-    setEditorOpen(true);
-  };
+  const userColumns = useMemo(
+    () =>
+      guestGroups
+        .filter((g) => g.name !== WEDDING_PARTY_GROUP_NAME)
+        .sort((a, b) => a.sort_order - b.sort_order),
+    [guestGroups],
+  );
 
-  const openEdit = (group: GuestGroup) => {
-    haptic.light();
-    setEditingGroup(group);
-    setDraft(draftFromGroup(group));
-    setMemberQuery('');
-    setEditorOpen(true);
-  };
+  const countBy = (predicate: (a: Attendee) => boolean): number =>
+    sortedAttendees.reduce((sum, a) => sum + (predicate(a) ? 1 : 0), 0);
 
-  const closeEditor = () => {
-    if (saving) return;
-    setEditorOpen(false);
-    setEditingGroup(null);
-    setDraft(EMPTY_DRAFT);
-    setMemberQuery('');
-  };
+  const weddingPartyCount = countBy((a) => a.isWeddingParty);
+  const femaleCount = countBy((a) => a.gender === 'female');
+  const maleCount = countBy((a) => a.gender === 'male');
+  const unknownCount = countBy((a) => a.gender === null);
 
-  const toggleMember = (canonicalName: string) => {
-    haptic.selection();
-    setDraft((prev) => {
-      const next = new Set(prev.members);
-      if (next.has(canonicalName)) next.delete(canonicalName);
-      else next.add(canonicalName);
-      return { ...prev, members: next };
-    });
-  };
+  // ─── Write handlers ────────────────────────────────────────────────
+  // Optimistic patch first for snappy UI, then write. On failure we roll
+  // back the in-memory state and surface an alert so the admin can retry.
 
-  const setDraftField = <K extends keyof GroupDraft>(key: K, value: GroupDraft[K]) => {
-    setDraft((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const nameCollides = useMemo(() => {
-    const trimmed = draft.name.trim().toLowerCase();
-    if (!trimmed) return false;
-    return groups.some(
-      (g) =>
-        g.name.toLowerCase() === trimmed &&
-        (!editingGroup || g.id !== editingGroup.id),
-    );
-  }, [groups, draft.name, editingGroup]);
-
-  const canSave = draft.name.trim().length > 0 && !nameCollides && !saving;
-
-  const handleSave = async () => {
-    if (!canSave) return;
-    haptic.medium();
-    setSaving(true);
-    const name = draft.name.trim();
-    const description = draft.description.trim() || null;
-    const icon = draft.iconKey || null;
-    const members = Array.from(draft.members);
+  const handleToggleWeddingParty = async (canonicalName: string, next: boolean) => {
+    patchAttendeeFlag(canonicalName, { is_wedding_party: next });
+    const groupId = weddingPartyGroup?.id;
+    if (groupId) patchGuestGroupMembership(groupId, canonicalName, next);
     try {
-      if (editingGroup) {
-        await Promise.all([
-          updateGuestGroupMetadata(editingGroup.id, { name, description, icon }),
-          updateGuestGroupMembers(editingGroup.id, weddingId, members),
-        ]);
-        setGroups((prev) =>
-          prev.map((g) =>
-            g.id === editingGroup.id
-              ? {
-                  ...g,
-                  name,
-                  description,
-                  icon,
-                  members: members.slice().sort((a, b) => a.localeCompare(b)),
-                }
-              : g,
-          ),
-        );
-      } else {
-        const created = await createGuestGroup(weddingId, {
-          name,
-          description,
-          icon,
-          members,
-        });
-        setGroups((prev) => [...prev, created]);
+      await setGuestWeddingParty(weddingId, canonicalName, next);
+      // Sync the backfilled group's membership so downstream visibility
+      // filters (which read via guest_group_members) match the flag.
+      if (groupId) {
+        await toggleGuestGroupMember(weddingId, groupId, canonicalName, next);
       }
-      setEditorOpen(false);
-      setEditingGroup(null);
-      setDraft(EMPTY_DRAFT);
-      setMemberQuery('');
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Unknown error';
-      Alert.alert('Could not save group', msg);
-    } finally {
-      setSaving(false);
+      patchAttendeeFlag(canonicalName, { is_wedding_party: !next });
+      if (groupId) patchGuestGroupMembership(groupId, canonicalName, !next);
+      Alert.alert('Could not update Wedding Party', errorMessage(e));
     }
   };
 
-  const handleDelete = (group: GuestGroup) => {
+  const handleSetGender = async (canonicalName: string, next: Gender | null) => {
+    const prev = sortedAttendees.find((a) => a.canonicalName === canonicalName)?.gender ?? null;
+    if (prev === next) return;
+    patchAttendeeFlag(canonicalName, { gender: next });
+    try {
+      await setGuestGender(weddingId, canonicalName, next);
+    } catch (e) {
+      patchAttendeeFlag(canonicalName, { gender: prev });
+      Alert.alert('Could not update gender', errorMessage(e));
+    }
+  };
+
+  const handleToggleGroup = async (
+    groupId: string,
+    canonicalName: string,
+    next: boolean,
+  ) => {
+    patchGuestGroupMembership(groupId, canonicalName, next);
+    try {
+      await toggleGuestGroupMember(weddingId, groupId, canonicalName, next);
+    } catch (e) {
+      patchGuestGroupMembership(groupId, canonicalName, !next);
+      Alert.alert('Could not update group', errorMessage(e));
+    }
+  };
+
+  // ─── Column-level actions ──────────────────────────────────────────
+
+  const handleCreateGroup = async (name: string) => {
+    setCreating(true);
+    try {
+      const created = await createGuestGroup(weddingId, {
+        name,
+        description: null,
+        icon: null,
+        members: [],
+      });
+      patchGuestGroups({ type: 'add', group: created });
+      setCreatingGroup(false);
+    } catch (e) {
+      Alert.alert('Could not create group', errorMessage(e));
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleRenameGroup = async (groupId: string, name: string) => {
+    const group = guestGroups.find((g) => g.id === groupId);
+    if (!group) return;
+    setRenaming(true);
+    // Optimistic
+    patchGuestGroups({ type: 'rename', groupId, name });
+    try {
+      await updateGuestGroupMetadata(groupId, {
+        name,
+        description: group.description,
+        icon: group.icon,
+      });
+      setRenamingGroupId(null);
+    } catch (e) {
+      patchGuestGroups({ type: 'rename', groupId, name: group.name });
+      Alert.alert('Could not rename group', errorMessage(e));
+    } finally {
+      setRenaming(false);
+    }
+  };
+
+  const handleDeleteGroup = (group: GuestGroup) => {
     Alert.alert(
       `Delete "${group.name}"?`,
-      'This removes the group and its member list. Guests themselves are not affected.',
+      `This removes the column and its ${group.members.length} membership${group.members.length === 1 ? '' : 's'}. Guests themselves are not affected.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -245,12 +473,13 @@ export default function AdminGuestGroupsScreen() {
           style: 'destructive',
           onPress: async () => {
             haptic.warning();
+            // Optimistic remove; put it back if the delete fails.
+            patchGuestGroups({ type: 'remove', groupId: group.id });
             try {
               await deleteGuestGroup(group.id);
-              setGroups((prev) => prev.filter((g) => g.id !== group.id));
             } catch (e) {
-              const msg = e instanceof Error ? e.message : 'Unknown error';
-              Alert.alert('Could not delete group', msg);
+              patchGuestGroups({ type: 'add', group });
+              Alert.alert('Could not delete group', errorMessage(e));
             }
           },
         },
@@ -258,343 +487,163 @@ export default function AdminGuestGroupsScreen() {
     );
   };
 
+  // Collision check used by the name modal — excludes the current
+  // group when renaming so a no-op rename doesn't collide with itself.
+  const collisionCheck = (excludingId: string | null) => (candidate: string) => {
+    const lower = candidate.toLowerCase();
+    if (DEFAULT_COLUMN_NAMES.has(lower)) return true;
+    return guestGroups.some(
+      (g) => g.name.toLowerCase() === lower && g.id !== excludingId,
+    );
+  };
+
+  const renamingGroup = renamingGroupId
+    ? guestGroups.find((g) => g.id === renamingGroupId) ?? null
+    : null;
+
   return (
     <View style={styles.root}>
       <ScrollView
         style={styles.container}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.md }]}
+        contentContainerStyle={[styles.headerContent, { paddingTop: insets.top + Spacing.md }]}
       >
-        <View style={styles.header}>
+        <View style={styles.pageHeader}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Ionicons name="chevron-back" size={20} color={Colors.textMuted} />
             <Text style={styles.backText}>Back</Text>
           </TouchableOpacity>
           <Text style={styles.pageTitle}>Guest Groups</Text>
           <Text style={styles.pageSubtitle}>
-            Organize guests into groups like wedding party, family, or bridesmaids. Use them for event visibility and the packing list.
+            Rows are attendees, columns are groups. Tap a cell to add or remove that guest from the group.
+            Wedding Party + gender columns are built-in; add your own by tapping New group.
           </Text>
         </View>
-
-        <TouchableOpacity
-          style={styles.newGroupButton}
-          onPress={openCreate}
-          activeOpacity={0.85}
-        >
-          <Ionicons name="add-circle" size={18} color={Colors.white} />
-          <Text style={styles.newGroupButtonText}>New group</Text>
-        </TouchableOpacity>
-
-        {loading ? (
-          <ActivityIndicator color={Colors.primary} style={styles.loader} />
-        ) : errored ? (
-          <View style={styles.emptyCard}>
-            <Ionicons name="cloud-offline-outline" size={28} color={Colors.textMuted} />
-            <Text style={styles.emptyTitle}>Couldn't load groups</Text>
-            <Text style={styles.emptyBody}>Please try again in a moment.</Text>
-          </View>
-        ) : groups.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Ionicons name="people-outline" size={28} color={Colors.textMuted} />
-            <Text style={styles.emptyTitle}>No groups yet</Text>
-            <Text style={styles.emptyBody}>
-              Create your first group to start organizing guests. Try "Bridesmaids" or "Family".
-            </Text>
-          </View>
-        ) : (
-          groups.map((group) => (
-            <TouchableOpacity
-              key={group.id}
-              style={styles.groupCard}
-              onPress={() => openEdit(group)}
-              activeOpacity={0.85}
-            >
-              <View style={styles.groupHeader}>
-                <View style={styles.groupIcon}>
-                  <Ionicons
-                    name={iconFromKey(group.icon)}
-                    size={18}
-                    color={Colors.primary}
-                  />
-                </View>
-                <View style={styles.groupHeaderText}>
-                  <Text style={styles.groupName}>{group.name}</Text>
-                  <Text style={styles.groupMeta}>
-                    {group.members.length} {group.members.length === 1 ? 'member' : 'members'}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  onPress={(e) => {
-                    // Prevent the card's onPress (which opens the editor) so
-                    // tapping delete never accidentally puts the admin into
-                    // an edit modal for a group they meant to remove.
-                    e.stopPropagation();
-                    handleDelete(group);
-                  }}
-                  hitSlop={8}
-                  style={styles.deleteButton}
-                >
-                  <Ionicons name="trash-outline" size={16} color={Colors.textMuted} />
-                </TouchableOpacity>
-              </View>
-
-              {group.description ? (
-                <Text style={styles.groupDescription}>{group.description}</Text>
-              ) : null}
-
-              {group.members.length > 0 ? (
-                <View style={styles.memberChips}>
-                  {group.members.slice(0, 8).map((name) => (
-                    <View key={name} style={styles.memberChip}>
-                      <Text style={styles.memberChipText}>{name}</Text>
-                    </View>
-                  ))}
-                  {group.members.length > 8 ? (
-                    <View style={[styles.memberChip, styles.memberChipMore]}>
-                      <Text style={styles.memberChipText}>
-                        +{group.members.length - 8} more
-                      </Text>
-                    </View>
-                  ) : null}
-                </View>
-              ) : (
-                <Text style={styles.groupEmpty}>No members yet — tap to add some.</Text>
-              )}
-            </TouchableOpacity>
-          ))
-        )}
-
-        <View style={{ height: insets.bottom + Spacing.xxl }} />
       </ScrollView>
 
-      <GroupEditorModal
-        visible={editorOpen}
-        editingGroup={editingGroup}
-        draft={draft}
-        memberQuery={memberQuery}
-        onMemberQueryChange={setMemberQuery}
-        filteredRoster={filteredRoster}
-        onSetField={setDraftField}
-        onToggleMember={toggleMember}
-        onClose={closeEditor}
-        onSave={handleSave}
-        canSave={canSave}
-        saving={saving}
-        nameCollides={nameCollides}
+      {/* Spreadsheet — two nested ScrollViews so the header + name column
+          stay put while the cells scroll independently. */}
+      <View style={styles.sheet}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator
+          stickyHeaderIndices={undefined}
+          contentContainerStyle={styles.sheetHorizontalContent}
+          bounces={false}
+        >
+          <View>
+            {/* Header row */}
+            <View style={styles.headerRow}>
+              <View style={[styles.nameHeaderCell, { width: NAME_COLUMN_WIDTH }]}>
+                <Text style={styles.nameHeaderText}>
+                  {sortedAttendees.length} attendee{sortedAttendees.length === 1 ? '' : 's'}
+                </Text>
+              </View>
+
+              <ColumnHeader
+                label="Wedding Party"
+                sublabel="default"
+                count={weddingPartyCount}
+              />
+              <ColumnHeader label="Female" sublabel="gender" count={femaleCount} />
+              <ColumnHeader label="Male" sublabel="gender" count={maleCount} />
+              <ColumnHeader label="Unknown" sublabel="gender" count={unknownCount} />
+
+              {userColumns.map((group) => (
+                <ColumnHeader
+                  key={group.id}
+                  label={group.name}
+                  count={group.members.length}
+                  onEdit={() => setRenamingGroupId(group.id)}
+                  onDelete={() => handleDeleteGroup(group)}
+                />
+              ))}
+
+              <TouchableOpacity
+                style={styles.addColumnBtn}
+                onPress={() => {
+                  haptic.light();
+                  setCreatingGroup(true);
+                }}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="add" size={18} color={Colors.primary} />
+                <Text style={styles.addColumnBtnText}>New group</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Body rows */}
+            <ScrollView
+              style={styles.bodyScroll}
+              contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xxl }}
+              nestedScrollEnabled
+            >
+              {sortedAttendees.length === 0 ? (
+                <View style={styles.emptyRow}>
+                  <Text style={styles.emptyText}>
+                    No attendees yet — add guests to this wedding first.
+                  </Text>
+                </View>
+              ) : (
+                sortedAttendees.map((a, idx) => (
+                  <AttendeeRow
+                    key={a.canonicalName}
+                    attendee={a}
+                    weddingPartyOn={a.isWeddingParty}
+                    gender={a.gender}
+                    userGroups={userColumns}
+                    onToggleWeddingParty={handleToggleWeddingParty}
+                    onSetGender={handleSetGender}
+                    onToggleGroup={handleToggleGroup}
+                    alt={idx % 2 === 1}
+                  />
+                ))
+              )}
+            </ScrollView>
+          </View>
+        </ScrollView>
+      </View>
+
+      <GroupNameModal
+        visible={creatingGroup}
+        title="New group"
+        initialValue=""
+        submitLabel="Create"
+        saving={creating}
+        onSubmit={handleCreateGroup}
+        onClose={() => (creating ? undefined : setCreatingGroup(false))}
+        collisionCheck={collisionCheck(null)}
+      />
+      <GroupNameModal
+        visible={!!renamingGroup}
+        title="Rename group"
+        initialValue={renamingGroup?.name ?? ''}
+        submitLabel="Save"
+        saving={renaming}
+        onSubmit={(v) => renamingGroup && handleRenameGroup(renamingGroup.id, v)}
+        onClose={() => (renaming ? undefined : setRenamingGroupId(null))}
+        collisionCheck={collisionCheck(renamingGroupId)}
       />
     </View>
   );
 }
 
-interface EditorProps {
-  visible: boolean;
-  editingGroup: GuestGroup | null;
-  draft: GroupDraft;
-  memberQuery: string;
-  onMemberQueryChange: (v: string) => void;
-  filteredRoster: { canonical_name: string }[];
-  onSetField: <K extends keyof GroupDraft>(key: K, value: GroupDraft[K]) => void;
-  onToggleMember: (canonicalName: string) => void;
-  onClose: () => void;
-  onSave: () => void;
-  canSave: boolean;
-  saving: boolean;
-  nameCollides: boolean;
-}
-
-function GroupEditorModal({
-  visible,
-  editingGroup,
-  draft,
-  memberQuery,
-  onMemberQueryChange,
-  filteredRoster,
-  onSetField,
-  onToggleMember,
-  onClose,
-  onSave,
-  canSave,
-  saving,
-  nameCollides,
-}: EditorProps) {
-  const insets = useSafeAreaInsets();
-  const memberCount = draft.members.size;
-
-  return (
-    <Modal
-      visible={visible}
-      transparent={false}
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <KeyboardAvoidingView
-        style={styles.editorRoot}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <View style={[styles.editorHeader, { paddingTop: insets.top + Spacing.sm }]}>
-          <TouchableOpacity onPress={onClose} disabled={saving} hitSlop={8}>
-            <Text style={[styles.editorCancel, saving && styles.editorCancelDisabled]}>
-              Cancel
-            </Text>
-          </TouchableOpacity>
-          <Text style={styles.editorTitle}>
-            {editingGroup ? 'Edit group' : 'New group'}
-          </Text>
-          <TouchableOpacity
-            onPress={onSave}
-            disabled={!canSave}
-            hitSlop={8}
-          >
-            {saving ? (
-              <ActivityIndicator color={Colors.primary} size="small" />
-            ) : (
-              <Text style={[styles.editorSave, !canSave && styles.editorSaveDisabled]}>
-                Save
-              </Text>
-            )}
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView
-          style={styles.editorScroll}
-          contentContainerStyle={styles.editorContent}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Name */}
-          <View style={styles.editorCard}>
-            <Text style={styles.editorLabel}>Group name</Text>
-            <TextInput
-              style={styles.editorInput}
-              value={draft.name}
-              onChangeText={(t) => onSetField('name', t)}
-              placeholder="e.g. Bridesmaids"
-              placeholderTextColor={Colors.textMuted}
-              autoCapitalize="words"
-              maxLength={60}
-              returnKeyType="next"
-            />
-            {nameCollides ? (
-              <Text style={styles.editorError}>
-                Another group already has this name.
-              </Text>
-            ) : null}
-          </View>
-
-          {/* Description */}
-          <View style={styles.editorCard}>
-            <Text style={styles.editorLabel}>Description (optional)</Text>
-            <TextInput
-              style={[styles.editorInput, styles.editorInputMulti]}
-              value={draft.description}
-              onChangeText={(t) => onSetField('description', t)}
-              placeholder="What is this group for?"
-              placeholderTextColor={Colors.textMuted}
-              multiline
-              maxLength={280}
-              textAlignVertical="top"
-            />
-          </View>
-
-          {/* Icon */}
-          <View style={styles.editorCard}>
-            <Text style={styles.editorLabel}>Icon</Text>
-            <View style={styles.iconGrid}>
-              {ICON_OPTIONS.map((opt) => {
-                const active = draft.iconKey === opt.key;
-                return (
-                  <TouchableOpacity
-                    key={opt.key}
-                    style={[styles.iconOption, active && styles.iconOptionActive]}
-                    onPress={() => {
-                      haptic.selection();
-                      onSetField('iconKey', opt.key);
-                    }}
-                    activeOpacity={0.85}
-                  >
-                    <Ionicons
-                      name={opt.icon}
-                      size={18}
-                      color={active ? Colors.white : Colors.primary}
-                    />
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* Members */}
-          <View style={styles.editorCard}>
-            <View style={styles.membersHeader}>
-              <Text style={styles.editorLabel}>Members</Text>
-              <Text style={styles.memberCount}>
-                {memberCount} selected
-              </Text>
-            </View>
-
-            <View style={styles.searchRow}>
-              <Ionicons name="search" size={16} color={Colors.textMuted} />
-              <TextInput
-                style={styles.searchInput}
-                value={memberQuery}
-                onChangeText={onMemberQueryChange}
-                placeholder="Search guests"
-                placeholderTextColor={Colors.textMuted}
-                autoCapitalize="words"
-                autoCorrect={false}
-                returnKeyType="search"
-                clearButtonMode="while-editing"
-              />
-            </View>
-
-            <View style={styles.rosterList}>
-              {filteredRoster.length === 0 ? (
-                <Text style={styles.rosterEmpty}>
-                  {memberQuery
-                    ? 'No guests match this search.'
-                    : 'No guests in this wedding yet.'}
-                </Text>
-              ) : (
-                filteredRoster.map((g) => {
-                  const checked = draft.members.has(g.canonical_name);
-                  return (
-                    <TouchableOpacity
-                      key={g.canonical_name}
-                      style={styles.rosterRow}
-                      onPress={() => onToggleMember(g.canonical_name)}
-                      activeOpacity={0.7}
-                    >
-                      <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
-                        {checked ? (
-                          <Ionicons name="checkmark" size={13} color={Colors.white} />
-                        ) : null}
-                      </View>
-                      <Text style={styles.rosterName}>{g.canonical_name}</Text>
-                    </TouchableOpacity>
-                  );
-                })
-              )}
-            </View>
-          </View>
-
-          <View style={{ height: insets.bottom + Spacing.xxl }} />
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </Modal>
-  );
+function errorMessage(e: unknown): string {
+  return e instanceof Error ? e.message : 'Unknown error';
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
-  container: { flex: 1 },
-  content: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.xxl },
+  container: { maxHeight: 200 },
+  headerContent: { paddingHorizontal: Spacing.lg },
 
   guard: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   guardText: { fontFamily: Fonts.sans, color: Colors.textMuted },
 
-  header: { marginBottom: Spacing.lg },
+  pageHeader: { marginBottom: Spacing.md },
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   backText: {
     fontFamily: Fonts.sans,
@@ -603,303 +652,218 @@ const styles = StyleSheet.create({
     marginLeft: 2,
   },
   pageTitle: {
-    fontSize: 30,
+    fontSize: 26,
     fontFamily: Fonts.serifSemiBold,
     color: Colors.textPrimary,
     marginBottom: Spacing.xs,
     letterSpacing: 0.3,
   },
   pageSubtitle: {
-    fontSize: 13,
+    fontSize: 12,
     fontFamily: Fonts.sans,
     color: Colors.textSecondary,
-    lineHeight: 19,
+    lineHeight: 18,
   },
 
-  newGroupButton: {
+  sheet: {
+    flex: 1,
+    backgroundColor: Colors.white,
+    borderTopWidth: 0.5,
+    borderTopColor: Colors.border,
+  },
+  sheetHorizontalContent: { flexGrow: 1 },
+
+  headerRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: Spacing.xs,
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.surfaceWarm,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+    minHeight: 88,
+  },
+  nameHeaderCell: {
+    justifyContent: 'flex-end',
     paddingHorizontal: Spacing.md,
-    paddingVertical: 10,
-    borderRadius: Radius.full,
-    marginBottom: Spacing.lg,
+    paddingBottom: Spacing.sm,
+    borderRightWidth: 0.5,
+    borderRightColor: Colors.border,
+    backgroundColor: Colors.surfaceWarm,
   },
-  newGroupButtonText: {
+  nameHeaderText: {
     fontFamily: Fonts.sansMedium,
-    fontSize: 14,
-    color: Colors.white,
-    letterSpacing: 0.2,
-  },
-
-  loader: { marginTop: Spacing.xl },
-
-  emptyCard: {
-    backgroundColor: Colors.white,
-    borderRadius: Radius.lg,
-    padding: Spacing.xl,
-    borderWidth: 0.5,
-    borderColor: Colors.border,
-    alignItems: 'center',
-    ...Shadow.small,
-  },
-  emptyTitle: {
-    fontFamily: Fonts.serifSemiBold,
-    fontSize: 16,
-    color: Colors.textPrimary,
-    marginTop: Spacing.sm,
-    marginBottom: Spacing.xs,
-  },
-  emptyBody: {
-    fontFamily: Fonts.sans,
-    fontSize: 13,
+    fontSize: 11,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
     color: Colors.textMuted,
-    textAlign: 'center',
-    lineHeight: 19,
   },
-
-  groupCard: {
-    backgroundColor: Colors.white,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    marginBottom: Spacing.md,
-    borderWidth: 0.5,
-    borderColor: Colors.border,
-    ...Shadow.small,
-  },
-  groupHeader: {
-    flexDirection: 'row',
+  headerCell: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: 4,
     alignItems: 'center',
-    marginBottom: Spacing.sm,
+    justifyContent: 'flex-end',
+    borderRightWidth: 0.5,
+    borderRightColor: Colors.border,
   },
-  groupIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.accentLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing.sm,
-    flexShrink: 0,
-  },
-  groupHeaderText: { flex: 1 },
-  groupName: {
-    fontFamily: Fonts.serifSemiBold,
-    fontSize: 17,
+  headerLabel: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 11,
     color: Colors.textPrimary,
-    letterSpacing: 0.1,
+    textAlign: 'center',
+    lineHeight: 14,
   },
-  groupMeta: {
+  headerSublabel: {
     fontFamily: Fonts.sans,
-    fontSize: 12,
+    fontSize: 9,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
     color: Colors.textMuted,
     marginTop: 2,
   },
-  deleteButton: {
-    padding: 6,
-  },
-  groupDescription: {
-    fontFamily: Fonts.sans,
-    fontSize: 13,
-    color: Colors.textSecondary,
-    lineHeight: 19,
-    marginBottom: Spacing.sm,
-  },
-  memberChips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.xs,
-  },
-  memberChip: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.surfaceWarm,
-    borderWidth: 0.5,
-    borderColor: Colors.border,
-  },
-  memberChipMore: {
-    backgroundColor: Colors.accentLight,
-  },
-  memberChipText: {
+  headerCount: {
     fontFamily: Fonts.sansMedium,
     fontSize: 11,
-    color: Colors.textSecondary,
-    letterSpacing: 0.1,
-  },
-  groupEmpty: {
-    fontFamily: Fonts.sans,
-    fontSize: 12,
-    fontStyle: 'italic',
-    color: Colors.textMuted,
-  },
-
-  editorRoot: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  editorHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.divider,
-    backgroundColor: Colors.white,
-  },
-  editorCancel: {
-    fontFamily: Fonts.sans,
-    fontSize: 15,
-    color: Colors.textMuted,
-  },
-  editorCancelDisabled: { opacity: 0.5 },
-  editorTitle: {
-    fontFamily: Fonts.serifSemiBold,
-    fontSize: 18,
-    color: Colors.textPrimary,
-    letterSpacing: 0.2,
-  },
-  editorSave: {
-    fontFamily: Fonts.sansMedium,
-    fontSize: 15,
     color: Colors.primary,
+    marginTop: 4,
   },
-  editorSaveDisabled: { opacity: 0.45 },
-
-  editorScroll: { flex: 1 },
-  editorContent: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-  },
-  editorCard: {
-    backgroundColor: Colors.white,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    marginBottom: Spacing.md,
-    borderWidth: 0.5,
-    borderColor: Colors.border,
-    ...Shadow.small,
-  },
-  editorLabel: {
-    fontFamily: Fonts.sansMedium,
-    fontSize: 10,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    color: Colors.textMuted,
-    marginBottom: Spacing.sm,
-  },
-  editorInput: {
-    fontFamily: Fonts.sans,
-    fontSize: 15,
-    color: Colors.textPrimary,
-    paddingVertical: Platform.OS === 'ios' ? 10 : 6,
-    paddingHorizontal: Spacing.md,
-    backgroundColor: Colors.background,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  editorInputMulti: {
-    minHeight: 72,
-    paddingTop: 10,
-  },
-  editorError: {
-    fontFamily: Fonts.sans,
-    fontSize: 12,
-    color: Colors.error,
-    marginTop: Spacing.xs,
-  },
-
-  iconGrid: {
+  headerActionRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
+    gap: 4,
+    marginTop: 4,
   },
-  iconOption: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.background,
+  headerAction: {
+    padding: 2,
+  },
+
+  addColumnBtn: {
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
+    width: 80,
+    paddingHorizontal: Spacing.sm,
+    gap: 2,
+    borderLeftWidth: 0.5,
+    borderLeftColor: Colors.border,
   },
-  iconOptionActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+  addColumnBtnText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 10,
+    letterSpacing: 0.4,
+    color: Colors.primary,
+    textAlign: 'center',
   },
 
-  membersHeader: {
+  bodyScroll: { flex: 1 },
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.sm,
-  },
-  memberCount: {
-    fontFamily: Fonts.sansMedium,
-    fontSize: 12,
-    color: Colors.primary,
-  },
-  searchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Platform.OS === 'ios' ? 10 : 4,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.background,
-    marginBottom: Spacing.sm,
-  },
-  searchInput: {
-    flex: 1,
-    fontFamily: Fonts.sans,
-    fontSize: 14,
-    color: Colors.textPrimary,
-    paddingVertical: 0,
-  },
-  rosterList: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.divider,
-  },
-  rosterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.divider,
   },
-  rosterName: {
-    flex: 1,
-    fontFamily: Fonts.sans,
-    fontSize: 14,
-    color: Colors.textPrimary,
-    marginLeft: Spacing.sm,
+  rowAlt: {
+    backgroundColor: Colors.surfaceWarm,
   },
-  rosterEmpty: {
-    fontFamily: Fonts.sans,
+  nameCell: {
+    paddingHorizontal: Spacing.md,
+    justifyContent: 'center',
+    borderRightWidth: 0.5,
+    borderRightColor: Colors.border,
+  },
+  nameText: {
+    fontFamily: Fonts.sansMedium,
     fontSize: 13,
-    color: Colors.textMuted,
-    fontStyle: 'italic',
-    paddingVertical: Spacing.md,
-    textAlign: 'center',
+    color: Colors.textPrimary,
   },
+  cell: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRightWidth: 0.5,
+    borderRightColor: Colors.border,
+  },
+  cellPressed: { opacity: 0.5 },
   checkbox: {
-    width: 21,
-    height: 21,
+    width: 22,
+    height: 22,
     borderRadius: 5,
     borderWidth: 1.5,
     borderColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: Colors.white,
   },
-  checkboxChecked: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+
+  emptyRow: {
+    padding: Spacing.xl,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontFamily: Fonts.sans,
+    fontSize: 13,
+    color: Colors.textMuted,
+    textAlign: 'center',
+  },
+
+  // ─── Modal ───────────────────────────────────────────────────────
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(28, 24, 16, 0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.lg,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: Colors.white,
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
+    ...Shadow.medium,
+  },
+  modalTitle: {
+    fontFamily: Fonts.serifSemiBold,
+    fontSize: 20,
+    color: Colors.textPrimary,
+    marginBottom: Spacing.sm,
+  },
+  modalInput: {
+    fontFamily: Fonts.sans,
+    fontSize: 15,
+    color: Colors.textPrimary,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 12,
+    backgroundColor: Colors.background,
+  },
+  modalError: {
+    fontFamily: Fonts.sans,
+    fontSize: 12,
+    color: Colors.error,
+    marginTop: Spacing.xs,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: Spacing.sm,
+    marginTop: Spacing.lg,
+  },
+  modalBtn: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: 10,
+    borderRadius: Radius.full,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  modalBtnCancel: { backgroundColor: 'transparent' },
+  modalBtnCancelText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 14,
+    color: Colors.textMuted,
+  },
+  modalBtnConfirm: { backgroundColor: Colors.primary },
+  modalBtnConfirmDisabled: { opacity: 0.45 },
+  modalBtnConfirmText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 14,
+    color: Colors.white,
   },
 });
