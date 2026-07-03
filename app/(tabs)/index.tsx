@@ -21,7 +21,6 @@ import { useWedding } from '@/context/WeddingContext';
 import { supabase } from '@/lib/supabase';
 import { Colors, Fonts, Typography, Spacing, Radius, Shadow } from '@/constants/theme';
 import { WEDDING, type WeddingEvent } from '@/constants/weddingData';
-import { transformHeroImageUrl } from '@/utils/heroImage';
 
 // Pick the event to feature on the home screen at the current moment.
 //   - Skips events the guest can't see (wedding-party-only when they're not).
@@ -177,16 +176,9 @@ export default function HomeScreen() {
     >
       {/* Hero header — prefers the per-wedding hero_image_url from the
           `weddings` table when set, falls back to the bundled image so
-          tenants with no custom image still render something. The URL
-          is routed through Supabase's image-transform endpoint (see
-          utils/heroImage.ts) so a raw phone-photo upload doesn't ship
-          a 5 MB JPEG to every guest's home screen. */}
+          tenants with no custom image still render something. */}
       <ImageBackground
-        source={
-          wedding.hero_image_url
-            ? { uri: transformHeroImageUrl(wedding.hero_image_url) }
-            : WEDDING.heroImage
-        }
+        source={wedding.hero_image_url ? { uri: wedding.hero_image_url } : WEDDING.heroImage}
         style={[styles.heroImage, { paddingTop: insets.top + Spacing.xl }]}
         resizeMode="cover"
       >
