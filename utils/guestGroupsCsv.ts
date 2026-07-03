@@ -82,18 +82,28 @@ export function buildGuestGroupsCsv(
   return `﻿${headers.map(csvEscape).join(',')}\n${rows.join('\n')}\n`;
 }
 
-// Blank guest-list template for couples doing an initial upload. Two
-// example rows demonstrate the format (Name / Wedding Party / Gender
-// values); admins replace them with real names. Kept intentionally
-// simple — the built-in Wedding Party + Gender columns are the only
-// dimensions the initial upload needs to set; custom groups can be
-// added via the sheet after the first import.
-export function buildGuestListTemplateCsv(): string {
-  const headers = ['Name', 'Wedding Party', 'Gender'];
-  const exampleRows = [
-    ['Ada Lovelace', 'Yes', 'Female'],
-    ['Alan Turing', '', 'Male'],
-    ['Grace Hopper', '', 'Female'],
+// Blank guest-list template for couples doing an initial upload. The
+// three example rows demonstrate the built-in column formats
+// (Wedding Party = Yes/blank; Gender = Female/Male/blank) plus every
+// custom group that already exists in the wedding so the admin can
+// pre-populate memberships in the same file. Admins replace the
+// example rows with real names.
+//
+// Passing an empty userGroups array is safe — the CSV falls back to
+// the three built-in columns, which matches the pre-userGroups
+// template shape.
+export function buildGuestListTemplateCsv(
+  userGroups: GuestGroup[] = [],
+): string {
+  const headers = ['Name', 'Wedding Party', 'Gender', ...userGroups.map((g) => g.name)];
+  const emptyGroupCells = userGroups.map(() => '');
+  // First example lives in the wedding party AND every user group so
+  // admins can see what a "Yes" looks like across every column.
+  const groupYesCells = userGroups.map(() => 'Yes');
+  const exampleRows: string[][] = [
+    ['Ada Lovelace', 'Yes', 'Female', ...groupYesCells],
+    ['Alan Turing', '', 'Male', ...emptyGroupCells],
+    ['Grace Hopper', '', 'Female', ...emptyGroupCells],
   ];
   const body = exampleRows.map((r) => r.map(csvEscape).join(',')).join('\n');
   return `﻿${headers.map(csvEscape).join(',')}\n${body}\n`;
@@ -241,16 +251,33 @@ export interface ImportDiff {
   csvRowCount: number;
 }
 
-// Wedding-party column values that appear on the export. Kept as a
-// set of case-insensitive matches so importing a hand-edited file with
-// "wedding party" or "party" as the header still works.
-const HEADER_ALIASES: Record<string, 'name' | 'weddingParty' | 'gender'> = {
+// Header-name aliases mapping every recognized column label to its
+// semantic role. The Gender column stores the value directly
+// ("Female" / "Male" / blank); the three genderFemale / genderMale /
+// genderUnknown roles handle the CSV variant that mirrors the sheet
+// UI (separate Yes/No columns per gender). Only one variant is
+// expected in any given file, but if both appear the last populated
+// column wins — importers don't have to guess which takes precedence
+// because we walk left-to-right.
+type HeaderRole =
+  | 'name'
+  | 'weddingParty'
+  | 'gender'
+  | 'genderFemale'
+  | 'genderMale'
+  | 'genderUnknown';
+
+const HEADER_ALIASES: Record<string, HeaderRole> = {
   'name': 'name',
   'guest': 'name',
   'attendee': 'name',
   'wedding party': 'weddingParty',
   'weddingparty': 'weddingParty',
   'gender': 'gender',
+  'female': 'genderFemale',
+  'male': 'genderMale',
+  'unknown': 'genderUnknown',
+  'unknown gender': 'genderUnknown',
 };
 
 // Computes the diff between a parsed CSV and the current wedding
@@ -289,7 +316,7 @@ export function computeImportDiff(
   }
 
   interface ColumnBinding {
-    kind: 'name' | 'weddingParty' | 'gender' | 'group' | 'unknown';
+    kind: HeaderRole | 'group' | 'unknown';
     group?: GuestGroup;
     headerLabel: string;
   }
@@ -338,7 +365,11 @@ export function computeImportDiff(
       seenUnknown.add(key);
       // Capture what the CSV wants for this new attendee so the
       // insert step can seed is_wedding_party / gender + memberships
-      // in one pass.
+      // in one pass. Gender resolution walks left-to-right: any
+      // matching column (Gender OR one of Female / Male / Unknown)
+      // updates the running value, so later populated columns win.
+      // This also mirrors the sheet UI's mutually-exclusive gender
+      // radio layout when the CSV uses that variant.
       let isWeddingParty = false;
       let gender: Gender | null = null;
       const groups: UnknownAttendeeRow['groups'] = [];
@@ -347,8 +378,14 @@ export function computeImportDiff(
         const raw = row[colIdx] ?? '';
         if (col.kind === 'weddingParty') {
           isWeddingParty = cellToBool(raw);
-        } else if (col.kind === 'gender') {
+        } else if (col.kind === 'gender' && raw.trim().length > 0) {
           gender = cellToGender(raw);
+        } else if (col.kind === 'genderFemale' && cellToBool(raw)) {
+          gender = 'female';
+        } else if (col.kind === 'genderMale' && cellToBool(raw)) {
+          gender = 'male';
+        } else if (col.kind === 'genderUnknown' && cellToBool(raw)) {
+          gender = null;
         } else if (col.kind === 'group' && col.group && cellToBool(raw)) {
           groups.push({ groupId: col.group.id, groupName: col.group.name });
         }
@@ -362,6 +399,13 @@ export function computeImportDiff(
     const addedTo: AttendeeDiff['addedTo'] = [];
     const removedFrom: AttendeeDiff['removedFrom'] = [];
 
+    // Same left-to-right resolution as the unknown-attendee branch:
+    // gender may be declared via a Gender column or via one of the
+    // Female / Male / Unknown columns that mirror the sheet UI, and a
+    // later populated column wins. Only produces a diff if the
+    // resolved value differs from what's on the guest today.
+    let resolvedGender: Gender | null = attendee.gender;
+    let genderTouched = false;
     for (let colIdx = 0; colIdx < columns.length; colIdx++) {
       const col = columns[colIdx];
       const raw = row[colIdx] ?? '';
@@ -370,11 +414,18 @@ export function computeImportDiff(
         if (to !== attendee.isWeddingParty) {
           weddingPartyDiff = { from: attendee.isWeddingParty, to };
         }
-      } else if (col.kind === 'gender') {
-        const to = cellToGender(raw);
-        if (to !== attendee.gender) {
-          genderDiff = { from: attendee.gender, to };
-        }
+      } else if (col.kind === 'gender' && raw.trim().length > 0) {
+        resolvedGender = cellToGender(raw);
+        genderTouched = true;
+      } else if (col.kind === 'genderFemale' && cellToBool(raw)) {
+        resolvedGender = 'female';
+        genderTouched = true;
+      } else if (col.kind === 'genderMale' && cellToBool(raw)) {
+        resolvedGender = 'male';
+        genderTouched = true;
+      } else if (col.kind === 'genderUnknown' && cellToBool(raw)) {
+        resolvedGender = null;
+        genderTouched = true;
       } else if (col.kind === 'group' && col.group) {
         const shouldBeIn = cellToBool(raw);
         const currentlyIn = col.group.members.includes(attendee.canonicalName);
@@ -384,6 +435,9 @@ export function computeImportDiff(
           removedFrom.push({ groupId: col.group.id, groupName: col.group.name });
         }
       }
+    }
+    if (genderTouched && resolvedGender !== attendee.gender) {
+      genderDiff = { from: attendee.gender, to: resolvedGender };
     }
 
     if (weddingPartyDiff || genderDiff || addedTo.length > 0 || removedFrom.length > 0) {

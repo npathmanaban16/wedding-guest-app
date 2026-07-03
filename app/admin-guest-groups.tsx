@@ -693,15 +693,29 @@ export default function AdminGuestGroupsScreen() {
   const handleEmailTemplate = async () => {
     setEmailingTemplate(true);
     try {
-      const csv = buildGuestListTemplateCsv();
+      // Include every existing user column so the round-trip is
+      // complete — an admin uploading the filled-in template picks up
+      // memberships in the same file rather than having to visit the
+      // sheet cell-by-cell after import.
+      const csv = buildGuestListTemplateCsv(userColumns);
       const subject = 'Guest list template';
+      const existingGroupsLine = userColumns.length
+        ? `\n  • ${userColumns.map((g) => g.name).join(', ')} — "Yes" if the guest is in that group, blank otherwise\n`
+        : '';
       const body =
         'Fill out this template with your full guest list, then upload it via ' +
-        '"Import" on the Guest Groups & Access screen.\n\n' +
+        '"Import CSV" on the Guest Groups & Access screen.\n\n' +
         'Columns:\n' +
         '  • Name — full name (e.g. "Ada Lovelace")\n' +
         '  • Wedding Party — "Yes" for wedding-party members, blank otherwise\n' +
-        '  • Gender — "Female", "Male", or blank\n\n' +
+        '  • Gender — "Female", "Male", or blank\n' +
+        existingGroupsLine +
+        '\n' +
+        'To add a new group, insert a column with the group\'s name as the ' +
+        'header (e.g. "Bridesmaids"). Any Yes in that column adds the guest ' +
+        'to that group. Note: the group has to already exist in the app — ' +
+        'create it with "New group" on the sheet before importing so the ' +
+        'column is recognized.\n\n' +
         'The example rows can be replaced or deleted.\n';
       await emailCsv(csv, subject, body, `guest-list-template-${todayIso()}.csv`);
     } catch (e) {
@@ -1462,13 +1476,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   nameColumn: {
-    borderRightWidth: 0.5,
-    borderRightColor: Colors.border,
+    // Right border lives on each cell (nameCell.borderRightWidth) so
+    // the alt-row backgrounds don't paint over the container-level
+    // border. Keeping backgroundColor here so white rows still have a
+    // consistent left column background under the cells.
     backgroundColor: Colors.white,
   },
   nameCell: {
     paddingHorizontal: Spacing.md,
     justifyContent: 'center',
+    borderRightWidth: 0.5,
+    borderRightColor: Colors.border,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.divider,
   },
