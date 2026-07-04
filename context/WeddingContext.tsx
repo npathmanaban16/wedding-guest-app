@@ -31,9 +31,10 @@ import { fetchWeddingEvents } from '@/services/events';
 import { fetchWeddingGuide } from '@/services/guide';
 import { fetchWeddingPackingList } from '@/services/packing';
 import { fetchWeddingSchedulePage } from '@/services/schedulePage';
+import { fetchGuestGroups, type GuestGroup } from '@/services/guestGroups';
 import { prefetchHeroImage } from '@/utils/heroImage';
 
-export type { AdminRole, Gender };
+export type { AdminRole, Gender, GuestGroup };
 
 // ─── Session: always available while WeddingProvider is mounted ──────────────
 // Tracks which wedding this install is attached to. Null on the SaaS variant
@@ -87,6 +88,10 @@ interface WeddingContextType {
   // writing to the DB so consumers re-render with the new value
   // without a round-trip.
   attendees: GuestRow[];
+  // Guest groups for this wedding with each group's member roster.
+  // Used by the admin guest-groups spreadsheet (rows=attendees,
+  // columns=groups) and by getUserGroupIds/visibility filters below.
+  guestGroups: GuestGroup[];
   // In-place patcher for the attendees array. Call this AFTER a
   // successful write via services/wedding.ts#updateGuestProfile so
   // the Attendees tab (and anything else reading from `attendees`)
@@ -100,6 +105,40 @@ interface WeddingContextType {
   // write via services/wedding.ts#updateWeddingSettings so feature-flag
   // toggles (e.g. attendees_enabled) apply app-wide without a refetch.
   patchWedding: (patch: Partial<WeddingRow>) => void;
+  // In-place patchers for the guest-groups admin spreadsheet. Called
+  // after a successful write so the whole app (packing filter, event
+  // visibility, gender-based item gating) reflects the change without
+  // a refetch. `patchAttendeeFlag` covers is_wedding_party and gender;
+  // `patchGuestGroupMembership` covers the many-to-many toggles.
+  patchAttendeeFlag: (
+    canonicalName: string,
+    patch: { is_wedding_party?: boolean; gender?: Gender | null },
+  ) => void;
+  patchGuestGroupMembership: (
+    groupId: string,
+    canonicalName: string,
+    include: boolean,
+  ) => void;
+  // Appends newly-inserted guests to the in-memory roster so the
+  // spreadsheet + attendees tab reflect them without waiting on a
+  // foreground refetch. Called by the guest-groups CSV importer after
+  // a successful createGuestsBulk. Idempotent — rows whose
+  // canonical_name is already known are skipped.
+  appendAttendees: (rows: GuestRow[]) => void;
+  // Removes a guest from every in-memory slice — the attendees roster
+  // itself and every guest_groups.members list they belonged to.
+  // Called by the sheet after a successful deleteGuest() so the row
+  // disappears immediately without a refetch.
+  removeAttendee: (canonicalName: string) => void;
+  // Add/remove/update on the guest_groups list itself, called by the
+  // admin spreadsheet when a new column is created, renamed, or
+  // deleted. Membership updates use patchGuestGroupMembership above.
+  patchGuestGroups: (
+    action:
+      | { type: 'add'; group: GuestGroup }
+      | { type: 'rename'; groupId: string; name: string }
+      | { type: 'remove'; groupId: string }
+  ) => void;
   // In-place patcher for the destination guide's photo strip. Call this
   // AFTER a successful write via services/guide.ts#updateWeddingGuidePhotoStrip
   // so the Travel tab reflects the admin's changes without waiting on
@@ -145,6 +184,14 @@ interface WeddingContextType {
   // surface bridal-party-only items.
   isBridalParty: (name: string) => boolean;
   getGuestGender: (name: string) => Gender | null;
+  // Guest_groups.id values the named guest belongs to. Used by the
+  // shared visibility helpers (constants/visibility.ts) to gate events
+  // + packing items on group membership. Empty set for admin-only
+  // logins, unknown names, or a wedding whose groups list is still
+  // loading — the visibility filter treats an empty set as "not in any
+  // group", which pairs correctly with the "empty visible_to_groups
+  // means no gating" branch on the item side.
+  getUserGroupIds: (name: string) => ReadonlySet<string>;
   // True only for admins with full powers (no role, or role='planner').
   // Vendor-role admins like DJs return false — they have login access but
   // no admin-ui surfaces. Membership in wedding_admins is still checked
@@ -199,6 +246,11 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
   // returns the Fairmont fallback (for N&N + Emma & James) or an
   // empty page (for everyone else).
   const [dbSchedulePage, setDbSchedulePage] = useState<WeddingSchedulePage | null>(null);
+  // Guest groups for this wedding, each with its member roster. Powers
+  // the visibility filters on schedule + packing. Empty array means
+  // "no groups yet" (default for new tenants until an admin creates
+  // any), which the visibility filter treats as "no group gating".
+  const [guestGroups, setGuestGroups] = useState<GuestGroup[]>([]);
   const [loadState, setLoadState] = useState<'idle' | 'loading' | 'ready' | 'error'>(
     DEFAULT_WEDDING_ID ? 'loading' : 'idle',
   );
@@ -229,6 +281,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       setDbGuide(null);
       setDbPackingList(null);
       setDbSchedulePage(null);
+      setGuestGroups([]);
       return;
     }
     // Defensive: if weddingId somehow isn't a uuid-shaped string, clear it.
@@ -253,13 +306,13 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const [w, g, a, e, gd, pl, sp] = await Promise.all([
+        const [w, g, a, e, gd, pl, sp, gg] = await Promise.all([
           fetchWedding(weddingId),
           fetchGuests(weddingId),
           fetchAdmins(weddingId),
-          // Events / guide / packing / schedule-page failing shouldn't
-          // take the whole wedding load down — we fall back to code
-          // defaults if any is unreachable.
+          // Events / guide / packing / schedule-page / groups failing
+          // shouldn't take the whole wedding load down — we fall back
+          // to code defaults / no gating if any is unreachable.
           fetchWeddingEvents(weddingId).catch((err) => {
             console.warn('[WeddingProvider] failed to load wedding_events', err);
             return [];
@@ -275,6 +328,10 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
           fetchWeddingSchedulePage(weddingId).catch((err) => {
             console.warn('[WeddingProvider] failed to load wedding_schedule_pages', err);
             return null;
+          }),
+          fetchGuestGroups(weddingId).catch((err) => {
+            console.warn('[WeddingProvider] failed to load guest_groups', err);
+            return [] as GuestGroup[];
           }),
         ]);
         if (cancelled) return;
@@ -293,6 +350,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
         setDbGuide(gd);
         setDbPackingList(pl);
         setDbSchedulePage(sp);
+        setGuestGroups(gg);
         setLoadState('ready');
       } catch (err) {
         console.error('[WeddingProvider] failed to load wedding data', err);
@@ -317,7 +375,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       // guests + admins). Fetch them here so the first render after
       // login has all the right content; on failure we fall back to
       // code defaults via the resolver below.
-      const [e, gd, pl, sp] = await Promise.all([
+      const [e, gd, pl, sp, gg] = await Promise.all([
         fetchWeddingEvents(w.id).catch((err) => {
           console.warn('[WeddingProvider] failed to pre-load wedding_events', err);
           return [] as WeddingEvent[];
@@ -334,6 +392,10 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
           console.warn('[WeddingProvider] failed to pre-load wedding_schedule_pages', err);
           return null;
         }),
+        fetchGuestGroups(w.id).catch((err) => {
+          console.warn('[WeddingProvider] failed to pre-load guest_groups', err);
+          return [] as GuestGroup[];
+        }),
       ]);
       await AsyncStorage.setItem(WEDDING_ID_STORAGE_KEY, w.id);
       // New invite means a new tenant — discard any cached login from a
@@ -346,6 +408,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       setDbGuide(gd);
       setDbPackingList(pl);
       setDbSchedulePage(sp);
+      setGuestGroups(gg);
       setLoadState('ready');
       setWeddingId(w.id);
     },
@@ -383,6 +446,16 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
         .catch((err) => {
           console.warn('[WeddingProvider] foreground guest refetch failed', err);
         });
+      // Groups can change out-of-band (an admin adds a guest to a
+      // group from another device). Refetching alongside guests keeps
+      // schedule + packing visibility in sync without a hard app
+      // restart. Same best-effort pattern — errors leave the previous
+      // roster in place.
+      fetchGuestGroups(weddingId)
+        .then((gg) => setGuestGroups(gg))
+        .catch((err) => {
+          console.warn('[WeddingProvider] foreground guest-groups refetch failed', err);
+        });
     });
     return () => sub.remove();
   }, [weddingId]);
@@ -414,6 +487,108 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
   const patchWedding = useCallback((patch: Partial<WeddingRow>) => {
     setWedding((prev) => (prev ? { ...prev, ...patch } : prev));
   }, []);
+
+  // In-memory patcher for is_wedding_party / gender on a single guest.
+  // Called by the guest-groups spreadsheet after a successful write so
+  // downstream consumers (packing filter, event visibility) reflect
+  // the change immediately.
+  const patchAttendeeFlag = useCallback(
+    (canonicalName: string, patch: { is_wedding_party?: boolean; gender?: Gender | null }) => {
+      setGuests((prev) =>
+        prev.map((g) => {
+          if (g.canonical_name !== canonicalName) return g;
+          return {
+            ...g,
+            ...(patch.is_wedding_party !== undefined
+              ? { is_wedding_party: patch.is_wedding_party }
+              : {}),
+            ...(patch.gender !== undefined ? { gender: patch.gender } : {}),
+          };
+        }),
+      );
+    },
+    [],
+  );
+
+  // Append newly-inserted guests to the in-memory roster. De-duplicates
+  // on canonical_name so a retried insert doesn't add a phantom row.
+  const appendAttendees = useCallback((rows: GuestRow[]) => {
+    if (rows.length === 0) return;
+    setGuests((prev) => {
+      const existing = new Set(prev.map((g) => g.canonical_name));
+      const fresh = rows.filter((r) => !existing.has(r.canonical_name));
+      if (fresh.length === 0) return prev;
+      return [...prev, ...fresh];
+    });
+  }, []);
+
+  // Remove a guest from every in-memory slice at once. Splices them
+  // out of the attendees array and out of every guest_groups.members
+  // list they appeared in, so the sheet reflects the delete without
+  // waiting on a refetch. Server-side, the composite FK on
+  // guest_group_members handles the DB cascade — this patcher just
+  // mirrors that behavior locally.
+  const removeAttendee = useCallback((canonicalName: string) => {
+    setGuests((prev) => prev.filter((g) => g.canonical_name !== canonicalName));
+    setGuestGroups((prev) =>
+      prev.map((group) =>
+        group.members.includes(canonicalName)
+          ? { ...group, members: group.members.filter((n) => n !== canonicalName) }
+          : group,
+      ),
+    );
+  }, []);
+
+  // In-memory patcher for a single membership row on the guest_groups
+  // spreadsheet. Add or remove a canonical name from a group's members
+  // list without a refetch.
+  const patchGuestGroupMembership = useCallback(
+    (groupId: string, canonicalName: string, include: boolean) => {
+      setGuestGroups((prev) =>
+        prev.map((g) => {
+          if (g.id !== groupId) return g;
+          const inList = g.members.includes(canonicalName);
+          if (include && !inList) {
+            return {
+              ...g,
+              members: [...g.members, canonicalName].sort((a, b) => a.localeCompare(b)),
+            };
+          }
+          if (!include && inList) {
+            return { ...g, members: g.members.filter((n) => n !== canonicalName) };
+          }
+          return g;
+        }),
+      );
+    },
+    [],
+  );
+
+  // In-memory patcher for the guest_groups list itself. Add a newly
+  // created column, rename an existing one, or drop a deleted one so
+  // the spreadsheet reflects the change immediately.
+  const patchGuestGroups = useCallback(
+    (
+      action:
+        | { type: 'add'; group: GuestGroup }
+        | { type: 'rename'; groupId: string; name: string }
+        | { type: 'remove'; groupId: string }
+    ) => {
+      setGuestGroups((prev) => {
+        switch (action.type) {
+          case 'add':
+            return [...prev, action.group];
+          case 'rename':
+            return prev.map((g) =>
+              g.id === action.groupId ? { ...g, name: action.name } : g,
+            );
+          case 'remove':
+            return prev.filter((g) => g.id !== action.groupId);
+        }
+      });
+    },
+    [],
+  );
 
   // In-memory patcher for the destination guide's photo strip. No-op
   // when we're on the code-defined fallback (no DB row) — the strip
@@ -543,6 +718,25 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       return adminByNormalized.get(n)?.gender ?? null;
     };
 
+    // Precompute name → Set<group_id> once per memo cycle so per-render
+    // visibility checks are O(1). Normalized-name keys mirror the rest
+    // of the identity lookups here — spouses of admins etc. hit the
+    // same canonicalisation. Group membership is only meaningful for
+    // guests (not admin-only users); the getter returns an empty set
+    // for anyone not in the guests table.
+    const groupIdsByGuest = new Map<string, Set<string>>();
+    for (const group of guestGroups) {
+      for (const memberName of group.members) {
+        const key = normalizeName(memberName);
+        const set = groupIdsByGuest.get(key);
+        if (set) set.add(group.id);
+        else groupIdsByGuest.set(key, new Set([group.id]));
+      }
+    }
+    const emptyGroupSet: ReadonlySet<string> = new Set();
+    const getUserGroupIds = (name: string): ReadonlySet<string> =>
+      groupIdsByGuest.get(normalizeName(name)) ?? emptyGroupSet;
+
     return {
       weddingId,
       wedding,
@@ -558,16 +752,23 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       hasEditableGuide: dbGuide !== null,
       patchPackingList,
       hasEditablePackingList: dbPackingList !== null,
+      guestGroups,
       isValidGuest,
       isValidGuestOrAdmin,
       getCanonicalName,
       isWeddingParty,
       isBridalParty,
       getGuestGender,
+      getUserGroupIds,
       isAdmin,
       getAdminRole,
+      patchAttendeeFlag,
+      patchGuestGroupMembership,
+      patchGuestGroups,
+      appendAttendees,
+      removeAttendee,
     };
-  }, [weddingId, wedding, guests, admins, dbEvents, dbGuide, dbPackingList, dbSchedulePage, patchAttendeeProfile, patchWedding, patchGuidePhotoStrip, patchGuideContent, patchPackingList]);
+  }, [weddingId, wedding, guests, admins, dbEvents, dbGuide, dbPackingList, dbSchedulePage, guestGroups, patchAttendeeProfile, patchWedding, patchGuidePhotoStrip, patchGuideContent, patchPackingList, patchAttendeeFlag, patchGuestGroupMembership, patchGuestGroups, appendAttendees, removeAttendee]);
 
   // Initial session restore — brief blank while AsyncStorage reads on SaaS.
   if (!sessionReady) {

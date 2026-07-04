@@ -75,7 +75,7 @@ interface ChatMessage {
 
 export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
   const { guestName } = useAuth();
-  const { wedding, weddingId, isWeddingParty, isBridalParty, getGuestGender, events: baseEvents, guide, packingList } = useWedding();
+  const { wedding, weddingId, isWeddingParty, isBridalParty, getGuestGender, getUserGroupIds, events: baseEvents, guide, packingList } = useWedding();
   const insets = useSafeAreaInsets();
 
   const [open, setOpen] = useState(false);
@@ -109,6 +109,7 @@ export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
         isWeddingParty: isWeddingParty(guestName),
         isBridalParty: isBridalParty(guestName),
         gender: getGuestGender(guestName),
+        userGroupIds: getUserGroupIds(guestName),
         tabContext,
       }
     : null;

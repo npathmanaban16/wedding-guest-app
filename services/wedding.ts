@@ -157,6 +157,172 @@ export async function updateGuestProfile(
   if (error) throw error;
 }
 
+// Admin write path for the guest-groups spreadsheet — flips a single
+// guest's is_wedding_party flag. Sits alongside the group-membership
+// writes since the "Wedding Party" default column in the spreadsheet
+// syncs both dimensions so the legacy flag stays lined up with the
+// group (which schedule + packing already read through).
+export async function setGuestWeddingParty(
+  weddingId: string,
+  canonicalName: string,
+  value: boolean,
+): Promise<void> {
+  const { error } = await supabase
+    .from('guests')
+    .update({ is_wedding_party: value })
+    .eq('wedding_id', weddingId)
+    .eq('canonical_name', canonicalName);
+  if (error) throw error;
+}
+
+// Admin write path for the guest-groups spreadsheet — sets a single
+// guest's gender to male / female / null (unknown). The gender columns
+// are radio-style: clicking a cell either picks that value or clears
+// back to null if it was already selected.
+export async function setGuestGender(
+  weddingId: string,
+  canonicalName: string,
+  gender: Gender | null,
+): Promise<void> {
+  const { error } = await supabase
+    .from('guests')
+    .update({ gender })
+    .eq('wedding_id', weddingId)
+    .eq('canonical_name', canonicalName);
+  if (error) throw error;
+}
+
+// Bulk guest-flag write for CSV import. Combines is_wedding_party +
+// gender updates into a single row-scoped statement so importing 100
+// changed attendees takes 100 writes rather than 200. Fields left
+// undefined are not touched.
+export async function bulkUpdateGuestFlags(
+  weddingId: string,
+  canonicalName: string,
+  patch: { is_wedding_party?: boolean; gender?: Gender | null },
+): Promise<void> {
+  const update: Record<string, boolean | Gender | null> = {};
+  if (patch.is_wedding_party !== undefined) update.is_wedding_party = patch.is_wedding_party;
+  if (patch.gender !== undefined) update.gender = patch.gender;
+  if (Object.keys(update).length === 0) return;
+  const { error } = await supabase
+    .from('guests')
+    .update(update)
+    .eq('wedding_id', weddingId)
+    .eq('canonical_name', canonicalName);
+  if (error) throw error;
+}
+
+// Full guest removal — deletes them from public.guests plus every
+// related table that doesn't cascade automatically. Used by the
+// Guest Groups & Access sheet when an admin marks someone as not
+// attending (last-minute drop, etc.).
+//
+// Cascade coverage:
+//   guest_group_members — CASCADE via the composite FK on
+//                         (wedding_id, canonical_name) (migration 041)
+// Manually cleaned here (no guest-scoped FK on these tables):
+//   guest_info, packing_checklist, song_requests, notifications
+//   (only chat messages sent by the guest — admin-sent messages carry
+//   the couple/planner label in `sender`, not the guest's canonical
+//   name, so those stay), notification_reactions, notification_replies,
+//   ai_questions.
+//
+// Not touched (out of scope for this pass):
+//   * Storage buckets (message-images, guest-profile-images) — the
+//     public URLs on any deleted notifications become orphan blobs.
+//     Cleaning storage is a separate lifecycle concern; leaving the
+//     files behind is safer than accidentally removing an unrelated
+//     admin's uploaded photo that happened to share a filename.
+//   * push_token on guest_info — deleted along with the row.
+export async function deleteGuest(
+  weddingId: string,
+  canonicalName: string,
+): Promise<void> {
+  // Delete auxiliary rows first. Ordering doesn't matter functionally
+  // since none of these have inter-table FKs; running them in parallel
+  // via Promise.all keeps the round-trip short. Any single failure
+  // throws — the caller shows the error and the guest stays on the
+  // sheet.
+  await Promise.all([
+    supabase
+      .from('guest_info')
+      .delete()
+      .eq('wedding_id', weddingId)
+      .eq('guest_name', canonicalName),
+    supabase
+      .from('packing_checklist')
+      .delete()
+      .eq('wedding_id', weddingId)
+      .eq('guest_name', canonicalName),
+    supabase
+      .from('notifications')
+      .delete()
+      .eq('wedding_id', weddingId)
+      .eq('sender', canonicalName),
+    supabase
+      .from('notification_reactions')
+      .delete()
+      .eq('wedding_id', weddingId)
+      .eq('guest_name', canonicalName),
+    supabase
+      .from('notification_replies')
+      .delete()
+      .eq('wedding_id', weddingId)
+      .eq('guest_name', canonicalName),
+    supabase
+      .from('song_requests')
+      .delete()
+      .eq('wedding_id', weddingId)
+      .eq('requested_by', canonicalName),
+    supabase
+      .from('ai_questions')
+      .delete()
+      .eq('wedding_id', weddingId)
+      .eq('guest_name', canonicalName),
+  ]);
+  // Finally the guests row itself; the composite FK on
+  // guest_group_members takes care of memberships via CASCADE.
+  const { error } = await supabase
+    .from('guests')
+    .delete()
+    .eq('wedding_id', weddingId)
+    .eq('canonical_name', canonicalName);
+  if (error) throw error;
+}
+
+// Bulk insert of new guests, used by the CSV importer when the admin
+// opts in to creating attendees for unknown names in the file (the
+// initial-upload flow for a fresh wedding). Skips names that already
+// exist via ON CONFLICT DO NOTHING so partial retries after a
+// network hiccup don't error. Returns every attempted row shaped as
+// GuestRow so the caller can splice them into the in-memory attendees
+// list without a refetch.
+export async function createGuestsBulk(
+  weddingId: string,
+  guests: {
+    canonicalName: string;
+    isWeddingParty: boolean;
+    gender: Gender | null;
+  }[],
+): Promise<GuestRow[]> {
+  if (guests.length === 0) return [];
+  const rows = guests.map((g) => ({
+    wedding_id: weddingId,
+    canonical_name: g.canonicalName,
+    is_wedding_party: g.isWeddingParty,
+    gender: g.gender,
+  }));
+  const { data, error } = await supabase
+    .from('guests')
+    .upsert(rows, { onConflict: 'wedding_id,canonical_name', ignoreDuplicates: true })
+    .select('canonical_name, is_wedding_party, is_bridal_party, gender, profile_photo_url, bio, is_couple, wedding_party_role');
+  if (error) throw error;
+  // Postgrest returns `null` for the select when ignoreDuplicates is
+  // set and every row conflicted; treat that as an empty result.
+  return (data as GuestRow[] | null) ?? [];
+}
+
 export async function fetchAdmins(weddingId: string): Promise<AdminRow[]> {
   const { data, error } = await supabase
     .from('wedding_admins')

@@ -18,6 +18,7 @@ import type {
   GuideItem,
   HotelLogistics,
 } from '@/constants/weddingData';
+import { isEventVisible, isPackingItemVisible } from '@/constants/visibility';
 
 // ─── Tab context ─────────────────────────────────────────────────────────────
 // Stable identifiers used both for tagging persisted Q&As and for
@@ -126,6 +127,7 @@ interface GuestVisibility {
   inWeddingParty: boolean;
   inBridalParty: boolean;
   gender: Gender | null;
+  userGroupIds: ReadonlySet<string>;
 }
 
 function visibilityFor(profile: GuestProfile): GuestVisibility {
@@ -133,6 +135,7 @@ function visibilityFor(profile: GuestProfile): GuestVisibility {
     inWeddingParty: profile.isWeddingParty || profile.isBridalParty,
     inBridalParty: profile.isBridalParty,
     gender: profile.gender,
+    userGroupIds: profile.userGroupIds,
   };
 }
 
@@ -141,7 +144,7 @@ export function filterEventsForGuest(
   profile: GuestProfile,
 ): WeddingEvent[] {
   const v = visibilityFor(profile);
-  return events.filter((e) => !e.weddingPartyOnly || v.inWeddingParty);
+  return events.filter((e) => isEventVisible(e, v));
 }
 
 export function filterPackingForGuest(
@@ -152,17 +155,7 @@ export function filterPackingForGuest(
   return packing
     .map((cat) => ({
       ...cat,
-      items: cat.items.filter((item) => {
-        if (item.weddingPartyOnly && !v.inWeddingParty) return false;
-        if (item.bridalPartyOnly && !v.inBridalParty) return false;
-        if (item.excludeBridalParty && v.inBridalParty) return false;
-        if (item.excludeWeddingParty && v.inWeddingParty) return false;
-        // Match the packing tab: items keep showing if the guest's
-        // gender isn't known. Only filter when both are known and
-        // disagree.
-        if (item.gender && v.gender && item.gender !== v.gender) return false;
-        return true;
-      }),
+      items: cat.items.filter((item) => isPackingItemVisible(item, v)),
     }))
     .filter((cat) => cat.items.length > 0);
 }
@@ -251,7 +244,13 @@ export function buildContextBlock(args: BuildContextArgs): string {
   sections.push('## Events');
   events.forEach((event) => {
     const lines: string[] = [];
-    lines.push(`### ${event.title}${event.weddingPartyOnly ? ' (wedding party only)' : ''}`);
+    // Signal restricted visibility to the assistant so it can qualify
+    // answers about the event ("this one's only for the wedding party"
+    // etc.). Any group filter or the legacy weddingPartyOnly flag both
+    // qualify — either means non-general guests may not have received
+    // details about it elsewhere.
+    const restricted = event.weddingPartyOnly || (event.visibleToGroups?.length ?? 0) > 0;
+    lines.push(`### ${event.title}${restricted ? ' (restricted event)' : ''}`);
     lines.push(`When: ${event.date}, ${event.time}`);
     lines.push(`Venue: ${event.venue}`);
     if (event.address) lines.push(`Address: ${event.address}`);
@@ -366,6 +365,11 @@ export interface GuestProfile {
   isWeddingParty: boolean;
   isBridalParty: boolean;
   gender: Gender | null;
+  // Guest_groups.id values this guest belongs to. Feeds the same
+  // isEventVisible / isPackingItemVisible helpers the client screens
+  // use, so the assistant sees the same slice of the schedule and
+  // packing list as the guest asking the question.
+  userGroupIds: ReadonlySet<string>;
   tabContext: TabContext | null;
 }
 

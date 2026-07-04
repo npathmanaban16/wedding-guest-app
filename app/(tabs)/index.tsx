@@ -21,6 +21,7 @@ import { useWedding } from '@/context/WeddingContext';
 import { supabase } from '@/lib/supabase';
 import { Colors, Fonts, Typography, Spacing, Radius, Shadow } from '@/constants/theme';
 import { WEDDING, type WeddingEvent } from '@/constants/weddingData';
+import { isEventVisible } from '@/constants/visibility';
 
 // Pick the event to feature on the home screen at the current moment.
 //   - Skips events the guest can't see (wedding-party-only when they're not).
@@ -37,9 +38,12 @@ type DisplayedEvent =
 function pickDisplayedEvent(
   events: WeddingEvent[],
   inWeddingParty: boolean,
+  userGroupIds: ReadonlySet<string>,
   now: number,
 ): DisplayedEvent | null {
-  const visible = events.filter((e) => !e.weddingPartyOnly || inWeddingParty);
+  const visible = events.filter((e) =>
+    isEventVisible(e, { inWeddingParty, userGroupIds }),
+  );
   for (let i = 0; i < visible.length; i++) {
     const e = visible[i];
     const startMs = new Date(e.startDate).getTime();
@@ -105,13 +109,14 @@ function QuickCard({ title, subtitle, onPress }: QuickCardProps) {
 
 export default function HomeScreen() {
   const { guestName, logout } = useAuth();
-  const { isWeddingParty, isAdmin, wedding, events } = useWedding();
+  const { isWeddingParty, getUserGroupIds, isAdmin, wedding, events } = useWedding();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const weddingDate = React.useMemo(() => new Date(wedding.wedding_date), [wedding.wedding_date]);
   const countdown = useCountdown(weddingDate);
   const firstName = guestName?.split(' ')[0] ?? 'Guest';
   const inWeddingParty = isWeddingParty(guestName ?? '');
+  const userGroupIds = getUserGroupIds(guestName ?? '');
   const isAdminUser = !!guestName && isAdmin(guestName);
   // Admin tools are hidden behind a shared password until unlocked once on
   // this device. State is restored from AsyncStorage on mount and persists
@@ -162,10 +167,10 @@ export default function HomeScreen() {
   // Sangeet → Baraat → Ceremony → Reception → nothing as the weekend
   // unfolds, without having to wire up a separate timer.
   const displayedEvent = useMemo(
-    () => pickDisplayedEvent(events, inWeddingParty, Date.now()),
+    () => pickDisplayedEvent(events, inWeddingParty, userGroupIds, Date.now()),
     // countdown ticks every second, which is the trigger we want here.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [events, inWeddingParty, countdown.seconds, countdown.isPast],
+    [events, inWeddingParty, userGroupIds, countdown.seconds, countdown.isPast],
   );
 
   return (
@@ -315,6 +320,14 @@ export default function HomeScreen() {
           >
             <Ionicons name="bed-outline" size={15} color={Colors.white} />
             <Text style={styles.adminButtonText}>Guest Accommodations</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.adminButton}
+            onPress={() => router.push('/admin-guest-groups')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="people-outline" size={15} color={Colors.white} />
+            <Text style={styles.adminButtonText}>Guest Groups & Access</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.adminButton}

@@ -20,6 +20,7 @@ import { useWedding } from '@/context/WeddingContext';
 import { HotelMap } from '@/components/HotelMap';
 import { haptic } from '@/utils/haptics';
 import { getEventOverrides, EventOverridePatch } from '@/services/storage';
+import { isEventVisible } from '@/constants/visibility';
 
 // Pass `name` when a human-readable landmark / venue exists so the maps
 // app resolves to the actual destination rather than geocoding just the
@@ -300,8 +301,9 @@ function InfoRow({ icon, label, value }: InfoRowProps) {
 export default function ScheduleScreen() {
   const insets = useSafeAreaInsets();
   const { guestName } = useAuth();
-  const { weddingId, isWeddingParty, events, schedulePage } = useWedding();
+  const { weddingId, isWeddingParty, getUserGroupIds, events, schedulePage } = useWedding();
   const inWeddingParty = isWeddingParty(guestName ?? '');
+  const userGroupIds = getUserGroupIds(guestName ?? '');
 
   // Admins can override per-event text fields (title, time, venue, etc.)
   // without a code deploy. Fetched once on mount; if an admin edits while
@@ -315,7 +317,7 @@ export default function ScheduleScreen() {
 
   const visibleEvents = events
     .map((e) => (overrides[e.id] ? { ...e, ...overrides[e.id] } : e))
-    .filter((e) => !e.weddingPartyOnly || inWeddingParty);
+    .filter((e) => isEventVisible(e, { inWeddingParty, userGroupIds }));
 
   // Accordion: at most one event expanded at a time. Tapping another event
   // collapses the current one; tapping the open event again collapses it.
