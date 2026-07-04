@@ -689,6 +689,19 @@ export default function AdminGuestGroupsScreen() {
     await Linking.openURL(url);
   };
 
+  // Shared column-doc block appended to both the template email and
+  // the export email. Female/Male get called out with a pointer at
+  // the packing list so admins understand why gender is being asked
+  // for beyond the sheet UI — those flags drive which items show up
+  // on each guest's Packing tab (e.g. gender-specific ceremony
+  // outfits).
+  const columnInstructions =
+    'Every column after Name uses "Yes" or blank cells:\n' +
+    '  • Name — full name (e.g. "Ada Lovelace")\n' +
+    '  • Female / Male — mutually exclusive; leave both blank for "unknown".\n' +
+    '    Used to filter gender-specific items on the guest\'s Packing list.\n' +
+    '  • Wedding Party — "Yes" for wedding-party members, blank otherwise.\n';
+
   const handleEmailTemplate = async () => {
     setEmailingTemplate(true);
     try {
@@ -697,13 +710,7 @@ export default function AdminGuestGroupsScreen() {
       const body =
         'Fill out this template with your full guest list, then upload it via ' +
         '"Import CSV" on the Guest Groups & Access screen.\n\n' +
-        'Every column after Name uses "Yes" or blank cells:\n' +
-        '  • Name — full name (e.g. "Ada Lovelace")\n' +
-        '  • Female — "Yes" if the guest is female, blank otherwise\n' +
-        '  • Male — "Yes" if the guest is male, blank otherwise\n' +
-        '  • Wedding Party — "Yes" for wedding-party members, blank otherwise\n\n' +
-        'Female and Male are mutually exclusive — mark one or leave both blank ' +
-        'for "unknown".\n\n' +
+        columnInstructions + '\n' +
         'To also assign guests to custom groups in the same file, insert a ' +
         'column with the group\'s name as the header (e.g. "Bridesmaids"). ' +
         'Any Yes in that column adds the guest to that group. Note: the group ' +
@@ -728,9 +735,24 @@ export default function AdminGuestGroupsScreen() {
       const csv = buildGuestGroupsCsv(sortedAttendees, userColumns);
       const stamp = todayIso();
       const subject = `Guest groups — ${stamp}`;
+      // Dynamic per-group line so admins can see what each custom
+      // column in the CSV represents without opening the file. Only
+      // added when the wedding actually has user groups.
+      const groupsBlock = userColumns.length
+        ? '\n' + userColumns
+            .map((g) => `  • ${g.name} — "Yes" if the guest is in that group, blank otherwise.\n`)
+            .join('')
+        : '';
       const body =
         `${sortedAttendees.length} attendee${sortedAttendees.length === 1 ? '' : 's'} attached as CSV.\n\n` +
-        `Columns: Name, Wedding Party, Gender${userColumns.length ? `, ${userColumns.map((g) => g.name).join(', ')}` : ''}\n`;
+        columnInstructions +
+        groupsBlock + '\n' +
+        'Edit any cell in a spreadsheet editor and re-upload via ' +
+        '"Import CSV" on the Guest Groups & Access screen. The importer ' +
+        'shows a preview of every change before applying.\n\n' +
+        'To add a new group column, first create it in the app with ' +
+        '"New group" — otherwise the importer treats unknown headers as ' +
+        'noise and skips them.\n';
       await emailCsv(csv, subject, body, `guest-groups-${stamp}.csv`);
     } catch (e) {
       Alert.alert('Export failed', errorMessage(e));
@@ -999,21 +1021,28 @@ export default function AdminGuestGroupsScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.actionRow}
         >
-          <TouchableOpacity
-            onPress={handleEmailTemplate}
-            disabled={emailingTemplate}
-            style={[styles.toolbarBtn, emailingTemplate && styles.toolbarBtnDisabled]}
-            activeOpacity={0.85}
-          >
-            {emailingTemplate ? (
-              <ActivityIndicator size="small" color={Colors.primary} />
-            ) : (
-              <>
-                <Ionicons name="document-text-outline" size={14} color={Colors.primary} />
-                <Text style={styles.toolbarBtnText}>Email template</Text>
-              </>
-            )}
-          </TouchableOpacity>
+          {/* Template button only appears while the roster is empty —
+              its purpose is to seed a fresh wedding's guest list, and
+              the empty-state prompt on the sheet itself already offers
+              the same button, so keeping it in the toolbar once
+              guests exist is noise. */}
+          {sortedAttendees.length === 0 ? (
+            <TouchableOpacity
+              onPress={handleEmailTemplate}
+              disabled={emailingTemplate}
+              style={[styles.toolbarBtn, emailingTemplate && styles.toolbarBtnDisabled]}
+              activeOpacity={0.85}
+            >
+              {emailingTemplate ? (
+                <ActivityIndicator size="small" color={Colors.primary} />
+              ) : (
+                <>
+                  <Ionicons name="document-text-outline" size={14} color={Colors.primary} />
+                  <Text style={styles.toolbarBtnText}>Email template</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          ) : null}
           <TouchableOpacity
             onPress={handleExport}
             disabled={exporting}
