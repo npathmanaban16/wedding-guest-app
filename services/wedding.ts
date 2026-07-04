@@ -213,6 +213,84 @@ export async function bulkUpdateGuestFlags(
   if (error) throw error;
 }
 
+// Full guest removal — deletes them from public.guests plus every
+// related table that doesn't cascade automatically. Used by the
+// Guest Groups & Access sheet when an admin marks someone as not
+// attending (last-minute drop, etc.).
+//
+// Cascade coverage:
+//   guest_group_members — CASCADE via the composite FK on
+//                         (wedding_id, canonical_name) (migration 041)
+// Manually cleaned here (no guest-scoped FK on these tables):
+//   guest_info, packing_checklist, song_requests, notifications
+//   (only chat messages sent by the guest — admin-sent messages carry
+//   the couple/planner label in `sender`, not the guest's canonical
+//   name, so those stay), notification_reactions, notification_replies,
+//   ai_questions.
+//
+// Not touched (out of scope for this pass):
+//   * Storage buckets (message-images, guest-profile-images) — the
+//     public URLs on any deleted notifications become orphan blobs.
+//     Cleaning storage is a separate lifecycle concern; leaving the
+//     files behind is safer than accidentally removing an unrelated
+//     admin's uploaded photo that happened to share a filename.
+//   * push_token on guest_info — deleted along with the row.
+export async function deleteGuest(
+  weddingId: string,
+  canonicalName: string,
+): Promise<void> {
+  // Delete auxiliary rows first. Ordering doesn't matter functionally
+  // since none of these have inter-table FKs; running them in parallel
+  // via Promise.all keeps the round-trip short. Any single failure
+  // throws — the caller shows the error and the guest stays on the
+  // sheet.
+  await Promise.all([
+    supabase
+      .from('guest_info')
+      .delete()
+      .eq('wedding_id', weddingId)
+      .eq('guest_name', canonicalName),
+    supabase
+      .from('packing_checklist')
+      .delete()
+      .eq('wedding_id', weddingId)
+      .eq('guest_name', canonicalName),
+    supabase
+      .from('notifications')
+      .delete()
+      .eq('wedding_id', weddingId)
+      .eq('sender', canonicalName),
+    supabase
+      .from('notification_reactions')
+      .delete()
+      .eq('wedding_id', weddingId)
+      .eq('guest_name', canonicalName),
+    supabase
+      .from('notification_replies')
+      .delete()
+      .eq('wedding_id', weddingId)
+      .eq('guest_name', canonicalName),
+    supabase
+      .from('song_requests')
+      .delete()
+      .eq('wedding_id', weddingId)
+      .eq('requested_by', canonicalName),
+    supabase
+      .from('ai_questions')
+      .delete()
+      .eq('wedding_id', weddingId)
+      .eq('guest_name', canonicalName),
+  ]);
+  // Finally the guests row itself; the composite FK on
+  // guest_group_members takes care of memberships via CASCADE.
+  const { error } = await supabase
+    .from('guests')
+    .delete()
+    .eq('wedding_id', weddingId)
+    .eq('canonical_name', canonicalName);
+  if (error) throw error;
+}
+
 // Bulk insert of new guests, used by the CSV importer when the admin
 // opts in to creating attendees for unknown names in the file (the
 // initial-upload flow for a fresh wedding). Skips names that already

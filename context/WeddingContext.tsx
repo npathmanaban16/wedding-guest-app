@@ -125,6 +125,11 @@ interface WeddingContextType {
   // a successful createGuestsBulk. Idempotent — rows whose
   // canonical_name is already known are skipped.
   appendAttendees: (rows: GuestRow[]) => void;
+  // Removes a guest from every in-memory slice — the attendees roster
+  // itself and every guest_groups.members list they belonged to.
+  // Called by the sheet after a successful deleteGuest() so the row
+  // disappears immediately without a refetch.
+  removeAttendee: (canonicalName: string) => void;
   // Add/remove/update on the guest_groups list itself, called by the
   // admin spreadsheet when a new column is created, renamed, or
   // deleted. Membership updates use patchGuestGroupMembership above.
@@ -517,6 +522,23 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  // Remove a guest from every in-memory slice at once. Splices them
+  // out of the attendees array and out of every guest_groups.members
+  // list they appeared in, so the sheet reflects the delete without
+  // waiting on a refetch. Server-side, the composite FK on
+  // guest_group_members handles the DB cascade — this patcher just
+  // mirrors that behavior locally.
+  const removeAttendee = useCallback((canonicalName: string) => {
+    setGuests((prev) => prev.filter((g) => g.canonical_name !== canonicalName));
+    setGuestGroups((prev) =>
+      prev.map((group) =>
+        group.members.includes(canonicalName)
+          ? { ...group, members: group.members.filter((n) => n !== canonicalName) }
+          : group,
+      ),
+    );
+  }, []);
+
   // In-memory patcher for a single membership row on the guest_groups
   // spreadsheet. Add or remove a canonical name from a group's members
   // list without a refetch.
@@ -744,8 +766,9 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       patchGuestGroupMembership,
       patchGuestGroups,
       appendAttendees,
+      removeAttendee,
     };
-  }, [weddingId, wedding, guests, admins, dbEvents, dbGuide, dbPackingList, dbSchedulePage, guestGroups, patchAttendeeProfile, patchWedding, patchGuidePhotoStrip, patchGuideContent, patchPackingList, patchAttendeeFlag, patchGuestGroupMembership, patchGuestGroups, appendAttendees]);
+  }, [weddingId, wedding, guests, admins, dbEvents, dbGuide, dbPackingList, dbSchedulePage, guestGroups, patchAttendeeProfile, patchWedding, patchGuidePhotoStrip, patchGuideContent, patchPackingList, patchAttendeeFlag, patchGuestGroupMembership, patchGuestGroups, appendAttendees, removeAttendee]);
 
   // Initial session restore — brief blank while AsyncStorage reads on SaaS.
   if (!sessionReady) {

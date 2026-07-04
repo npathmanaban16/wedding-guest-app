@@ -37,6 +37,7 @@ import {
 import {
   bulkUpdateGuestFlags,
   createGuestsBulk,
+  deleteGuest,
   setGuestGender,
   setGuestWeddingParty,
   type Gender,
@@ -432,6 +433,7 @@ export default function AdminGuestGroupsScreen() {
     patchGuestGroupMembership,
     patchGuestGroups,
     appendAttendees,
+    removeAttendee,
   } = useWedding();
 
   const [search, setSearch] = useState('');
@@ -567,6 +569,47 @@ export default function AdminGuestGroupsScreen() {
       patchGuestGroupMembership(groupId, canonicalName, !next);
       Alert.alert('Could not update group', errorMessage(e));
     }
+  };
+
+  // Tap on a name → confirmation → hard delete. Copy is explicit about
+  // what gets removed alongside the guest row (memberships, sent
+  // chats, packing list, hotel/arrival info, etc.) so an admin can't
+  // treat this as a "hide" — a soft-hide isn't in the schema and
+  // pretending otherwise would just leave stale data around.
+  const handleDeleteGuest = (canonicalName: string) => {
+    Alert.alert(
+      `Remove ${canonicalName}?`,
+      "They'll be removed from the guest list, every group they're in, " +
+        "their travel info, their packing list, any messages they've sent, " +
+        "and any reactions or song requests they've made. This can't be undone.",
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            haptic.warning();
+            // Snapshot for rollback so a network failure puts the
+            // guest back on the sheet without a refetch.
+            const snapshot = attendees.find((a) => a.canonical_name === canonicalName);
+            const groupSnapshot = guestGroups
+              .filter((g) => g.members.includes(canonicalName))
+              .map((g) => g.id);
+            removeAttendee(canonicalName);
+            try {
+              await deleteGuest(weddingId, canonicalName);
+            } catch (e) {
+              // Roll back: restore the guest and their group memberships.
+              if (snapshot) appendAttendees([snapshot]);
+              for (const gid of groupSnapshot) {
+                patchGuestGroupMembership(gid, canonicalName, true);
+              }
+              Alert.alert('Could not remove guest', errorMessage(e));
+            }
+          },
+        },
+      ],
+    );
   };
 
   // ─── Column-level actions ──────────────────────────────────────────
@@ -1148,18 +1191,26 @@ export default function AdminGuestGroupsScreen() {
                 </View>
               ) : (
                 filteredAttendees.map((a, idx) => (
-                  <View
+                  <TouchableOpacity
                     key={a.canonicalName}
                     style={[
                       styles.nameCell,
                       { width: NAME_COLUMN_WIDTH, height: ROW_HEIGHT },
                       idx % 2 === 1 && styles.rowAlt,
                     ]}
+                    onPress={() => handleDeleteGuest(a.canonicalName)}
+                    activeOpacity={0.6}
                   >
                     <Text style={styles.nameText} numberOfLines={1}>
                       {a.canonicalName}
                     </Text>
-                  </View>
+                    <Ionicons
+                      name="close-circle-outline"
+                      size={14}
+                      color={Colors.textMuted}
+                      style={styles.nameDeleteIcon}
+                    />
+                  </TouchableOpacity>
                 ))
               )}
             </View>
@@ -1495,16 +1546,22 @@ const styles = StyleSheet.create({
   },
   nameCell: {
     paddingHorizontal: Spacing.md,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
     borderRightWidth: 0.5,
     borderRightColor: Colors.border,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.divider,
   },
   nameText: {
+    flex: 1,
     fontFamily: Fonts.sansMedium,
     fontSize: 13,
     color: Colors.textPrimary,
+  },
+  nameDeleteIcon: {
+    marginLeft: Spacing.xs,
+    opacity: 0.6,
   },
   cellRow: {
     flexDirection: 'row',
