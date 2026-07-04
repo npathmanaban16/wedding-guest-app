@@ -82,33 +82,23 @@ export function buildGuestGroupsCsv(
   return `﻿${headers.map(csvEscape).join(',')}\n${rows.join('\n')}\n`;
 }
 
-// Blank guest-list template for couples doing an initial upload. The
-// three example rows demonstrate the built-in column formats
-// (Wedding Party = Yes/blank; Gender = Female/Male/blank) plus every
-// custom group that already exists in the wedding so the admin can
-// pre-populate memberships in the same file. Admins replace the
-// example rows with real names.
-//
-// Passing an empty userGroups array is safe — the CSV falls back to
-// the three built-in columns, which matches the pre-userGroups
-// template shape.
-export function buildGuestListTemplateCsv(
-  userGroups: GuestGroup[] = [],
-): string {
-  const headers = ['Name', 'Female', 'Male', 'Wedding Party', ...userGroups.map((g) => g.name)];
-  const emptyGroupCells = userGroups.map(() => '');
-  // First example lives in every user group so admins can see what a
-  // "Yes" looks like across every column.
-  const groupYesCells = userGroups.map(() => 'Yes');
+// Blank guest-list template for couples doing an initial upload. Kept
+// intentionally minimal — just Name + the three built-in columns
+// (Female, Male, Wedding Party) with three example rows demonstrating
+// the state space. Custom-group columns are deliberately excluded
+// even when the wedding already has them; adding them to the template
+// muddies the initial-upload flow, and admins who want a full round-
+// trip of the current sheet state should use "Export CSV" instead.
+export function buildGuestListTemplateCsv(): string {
+  const headers = ['Name', 'Female', 'Male', 'Wedding Party'];
   const exampleRows: string[][] = [
-    // Female wedding-party member in every group.
-    ['Ada Lovelace', 'Yes', '', 'Yes', ...groupYesCells],
+    // Female wedding-party member.
+    ['Ada Lovelace', 'Yes', '', 'Yes'],
     // Male, not in the wedding party.
-    ['Alan Turing', '', 'Yes', '', ...emptyGroupCells],
-    // Female, not in the wedding party. Third row leaves both gender
-    // cells blank to demonstrate the "unknown" state (neither
-    // selected).
-    ['Grace Hopper', '', '', '', ...emptyGroupCells],
+    ['Alan Turing', '', 'Yes', ''],
+    // Third row leaves both gender cells blank to demonstrate the
+    // "unknown" state (neither selected).
+    ['Grace Hopper', '', '', ''],
   ];
   const body = exampleRows.map((r) => r.map(csvEscape).join(',')).join('\n');
   return `﻿${headers.map(csvEscape).join(',')}\n${body}\n`;

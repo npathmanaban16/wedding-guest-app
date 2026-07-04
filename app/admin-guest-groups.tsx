@@ -692,15 +692,8 @@ export default function AdminGuestGroupsScreen() {
   const handleEmailTemplate = async () => {
     setEmailingTemplate(true);
     try {
-      // Include every existing user column so the round-trip is
-      // complete — an admin uploading the filled-in template picks up
-      // memberships in the same file rather than having to visit the
-      // sheet cell-by-cell after import.
-      const csv = buildGuestListTemplateCsv(userColumns);
+      const csv = buildGuestListTemplateCsv();
       const subject = 'Guest list template';
-      const existingGroupsLine = userColumns.length
-        ? `\n  • ${userColumns.map((g) => g.name).join(', ')} — "Yes" if the guest is in that group, blank otherwise\n`
-        : '';
       const body =
         'Fill out this template with your full guest list, then upload it via ' +
         '"Import CSV" on the Guest Groups & Access screen.\n\n' +
@@ -708,16 +701,14 @@ export default function AdminGuestGroupsScreen() {
         '  • Name — full name (e.g. "Ada Lovelace")\n' +
         '  • Female — "Yes" if the guest is female, blank otherwise\n' +
         '  • Male — "Yes" if the guest is male, blank otherwise\n' +
-        '  • Wedding Party — "Yes" for wedding-party members, blank otherwise\n' +
-        existingGroupsLine +
-        '\n' +
+        '  • Wedding Party — "Yes" for wedding-party members, blank otherwise\n\n' +
         'Female and Male are mutually exclusive — mark one or leave both blank ' +
         'for "unknown".\n\n' +
-        'To add a new group, insert a column with the group\'s name as the ' +
-        'header (e.g. "Bridesmaids"). Any Yes in that column adds the guest ' +
-        'to that group. Note: the group has to already exist in the app — ' +
-        'create it with "New group" on the sheet before importing so the ' +
-        'column is recognized.\n\n' +
+        'To also assign guests to custom groups in the same file, insert a ' +
+        'column with the group\'s name as the header (e.g. "Bridesmaids"). ' +
+        'Any Yes in that column adds the guest to that group. Note: the group ' +
+        'has to already exist in the app — create it with "New group" on the ' +
+        'sheet before importing so the column is recognized.\n\n' +
         'The example rows can be replaced or deleted.\n';
       await emailCsv(csv, subject, body, `guest-list-template-${todayIso()}.csv`);
     } catch (e) {
