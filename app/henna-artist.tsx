@@ -12,9 +12,11 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Redirect } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
+import { DEFAULT_WEDDING_ID } from '@/constants/weddingData';
 import { Colors, Fonts, Radius, Shadow, Spacing, Typography } from '@/constants/theme';
 import { haptic } from '@/utils/haptics';
 import {
@@ -34,6 +36,12 @@ import {
 // lag. Still cheap: a handful of rows per poll.
 const POLL_MS = 4000;
 
+// Kept in sync with WeddingContext's WEDDING_ID_STORAGE_KEY —
+// same rationale as my-info.tsx: sign-out on SaaS needs to drop
+// the persisted wedding id so the next cold launch routes to
+// /invite instead of resuming this tenant.
+const WEDDING_ID_STORAGE_KEY = '@wedding_id';
+
 export default function HennaArtistScreen() {
   const { guestName } = useAuth();
   const { getAdminRole } = useWedding();
@@ -47,6 +55,8 @@ export default function HennaArtistScreen() {
 
 function HennaArtistInner({ artistName }: { artistName: string }) {
   const { weddingId, wedding } = useWedding();
+  const { logout } = useAuth();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
 
   const [loading, setLoading] = useState(true);
@@ -176,6 +186,35 @@ function HennaArtistInner({ artistName }: { artistName: string }) {
       haptic.success();
     });
   }, [myChair, withBusy]);
+
+  // Same shape as my-info.tsx#handleSignOut — on SaaS, route to
+  // /invite first and clear the persisted wedding id so the next
+  // cold launch also lands on /invite; on N&N, the tabs layout /
+  // login screen catches the null guestName and routes to /login
+  // for us. Wrapped in a confirmation so the artist doesn't lose
+  // their session mid-shift with a stray tap.
+  const doSignOut = useCallback(() => {
+    Alert.alert(
+      'Sign out?',
+      'You\'ll need to sign in again to access the queue.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign out',
+          style: 'destructive',
+          onPress: async () => {
+            if (DEFAULT_WEDDING_ID === null) {
+              router.replace('/invite');
+              await AsyncStorage.removeItem(WEDDING_ID_STORAGE_KEY);
+            } else {
+              router.replace('/login');
+            }
+            await logout();
+          },
+        },
+      ],
+    );
+  }, [logout, router]);
 
   const doSkip = useCallback(
     (entry: HennaWaitlistEntry) => {
@@ -344,6 +383,15 @@ function HennaArtistInner({ artistName }: { artistName: string }) {
           );
         })
       )}
+
+      <TouchableOpacity
+        onPress={doSignOut}
+        style={styles.signOut}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="log-out-outline" size={14} color={Colors.textMuted} />
+        <Text style={styles.signOutText}>Sign out</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -603,5 +651,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.background,
+  },
+
+  signOut: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: Spacing.xl,
+    paddingVertical: Spacing.md,
+  },
+  signOutText: {
+    fontFamily: Fonts.sans,
+    fontSize: Typography.sm,
+    color: Colors.textMuted,
+    textDecorationLine: 'underline',
   },
 });
