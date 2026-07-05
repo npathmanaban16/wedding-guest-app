@@ -49,6 +49,8 @@ export default function RootLayout() {
             <Stack.Screen name="login" />
             <Stack.Screen name="onboarding" />
             <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="henna" />
+            <Stack.Screen name="henna-artist" />
           </Stack>
         </AuthProvider>
       </WeddingProvider>

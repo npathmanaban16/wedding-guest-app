@@ -61,7 +61,7 @@ export interface GuestRow {
   wedding_party_role: string | null;
 }
 
-export type AdminRole = 'planner' | 'dj' | 'makeup_artist';
+export type AdminRole = 'planner' | 'dj' | 'makeup_artist' | 'henna_artist';
 
 export interface AdminRow {
   guest_name: string;

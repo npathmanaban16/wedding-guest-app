@@ -22,6 +22,11 @@ import { supabase } from '@/lib/supabase';
 import { Colors, Fonts, Typography, Spacing, Radius, Shadow } from '@/constants/theme';
 import { WEDDING, type WeddingEvent } from '@/constants/weddingData';
 import { isEventVisible } from '@/constants/visibility';
+import {
+  fetchActiveEntries,
+  fetchStation,
+  type HennaWaitlistEntry,
+} from '@/services/hennaWaitlist';
 
 // Pick the event to feature on the home screen at the current moment.
 //   - Skips events the guest can't see (wedding-party-only when they're not).
@@ -109,7 +114,7 @@ function QuickCard({ title, subtitle, onPress }: QuickCardProps) {
 
 export default function HomeScreen() {
   const { guestName, logout } = useAuth();
-  const { isWeddingParty, getUserGroupIds, isAdmin, wedding, events } = useWedding();
+  const { weddingId, isWeddingParty, getUserGroupIds, isAdmin, wedding, events } = useWedding();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const weddingDate = React.useMemo(() => new Date(wedding.wedding_date), [wedding.wedding_date]);
@@ -118,6 +123,43 @@ export default function HomeScreen() {
   const inWeddingParty = isWeddingParty(guestName ?? '');
   const userGroupIds = getUserGroupIds(guestName ?? '');
   const isAdminUser = !!guestName && isAdmin(guestName);
+  // Henna line — only surfaces when the artist has opened the
+  // waitlist. Rows are lightweight (a queue depth number + whether
+  // the guest already has a spot), so we refetch on every mount
+  // and let the dedicated /henna screen own the live polling.
+  const [hennaOpen, setHennaOpen] = useState(false);
+  const [hennaLabel, setHennaLabel] = useState<string | null>(null);
+  const [hennaMinePending, setHennaMinePending] = useState(0);
+  const [hennaQueueDepth, setHennaQueueDepth] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const [station, entries] = await Promise.all([
+          fetchStation(weddingId),
+          fetchActiveEntries(weddingId),
+        ]);
+        if (cancelled) return;
+        setHennaOpen(!!station?.is_open);
+        setHennaLabel(station?.display_name?.trim() || null);
+        setHennaQueueDepth(entries.filter((e: HennaWaitlistEntry) => e.status === 'waiting').length);
+        setHennaMinePending(
+          guestName
+            ? entries.filter((e) => e.added_by === guestName).length
+            : 0,
+        );
+      } catch (err) {
+        // Feature is optional — silence errors so the home tab
+        // still renders on tenants that haven't run migration 045.
+        if (!cancelled) {
+          setHennaOpen(false);
+          setHennaMinePending(0);
+        }
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [weddingId, guestName]);
   // Admin tools are hidden behind a shared password until unlocked once on
   // this device. State is restored from AsyncStorage on mount and persists
   // across app launches; tapping "Lock again" clears it.
@@ -228,6 +270,33 @@ export default function HomeScreen() {
           </>
         )}
       </View>
+
+      {/* Henna waitlist — only surfaces while the artist has the
+          line open. Discreet when no henna events are running: the
+          whole card vanishes rather than sit empty. */}
+      {hennaOpen && (
+        <TouchableOpacity
+          style={[styles.hennaCard, Shadow.small]}
+          onPress={() => router.push('/henna')}
+          activeOpacity={0.85}
+        >
+          <View style={styles.hennaCardHeader}>
+            <View style={styles.hennaDot} />
+            <Text style={styles.hennaTag}>HENNA LINE OPEN</Text>
+          </View>
+          <Text style={styles.hennaTitle}>{hennaLabel ?? 'Join the henna waitlist'}</Text>
+          <Text style={styles.hennaSub}>
+            {hennaMinePending > 0
+              ? `You have ${hennaMinePending} spot${hennaMinePending === 1 ? '' : 's'} in line`
+              : hennaQueueDepth === 0
+                ? 'No one is waiting — join now'
+                : `${hennaQueueDepth} ${hennaQueueDepth === 1 ? 'person is' : 'people are'} in line`}
+          </Text>
+          <Text style={styles.hennaLink}>
+            {hennaMinePending > 0 ? 'View your spots →' : 'Join the line →'}
+          </Text>
+        </TouchableOpacity>
+      )}
 
       {/* Featured event card — hidden once the last event has ended so
           the home screen doesn't keep linking to a past schedule. While
@@ -534,6 +603,51 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     borderLeftWidth: 3,
     borderLeftColor: Colors.gold,
+  },
+
+  hennaCard: {
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+    backgroundColor: Colors.accentLight,
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.accent,
+  },
+  hennaCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: Spacing.xs,
+  },
+  hennaDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.accent,
+  },
+  hennaTag: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 10,
+    letterSpacing: 2,
+    color: Colors.accent,
+  },
+  hennaTitle: {
+    fontFamily: Fonts.serifSemiBold,
+    fontSize: Typography.lg,
+    color: Colors.textPrimary,
+    marginBottom: 3,
+  },
+  hennaSub: {
+    fontFamily: Fonts.sans,
+    fontSize: Typography.sm,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.sm,
+  },
+  hennaLink: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: Typography.sm,
+    color: Colors.accent,
   },
   eventTag: {
     fontFamily: Fonts.sansMedium,
