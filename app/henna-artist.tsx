@@ -182,10 +182,10 @@ function HennaArtistInner({ artistName }: { artistName: string }) {
   const doFinish = useCallback(() => {
     if (!myChair) return;
     withBusy(myChair.id, async () => {
-      await finishEntry(myChair.id);
+      await finishEntry(weddingId, myChair.id);
       haptic.success();
     });
-  }, [myChair, withBusy]);
+  }, [myChair, weddingId, withBusy]);
 
   // Same shape as my-info.tsx#handleSignOut — on SaaS, route to
   // /invite first and clear the persisted wedding id so the next

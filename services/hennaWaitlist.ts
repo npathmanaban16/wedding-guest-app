@@ -192,24 +192,52 @@ export async function startEntry(
 // row stays in_progress; the artist hits `finishEntry` when they
 // actually finish (usually a minute or two later).
 export async function almostDoneAlert(weddingId: string): Promise<void> {
-  const active = await fetchActiveEntries(weddingId);
-  const top = active.find((e) => e.status === 'waiting');
-  if (!top) return;
-  await sendHennaPush(weddingId, top.added_by, {
-    title: 'Henna — you\'re up next',
-    body: `${addressee(top)} the person before you is almost done. Head to the henna chair now.`,
-  });
+  await alertNextInLine(
+    weddingId,
+    (top) => `${addressee(top)} the person before you is almost done. Head to the henna chair now.`,
+  );
 }
 
-// finishEntry: chair row → done. No push — the artist will Start
-// the next person separately (which fires its own 2-away push).
-export async function finishEntry(entryId: string): Promise<void> {
+// finishEntry: chair row → done. Also fires the "come now" push
+// as a safety net for the case where the artist skipped Almost
+// done — Start pings the person-after-next, not the person
+// actually being pulled up, so without this ping the true next
+// person might not know their turn came. If the artist DID hit
+// Almost done a minute earlier, the top waiter gets a second
+// nearly-identical push — mildly noisy but reliable, which we
+// prefer for a live queue.
+export async function finishEntry(weddingId: string, entryId: string): Promise<void> {
   const { error } = await supabase
     .from('henna_waitlist')
     .update({ status: 'done', finished_at: new Date().toISOString() })
     .eq('id', entryId)
     .eq('status', 'in_progress');
   if (error) throw error;
+  await alertNextInLine(
+    weddingId,
+    (top) => `${addressee(top)} the person before you just finished. Head to the henna chair.`,
+  );
+}
+
+// Shared "you're up next" push — finds the top of the waiting
+// queue and pings their added_by device. Best-effort: swallows
+// errors (a failed push shouldn't blow up the caller's queue
+// mutation) and no-ops on an empty queue.
+async function alertNextInLine(
+  weddingId: string,
+  bodyFor: (top: HennaWaitlistEntry) => string,
+): Promise<void> {
+  try {
+    const active = await fetchActiveEntries(weddingId);
+    const top = active.find((e) => e.status === 'waiting');
+    if (!top) return;
+    await sendHennaPush(weddingId, top.added_by, {
+      title: 'Henna — you\'re up next',
+      body: bodyFor(top),
+    });
+  } catch (err) {
+    console.warn('[henna] next-in-line push failed', err);
+  }
 }
 
 // skipEntry: any waiting row → skipped (no-show, guest wandered off,
