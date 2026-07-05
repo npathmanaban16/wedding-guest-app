@@ -2,12 +2,16 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? '';
 // Per-wedding recipient is read from weddings.contact_email at request
-// time. Note: Resend's free tier only delivers to the address that
-// registered the account until a sender domain is verified at
-// resend.com/domains — so even after this routes per-wedding, emails to
-// any address other than the signup address will be silently dropped
-// until that's set up.
-const FROM_EMAIL = 'onboarding@resend.dev';
+// time. To deliver to arbitrary per-wedding recipients (not just the
+// Resend account owner), verify a sender domain at resend.com/domains
+// and set RESEND_FROM_EMAIL to an address on that domain (e.g.
+// notifications@yourdomain.com). Without that env var the function
+// falls back to Resend's shared onboarding@resend.dev sender, which
+// only delivers to the account-owner address.
+const FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') ?? 'onboarding@resend.dev';
+// Display name shown as the sender in the recipient's inbox. Resend
+// accepts an RFC 5322 `Name <address>` in the `from` field.
+const FROM_NAME = 'Tetherly App';
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -102,7 +106,7 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: FROM_EMAIL,
+        from: `${FROM_NAME} <${FROM_EMAIL}>`,
         to: [TO_EMAIL],
         subject,
         text: `${textIntro}\n\n${details}\n\n— ${coupleNames} Wedding App`,

@@ -39,6 +39,48 @@ export default function CoupleSignupScreen() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  // Non-blocking domain check: on blur we ask Google's public DNS
+  // resolver whether the email's domain has any MX records. This
+  // catches typos like `gmial.com` or `gmail.co` before the request is
+  // submitted. Left null until the check has run and produced a
+  // negative result; network errors are treated as "unknown" and don't
+  // block submit.
+  const [emailWarning, setEmailWarning] = useState<string | null>(null);
+  const [checkingEmail, setCheckingEmail] = useState(false);
+
+  const checkEmailMx = async (addr: string) => {
+    const trimmed = addr.trim();
+    if (!trimmed || !EMAIL_REGEX.test(trimmed)) {
+      setEmailWarning(null);
+      return;
+    }
+    const domain = trimmed.split('@')[1];
+    setCheckingEmail(true);
+    try {
+      const res = await fetch(
+        `https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=MX`,
+      );
+      if (!res.ok) return;
+      const data = await res.json();
+      // Status 3 = NXDOMAIN (domain doesn't exist). A missing/empty
+      // Answer array with no NXDOMAIN just means "no MX records", which
+      // for any modern email provider means the domain can't receive
+      // mail.
+      const hasMx = Array.isArray(data.Answer)
+        && data.Answer.some((a: { type: number }) => a.type === 15);
+      if (data.Status === 3) {
+        setEmailWarning("We couldn't find that domain. Please double-check your email.");
+      } else if (!hasMx) {
+        setEmailWarning(`We couldn't find an email server for ${domain}. Please double-check your email.`);
+      } else {
+        setEmailWarning(null);
+      }
+    } catch {
+      // Silent — a network hiccup shouldn't block a legitimate signup.
+    } finally {
+      setCheckingEmail(false);
+    }
+  };
 
   const validate = (): string | null => {
     if (!coupleName.trim()) return 'Please enter the couple name.';
@@ -48,6 +90,7 @@ export default function CoupleSignupScreen() {
     if (!email.trim()) return 'Please enter your email.';
     if (!EMAIL_REGEX.test(email.trim())) return 'That email doesn’t look right.';
     if (isDisposableEmail(email.trim())) return 'Please use a non-disposable email address.';
+    if (emailWarning) return emailWarning;
     if (email.trim().toLowerCase() !== confirmEmail.trim().toLowerCase()) {
       return 'Email addresses don’t match.';
     }
@@ -225,12 +268,23 @@ export default function CoupleSignupScreen() {
             placeholder="you@example.com"
             placeholderTextColor={Colors.textMuted}
             value={email}
-            onChangeText={(t) => { setEmail(t); if (error) setError(''); }}
+            onChangeText={(t) => {
+              setEmail(t);
+              if (error) setError('');
+              if (emailWarning) setEmailWarning(null);
+            }}
+            onBlur={() => checkEmailMx(email)}
             autoCapitalize="none"
             autoCorrect={false}
             keyboardType="email-address"
             returnKeyType="next"
           />
+          {checkingEmail && (
+            <Text style={styles.helperNote}>Checking email…</Text>
+          )}
+          {!!emailWarning && !checkingEmail && (
+            <Text style={styles.fieldWarning}>{emailWarning}</Text>
+          )}
 
           {email.length > 0 && (
             <>
@@ -454,6 +508,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: Spacing.sm,
     marginBottom: Spacing.sm,
+  },
+
+  fieldWarning: {
+    fontFamily: Fonts.sans,
+    fontSize: Typography.xs,
+    color: Colors.error,
+    marginTop: -Spacing.sm,
+    marginBottom: Spacing.md,
   },
 
   honeypot: {
