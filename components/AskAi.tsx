@@ -33,8 +33,8 @@ import { Colors, Fonts, Radius, Shadow, Spacing, Typography } from '@/constants/
 import { useAuth } from '@/context/AuthContext';
 import { useWedding } from '@/context/WeddingContext';
 import {
-  HOTEL_LOGISTICS,
-  OFFSITE_VENUE_TRANSPORT,
+  getHotelLogisticsForWedding,
+  getOffsiteVenueTransportForWedding,
   NN_WEDDING_IDS,
 } from '@/constants/weddingData';
 import {
@@ -129,12 +129,15 @@ export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
         packingGuide: filterPackingForGuest(packingGuide, profile),
         // Resolved per-wedding destination guide — either DB-backed
         // (wedding_guides row) or a code-defined fallback for legacy
-        // tenants. Hotel logistics + offsite-venue transport stay
-        // Montreux-specific for now and only apply to N&N + Emma & James.
+        // tenants. Hotel logistics + offsite-venue transport are
+        // scoped by wedding id so tenants outside Montreux (e.g.
+        // Arjun & Ila at the Ritz-Carlton in Laguna Niguel) don't
+        // receive Swiss walking-distance data the AI would then
+        // confidently cite as if it applied to their weekend.
         destinationGuide: guide.sections,
         destinationCity: wedding.destination_city,
-        hotelLogistics: HOTEL_LOGISTICS,
-        offsiteVenueTransport: OFFSITE_VENUE_TRANSPORT,
+        hotelLogistics: getHotelLogisticsForWedding(wedding.id),
+        offsiteVenueTransport: getOffsiteVenueTransportForWedding(wedding.id),
         customPackingItems,
         registryUrl: wedding.registry_url,
       });
@@ -152,7 +155,7 @@ export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
     ],
   );
 
-  const prompts = promptsForTab(tabContext);
+  const prompts = promptsForTab(tabContext, wedding);
 
   // Load past Q&As whenever the modal opens. Cheap (indexed query, capped at
   // 30 rows) so we just refetch each time rather than caching across opens.

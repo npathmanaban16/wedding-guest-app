@@ -56,11 +56,16 @@ export interface ContextualPrompt {
   emoji: string;
 }
 
+// The base set below is intentionally destination-neutral — every
+// prompt here should read well for any wedding regardless of country
+// or theme. Location-specific starters (EES at the EU border,
+// vineyard wine tastings, etc.) live in extraPromptsForWedding
+// further down and are appended only for weddings where they apply,
+// so a guest of a US wedding never sees a Schengen-border question.
 export const CONTEXTUAL_PROMPTS: Record<TabContext, ContextualPrompt[]> = {
   home: [
     { emoji: '🗓️', label: 'What\'s the order of events that weekend?' },
     { emoji: '🌤️', label: 'What\'s the weather usually like?' },
-    { emoji: '🛂', label: 'What do I need to know about EES at the EU border?' },
     { emoji: '💡', label: 'What should I do the day before the wedding?' },
     { emoji: '🎁', label: 'Any tips on a thoughtful gift?' },
   ],
@@ -72,7 +77,6 @@ export const CONTEXTUAL_PROMPTS: Record<TabContext, ContextualPrompt[]> = {
   ],
   destination: [
     { emoji: '🥾', label: 'Best half-day activity near the hotel?' },
-    { emoji: '🍷', label: 'Recommend a wine tasting nearby' },
     { emoji: '🍽️', label: 'Where should I have a casual dinner?' },
     { emoji: '🚶', label: 'How far is my hotel from the wedding venue?' },
   ],
@@ -103,15 +107,61 @@ export const CONTEXTUAL_PROMPTS: Record<TabContext, ContextualPrompt[]> = {
 // Generic fallback prompts — shown if a tab isn't mapped above or when
 // opened from a non-tab context.
 export const DEFAULT_PROMPTS: ContextualPrompt[] = [
-  { emoji: '👗', label: 'Will a sage long green dress work for the wedding?' },
   { emoji: '🗓️', label: 'What should I do on Saturday before the wedding?' },
   { emoji: '🥂', label: 'What\'s the dress code at each event?' },
   { emoji: '🥾', label: 'Anything fun to do near the hotel?' },
 ];
 
-export function promptsForTab(tab: TabContext | null): ContextualPrompt[] {
+// Minimal shape needed from the wedding row to compute location-conditional
+// prompts. Kept as a structural type so callers can pass a WeddingRow
+// directly without an import cycle back into services/wedding.
+export interface PromptWeddingContext {
+  location: string;
+  destination_city: string;
+}
+
+// Prompt supplements gated on where the wedding is being held. Extended
+// as new location-specific starters make sense — the goal is a chip the
+// AI can actually answer well for that region, not a decorative one.
+function extraPromptsForWedding(
+  wedding: PromptWeddingContext | null,
+  tab: TabContext,
+): ContextualPrompt[] {
+  if (!wedding) return [];
+  const loc = `${wedding.location} ${wedding.destination_city}`.toLowerCase();
+  // Schengen area — the Entry/Exit System (EES) applies at every land,
+  // sea, and air border crossing into these countries. Substring match
+  // on the wedding location covers current tenants; if we ever add a
+  // country code column on the wedding row we can key off that instead.
+  const isSchengen =
+    /switzerland|france|germany|italy|spain|netherlands|belgium|austria|denmark|sweden|norway|finland|portugal|greece|poland|czech|slovak|hungary|slovenia|estonia|latvia|lithuania|luxembourg|malta|iceland|liechtenstein/i.test(
+      loc,
+    );
+  // Regions where a wine-tasting recommendation is a natural ask — the
+  // AI can point at a specific appellation instead of shrugging.
+  const isWineRegion =
+    /montreux|lavaux|geneva|napa|sonoma|tuscany|piedmont|bordeaux|champagne|rioja|douro/i.test(
+      loc,
+    );
+
+  const extras: ContextualPrompt[] = [];
+  if (tab === 'home' && isSchengen) {
+    extras.push({ emoji: '🛂', label: 'What do I need to know about EES at the EU border?' });
+  }
+  if (tab === 'destination' && isWineRegion) {
+    extras.push({ emoji: '🍷', label: 'Recommend a wine tasting nearby' });
+  }
+  return extras;
+}
+
+export function promptsForTab(
+  tab: TabContext | null,
+  wedding?: PromptWeddingContext | null,
+): ContextualPrompt[] {
   if (!tab) return DEFAULT_PROMPTS;
-  return CONTEXTUAL_PROMPTS[tab] ?? DEFAULT_PROMPTS;
+  const base = CONTEXTUAL_PROMPTS[tab] ?? DEFAULT_PROMPTS;
+  const extras = extraPromptsForWedding(wedding ?? null, tab);
+  return extras.length > 0 ? [...base, ...extras] : base;
 }
 
 // ─── Per-guest filtering ─────────────────────────────────────────────────────
