@@ -1,18 +1,18 @@
 // Triggered by the client (via supabase.functions.invoke) right after a
-// new row is inserted into `wedding_requests`. Sends an admin notification
-// email so the request is seen. A couple-facing confirmation email is
-// intentionally NOT sent yet — Resend's shared test sender can only
-// deliver to the account owner's address, so any third-party recipient is
-// silently rejected. Wire that second send back in once a sender domain
-// is verified on Resend.
+// new row is inserted into `wedding_requests`. Sends two emails: an
+// admin notification so the request is seen, and a confirmation to the
+// requesting couple so they know it landed. Reply-To on the admin mail
+// points at the couple's address; reply-to on the couple's confirmation
+// points at SUPPORT_EMAIL so replies reach a real inbox.
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? '';
 const ADMIN_EMAIL = 'neha.pathmanaban.2016@gmail.com';
-// Resend requires a verified sender. Until a domain is verified, use
-// Resend's shared onboarding address for the From header; Reply-To is set
-// per-send on the admin email to the couple's address so replies land in
-// a real conversation.
-const FROM_EMAIL = 'onboarding@resend.dev';
+const SUPPORT_EMAIL = 'tetherly.app@gmail.com';
+// FROM address for outbound Resend mail. Set RESEND_FROM_EMAIL to an
+// address on a domain verified at resend.com/domains to deliver to
+// arbitrary recipients; without it the function falls back to Resend's
+// shared onboarding sender, which only reaches the account owner.
+const FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') ?? 'onboarding@resend.dev';
 const APP_NAME = 'Tetherly';
 
 const CORS_HEADERS = {
@@ -121,12 +121,50 @@ Deno.serve(async (req) => {
       </div>
     `;
 
-    // Admin notification only. Couple confirmation is disabled until a
-    // sender domain is verified on Resend — the test sender can't deliver
-    // to arbitrary third-party addresses, so promising a confirmation
-    // email in the UI would be a lie. Re-enable the send once FROM_EMAIL
-    // is switched from onboarding@resend.dev to a verified-domain address.
     await sendEmail(ADMIN_EMAIL, adminSubject, adminHtml, adminText, email);
+
+    // ── Couple confirmation ──────────────────────────────────────
+    // Reply-To points at SUPPORT_EMAIL so a couple hitting Reply lands
+    // in a real inbox instead of the send-only FROM_EMAIL address. This
+    // send is best-effort: a failure here shouldn't fail the request,
+    // since the admin notification (which is what actually triggers
+    // follow-up) has already gone out.
+    const coupleSubject = `We got your ${APP_NAME} request 💍`;
+    const coupleText =
+      `Hi ${coupleName},\n\n` +
+      `Thanks for reaching out — we got your ${APP_NAME} request and we're excited to take a look.\n\n` +
+      `Here's what we have on file:\n\n` +
+      `Couple:   ${coupleName}\n` +
+      `Date:     ${dateStr}\n` +
+      (guestCount != null ? `Guests:   ${guestCount}\n` : '') +
+      (city ? `City:     ${city}\n` : '') +
+      `\n` +
+      `We review each request personally and will follow up from ${SUPPORT_EMAIL} within a few days. If anything above looks off, just reply to this email and it'll reach us directly.\n\n` +
+      `— The ${APP_NAME} team`;
+    const coupleHtml = `
+      <div style="font-family: Georgia, serif; max-width: 480px; margin: 0 auto; padding: 32px; color: #1C1810;">
+        <h2 style="color: #7A6A55; margin-bottom: 4px;">We got your request 💍</h2>
+        <p style="color: #9A8A78; font-size: 13px; margin-top: 0;">${new Date().toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'short' })}</p>
+        <hr style="border: none; border-top: 1px solid #E4D9CC; margin: 20px 0;" />
+        <p style="font-size: 15px; line-height: 1.6;">Hi ${coupleName},</p>
+        <p style="font-size: 15px; line-height: 1.6;">Thanks for reaching out — we got your ${APP_NAME} request and we're excited to take a look.</p>
+        <p style="font-size: 15px; line-height: 1.6; margin-bottom: 6px;">Here's what we have on file:</p>
+        <table style="width: 100%; font-size: 15px; line-height: 1.8; color: #1C1810;">
+          <tr><td style="color:#9A8A78; padding-right:12px;">Couple</td><td><strong>${coupleName}</strong></td></tr>
+          <tr><td style="color:#9A8A78; padding-right:12px;">Date</td><td>${dateStr}</td></tr>
+          ${guestCount != null ? `<tr><td style="color:#9A8A78; padding-right:12px;">Guests</td><td>${guestCount}</td></tr>` : ''}
+          ${city ? `<tr><td style="color:#9A8A78; padding-right:12px;">City</td><td>${city}</td></tr>` : ''}
+        </table>
+        <p style="font-size: 15px; line-height: 1.6;">We review each request personally and will follow up from <a href="mailto:${SUPPORT_EMAIL}" style="color:#7A6A55;">${SUPPORT_EMAIL}</a> within a few days. If anything above looks off, just reply to this email and it'll reach us directly.</p>
+        <hr style="border: none; border-top: 1px solid #E4D9CC; margin: 20px 0;" />
+        <p style="font-size: 13px; color: #7A6A55;">— The ${APP_NAME} team</p>
+      </div>
+    `;
+    try {
+      await sendEmail(email, coupleSubject, coupleHtml, coupleText, SUPPORT_EMAIL);
+    } catch (e) {
+      console.error('Couple confirmation email failed (admin notification still sent):', e);
+    }
 
     return new Response(JSON.stringify({ ok: true }), {
       headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
