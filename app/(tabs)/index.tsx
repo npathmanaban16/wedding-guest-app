@@ -297,6 +297,9 @@ export default function HomeScreen() {
 
       {isAdminUser && adminUnlocked && (
         <>
+          <Text style={styles.adminHeading}>Admin Tools</Text>
+
+          <Text style={styles.adminSectionLabel}>Notifications</Text>
           <TouchableOpacity
             style={styles.adminButton}
             onPress={() => router.push('/admin')}
@@ -305,6 +308,8 @@ export default function HomeScreen() {
             <Ionicons name="notifications-outline" size={15} color={Colors.white} />
             <Text style={styles.adminButtonText}>Send Guest Notification</Text>
           </TouchableOpacity>
+
+          <Text style={styles.adminSectionLabel}>App Configuration</Text>
           <TouchableOpacity
             style={styles.adminButton}
             onPress={() => router.push('/admin-content')}
@@ -313,6 +318,16 @@ export default function HomeScreen() {
             <Ionicons name="create-outline" size={15} color={Colors.white} />
             <Text style={styles.adminButtonText}>Edit App Content</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.adminButton}
+            onPress={() => router.push('/admin-settings')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="options-outline" size={15} color={Colors.white} />
+            <Text style={styles.adminButtonText}>Enable App Features</Text>
+          </TouchableOpacity>
+
+          <Text style={styles.adminSectionLabel}>Guest Information</Text>
           <TouchableOpacity
             style={styles.adminButton}
             onPress={() => router.push('/admin-accommodations')}
@@ -329,14 +344,7 @@ export default function HomeScreen() {
             <Ionicons name="people-outline" size={15} color={Colors.white} />
             <Text style={styles.adminButtonText}>Guest Groups & Access</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.adminButton}
-            onPress={() => router.push('/admin-settings')}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="options-outline" size={15} color={Colors.white} />
-            <Text style={styles.adminButtonText}>App Features</Text>
-          </TouchableOpacity>
+
           <TouchableOpacity
             onPress={handleLockAdmin}
             style={styles.adminLockAgain}
@@ -662,6 +670,24 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 
+  adminHeading: {
+    fontFamily: Fonts.serif,
+    fontSize: Typography.xl,
+    color: Colors.textPrimary,
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.xs,
+  },
+  adminSectionLabel: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 10,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    color: Colors.textMuted,
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
   adminButton: {
     flexDirection: 'row',
     alignItems: 'center',
