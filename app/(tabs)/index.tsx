@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -11,9 +11,10 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  AppState,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/context/AuthContext';
@@ -63,6 +64,14 @@ function pickDisplayedEvent(
     }
   }
   return null;
+}
+
+// One-liner queue-depth string used on the henna card, e.g.
+// "3 people in line" / "1 person in line" / "no one waiting".
+function queueLine(depth: number): string {
+  if (depth === 0) return 'no one waiting';
+  if (depth === 1) return '1 person in line';
+  return `${depth} people in line`;
 }
 
 // Casual second-factor for the admin tools — gates the buttons on the home
@@ -125,41 +134,48 @@ export default function HomeScreen() {
   const isAdminUser = !!guestName && isAdmin(guestName);
   // Henna line — only surfaces when the artist has opened the
   // waitlist. Rows are lightweight (a queue depth number + whether
-  // the guest already has a spot), so we refetch on every mount
-  // and let the dedicated /henna screen own the live polling.
+  // the guest already has a spot), so we refetch on every focus
+  // (navigating back from /henna) and on app-resume. The dedicated
+  // /henna screen owns the fast live polling — this card just
+  // needs "recent enough" numbers to be useful.
   const [hennaOpen, setHennaOpen] = useState(false);
   const [hennaLabel, setHennaLabel] = useState<string | null>(null);
   const [hennaMinePending, setHennaMinePending] = useState(0);
   const [hennaQueueDepth, setHennaQueueDepth] = useState(0);
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      try {
-        const [station, entries] = await Promise.all([
-          fetchStation(weddingId),
-          fetchActiveEntries(weddingId),
-        ]);
-        if (cancelled) return;
-        setHennaOpen(!!station?.is_open);
-        setHennaLabel(station?.display_name?.trim() || null);
-        setHennaQueueDepth(entries.filter((e: HennaWaitlistEntry) => e.status === 'waiting').length);
-        setHennaMinePending(
-          guestName
-            ? entries.filter((e) => e.added_by === guestName).length
-            : 0,
-        );
-      } catch (err) {
-        // Feature is optional — silence errors so the home tab
-        // still renders on tenants that haven't run migration 045.
-        if (!cancelled) {
-          setHennaOpen(false);
-          setHennaMinePending(0);
-        }
-      }
-    };
-    load();
-    return () => { cancelled = true; };
+  const loadHenna = useCallback(async () => {
+    try {
+      const [station, entries] = await Promise.all([
+        fetchStation(weddingId),
+        fetchActiveEntries(weddingId),
+      ]);
+      setHennaOpen(!!station?.is_open);
+      setHennaLabel(station?.display_name?.trim() || null);
+      setHennaQueueDepth(
+        entries.filter((e: HennaWaitlistEntry) => e.status === 'waiting').length,
+      );
+      setHennaMinePending(
+        guestName
+          ? entries.filter((e) => e.added_by === guestName).length
+          : 0,
+      );
+    } catch (err) {
+      // Feature is optional — silence errors so the home tab
+      // still renders on tenants that haven't run migration 045.
+      setHennaOpen(false);
+      setHennaMinePending(0);
+    }
   }, [weddingId, guestName]);
+  useFocusEffect(
+    useCallback(() => {
+      loadHenna();
+    }, [loadHenna]),
+  );
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') loadHenna();
+    });
+    return () => sub.remove();
+  }, [loadHenna]);
   // Admin tools are hidden behind a shared password until unlocked once on
   // this device. State is restored from AsyncStorage on mount and persists
   // across app launches; tapping "Lock again" clears it.
@@ -284,13 +300,11 @@ export default function HomeScreen() {
             <View style={styles.hennaDot} />
             <Text style={styles.hennaTag}>HENNA LINE OPEN</Text>
           </View>
-          <Text style={styles.hennaTitle}>{hennaLabel ?? 'Join the henna waitlist'}</Text>
+          <Text style={styles.hennaTitle}>{hennaLabel ?? 'Henna waitlist'}</Text>
           <Text style={styles.hennaSub}>
             {hennaMinePending > 0
-              ? `You have ${hennaMinePending} spot${hennaMinePending === 1 ? '' : 's'} in line`
-              : hennaQueueDepth === 0
-                ? 'No one is waiting — join now'
-                : `${hennaQueueDepth} ${hennaQueueDepth === 1 ? 'person is' : 'people are'} in line`}
+              ? `You have ${hennaMinePending} spot${hennaMinePending === 1 ? '' : 's'} in line · ${queueLine(hennaQueueDepth)}`
+              : queueLine(hennaQueueDepth)}
           </Text>
           <Text style={styles.hennaLink}>
             {hennaMinePending > 0 ? 'View your spots →' : 'Join the line →'}
