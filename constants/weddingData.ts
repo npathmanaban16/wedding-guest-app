@@ -623,6 +623,32 @@ export const OFFSITE_VENUE_TRANSPORT: { venue: string; notes: string }[] = [
   },
 ];
 
+// The HOTEL_LOGISTICS and OFFSITE_VENUE_TRANSPORT arrays above are
+// hand-authored for the Montreux venue. Feeding them to the AI for a
+// wedding held elsewhere (e.g. Arjun & Ila at the Ritz-Carlton, Laguna
+// Niguel) makes the assistant confidently cite Swiss walking distances
+// to guests in California. These resolvers gate the data to the
+// weddings it actually applies to; tenants without matching data get
+// empty arrays and the AI answers from the wedding row's location +
+// hotel picker text instead of inventing numbers.
+export function getHotelLogisticsForWedding(
+  weddingId: string | null | undefined,
+): HotelLogistics[] {
+  if (!weddingId) return [];
+  if (NN_WEDDING_IDS.has(weddingId)) return HOTEL_LOGISTICS;
+  if (weddingId === EMMA_JAMES_WEDDING_ID) return HOTEL_LOGISTICS;
+  return [];
+}
+
+export function getOffsiteVenueTransportForWedding(
+  weddingId: string | null | undefined,
+): { venue: string; notes: string }[] {
+  if (!weddingId) return [];
+  if (NN_WEDDING_IDS.has(weddingId)) return OFFSITE_VENUE_TRANSPORT;
+  if (weddingId === EMMA_JAMES_WEDDING_ID) return OFFSITE_VENUE_TRANSPORT;
+  return [];
+}
+
 // ============================================================
 // SWITZERLAND GUIDE — Montreux
 // ============================================================
