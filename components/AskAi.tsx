@@ -372,6 +372,10 @@ export function AskAi({ tabContext, bottomOffset = 84 }: AskAiProps) {
   // Hide entirely if there's no logged-in guest — assistant is a guest-only
   // surface and the contexts above would throw without one.
   if (!guestName) return null;
+  // App Features toggle: when the admin has turned the AI assistant off,
+  // hide the FAB across every tab. Missing/undefined is treated as
+  // enabled to preserve the pre-migration-044 default.
+  if (wedding.ai_enabled === false) return null;
 
   return (
     <>

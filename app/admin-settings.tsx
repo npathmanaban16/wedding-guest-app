@@ -16,10 +16,14 @@ import { useWedding } from '@/context/WeddingContext';
 import { haptic } from '@/utils/haptics';
 import { updateWeddingSettings } from '@/services/wedding';
 
-// The two flippable flags on the weddings row. Each renders as one
+// The flippable flags on the weddings row. Each renders as one
 // toggle row below; adding a future flag means adding an entry here
 // plus its column migration + gating at the consuming screens.
-type FeatureFlag = 'attendees_enabled' | 'chat_enabled' | 'onboarding_enabled';
+type FeatureFlag =
+  | 'attendees_enabled'
+  | 'chat_enabled'
+  | 'onboarding_enabled'
+  | 'ai_enabled';
 
 function FeatureToggleRow({
   icon,
@@ -140,6 +144,16 @@ export default function AdminSettingsScreen() {
         enabled={wedding.onboarding_enabled !== false}
         saving={saving === 'onboarding_enabled'}
         onToggle={() => handleToggle('onboarding_enabled')}
+      />
+
+      <FeatureToggleRow
+        icon="sparkles-outline"
+        label="Ask AI assistant"
+        hintOn="The floating Ask button appears on every tab so guests can chat with the AI assistant about the wedding."
+        hintOff="The Ask button is hidden for all guests. Past Q&A history is kept and returns when the assistant is turned back on."
+        enabled={wedding.ai_enabled !== false}
+        saving={saving === 'ai_enabled'}
+        onToggle={() => handleToggle('ai_enabled')}
       />
 
       <Text style={styles.footnote}>
