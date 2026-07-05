@@ -127,21 +127,31 @@ begin
     raise notice 'Wedding NEHANAVEEN2026 not present in this env; skipping.';
   end if;
 
-  -- Arjun & Ila (pitch demo). Uses a different first name from
-  -- the existing "Priya Sharma" guest on this tenant to keep the
-  -- artist unambiguous at login.
+  -- Arjun & Ila (pitch demo). Two artists share one station /
+  -- queue — Anjali and Meera each get their own chair on the
+  -- artist screen but pull from the same waiting list. Names
+  -- avoid clashing with the existing "Priya Sharma" guest on
+  -- this tenant so login lookups stay unambiguous.
   select id into ai_id from public.weddings where invite_code = 'ARJUNILA2026';
   if ai_id is not null then
     insert into public.wedding_admins (wedding_id, guest_name, is_wedding_party, gender, role)
-    values (ai_id, 'Anjali Mehta', true, 'female', 'henna_artist')
+    values
+      (ai_id, 'Anjali Mehta', true, 'female', 'henna_artist'),
+      (ai_id, 'Meera Iyer',   true, 'female', 'henna_artist')
     on conflict (wedding_id, guest_name) do update set
       is_wedding_party = excluded.is_wedding_party,
       gender           = excluded.gender,
       role             = excluded.role;
 
+    -- Two artists → drop the single-name label so guests don't
+    -- see "Henna with Anjali" while Meera is also serving. Null
+    -- falls back to the generic "Henna waitlist" heading in the
+    -- guest UI. Kept as an upsert so re-running the migration on
+    -- a DB that already has "Henna with Anjali" from an earlier
+    -- run picks up the correction.
     insert into public.henna_stations (wedding_id, is_open, display_name)
-    values (ai_id, false, 'Henna with Anjali')
-    on conflict (wedding_id) do nothing;
+    values (ai_id, false, null)
+    on conflict (wedding_id) do update set display_name = excluded.display_name;
   else
     raise notice 'Wedding ARJUNILA2026 not present in this env; skipping.';
   end if;
