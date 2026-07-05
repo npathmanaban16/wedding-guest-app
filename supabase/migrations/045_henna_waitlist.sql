@@ -97,36 +97,52 @@ create policy "allow_all_henna_waitlist"
   on public.henna_waitlist for all using (true) with check (true);
 
 
--- ─── N&N seed data ──────────────────────────────────────────────
--- Adds a demo henna artist login + a closed henna station to the
--- N&N tenant so the feature is discoverable end-to-end when the
--- couple wants to try it. The artist logs in as "Priya Kapoor";
--- role='henna_artist' excludes her from admin powers in
--- WeddingContext but sends her to the artist queue screen on
--- login. is_open starts false so guests don't see the join card
--- on the home tab until the artist explicitly opens the line.
+-- ─── Per-wedding seed data ──────────────────────────────────────
+-- Adds a demo henna artist login + a closed henna station to any
+-- tenant we already know about (N&N and the Arjun & Ila pitch
+-- demo). role='henna_artist' excludes the artist from admin powers
+-- in WeddingContext but routes them to the artist queue screen
+-- on login. is_open starts false so guests don't see the join
+-- card on the home tab until the artist explicitly opens the line.
 
 do $$
 declare
   nn_id uuid;
+  ai_id uuid;
 begin
-  select id into nn_id
-  from public.weddings
-  where invite_code = 'NEHANAVEEN2026';
+  -- N&N
+  select id into nn_id from public.weddings where invite_code = 'NEHANAVEEN2026';
+  if nn_id is not null then
+    insert into public.wedding_admins (wedding_id, guest_name, is_wedding_party, gender, role)
+    values (nn_id, 'Priya Kapoor', true, 'female', 'henna_artist')
+    on conflict (wedding_id, guest_name) do update set
+      is_wedding_party = excluded.is_wedding_party,
+      gender           = excluded.gender,
+      role             = excluded.role;
 
-  if nn_id is null then
-    raise notice 'Wedding NEHANAVEEN2026 not present in this env; skipping N&N-specific seed.';
-    return;
+    insert into public.henna_stations (wedding_id, is_open, display_name)
+    values (nn_id, false, 'Henna with Priya')
+    on conflict (wedding_id) do nothing;
+  else
+    raise notice 'Wedding NEHANAVEEN2026 not present in this env; skipping.';
   end if;
 
-  insert into public.wedding_admins (wedding_id, guest_name, is_wedding_party, gender, role)
-  values (nn_id, 'Priya Kapoor', true, 'female', 'henna_artist')
-  on conflict (wedding_id, guest_name) do update set
-    is_wedding_party = excluded.is_wedding_party,
-    gender           = excluded.gender,
-    role             = excluded.role;
+  -- Arjun & Ila (pitch demo). Uses a different first name from
+  -- the existing "Priya Sharma" guest on this tenant to keep the
+  -- artist unambiguous at login.
+  select id into ai_id from public.weddings where invite_code = 'ARJUNILA2026';
+  if ai_id is not null then
+    insert into public.wedding_admins (wedding_id, guest_name, is_wedding_party, gender, role)
+    values (ai_id, 'Anjali Mehta', true, 'female', 'henna_artist')
+    on conflict (wedding_id, guest_name) do update set
+      is_wedding_party = excluded.is_wedding_party,
+      gender           = excluded.gender,
+      role             = excluded.role;
 
-  insert into public.henna_stations (wedding_id, is_open, display_name)
-  values (nn_id, false, 'Henna with Priya')
-  on conflict (wedding_id) do nothing;
+    insert into public.henna_stations (wedding_id, is_open, display_name)
+    values (ai_id, false, 'Henna with Anjali')
+    on conflict (wedding_id) do nothing;
+  else
+    raise notice 'Wedding ARJUNILA2026 not present in this env; skipping.';
+  end if;
 end $$;

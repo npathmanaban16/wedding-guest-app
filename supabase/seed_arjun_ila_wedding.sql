@@ -136,6 +136,23 @@ insert into public.wedding_admins (wedding_id, guest_name) values
   ('a0000000-0000-0000-0000-000000000003', 'Ila Lohia')
 on conflict (wedding_id, guest_name) do nothing;
 
+-- Henna artist vendor login (role='henna_artist'). Login-only, no
+-- admin powers; lands on /henna-artist after signing in.
+insert into public.wedding_admins
+  (wedding_id, guest_name, is_wedding_party, gender, role)
+values
+  ('a0000000-0000-0000-0000-000000000003', 'Anjali Mehta', true, 'female', 'henna_artist')
+on conflict (wedding_id, guest_name) do update set
+  is_wedding_party = excluded.is_wedding_party,
+  gender           = excluded.gender,
+  role             = excluded.role;
+
+-- Henna station — starts closed. The artist toggles it open from
+-- their queue screen when the henna setup is ready for guests.
+insert into public.henna_stations (wedding_id, is_open, display_name)
+values ('a0000000-0000-0000-0000-000000000003', false, 'Henna with Anjali')
+on conflict (wedding_id) do nothing;
+
 
 -- ─── Guest Info ──────────────────────────────────────────────────────────────
 -- Pre-fill meal selections + dietary for a couple of guests so the Details
