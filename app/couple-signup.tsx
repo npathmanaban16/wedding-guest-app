@@ -125,11 +125,11 @@ export default function CoupleSignupScreen() {
             <Text style={styles.ornamentDiamond}>◆</Text>
             <View style={styles.ornamentLine} />
           </View>
-          <Text style={styles.confirmTitle}>Thank you!</Text>
+          <Text style={styles.confirmTitle}>Check your email</Text>
           <Text style={styles.confirmBody}>
-            We received your request. We’ll reach out at{' '}
-            <Text style={styles.confirmEmail}>{email.trim()}</Text> within a few days to get
-            your wedding set up.
+            We just sent a confirmation link to{' '}
+            <Text style={styles.confirmEmail}>{email.trim()}</Text>. Click it to confirm your
+            request and we’ll reach out within a few days to get your wedding set up.
           </Text>
           <TouchableOpacity
             style={styles.primaryButton}
