@@ -9,6 +9,9 @@ const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? '';
 // falls back to Resend's shared onboarding@resend.dev sender, which
 // only delivers to the account-owner address.
 const FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') ?? 'onboarding@resend.dev';
+// Display name shown as the sender in the recipient's inbox. Resend
+// accepts an RFC 5322 `Name <address>` in the `from` field.
+const FROM_NAME = 'Tetherly App';
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -103,7 +106,7 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: FROM_EMAIL,
+        from: `${FROM_NAME} <${FROM_EMAIL}>`,
         to: [TO_EMAIL],
         subject,
         text: `${textIntro}\n\n${details}\n\n— ${coupleNames} Wedding App`,

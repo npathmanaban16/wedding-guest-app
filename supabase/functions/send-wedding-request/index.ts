@@ -6,13 +6,16 @@
 // points at SUPPORT_EMAIL so replies reach a real inbox.
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? '';
-const ADMIN_EMAIL = 'neha.pathmanaban.2016@gmail.com';
+const ADMIN_EMAIL = 'tetherly.app@gmail.com';
 const SUPPORT_EMAIL = 'tetherly.app@gmail.com';
 // FROM address for outbound Resend mail. Set RESEND_FROM_EMAIL to an
 // address on a domain verified at resend.com/domains to deliver to
 // arbitrary recipients; without it the function falls back to Resend's
 // shared onboarding sender, which only reaches the account owner.
 const FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') ?? 'onboarding@resend.dev';
+// Display name shown as the sender in the recipient's inbox. Resend
+// accepts an RFC 5322 `Name <address>` in the `from` field.
+const FROM_NAME = 'Tetherly App';
 const APP_NAME = 'Tetherly';
 
 const CORS_HEADERS = {
@@ -44,6 +47,7 @@ const sendEmail = async (
   html: string,
   text: string,
   replyTo?: string,
+  cc?: string,
 ) => {
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -52,12 +56,13 @@ const sendEmail = async (
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: FROM_EMAIL,
+      from: `${FROM_NAME} <${FROM_EMAIL}>`,
       to: [to],
       subject,
       html,
       text,
       ...(replyTo ? { reply_to: replyTo } : {}),
+      ...(cc ? { cc: [cc] } : {}),
     }),
   });
   if (!res.ok) {
@@ -161,7 +166,7 @@ Deno.serve(async (req) => {
       </div>
     `;
     try {
-      await sendEmail(email, coupleSubject, coupleHtml, coupleText, SUPPORT_EMAIL);
+      await sendEmail(email, coupleSubject, coupleHtml, coupleText, SUPPORT_EMAIL, SUPPORT_EMAIL);
     } catch (e) {
       console.error('Couple confirmation email failed (admin notification still sent):', e);
     }
