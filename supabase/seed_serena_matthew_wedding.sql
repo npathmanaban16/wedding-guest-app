@@ -364,6 +364,357 @@ on conflict (wedding_id, event_id) do update set
   updated_at         = now();
 
 
+-- ─── Destination Guide ──────────────────────────────────────────────
+-- Mexico City content tailored to Serena & Matthew's wedding weekend.
+-- Stored as a single row in public.wedding_guides (migration 027) so
+-- the Travel tab reads Mexico City content instead of falling back to
+-- the bundled SWITZERLAND_FULL_GUIDE constant.
+--
+-- currency_code = 'MXN' enables the live-FX widget on the currency
+-- card. photo_strip is empty here — once you upload photos to the
+-- wedding-guide-images bucket (migration 031) via the admin
+-- destination-photo editor, they'll appear at the top of the tab.
+--
+-- The sections / quick_facts / filter_pills JSON below is dollar-quoted
+-- ($g$ ... $g$) so apostrophes inside descriptions don't need escaping.
+
+insert into public.wedding_guides (
+  wedding_id, page_title, page_subtitle_tag, page_subtitle,
+  currency_code, filter_pills, sections, quick_facts, photo_strip
+) values (
+  'a0000000-0000-0000-0000-000000000004',
+  'Mexico City Guide',
+  'Ciudad de México & Beyond',
+  'Everything you need to know about Mexico City and making the most of your trip.',
+  'MXN',
+  $g$["All","Transport","Sightseeing","Activity","Restaurant","Bar","Practical"]$g$::jsonb,
+  $g$[
+    {
+      "id": "getting-there",
+      "title": "Getting to Mexico City",
+      "emoji": "✈️",
+      "items": [
+        {
+          "id": "flights",
+          "name": "By Air",
+          "category": "Transport",
+          "description": "Benito Juárez International Airport (MEX) in the east of the city is the main gateway and is served by direct flights from most major US, Canadian, European, and Latin American hubs. The newer Felipe Ángeles airport (NLU) is ~50 km north — cheaper but a longer transfer. Toluca (TLC) is a smaller option to the west.",
+          "tip": "Fly into MEX unless a specific carrier only serves NLU — the transfer from NLU into downtown can take 90+ minutes in traffic."
+        },
+        {
+          "id": "from-airport",
+          "name": "From the Airport",
+          "category": "Transport",
+          "description": "From MEX to the Sofitel Reforma is ~13 km — 25 minutes without traffic, an hour with it. Authorized airport taxis (Porto Taxi, Sitio 300) sell fixed-fare tickets inside the terminal. Uber and Cabify are cheaper (~$15–20 USD) but must be requested from the designated rideshare zones outside the terminals.",
+          "tip": "Have your hotel address written down in Spanish — many airport-taxi drivers don't speak English."
+        },
+        {
+          "id": "getting-around",
+          "name": "Getting Around Downtown",
+          "category": "Transport",
+          "description": "Uber and Cabify are ubiquitous, cheap, and safer for late-night runs. Walking the Reforma / Zona Rosa / Centro Histórico corridor is easy in daylight. The Metrobús runs along Reforma with a stop steps from the Sofitel; it's the fastest way to Chapultepec and back.",
+          "tip": "Skip regular street taxis — Uber is cheaper, tracked, and the standard for tourists here."
+        }
+      ]
+    },
+    {
+      "id": "things-to-do",
+      "title": "Things to Do",
+      "emoji": "🗺️",
+      "subsections": [
+        {
+          "id": "centro-historico",
+          "title": "Centro Histórico",
+          "emoji": "🏛️",
+          "category": "Sightseeing",
+          "items": [
+            {
+              "id": "zocalo",
+              "name": "Zócalo & Metropolitan Cathedral",
+              "category": "Sightseeing",
+              "description": "The vast main square of the city, flanked by the 16th-century Metropolitan Cathedral and the Palacio Nacional. About 15 minutes by car from the Sofitel — walking distance to Ex Convento San Hipólito.",
+              "tip": "Climb the cathedral bell tower (small fee) for the best free view of the plaza.",
+              "address": "Plaza de la Constitución s/n, Centro, Cuauhtémoc, 06000 Ciudad de México, CDMX"
+            },
+            {
+              "id": "palacio-bellas-artes",
+              "name": "Palacio de Bellas Artes",
+              "category": "Sightseeing",
+              "description": "Art Nouveau exterior, Art Deco interior, and murals by Diego Rivera, Orozco, and Siqueiros. About 10 minutes by car from the Sofitel and right next to Alameda Central park.",
+              "tip": "Cross the street to Sears' 8th-floor café for the iconic photo of the palace dome.",
+              "address": "Av. Juárez, Centro Histórico, Cuauhtémoc, 06050 Ciudad de México, CDMX"
+            },
+            {
+              "id": "templo-mayor",
+              "name": "Templo Mayor",
+              "category": "Sightseeing",
+              "description": "The excavated Aztec temple complex right behind the cathedral, with an attached museum of artifacts pulled from the site. Allow ~90 minutes.",
+              "address": "Seminario 8, Centro Histórico, Cuauhtémoc, 06060 Ciudad de México, CDMX"
+            },
+            {
+              "id": "palacio-nacional",
+              "name": "Palacio Nacional & Rivera Murals",
+              "category": "Sightseeing",
+              "description": "Government seat with a full second-floor staircase covered in Diego Rivera murals telling the history of Mexico. Free entry with ID.",
+              "address": "Plaza de la Constitución s/n, Centro, Cuauhtémoc, 06066 Ciudad de México, CDMX"
+            }
+          ]
+        },
+        {
+          "id": "museums",
+          "title": "Museums",
+          "emoji": "🖼️",
+          "category": "Sightseeing",
+          "items": [
+            {
+              "id": "anthro-museum",
+              "name": "Museo Nacional de Antropología",
+              "category": "Sightseeing",
+              "description": "One of the great museums of the world — pre-Columbian civilizations of Mesoamerica across dozens of halls, plus the famous Sun Stone. In Chapultepec Park, about 10 minutes from the Sofitel.",
+              "tip": "Allow at least 3 hours. If tight on time, focus on the Mexica, Maya, and Teotihuacán halls.",
+              "address": "Av. Paseo de la Reforma s/n, Chapultepec Polanco, Miguel Hidalgo, 11560 Ciudad de México, CDMX"
+            },
+            {
+              "id": "frida-kahlo",
+              "name": "Museo Frida Kahlo (Casa Azul)",
+              "category": "Sightseeing",
+              "description": "Frida Kahlo's cobalt-blue childhood home in Coyoacán, now a museum of her art, wardrobe, and personal effects. About 30 minutes by car from the Sofitel.",
+              "tip": "Buy timed tickets online days in advance — walk-ups often sell out.",
+              "links": [
+                { "label": "Book tickets", "url": "https://www.museofridakahlo.org.mx/en/" }
+              ],
+              "address": "Londres 247, Del Carmen, Coyoacán, 04100 Ciudad de México, CDMX"
+            },
+            {
+              "id": "soumaya",
+              "name": "Museo Soumaya",
+              "category": "Sightseeing",
+              "description": "Free-entry museum in a striking mirrored-cloud building in Polanco, holding one of the largest Rodin collections outside France plus European masters.",
+              "address": "Blvd. Miguel de Cervantes Saavedra 303, Ampliación Granada, Miguel Hidalgo, 11529 Ciudad de México, CDMX"
+            }
+          ]
+        },
+        {
+          "id": "neighborhoods",
+          "title": "Neighborhoods to Wander",
+          "emoji": "🌳",
+          "category": "Sightseeing",
+          "items": [
+            {
+              "id": "roma-condesa",
+              "name": "Roma Norte & Condesa",
+              "category": "Sightseeing",
+              "description": "Tree-lined streets, Art Deco buildings, cafés, boutiques, and some of the best restaurants in the city. About 10 minutes by car south of the Sofitel.",
+              "tip": "Spend a slow afternoon walking Avenida Álvaro Obregón in Roma Norte and looping back through Parque México in Condesa."
+            },
+            {
+              "id": "coyoacan",
+              "name": "Coyoacán",
+              "category": "Sightseeing",
+              "description": "Cobbled colonial neighborhood in the south with a lively main square, weekend markets, and the Frida Kahlo museum. Pair with lunch at Los Danzantes.",
+              "tip": "Try a churro from El Jarocho and a helado from Roxy on the plaza."
+            },
+            {
+              "id": "polanco",
+              "name": "Polanco",
+              "category": "Sightseeing",
+              "description": "Upscale shopping and dining district with Masaryk Avenue as its spine. Home to Pujol and the Soumaya + Jumex museum campus."
+            }
+          ]
+        },
+        {
+          "id": "day-trips",
+          "title": "Day Trips",
+          "emoji": "🚗",
+          "category": "Sightseeing",
+          "items": [
+            {
+              "id": "teotihuacan",
+              "name": "Teotihuacán Pyramids",
+              "category": "Sightseeing",
+              "description": "The ancient pre-Aztec city about an hour northeast of downtown — climb the Pyramid of the Sun and walk the Avenue of the Dead. Book a driver or a small-group tour from your hotel; hot-air balloon rides at sunrise are a splurge worth doing.",
+              "tip": "Go early to beat the midday sun — there is no shade on the pyramids. Wear sturdy shoes."
+            },
+            {
+              "id": "xochimilco",
+              "name": "Xochimilco",
+              "category": "Sightseeing",
+              "description": "The floating gardens south of the city — hop on a colorful trajinera boat with drinks, tacos, and mariachi bands drifting alongside. Best on a Saturday or Sunday afternoon.",
+              "tip": "Split the cost across a group — trajineras rent by the hour, not per person."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "restaurants",
+      "title": "Eating & Drinking",
+      "emoji": "🍽️",
+      "subsections": [
+        {
+          "id": "restaurants-food",
+          "title": "Restaurants",
+          "emoji": "🌮",
+          "category": "Restaurant",
+          "items": [
+            {
+              "id": "pujol",
+              "name": "Pujol",
+              "category": "Restaurant",
+              "description": "Enrique Olvera's iconic tasting-menu restaurant in Polanco — one of the most celebrated in Latin America. The mole madre course alone is worth the trip.",
+              "tip": "Reservations open a couple of months out and go fast — book as soon as you have flights.",
+              "address": "Tennyson 133, Polanco, Polanco IV Secc, Miguel Hidalgo, 11550 Ciudad de México, CDMX"
+            },
+            {
+              "id": "contramar",
+              "name": "Contramar",
+              "category": "Restaurant",
+              "description": "Legendary Roma Norte seafood lunch spot — the tuna tostadas and pescado a la talla are the signature dishes. Long, loud, and unforgettable.",
+              "tip": "Lunch only, no dinner. Go with a group and share; walk-ins possible but reservations save the wait.",
+              "address": "Calle de Durango 200, Roma Nte., Cuauhtémoc, 06700 Ciudad de México, CDMX"
+            },
+            {
+              "id": "rosetta",
+              "name": "Rosetta",
+              "category": "Restaurant",
+              "description": "Elena Reygadas' Italian-Mexican menu in a beautiful old Roma Norte mansion. The attached Panadería Rosetta up the street does the best pastries in town.",
+              "address": "Colima 166, Roma Nte., Cuauhtémoc, 06700 Ciudad de México, CDMX"
+            },
+            {
+              "id": "maximo-bistrot",
+              "name": "Máximo Bistrot",
+              "category": "Restaurant",
+              "description": "Farm-to-table French-Mexican tasting menu from Eduardo García. Small, warm, and consistently one of the best meals in the city.",
+              "address": "Av. Álvaro Obregón 65B, Roma Nte., Cuauhtémoc, 06700 Ciudad de México, CDMX"
+            },
+            {
+              "id": "el-cardenal",
+              "name": "El Cardenal",
+              "category": "Restaurant",
+              "description": "Classic Mexican breakfast institution downtown — try the chilaquiles, the fresh sweet breads, and the hot chocolate. Multiple locations; the Centro one is a short walk from the Zócalo.",
+              "address": "Palma 23, Centro Histórico, Cuauhtémoc, 06000 Ciudad de México, CDMX"
+            }
+          ]
+        },
+        {
+          "id": "bars",
+          "title": "Bars & Nightlife",
+          "emoji": "🍸",
+          "category": "Bar",
+          "items": [
+            {
+              "id": "handshake",
+              "name": "Handshake Speakeasy",
+              "category": "Bar",
+              "description": "Zona Rosa cocktail bar consistently ranked among the world's 50 best. Reservations essential.",
+              "address": "Amberes 65, Juárez, Cuauhtémoc, 06600 Ciudad de México, CDMX"
+            },
+            {
+              "id": "limantour",
+              "name": "Licorería Limantour",
+              "category": "Bar",
+              "description": "Roma Norte cocktail landmark — sit at the bar and let them make you the drink you didn't know you wanted.",
+              "address": "Av. Álvaro Obregón 106, Roma Nte., Cuauhtémoc, 06700 Ciudad de México, CDMX"
+            },
+            {
+              "id": "hanky-panky",
+              "name": "Hanky Panky",
+              "category": "Bar",
+              "description": "Hidden-entrance speakeasy in Juárez — you'll need a text-message reservation to get past the front door.",
+              "address": "Turín 63, Juárez, Cuauhtémoc, 06600 Ciudad de México, CDMX"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "practical",
+      "title": "Practical Info",
+      "emoji": "💡",
+      "items": [
+        {
+          "id": "weather",
+          "name": "Weather in November",
+          "category": "Practical",
+          "description": "Dry season is in full swing — warm sunny days (~70°F / 22°C highs) and crisp evenings (~50°F / 10°C lows). Almost no rain.",
+          "tip": "Pack layers for the evening — a light jacket or shawl for outdoor dinners is a good call."
+        },
+        {
+          "id": "altitude",
+          "name": "Altitude",
+          "category": "Practical",
+          "description": "Mexico City sits at 2,240 m (7,350 ft). Most people feel it a bit on day one — mild headache or shortness of breath climbing stairs.",
+          "tip": "Take it easy on alcohol the first night, drink more water than usual, and skip the hardest workouts on arrival day."
+        },
+        {
+          "id": "timezone",
+          "name": "Time Zone",
+          "category": "Practical",
+          "description": "Central Standard Time (CST, UTC−6) year-round — Mexico abolished daylight saving in 2022. One hour behind the US East Coast in November."
+        },
+        {
+          "id": "language",
+          "name": "Language",
+          "category": "Practical",
+          "description": "Spanish is the language of the city. English is spoken at hotels, upmarket restaurants, and by many rideshare drivers, but far from universal. A few basic phrases go a long way.",
+          "tip": "Have your destination written down in Spanish for taxis, and let Google Translate's camera mode do the heavy lifting on menus."
+        },
+        {
+          "id": "currency",
+          "name": "Currency",
+          "category": "Practical",
+          "description": "Mexican Peso (MXN). Cards are widely accepted at hotels, restaurants, and bars, but bring pesos for markets, taxis, tips, and street food. ATMs at bank branches give the best rate."
+        },
+        {
+          "id": "plug",
+          "name": "Plug Type",
+          "category": "Practical",
+          "description": "Type A / Type B sockets, 127V, 60Hz — the same as the US and Canada. International guests from Europe / India / UK need an adaptor, and dual-voltage on any hair or grooming tools."
+        },
+        {
+          "id": "water",
+          "name": "Tap Water",
+          "category": "Practical",
+          "description": "Don't drink the tap water — stick to bottled or filtered. Every hotel provides bottled water and most restaurants only serve filtered water. Ice at reputable venues is made from filtered water and is safe."
+        },
+        {
+          "id": "safety",
+          "name": "Getting Around Safely",
+          "category": "Practical",
+          "description": "The Reforma / Roma / Condesa / Polanco / Centro Histórico corridor is safe for daytime walking. At night, use Uber or Cabify rather than street taxis, and avoid flashing expensive phones or jewelry on the metro."
+        },
+        {
+          "id": "emergency",
+          "name": "Emergency Numbers",
+          "category": "Practical",
+          "description": "911 for police, fire, or ambulance — the same number as the US. Tourist assistance (English-speaking) is available via the CAPTA line at +52 55 5250 0123."
+        }
+      ]
+    }
+  ]$g$::jsonb,
+  $g$[
+    {"key": "Weather (Nov)", "value": "Sunny · 50–70°F"},
+    {"key": "Time zone",     "value": "CST (UTC−6)"},
+    {"key": "Currency",      "value": "Mexican Peso ($)"},
+    {"key": "Language",      "value": "Spanish"},
+    {"key": "Plug type",     "value": "Type A / B · 127V"},
+    {"key": "Emergency",     "value": "911"}
+  ]$g$::jsonb,
+  $g$[]$g$::jsonb
+) on conflict (wedding_id) do update set
+  page_title        = excluded.page_title,
+  page_subtitle_tag = excluded.page_subtitle_tag,
+  page_subtitle     = excluded.page_subtitle,
+  currency_code     = excluded.currency_code,
+  filter_pills      = excluded.filter_pills,
+  sections          = excluded.sections,
+  quick_facts       = excluded.quick_facts,
+  -- photo_strip intentionally NOT overwritten on conflict so photos
+  -- uploaded via the admin destination-photo editor aren't clobbered by
+  -- re-running this seed.
+  updated_at        = now();
+
+
 -- ─── Schedule Page Overrides ─────────────────────────────────────────
 -- Sets the CST timezone footer under the schedule timeline. venue_photo_url
 -- and venue_map_image_urls are left null / empty — until you upload photos

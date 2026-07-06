@@ -86,6 +86,12 @@ export const NN_WEDDING_IDS = new Set([
 // showing Montreux hotels in May.
 export const ARJUN_ILA_WEDDING_ID = 'a0000000-0000-0000-0000-000000000003';
 
+// Serena & Matthew — Nov 2027 wedding weekend across four downtown
+// Mexico City venues, with guests based out of the Sofitel Mexico City
+// Reforma. Their own hotel shortlist + Nov 2027 travel window keep the
+// onboarding form matched to a Mexico City trip.
+export const SERENA_MATTHEW_WEDDING_ID = 'a0000000-0000-0000-0000-000000000004';
+
 // Emma & James — the Tetherly demo wedding. Same venue (Fairmont Le
 // Montreux Palace) as N&N, one year forward, so the Montreux hotel
 // shortlist applies here too.
@@ -130,6 +136,14 @@ export function getTravelWindow(
       max: new Date('2026-09-20'),
       checkInInitial: new Date(2026, 8, 10),  // Sep 10 2026 — day before Sangeet
       checkOutInitial: new Date(2026, 8, 13), // Sep 13 2026 — morning after reception
+    };
+  }
+  if (weddingId === SERENA_MATTHEW_WEDDING_ID) {
+    return {
+      min: new Date('2027-11-03'),
+      max: new Date('2027-11-10'),
+      checkInInitial: new Date(2027, 10, 5),  // Fri 5 Nov 2027 — day before church ceremony
+      checkOutInitial: new Date(2027, 10, 8), // Mon 8 Nov 2027 — morning after reception
     };
   }
   // Fallback: derive from the wedding_date field on the wedding row.
@@ -179,12 +193,25 @@ const HOTEL_OPTIONS_ARJUN_ILA = [
   'Marina Inn at Dana Point',
 ];
 
+// Downtown Mexico City hotels along Paseo de la Reforma / Chapultepec —
+// all within a short cab from the Sofitel guest base and the four
+// weekend venues (church, Sofitel, Casa del Corregidor, Ex Convento
+// San Hipólito).
+const HOTEL_OPTIONS_SERENA_MATTHEW = [
+  'Sofitel Mexico City Reforma',
+  'Four Seasons Hotel Mexico City',
+  'The Ritz-Carlton, Mexico City',
+  'The St. Regis Mexico City',
+  'Hyatt Regency Mexico City',
+];
+
 export function getHotelOptionsForWedding(
   weddingId: string | null | undefined,
 ): string[] {
   if (!!weddingId && NN_WEDDING_IDS.has(weddingId)) return HOTEL_OPTIONS_NN;
   if (weddingId === EMMA_JAMES_WEDDING_ID) return HOTEL_OPTIONS_NN;
   if (weddingId === ARJUN_ILA_WEDDING_ID) return HOTEL_OPTIONS_ARJUN_ILA;
+  if (weddingId === SERENA_MATTHEW_WEDDING_ID) return HOTEL_OPTIONS_SERENA_MATTHEW;
   return [];
 }
 
@@ -227,6 +254,12 @@ export function getArrivalPlaceholders(
     return {
       arrivalTime: 'e.g. 3:00 PM on Thu 10 Sep',
       flightNumber: 'e.g. AA1234 arriving SNA 3:00 PM',
+    };
+  }
+  if (weddingId === SERENA_MATTHEW_WEDDING_ID) {
+    return {
+      arrivalTime: 'e.g. 2:00 PM on Fri 5 Nov',
+      flightNumber: 'e.g. AM1234 arriving MEX 2:00 PM',
     };
   }
   // Fallback: anchor the hint on the same check-in day the travel window
