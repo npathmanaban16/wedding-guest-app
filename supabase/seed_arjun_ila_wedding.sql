@@ -136,6 +136,30 @@ insert into public.wedding_admins (wedding_id, guest_name) values
   ('a0000000-0000-0000-0000-000000000003', 'Ila Lohia')
 on conflict (wedding_id, guest_name) do nothing;
 
+-- Henna artist vendor logins (role='henna_artist'). Login-only,
+-- no admin powers; lands on /henna-artist after signing in. Two
+-- artists share one station and queue — Anjali and Meera each
+-- get their own chair on the artist screen but pull from the
+-- same waiting list.
+insert into public.wedding_admins
+  (wedding_id, guest_name, is_wedding_party, gender, role)
+values
+  ('a0000000-0000-0000-0000-000000000003', 'Anjali Mehta', true, 'female', 'henna_artist'),
+  ('a0000000-0000-0000-0000-000000000003', 'Meera Iyer',   true, 'female', 'henna_artist')
+on conflict (wedding_id, guest_name) do update set
+  is_wedding_party = excluded.is_wedding_party,
+  gender           = excluded.gender,
+  role             = excluded.role;
+
+-- Henna station — starts closed. Either artist can toggle it
+-- open from their queue screen when henna is ready for guests.
+-- display_name left null so the guest UI falls back to the
+-- generic "Henna waitlist" heading (rather than singling out
+-- one of the two artists).
+insert into public.henna_stations (wedding_id, is_open, display_name)
+values ('a0000000-0000-0000-0000-000000000003', false, null)
+on conflict (wedding_id) do update set display_name = excluded.display_name;
+
 
 -- ─── Guest Info ──────────────────────────────────────────────────────────────
 -- Pre-fill meal selections + dietary for a couple of guests so the Details

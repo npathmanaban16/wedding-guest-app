@@ -54,8 +54,13 @@ interface TabConfig {
 
 export default function TabLayout() {
   const { guestName, isLoading, logout, onboardingSkipped } = useAuth();
-  const { weddingId, wedding, isWeddingParty } = useWedding();
+  const { weddingId, wedding, isWeddingParty, getAdminRole } = useWedding();
   const inWeddingParty = !!guestName && isWeddingParty(guestName);
+  // Henna artists have a dedicated workspace instead of the guest
+  // tabs — mirrors how any future vendor role with its own screen
+  // would land. Persisted logins that hit /(tabs) on cold start
+  // get bounced here without a flash of the guest tabs.
+  const isHennaArtist = !!guestName && getAdminRole(guestName) === 'henna_artist';
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
   const tabContext = pathnameToTabContext(pathname);
@@ -154,6 +159,7 @@ export default function TabLayout() {
   if (!guestName) {
     return <Redirect href={DEFAULT_WEDDING_ID === null ? '/invite' : '/login'} />;
   }
+  if (isHennaArtist) return <Redirect href="/henna-artist" />;
   if (needsOnboarding && !onboardingSkipped) return <Redirect href="/onboarding" />;
 
   return (

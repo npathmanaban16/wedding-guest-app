@@ -95,9 +95,9 @@ create table public.wedding_admins (
   gender           text check (gender in ('male', 'female')),
   -- Optional role. Admins without a role (or role='planner') get full
   -- admin powers (send notifications, delete messages, admin page).
-  -- Vendor roles ('dj', 'makeup_artist') are login-only: no admin-ui
-  -- surfaces. Expand the check list as new vendors are added.
-  role             text check (role in ('planner', 'dj', 'makeup_artist')),
+  -- Vendor roles ('dj', 'makeup_artist', 'henna_artist') are login-only:
+  -- no admin-ui surfaces. Expand the check list as new vendors are added.
+  role             text check (role in ('planner', 'dj', 'makeup_artist', 'henna_artist')),
   created_at       timestamptz default now(),
   unique (wedding_id, guest_name)
 );
@@ -243,6 +243,44 @@ create index ai_questions_wedding_guest_idx
   on public.ai_questions (wedding_id, guest_name, created_at desc);
 
 
+-- ─── henna_stations ──────────────────────────────────────────────────────────
+-- Singleton per wedding: is_open gates the guest join-line card on the
+-- home tab; any henna_artist login can flip it. display_name is the
+-- optional label the guest side shows ("Henna with Priya").
+create table public.henna_stations (
+  wedding_id   uuid primary key references public.weddings(id) on delete cascade,
+  is_open      boolean not null default false,
+  display_name text,
+  updated_at   timestamptz not null default now()
+);
+
+
+-- ─── henna_waitlist ──────────────────────────────────────────────────────────
+-- Live queue of henna sign-ups. Entries flow 'waiting' → 'in_progress'
+-- → 'done'/'skipped'. Guests can 'cancelled' their own before pulling.
+-- Multiple artists can serve in parallel; served_by tags which artist
+-- pulled the row so per-artist chair filtering stays cheap.
+create table public.henna_waitlist (
+  id          uuid primary key default gen_random_uuid(),
+  wedding_id  uuid not null references public.weddings(id) on delete cascade,
+  guest_name  text not null,
+  added_by    text not null,
+  status      text not null default 'waiting'
+              check (status in ('waiting', 'in_progress', 'done', 'skipped', 'cancelled')),
+  served_by   text,
+  joined_at   timestamptz not null default now(),
+  started_at  timestamptz,
+  finished_at timestamptz
+);
+
+create index henna_waitlist_wedding_status_joined_idx
+  on public.henna_waitlist (wedding_id, status, joined_at);
+
+create index henna_waitlist_wedding_served_idx
+  on public.henna_waitlist (wedding_id, served_by)
+  where status = 'in_progress';
+
+
 -- ─── Row Level Security ──────────────────────────────────────────────────────
 -- Guest identity is handled at the application layer (AsyncStorage-backed
 -- guest name) for now. Policies stay permissive until auth is introduced;
@@ -259,6 +297,8 @@ alter table public.notification_replies   enable row level security;
 alter table public.packing_checklist      enable row level security;
 alter table public.event_time_overrides   enable row level security;
 alter table public.ai_questions           enable row level security;
+alter table public.henna_stations         enable row level security;
+alter table public.henna_waitlist         enable row level security;
 
 create policy "allow_all_weddings"               on public.weddings               for all using (true) with check (true);
 create policy "allow_all_guests"                 on public.guests                 for all using (true) with check (true);
@@ -271,6 +311,8 @@ create policy "allow_all_notification_replies"   on public.notification_replies 
 create policy "allow_all_packing_checklist"      on public.packing_checklist      for all using (true) with check (true);
 create policy "allow_all_event_time_overrides"   on public.event_time_overrides   for all using (true) with check (true);
 create policy "allow_all_ai_questions"           on public.ai_questions           for all using (true) with check (true);
+create policy "allow_all_henna_stations"         on public.henna_stations         for all using (true) with check (true);
+create policy "allow_all_henna_waitlist"         on public.henna_waitlist         for all using (true) with check (true);
 
 
 -- ─── RPC: admin password check ───────────────────────────────────────────────

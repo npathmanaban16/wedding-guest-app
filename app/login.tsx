@@ -31,7 +31,7 @@ export default function LoginScreen() {
 
 function LoginScreenInner() {
   const { login } = useAuth();
-  const { wedding, isValidGuestOrAdmin, getCanonicalName } = useWedding();
+  const { wedding, isValidGuestOrAdmin, getCanonicalName, getAdminRole } = useWedding();
   const router = useRouter();
 
   const [name, setName] = useState('');
@@ -73,7 +73,14 @@ function LoginScreenInner() {
     // slow connection can't strand the user on the button.
     await awaitHeroImage(wedding.hero_image_url);
     setLoading(false);
-    router.replace('/(tabs)');
+    // Henna artists get their own dedicated queue screen instead of
+    // the guest tabs — same pattern we'd use for any other vendor
+    // role that has a bespoke workspace.
+    if (getAdminRole(canonical) === 'henna_artist') {
+      router.replace('/henna-artist');
+    } else {
+      router.replace('/(tabs)');
+    }
   };
 
   return (
