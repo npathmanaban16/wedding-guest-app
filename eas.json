@@ -60,6 +60,7 @@
       "channel": "saas-production",
       "autoIncrement": true,
       "env": { "APP_VARIANT": "saas" },
+      "node": "22.11.0",
       "ios": {
         "image": "sdk-54"
       },
