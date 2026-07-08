@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tetherly — The wedding app your guests will actually love.</title>
-  <meta name="description" content="Schedule, photos, travel guide, songs, and messages — everything your guests need in one beautiful app. For couples, planners, and vendors." />
+  <meta name="description" content="Schedule, photos, travel guide, songs, messages, and an AI assistant that answers every guest's question — everything your guests need in one beautiful app. For couples, planners, and vendors." />
   <meta property="og:title" content="Tetherly — The wedding app your guests will actually love." />
-  <meta property="og:description" content="One elegant app that replaces the spreadsheets, PDFs, and group texts your guests keep losing." />
+  <meta property="og:description" content="One elegant app — with an AI assistant grounded in your wedding — that replaces the spreadsheets, PDFs, and group texts your guests keep losing." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://tetherly-app.com" />
   <meta name="theme-color" content="#F5F0E8" />
@@ -665,8 +665,15 @@
       margin: 0;
       line-height: 1.55;
     }
+    /* Center an orphan card when the last row has only one item (e.g. 10
+       cards in a 3-column grid). Applies only at the desktop 3-col layout. */
+    .features .feature-card:last-child:nth-child(3n+1) {
+      grid-column: 2;
+    }
     @media (max-width: 900px) {
       .features { grid-template-columns: repeat(2, 1fr); }
+      /* Reset the 3-col orphan rule so the 2-col layout stays natural. */
+      .features .feature-card:last-child:nth-child(3n+1) { grid-column: auto; }
     }
     @media (max-width: 560px) {
       .features { grid-template-columns: 1fr; }
@@ -783,6 +790,83 @@
       margin-left: auto;
     }
     .mini-card-badge.gold { background: #F4EBD9; color: var(--primary); }
+
+    /* Ask (AI assistant) chat mockup -------------------------------- */
+    .ask-chat {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      z-index: 1;
+    }
+    .ask-header {
+      align-self: center;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    .ask-header-mark { color: var(--gold); font-size: 14px; line-height: 1; }
+    .ask-msg {
+      display: flex;
+      gap: 10px;
+      max-width: 94%;
+    }
+    .ask-msg.user { align-self: flex-end; }
+    .ask-msg.ai { align-self: flex-start; }
+    .ask-bubble {
+      padding: 12px 16px;
+      font-family: var(--sans);
+      font-size: 14.5px;
+      line-height: 1.5;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+    }
+    .ask-msg.user .ask-bubble {
+      background: var(--text);
+      color: var(--bg);
+      border-color: transparent;
+      border-bottom-right-radius: 4px;
+    }
+    .ask-msg.ai .ask-bubble {
+      background: var(--surface);
+      color: var(--text-secondary);
+      border-bottom-left-radius: 4px;
+    }
+    .ask-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(140deg, var(--gold), var(--primary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--bg);
+      font-size: 15px;
+      font-weight: 600;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+    .ask-powered {
+      margin-top: 24px;
+      text-align: center;
+      font-family: var(--sans);
+      font-size: 12px;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+      position: relative;
+      z-index: 1;
+    }
+    .ask-powered strong { color: var(--text-secondary); font-weight: 500; }
 
     /* Founder story -------------------------------------------------- */
     .founder {
@@ -1008,6 +1092,7 @@
     </a>
     <nav class="nav-links nav-desktop-only" aria-label="Primary">
       <a href="#features">Features</a>
+      <a href="#ask">Ask AI</a>
       <a href="#couples">Couples</a>
       <a href="#planners">Planners</a>
       <a href="#vendors">Vendors</a>
@@ -1025,7 +1110,7 @@
       <div class="hero-copy">
         <div class="eyebrow">A wedding companion, made whole</div>
         <h1>The wedding app your guests will <em>actually</em> love.</h1>
-        <p>Schedule, photos, travel, songs, and messages — everything your guests need for the weekend, in one beautiful place they'll open every day.</p>
+        <p>Schedule, photos, travel, songs, messages, and a built-in AI assistant that answers every question — everything your guests need for the weekend, in one beautiful place they'll open every day.</p>
         <div class="hero-ctas">
           <a href="#waitlist" class="btn btn-primary btn-lg">Join the waitlist</a>
           <a href="#features" class="btn btn-ghost btn-lg">See what's inside</a>
@@ -1157,6 +1242,22 @@
 
         <div class="feature-card">
           <div class="feature-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <h3>Announcements</h3>
+          <p>Send a push to every guest — "shuttle in 15", "wear white for the mehndi" — and know it landed on the right screens.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+          </div>
+          <h3>Guest details</h3>
+          <p>Dietary needs, arrival times, hotel plans — guests fill it out once in the app, and you see it all in one place. No more email forms or reply-all threads.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
           </div>
           <h3>Guest photo album</h3>
@@ -1189,14 +1290,6 @@
 
         <div class="feature-card">
           <div class="feature-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          </div>
-          <h3>Announcements</h3>
-          <p>Send a push to every guest — "shuttle in 15", "wear white for the mehndi" — and know it landed on the right screens.</p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg>
           </div>
           <h3>Guest groups</h3>
@@ -1217,6 +1310,44 @@
           </div>
           <h3>Live vendor queues</h3>
           <p>Henna, photos, mehndi stations — guests join the line from their phone and know where they are in real time.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ASK (AI ASSISTANT) -->
+  <section id="ask" class="section-warm">
+    <div class="container">
+      <div class="audience reversed">
+        <div>
+          <div class="eyebrow">Meet Ask · AI assistant</div>
+          <h2 class="audience-title-serif">The AI that answers your guests, <em>so you don't have to</em>.</h2>
+          <p class="lead">Ask is the floating assistant in every corner of Tetherly. Guests tap it, ask a question, and get a warm, immediate answer — grounded entirely in your wedding — before they'd otherwise text you at 11 p.m.</p>
+          <ul class="audience-list">
+            <li><strong>Grounded in your wedding.</strong> Pulls from your schedule, dress codes, packing list, and travel guide. No hallucinated hotels, planners, or times.</li>
+            <li><strong>Personalized per guest.</strong> Hides events and items the guest isn't invited to. Bridal-party details never leak to the general list.</li>
+            <li><strong>Contextual to each tab.</strong> On Schedule, starters shift to "What should I wear?" On the Guide tab, "Best half-day activity near the hotel?"</li>
+            <li><strong>Insights for you.</strong> Every question is logged so you can see what guests are curious about — and update your content once.</li>
+          </ul>
+        </div>
+        <div class="audience-visual">
+          <div class="ask-chat">
+            <div class="ask-header">
+              <span class="ask-header-mark">✦</span>
+              <span>Ask</span>
+            </div>
+            <div class="ask-msg user">
+              <div class="ask-bubble">What should I wear to Welcome Night?</div>
+            </div>
+            <div class="ask-msg ai">
+              <div class="ask-avatar">✦</div>
+              <div class="ask-bubble">Welcome Night is festive-casual — breezy shirts, sundresses, comfortable shoes for the rooftop terrace. Warm neutrals like dusty rose or champagne fit the palette. It'll cool off by the water after sunset, so bring a light layer!</div>
+            </div>
+            <div class="ask-msg user">
+              <div class="ask-bubble">Is the ceremony indoors?</div>
+            </div>
+          </div>
+          <div class="ask-powered">Powered by <strong>Claude Sonnet 4.6</strong></div>
         </div>
       </div>
     </div>
