@@ -665,15 +665,8 @@
       margin: 0;
       line-height: 1.55;
     }
-    /* Center an orphan card when the last row has only one item (e.g. 10
-       cards in a 3-column grid). Applies only at the desktop 3-col layout. */
-    .features .feature-card:last-child:nth-child(3n+1) {
-      grid-column: 2;
-    }
     @media (max-width: 900px) {
       .features { grid-template-columns: repeat(2, 1fr); }
-      /* Reset the 3-col orphan rule so the 2-col layout stays natural. */
-      .features .feature-card:last-child:nth-child(3n+1) { grid-column: auto; }
     }
     @media (max-width: 560px) {
       .features { grid-template-columns: 1fr; }
@@ -856,18 +849,6 @@
       flex-shrink: 0;
       margin-top: 4px;
     }
-    .ask-powered {
-      margin-top: 24px;
-      text-align: center;
-      font-family: var(--sans);
-      font-size: 12px;
-      color: var(--text-muted);
-      letter-spacing: 0.04em;
-      position: relative;
-      z-index: 1;
-    }
-    .ask-powered strong { color: var(--text-secondary); font-weight: 500; }
-
     /* Founder story -------------------------------------------------- */
     .founder {
       background: var(--text);
@@ -1253,7 +1234,7 @@
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
           </div>
           <h3>Guest details</h3>
-          <p>Dietary needs, arrival times, hotel plans — guests fill it out once in the app, and you see it all in one place. No more email forms or reply-all threads.</p>
+          <p>Arrival times, hotel plans, dietary restrictions — guests fill it in once, and you see it all in one place. No more email forms or reply-all threads.</p>
         </div>
 
         <div class="feature-card">
@@ -1294,14 +1275,6 @@
           </div>
           <h3>Guest groups</h3>
           <p>Wedding party, family, plus-ones, kids — show the right events to the right people without a spreadsheet in sight.</p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M6 21V10l6-4 6 4v11M10 21v-6h4v6"/></svg>
-          </div>
-          <h3>Accommodations</h3>
-          <p>Room blocks, booking codes, transport windows, check-in details — bundled with the guests who need each one.</p>
         </div>
 
         <div class="feature-card">
@@ -1347,7 +1320,6 @@
               <div class="ask-bubble">Is the ceremony indoors?</div>
             </div>
           </div>
-          <div class="ask-powered">Powered by <strong>Claude Sonnet 4.6</strong></div>
         </div>
       </div>
     </div>
@@ -1489,7 +1461,7 @@
   <section id="story" class="founder">
     <div class="container">
       <div class="eyebrow" style="color: var(--gold-soft);">Founder story</div>
-      <h2 style="max-width: 780px;">I built Tetherly for our wedding<br /><em>One place for every guest. Every moment.</em></h2>
+      <h2 style="max-width: 780px;">I built Tetherly for our wedding<br /><em>One place for every guest.</em></h2>
 
       <div class="founder-body">
         <p>While planning our destination wedding in Switzerland, we realized how difficult it was to gather information from more than 100 guests while also keeping everyone informed, prepared, and connected throughout a multi-day celebration.</p>
@@ -1500,11 +1472,11 @@
 
         <p class="founder-beat">So I built Tetherly.</p>
 
-        <p>During our wedding weekend, our guests used the app to follow event schedules, receive real-time updates, request songs, connect with one another, and even get personalized local recommendations. It also helped our planning team coordinate guest arrivals and deliver welcome gifts more seamlessly.</p>
+        <p>During our wedding weekend, our guests used the app to follow event schedules, receive real-time updates, request songs, connect with one another, and even get personalized local recommendations. It also helped our planning team coordinate guest arrivals and deliver welcome gifts to guests' hotel rooms more seamlessly.</p>
 
         <p>Seeing how much easier and more connected the experience felt showed us that Tetherly could help other couples too.</p>
 
-        <p>Tetherly was created so couples can help every guest feel part of the celebration <em style="color: var(--gold-soft); font-style: italic;">before they arrive</em>, and connected to every moment once it begins.</p>
+        <p>Tetherly was created so couples can help every guest feel part of the celebration before they arrive, and connected to every moment once it begins.</p>
       </div>
 
       <div class="founder-attribution">
