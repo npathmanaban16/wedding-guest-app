@@ -165,23 +165,31 @@
       gap: 8px;
     }
     .brand-mark {
-      width: 26px; height: 26px;
+      width: 34px; height: 34px;
       border-radius: 50%;
-      background: linear-gradient(140deg, var(--gold) 0%, var(--primary) 100%);
-      position: relative;
-      display: inline-block;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+      box-shadow: 0 1px 2px rgba(28, 24, 16, 0.06);
     }
-    .brand-mark::after {
-      content: '';
-      position: absolute; inset: 5px;
-      background: var(--bg);
-      border-radius: 50%;
+    .brand-mark img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      /* Scale slightly so the rings sit closer to the frame edge —
+         the source PNG has generous negative space around the mark. */
+      transform: scale(1.35);
     }
-    .brand-mark::before {
-      content: '';
-      position: absolute; inset: 10px;
-      background: linear-gradient(140deg, var(--gold) 0%, var(--primary) 100%);
-      border-radius: 50%;
+    /* Footer sits on a dark background — give the frame a soft warm-white
+       inner so the cream-background logo doesn't disappear. */
+    footer .brand-mark {
+      background: var(--surface-warm);
+      border-color: rgba(245, 240, 232, 0.15);
     }
 
     .nav-links {
@@ -367,85 +375,198 @@
       height: 100%;
       overflow: hidden;
       position: relative;
-      padding: 60px 22px 20px;
+      padding: 44px 0 0;
     }
-    .phone-hero-img {
-      height: 140px;
-      border-radius: var(--radius);
-      background:
-        linear-gradient(180deg, rgba(28, 24, 16, 0) 40%, rgba(28, 24, 16, 0.55) 100%),
-        radial-gradient(circle at 30% 30%, #d4c5b0 0%, transparent 55%),
-        radial-gradient(circle at 70% 70%, #7A6A55 0%, transparent 55%),
-        linear-gradient(140deg, #C4B49A 0%, #7A6A55 100%);
-      position: relative;
+    /* Wedding hero header — mirrors the real app's landing image with
+       the couple's names + date overlaid on a warm-toned photograph. */
+    .app-hero {
+      height: 148px;
+      margin: 8px 12px 0;
+      border-radius: 14px;
       overflow: hidden;
-      margin-bottom: 16px;
+      position: relative;
+      background:
+        linear-gradient(180deg, rgba(28, 24, 16, 0) 30%, rgba(28, 24, 16, 0.65) 100%),
+        radial-gradient(120% 90% at 30% 20%, rgba(255, 220, 176, 0.55) 0%, transparent 55%),
+        radial-gradient(100% 70% at 80% 90%, rgba(122, 106, 85, 0.75) 0%, transparent 50%),
+        linear-gradient(160deg, #C9A870 0%, #7A6A55 55%, #3A4D3A 100%);
     }
-    .phone-hero-img::before {
+    .app-hero::after {
       content: '';
       position: absolute; inset: 0;
       background:
-        radial-gradient(circle at 20% 80%, rgba(255,255,255,0.4) 0%, transparent 20%),
-        radial-gradient(circle at 80% 20%, rgba(201, 168, 112, 0.5) 0%, transparent 30%);
+        radial-gradient(circle at 15% 85%, rgba(255, 255, 255, 0.28) 0%, transparent 22%),
+        radial-gradient(circle at 90% 40%, rgba(201, 168, 112, 0.4) 0%, transparent 30%);
+      pointer-events: none;
     }
-    .phone-hero-img .phone-title {
+    .app-hero-tag {
       position: absolute;
-      bottom: 12px; left: 14px; right: 14px;
-      color: white;
-      font-family: var(--serif);
-      font-size: 22px;
-      line-height: 1.15;
-    }
-    .phone-hero-img .phone-title small {
-      display: block;
-      font-size: 10px;
+      top: 14px; left: 16px;
       font-family: var(--sans);
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      opacity: 0.9;
-      margin-bottom: 4px;
+      font-size: 9px;
       font-weight: 500;
+      letter-spacing: 0.22em;
+      color: rgba(255, 255, 255, 0.85);
+      text-transform: uppercase;
+      z-index: 2;
     }
-    .phone-card {
+    .app-hero-title {
+      position: absolute;
+      bottom: 16px; left: 16px; right: 16px;
+      font-family: var(--serif);
+      font-weight: 500;
+      font-style: italic;
+      font-size: 26px;
+      line-height: 1.05;
+      color: #FFFFFF;
+      letter-spacing: -0.01em;
+      z-index: 2;
+    }
+    .app-hero-title small {
+      display: block;
+      font-family: var(--sans);
+      font-style: normal;
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      color: rgba(255, 255, 255, 0.85);
+      text-transform: uppercase;
+      margin-top: 5px;
+    }
+
+    /* Scroll area between the hero and the tab bar. */
+    .app-scroll {
+      padding: 14px 12px 60px;
+    }
+
+    /* UP NEXT event card — white surface, gold left rail, gold "UP NEXT"
+       eyebrow, serif event name, sans venue + link. */
+    .app-event-card {
       background: var(--surface);
-      border-radius: 12px;
-      padding: 12px 14px;
+      border-radius: 14px;
+      padding: 14px 14px 12px;
+      border-left: 3px solid var(--gold);
+      box-shadow: 0 1px 2px rgba(28, 24, 16, 0.06);
       margin-bottom: 10px;
-      border: 1px solid var(--divider);
+    }
+    .app-event-tag {
+      font-family: var(--sans);
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.22em;
+      color: var(--gold);
+      margin-bottom: 4px;
+    }
+    .app-event-name {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 17px;
+      line-height: 1.15;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+    .app-event-detail {
+      font-family: var(--sans);
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-bottom: 1px;
+    }
+    .app-event-venue {
+      font-family: var(--sans);
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .app-event-link {
+      font-family: var(--sans);
+      font-weight: 500;
+      font-size: 11px;
+      color: var(--primary);
+    }
+
+    /* HENNA LINE OPEN card — pale forest surface, forest left rail. */
+    .app-henna-card {
+      background: var(--forest-soft);
+      border-radius: 14px;
+      padding: 12px 14px;
+      border-left: 3px solid var(--forest);
+      margin-bottom: 12px;
+    }
+    .app-henna-header {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 6px;
+      margin-bottom: 3px;
     }
-    .phone-card-dot {
+    .app-henna-dot {
       width: 6px; height: 6px;
       border-radius: 50%;
-      background: var(--gold);
-      flex-shrink: 0;
+      background: var(--forest);
     }
-    .phone-card-dot.live { background: var(--forest); box-shadow: 0 0 0 3px rgba(58,77,58,0.15); }
-    .phone-card-content { flex: 1; min-width: 0; }
-    .phone-card-title {
+    .app-henna-tag {
+      font-family: var(--sans);
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.22em;
+      color: var(--forest);
+    }
+    .app-henna-title {
       font-family: var(--serif);
-      font-size: 15px;
+      font-weight: 600;
+      font-size: 16px;
       color: var(--text);
-      line-height: 1.2;
+      line-height: 1.15;
       margin-bottom: 2px;
     }
-    .phone-card-meta {
+    .app-henna-sub {
+      font-family: var(--sans);
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    .app-henna-link {
+      font-family: var(--sans);
+      font-weight: 500;
+      font-size: 11px;
+      color: var(--forest);
+    }
+
+    /* Explore section header + quick-card grid. */
+    .app-section-title {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 20px;
+      color: var(--text);
+      margin: 6px 4px 10px;
+    }
+    .app-quick-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .app-quick-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      min-height: 58px;
+    }
+    .app-quick-title {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.2;
+      margin-bottom: 3px;
+    }
+    .app-quick-sub {
+      font-family: var(--sans);
       font-size: 10px;
       color: var(--text-muted);
-      letter-spacing: 0.04em;
+      line-height: 1.3;
     }
-    .phone-card-chip {
-      font-size: 9px;
-      background: var(--forest-soft);
-      color: var(--forest);
-      padding: 3px 8px;
-      border-radius: 999px;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
+
+    /* Bottom tab bar — 5 tabs, subtle icons. */
     .phone-tabbar {
       position: absolute;
       bottom: 0; left: 0; right: 0;
@@ -453,15 +574,18 @@
       border-top: 1px solid var(--divider);
       display: flex;
       justify-content: space-around;
-      padding: 12px 8px 22px;
+      padding: 10px 8px 22px;
     }
     .phone-tab {
       width: 22px; height: 22px;
       border-radius: 6px;
       background: var(--divider);
-      position: relative;
+      opacity: 0.55;
     }
-    .phone-tab.active { background: var(--primary); }
+    .phone-tab.active {
+      background: var(--primary);
+      opacity: 1;
+    }
 
     @media (max-width: 900px) {
       .phone { transform: rotate(-2deg) scale(0.9); }
@@ -695,18 +819,21 @@
       gap: 16px;
       margin-top: 40px;
     }
-    .founder-avatars {
-      display: flex;
-    }
     .founder-avatar {
-      width: 48px; height: 48px;
+      width: 56px; height: 56px;
       border-radius: 50%;
-      border: 2px solid var(--text);
+      border: 2px solid rgba(245, 240, 232, 0.15);
       background: linear-gradient(140deg, var(--gold-soft), var(--gold));
-    }
-    .founder-avatar + .founder-avatar {
-      margin-left: -14px;
-      background: linear-gradient(140deg, var(--primary-light), var(--primary));
+      flex-shrink: 0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--serif);
+      font-size: 22px;
+      color: var(--text);
+      font-weight: 500;
+      letter-spacing: 0.02em;
     }
     .founder-attribution-text {
       font-family: var(--sans);
@@ -886,7 +1013,7 @@
 <header class="site" id="siteHeader">
   <div class="container nav">
     <a class="brand" href="#top" aria-label="Tetherly home">
-      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-mark" aria-hidden="true"><img src="./tetherly-logo.png" alt="" /></span>
       <span>Tetherly</span>
     </a>
     <nav class="nav-links nav-desktop-only" aria-label="Primary">
@@ -933,35 +1060,56 @@
       </div>
 
       <div class="hero-visual" aria-hidden="true">
-        <!-- CSS phone mockup. Swap for a real screenshot when available. -->
+        <!-- CSS mockup of the real Tetherly home screen. Layout mirrors
+             app/(tabs)/index.tsx: hero image with wedding title, an "UP NEXT"
+             event card (gold left rail), a "HENNA LINE OPEN" waitlist card
+             (forest-green left rail), the Explore quick-card grid, and the
+             bottom tab bar. Swap for a real screenshot when we have one we
+             love. -->
         <div class="phone">
           <div class="phone-screen">
-            <div class="phone-hero-img">
-              <div class="phone-title">
-                <small>Saturday · 5:30 pm</small>
-                Sangeet Night
+            <div class="app-hero">
+              <div class="app-hero-tag">May 15 · Montreux</div>
+              <div class="app-hero-title">
+                Priya &amp; Arjun
+                <small>Wedding weekend</small>
               </div>
             </div>
-            <div class="phone-card">
-              <span class="phone-card-dot live"></span>
-              <div class="phone-card-content">
-                <div class="phone-card-title">Welcome Dinner</div>
-                <div class="phone-card-meta">Friday · Rooftop Terrace</div>
+            <div class="app-scroll">
+              <div class="app-event-card">
+                <div class="app-event-tag">UP NEXT</div>
+                <div class="app-event-name">Sangeet Night</div>
+                <div class="app-event-detail">Saturday · 5:30 PM</div>
+                <div class="app-event-venue">Fairmont Terrace</div>
+                <div class="app-event-link">View full schedule →</div>
               </div>
-              <span class="phone-card-chip">Now</span>
-            </div>
-            <div class="phone-card">
-              <span class="phone-card-dot"></span>
-              <div class="phone-card-content">
-                <div class="phone-card-title">Baraat &amp; Ceremony</div>
-                <div class="phone-card-meta">Sunday · 11:00 am · Garden</div>
+              <div class="app-henna-card">
+                <div class="app-henna-header">
+                  <span class="app-henna-dot"></span>
+                  <span class="app-henna-tag">HENNA LINE OPEN</span>
+                </div>
+                <div class="app-henna-title">Henna waitlist</div>
+                <div class="app-henna-sub">3 people in line</div>
+                <div class="app-henna-link">Join the line →</div>
               </div>
-            </div>
-            <div class="phone-card">
-              <span class="phone-card-dot"></span>
-              <div class="phone-card-content">
-                <div class="phone-card-title">Reception</div>
-                <div class="phone-card-meta">Sunday · 6:30 pm · Ballroom</div>
+              <div class="app-section-title">Explore</div>
+              <div class="app-quick-grid">
+                <div class="app-quick-card">
+                  <div class="app-quick-title">Schedule</div>
+                  <div class="app-quick-sub">All events &amp; dress codes</div>
+                </div>
+                <div class="app-quick-card">
+                  <div class="app-quick-title">Montreux Guide</div>
+                  <div class="app-quick-sub">Things to do &amp; eat</div>
+                </div>
+                <div class="app-quick-card">
+                  <div class="app-quick-title">Packing List</div>
+                  <div class="app-quick-sub">Outfits &amp; essentials</div>
+                </div>
+                <div class="app-quick-card">
+                  <div class="app-quick-title">Share Photos</div>
+                  <div class="app-quick-sub">Upload memories</div>
+                </div>
               </div>
             </div>
             <div class="phone-tabbar">
@@ -1220,14 +1368,14 @@
   <section id="story" class="founder">
     <div class="container">
       <div class="eyebrow" style="color: var(--gold-soft);">Founder story</div>
-      <h2 style="max-width: 780px;">We built Tetherly for our own wedding. <em>Everyone kept asking for it.</em></h2>
+      <h2 style="max-width: 780px;">I built Tetherly for our wedding. <em>Everyone kept asking for it.</em></h2>
 
       <div class="founder-body">
         <p class="founder-quote">
-          Our guests were flying in from three continents for four days of events. The Google Doc kept getting stale. The group texts scattered the schedule across six different chats. Someone asked what to wear to the mehndi at 2 a.m. We thought: this can be better — and beautiful.
+          Our guests were flying in from three continents for four days of events. The Google Doc kept getting stale. The group texts scattered the schedule across six different chats. Someone asked what to wear to the mehndi at 2 a.m. I thought: this can be better — and beautiful.
         </p>
 
-        <p>So we built an app just for our wedding. A single elegant place with the schedule, the packing list, the songs, the photos, the travel notes for a city half our guests had never been to. We shipped it two weeks before the wedding.</p>
+        <p>So I built an app for our wedding. A single elegant place with the schedule, the packing list, the songs, the photos, the travel notes for a city half our guests had never been to. I shipped it two weeks before the ceremony.</p>
 
         <p>By day two, guests were opening it more than Instagram. Aunts who "don't do apps" were requesting songs. Our henna artist asked if she could use the queue for another wedding next month. A planner friend asked when it would be available for her couples.</p>
 
@@ -1235,13 +1383,10 @@
       </div>
 
       <div class="founder-attribution">
-        <div class="founder-avatars">
-          <div class="founder-avatar" aria-hidden="true"></div>
-          <div class="founder-avatar" aria-hidden="true"></div>
-        </div>
+        <div class="founder-avatar" aria-hidden="true">N</div>
         <div class="founder-attribution-text">
-          Neha &amp; Naveen
-          <small>Founders · married 2027</small>
+          Neha Pathmanaban
+          <small>Founder · Tetherly</small>
         </div>
       </div>
     </div>
@@ -1300,10 +1445,10 @@
     <div class="footer-grid">
       <div>
         <a class="brand" href="#top" aria-label="Tetherly home" style="color: var(--bg);">
-          <span class="brand-mark" aria-hidden="true"></span>
+          <span class="brand-mark" aria-hidden="true"><img src="./tetherly-logo.png" alt="" /></span>
           <span>Tetherly</span>
         </a>
-        <p>A wedding companion app for couples and their guests. Made with care in a warm color palette by two people who lived it.</p>
+        <p>A wedding companion app for couples and their guests. Made with care by someone who lived the group-text tax and thought it could be better.</p>
       </div>
       <div>
         <h4>Product</h4>
