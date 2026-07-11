@@ -592,6 +592,305 @@
       line-height: 1.3;
     }
 
+    /* Multi-screen carousel container: each .app-screen fades in/out over
+       the same phone area while the bottom tab bar stays fixed. */
+    .app-screens {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    .app-screen {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.55s ease-in-out;
+      pointer-events: none;
+      background: var(--bg);
+    }
+    .app-screen.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    /* Screens that do not have a hero photo start their content below the
+       notch/status-bar zone. */
+    .app-screen[data-screen]:not([data-screen="home"]) {
+      padding: 46px 0 60px;
+    }
+
+    /* Page header used by non-home screens — mirrors the app's schedule
+       pageHeader (small gold eyebrow + centered serif title). */
+    .app-page-header {
+      text-align: center;
+      padding: 6px 20px 14px;
+    }
+    .app-page-eyebrow {
+      font-family: var(--sans);
+      font-weight: 500;
+      font-size: 9px;
+      letter-spacing: 0.24em;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .app-page-title {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 24px;
+      line-height: 1.1;
+      color: var(--text);
+      letter-spacing: 0.01em;
+      margin: 0;
+    }
+    .app-page-sub {
+      font-family: var(--sans);
+      font-size: 11px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      margin-top: 6px;
+    }
+    .app-page-body {
+      padding: 4px 12px 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* Schedule screen — event cards similar to the home UP NEXT card
+       but stacked. */
+    .app-sched-card {
+      background: var(--surface);
+      border-radius: 12px;
+      border: 0.5px solid var(--border);
+      padding: 12px 14px 12px;
+    }
+    .app-sched-title {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--text);
+      margin-bottom: 3px;
+      line-height: 1.15;
+    }
+    .app-sched-date {
+      font-family: var(--sans);
+      font-size: 11px;
+      color: var(--primary);
+      font-weight: 500;
+      margin-bottom: 1px;
+    }
+    .app-sched-time {
+      font-family: var(--sans);
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .app-sched-venue {
+      font-family: var(--sans);
+      font-size: 10px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* Announcements/messages screen — notification cards. */
+    .app-note-card {
+      background: var(--surface);
+      border-radius: 12px;
+      border: 0.5px solid var(--border);
+      padding: 12px 14px;
+    }
+    .app-note-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .app-note-sender {
+      font-family: var(--sans);
+      font-weight: 600;
+      font-size: 11px;
+      color: var(--text);
+    }
+    .app-note-time {
+      font-family: var(--sans);
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+    .app-note-body {
+      font-family: var(--sans);
+      font-size: 11px;
+      line-height: 1.5;
+      color: var(--text-secondary);
+    }
+
+    /* Songs screen — song request list. */
+    .app-song-row {
+      background: var(--surface);
+      border-radius: 10px;
+      border: 0.5px solid var(--border);
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .app-song-icon {
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      background: #F4EBD9;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .app-song-text { flex: 1; min-width: 0; }
+    .app-song-title {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.15;
+      margin-bottom: 1px;
+    }
+    .app-song-artist {
+      font-family: var(--sans);
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+    .app-song-by {
+      font-family: var(--sans);
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+
+    /* Travel guide screen — section cards with emoji + title + count. */
+    .app-guide-card {
+      background: var(--surface);
+      border-radius: 12px;
+      border: 0.5px solid var(--border);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .app-guide-emoji {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      background: var(--surface-warm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .app-guide-text { flex: 1; min-width: 0; }
+    .app-guide-title {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.15;
+      margin-bottom: 1px;
+    }
+    .app-guide-sub {
+      font-family: var(--sans);
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+    .app-guide-chev {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    /* Packing screen — category with checkbox items. */
+    .app-pack-cat {
+      margin-bottom: 6px;
+    }
+    .app-pack-cat-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 4px 8px;
+    }
+    .app-pack-cat-emoji { font-size: 14px; }
+    .app-pack-cat-title {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 13px;
+      color: var(--text);
+    }
+    .app-pack-item {
+      background: var(--surface);
+      border-radius: 10px;
+      border: 0.5px solid var(--border);
+      padding: 9px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .app-pack-check {
+      width: 14px; height: 14px;
+      border-radius: 4px;
+      border: 1.5px solid var(--border-strong);
+      flex-shrink: 0;
+      position: relative;
+    }
+    .app-pack-check.done {
+      background: var(--forest);
+      border-color: var(--forest);
+    }
+    .app-pack-check.done::after {
+      content: '';
+      position: absolute;
+      left: 3px; top: 0px;
+      width: 4px; height: 8px;
+      border: solid white;
+      border-width: 0 1.5px 1.5px 0;
+      transform: rotate(45deg);
+    }
+    .app-pack-label {
+      font-family: var(--sans);
+      font-size: 11px;
+      color: var(--text);
+      line-height: 1.3;
+      flex: 1;
+    }
+    .app-pack-item.done .app-pack-label {
+      color: var(--text-muted);
+      text-decoration: line-through;
+    }
+
+    /* Jump dots below the phone frame — sit outside the phone's rotation
+       so they stay level with the ground. */
+    .phone-dots {
+      position: absolute;
+      bottom: -36px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      z-index: 4;
+    }
+    .phone-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(28, 24, 16, 0.18);
+      cursor: pointer;
+      padding: 0;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+    .phone-dot:hover { background: rgba(28, 24, 16, 0.32); }
+    .phone-dot.active {
+      background: var(--primary);
+      transform: scale(1.25);
+    }
+    @media (max-width: 900px) {
+      .phone-dots { display: none; }
+    }
+
     /* Bottom tab bar — 5 tabs, subtle icons. */
     .phone-tabbar {
       position: absolute;
@@ -1152,6 +1451,8 @@
              love. -->
         <div class="phone">
           <div class="phone-screen">
+            <div class="app-screens">
+            <div class="app-screen active" data-screen="home">
             <div class="app-hero">
               <div class="app-hero-header">
                 <div class="app-hero-greeting">Welcome, Alex</div>
@@ -1221,6 +1522,195 @@
                 </div>
               </div>
             </div>
+            </div>
+
+            <!-- SCHEDULE screen — Alex's view: non-weddingPartyOnly events. -->
+            <div class="app-screen" data-screen="schedule">
+              <div class="app-page-header">
+                <div class="app-page-eyebrow">May 20 – 22, 2027</div>
+                <h1 class="app-page-title">Wedding Weekend</h1>
+                <p class="app-page-sub">Three events across Friday and Saturday.</p>
+              </div>
+              <div class="app-page-body">
+                <div class="app-sched-card">
+                  <div class="app-sched-title">Welcome Party</div>
+                  <div class="app-sched-date">Friday, 21 May 2027</div>
+                  <div class="app-sched-time">6:30 PM – 11:00 PM</div>
+                  <div class="app-sched-venue">Fairmont Le Montreux Palace | La Coupole &amp; La Terrasse du Petit Palais</div>
+                </div>
+                <div class="app-sched-card">
+                  <div class="app-sched-title">Wedding Ceremony</div>
+                  <div class="app-sched-date">Saturday, 22 May 2027</div>
+                  <div class="app-sched-time">5:00 PM</div>
+                  <div class="app-sched-venue">Fairmont Le Montreux Palace | Garden</div>
+                </div>
+                <div class="app-sched-card">
+                  <div class="app-sched-title">Reception</div>
+                  <div class="app-sched-date">Saturday, 22 May 2027</div>
+                  <div class="app-sched-time">7:30 PM – 1:00 AM</div>
+                  <div class="app-sched-venue">Fairmont Le Montreux Palace | Salle des Fêtes</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ANNOUNCEMENTS screen — seeded notification from Emma & James. -->
+            <div class="app-screen" data-screen="announcements">
+              <div class="app-page-header">
+                <div class="app-page-eyebrow">Messages</div>
+                <h1 class="app-page-title">Announcements</h1>
+                <p class="app-page-sub">Updates from Emma &amp; James.</p>
+              </div>
+              <div class="app-page-body">
+                <div class="app-note-card">
+                  <div class="app-note-header">
+                    <div class="app-note-sender">Emma &amp; James</div>
+                    <div class="app-note-time">2d ago</div>
+                  </div>
+                  <div class="app-note-body">Welcome to our wedding app! Tap into each tab to explore the schedule, the Switzerland guide, your packing list, and more. We can't wait to celebrate with you.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SONGS screen — song requests from the demo seed. -->
+            <div class="app-screen" data-screen="songs">
+              <div class="app-page-header">
+                <div class="app-page-eyebrow">Song Requests</div>
+                <h1 class="app-page-title">Your Playlist</h1>
+                <p class="app-page-sub">Guest picks going straight to the DJ.</p>
+              </div>
+              <div class="app-page-body">
+                <div class="app-song-row">
+                  <div class="app-song-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
+                  <div class="app-song-text">
+                    <div class="app-song-title">Dancing Queen</div>
+                    <div class="app-song-artist">ABBA</div>
+                  </div>
+                  <div class="app-song-by">Taylor</div>
+                </div>
+                <div class="app-song-row">
+                  <div class="app-song-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
+                  <div class="app-song-text">
+                    <div class="app-song-title">September</div>
+                    <div class="app-song-artist">Earth, Wind &amp; Fire</div>
+                  </div>
+                  <div class="app-song-by">Jordan</div>
+                </div>
+                <div class="app-song-row">
+                  <div class="app-song-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
+                  <div class="app-song-text">
+                    <div class="app-song-title">Can't Stop the Feeling</div>
+                    <div class="app-song-artist">Justin Timberlake</div>
+                  </div>
+                  <div class="app-song-by">Sam</div>
+                </div>
+                <div class="app-song-row">
+                  <div class="app-song-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
+                  <div class="app-song-text">
+                    <div class="app-song-title">Mr. Brightside</div>
+                    <div class="app-song-artist">The Killers</div>
+                  </div>
+                  <div class="app-song-by">Alex</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TRAVEL GUIDE screen — Montreux guide section previews. -->
+            <div class="app-screen" data-screen="guide">
+              <div class="app-page-header">
+                <div class="app-page-eyebrow">Montreux Guide</div>
+                <h1 class="app-page-title">Things to Do &amp; See</h1>
+                <p class="app-page-sub">Curated notes from Emma &amp; James.</p>
+              </div>
+              <div class="app-page-body">
+                <div class="app-guide-card">
+                  <div class="app-guide-emoji">✈️</div>
+                  <div class="app-guide-text">
+                    <div class="app-guide-title">Getting to Montreux</div>
+                    <div class="app-guide-sub">Flights, trains, transfers</div>
+                  </div>
+                  <div class="app-guide-chev">›</div>
+                </div>
+                <div class="app-guide-card">
+                  <div class="app-guide-emoji">🥾</div>
+                  <div class="app-guide-text">
+                    <div class="app-guide-title">Walks &amp; Hikes</div>
+                    <div class="app-guide-sub">Lake Promenade, Rochers de Naye</div>
+                  </div>
+                  <div class="app-guide-chev">›</div>
+                </div>
+                <div class="app-guide-card">
+                  <div class="app-guide-emoji">🏰</div>
+                  <div class="app-guide-text">
+                    <div class="app-guide-title">Castles</div>
+                    <div class="app-guide-sub">Château de Chillon, Château d'Aigle</div>
+                  </div>
+                  <div class="app-guide-chev">›</div>
+                </div>
+                <div class="app-guide-card">
+                  <div class="app-guide-emoji">🍇</div>
+                  <div class="app-guide-text">
+                    <div class="app-guide-title">Lavaux &amp; Wine</div>
+                    <div class="app-guide-sub">Vineyard terraces above the lake</div>
+                  </div>
+                  <div class="app-guide-chev">›</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- PACKING screen — Alex's filtered items (non-wedding-party male). -->
+            <div class="app-screen" data-screen="packing">
+              <div class="app-page-header">
+                <div class="app-page-eyebrow">Packing</div>
+                <h1 class="app-page-title">Your Packing List</h1>
+                <p class="app-page-sub">Weather-aware picks for Montreux in May.</p>
+              </div>
+              <div class="app-page-body">
+                <div class="app-pack-cat">
+                  <div class="app-pack-cat-header">
+                    <span class="app-pack-cat-emoji">👗</span>
+                    <span class="app-pack-cat-title">Outfits</span>
+                  </div>
+                  <div class="app-pack-item done">
+                    <div class="app-pack-check done"></div>
+                    <div class="app-pack-label">Welcome Party outfit</div>
+                  </div>
+                  <div class="app-pack-item">
+                    <div class="app-pack-check"></div>
+                    <div class="app-pack-label">Tuxedo or Black Suit</div>
+                  </div>
+                </div>
+                <div class="app-pack-cat">
+                  <div class="app-pack-cat-header">
+                    <span class="app-pack-cat-emoji">🌦️</span>
+                    <span class="app-pack-cat-title">May Weather</span>
+                  </div>
+                  <div class="app-pack-item done">
+                    <div class="app-pack-check done"></div>
+                    <div class="app-pack-label">Light waterproof jacket</div>
+                  </div>
+                  <div class="app-pack-item">
+                    <div class="app-pack-check"></div>
+                    <div class="app-pack-label">Sunglasses</div>
+                  </div>
+                </div>
+                <div class="app-pack-cat">
+                  <div class="app-pack-cat-header">
+                    <span class="app-pack-cat-emoji">🧳</span>
+                    <span class="app-pack-cat-title">Travel Essentials</span>
+                  </div>
+                  <div class="app-pack-item">
+                    <div class="app-pack-check"></div>
+                    <div class="app-pack-label">Passport / ID</div>
+                  </div>
+                  <div class="app-pack-item">
+                    <div class="app-pack-check"></div>
+                    <div class="app-pack-label">Swiss plug adaptor (Type J)</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            </div>
             <div class="phone-tabbar">
               <span class="phone-tab active"></span>
               <span class="phone-tab"></span>
@@ -1229,6 +1719,14 @@
               <span class="phone-tab"></span>
             </div>
           </div>
+        </div>
+        <div class="phone-dots" role="tablist" aria-label="Phone preview screens">
+          <button class="phone-dot active" type="button" data-index="0" aria-label="Home"></button>
+          <button class="phone-dot" type="button" data-index="1" aria-label="Schedule"></button>
+          <button class="phone-dot" type="button" data-index="2" aria-label="Announcements"></button>
+          <button class="phone-dot" type="button" data-index="3" aria-label="Song requests"></button>
+          <button class="phone-dot" type="button" data-index="4" aria-label="Travel guide"></button>
+          <button class="phone-dot" type="button" data-index="5" aria-label="Packing list"></button>
         </div>
       </div>
     </div>
@@ -1661,6 +2159,65 @@
     }
     tick();
     setInterval(tick, 1000);
+  })();
+
+  // Phone screen carousel — auto-rotates through Home, Schedule,
+  // Announcements, Songs, Guide, Packing every 5s. Pauses on hover.
+  // Off on mobile and when the viewer prefers reduced motion.
+  (function () {
+    const screens = document.querySelectorAll('.app-screen');
+    const dots = document.querySelectorAll('.phone-dot');
+    if (!screens.length || !dots.length) return;
+
+    const mobileQ = window.matchMedia('(max-width: 900px)');
+    const reducedQ = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const ROTATE_MS = 5000;
+
+    let index = 0;
+    let timer = null;
+
+    function setActive(next) {
+      index = ((next % screens.length) + screens.length) % screens.length;
+      screens.forEach((s, i) => s.classList.toggle('active', i === index));
+      dots.forEach((d, i) => {
+        d.classList.toggle('active', i === index);
+        d.setAttribute('aria-selected', i === index ? 'true' : 'false');
+      });
+    }
+
+    function autoOff() {
+      return mobileQ.matches || reducedQ.matches;
+    }
+
+    function start() {
+      stop();
+      if (autoOff()) return;
+      timer = setInterval(() => setActive(index + 1), ROTATE_MS);
+    }
+    function stop() {
+      if (timer) { clearInterval(timer); timer = null; }
+    }
+
+    dots.forEach((d) => {
+      d.addEventListener('click', () => {
+        setActive(parseInt(d.dataset.index, 10));
+        // Restart the interval so the freshly-picked screen gets its
+        // full display window instead of flipping right after tap.
+        start();
+      });
+    });
+
+    const phone = document.querySelector('.phone');
+    if (phone) {
+      phone.addEventListener('mouseenter', stop);
+      phone.addEventListener('mouseleave', start);
+    }
+
+    // React to viewport or motion-preference changes without a reload.
+    mobileQ.addEventListener('change', () => { setActive(0); start(); });
+    reducedQ.addEventListener('change', () => { setActive(0); start(); });
+
+    start();
   })();
 </script>
 
