@@ -655,9 +655,27 @@
       gap: 8px;
     }
 
-    /* Schedule screen — venue hero photo + event cards. */
-    .app-sched-hero {
-      padding: 0 12px 10px;
+    /* Schedule screen — event cards + venue map + venue photo at bottom. */
+    .app-sched-map-section {
+      padding: 8px 12px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .app-sched-map-title {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 14px;
+      color: var(--text);
+      padding: 4px 4px 2px;
+    }
+    .app-sched-map {
+      height: 110px;
+      border-radius: 12px;
+      background-color: var(--surface);
+      background-size: cover;
+      background-position: center;
+      border: 0.5px solid var(--border);
     }
     .app-sched-hero-photo {
       height: 96px;
@@ -824,6 +842,94 @@
       font-size: 9px;
       color: var(--text-muted);
       letter-spacing: 0.06em;
+    }
+
+    /* Photos screen — shared album CTA + how-to steps. */
+    .app-photos-card {
+      background: var(--surface);
+      border-radius: 14px;
+      border: 0.5px solid var(--border);
+      padding: 18px 16px;
+      text-align: center;
+      margin: 0 12px;
+    }
+    .app-photos-icon {
+      width: 56px; height: 56px;
+      border-radius: 14px;
+      background: #F4EBD9;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 10px;
+    }
+    .app-photos-title {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 15px;
+      color: var(--text);
+      margin-bottom: 4px;
+      line-height: 1.2;
+    }
+    .app-photos-body {
+      font-family: var(--sans);
+      font-size: 10.5px;
+      line-height: 1.5;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+    .app-photos-btn {
+      background: var(--primary);
+      color: var(--surface);
+      border: none;
+      border-radius: 999px;
+      padding: 8px 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .app-photos-steps {
+      background: var(--surface);
+      border-radius: 12px;
+      border: 0.5px solid var(--border);
+      padding: 12px 14px;
+      margin: 10px 12px 0;
+    }
+    .app-photos-steps-title {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 13px;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .app-photos-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .app-photos-step-n {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: var(--surface);
+      font-family: var(--sans);
+      font-size: 9px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .app-photos-step-text {
+      font-family: var(--sans);
+      font-size: 10.5px;
+      color: var(--text-secondary);
+      line-height: 1.35;
     }
 
     /* Songs screen — request form + song request list. */
@@ -1666,9 +1772,6 @@
                 <h1 class="app-page-title">Wedding Schedule</h1>
                 <p class="app-page-sub">Tap each event for full details, dress code, and color palette.</p>
               </div>
-              <div class="app-sched-hero">
-                <div class="app-sched-hero-photo" style="background-image: url('./photo-fairmont.png');" aria-label="Fairmont Le Montreux Palace"></div>
-              </div>
               <div class="app-page-body">
                 <div class="app-sched-card">
                   <div class="app-sched-title">Welcome Party</div>
@@ -1688,6 +1791,9 @@
                   <div class="app-sched-time">7:30 PM – 1:00 AM</div>
                   <div class="app-sched-venue">Fairmont Le Montreux Palace | Salle des Fêtes</div>
                 </div>
+                <div class="app-sched-map-title">Fairmont Le Montreux Palace</div>
+                <div class="app-sched-map" style="background-image: url('./photo-floorplan.png');" aria-label="Fairmont floor plan"></div>
+                <div class="app-sched-hero-photo" style="background-image: url('./photo-fairmont.png');" aria-label="Fairmont Le Montreux Palace"></div>
               </div>
             </div>
 
@@ -1738,6 +1844,45 @@
                     <div class="app-att-name">James</div>
                     <div class="app-att-badge">Groom</div>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- PHOTOS screen — shared album CTA + how-to steps. -->
+            <div class="app-screen" data-screen="photos">
+              <div class="app-page-header">
+                <div class="app-page-eyebrow">Share Your Moments</div>
+                <h1 class="app-page-title">Photo Gallery</h1>
+                <p class="app-page-sub">Share your favorite photos and videos from the weekend.</p>
+              </div>
+              <div class="app-photos-card">
+                <div class="app-photos-icon">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>
+                </div>
+                <div class="app-photos-title">Emma &amp; James's Shared Album</div>
+                <div class="app-photos-body">All photos and videos from the wedding weekend live here. Add yours and see what everyone else captured.</div>
+                <div class="app-photos-btn">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>
+                  Open in Google Photos
+                </div>
+              </div>
+              <div class="app-photos-steps">
+                <div class="app-photos-steps-title">How to add your photos</div>
+                <div class="app-photos-step">
+                  <div class="app-photos-step-n">1</div>
+                  <div class="app-photos-step-text">Tap "Open in Google Photos" above</div>
+                </div>
+                <div class="app-photos-step">
+                  <div class="app-photos-step-n">2</div>
+                  <div class="app-photos-step-text">Sign in with any Google account</div>
+                </div>
+                <div class="app-photos-step">
+                  <div class="app-photos-step-n">3</div>
+                  <div class="app-photos-step-text">Tap the + button to add photos or videos from your camera roll</div>
+                </div>
+                <div class="app-photos-step">
+                  <div class="app-photos-step-n">4</div>
+                  <div class="app-photos-step-text">They'll appear in the shared album for everyone to see</div>
                 </div>
               </div>
             </div>
@@ -1892,10 +2037,11 @@
             <div class="phone-tabbar" role="tablist" aria-label="Preview screens">
               <button class="phone-tab active" type="button" data-index="0" aria-label="Home"></button>
               <button class="phone-tab" type="button" data-index="1" aria-label="Schedule"></button>
-              <button class="phone-tab" type="button" data-index="2" aria-label="Announcements"></button>
-              <button class="phone-tab" type="button" data-index="3" aria-label="Song requests"></button>
-              <button class="phone-tab" type="button" data-index="4" aria-label="Travel guide"></button>
-              <button class="phone-tab" type="button" data-index="5" aria-label="Packing list"></button>
+              <button class="phone-tab" type="button" data-index="2" aria-label="Messages"></button>
+              <button class="phone-tab" type="button" data-index="3" aria-label="Photos"></button>
+              <button class="phone-tab" type="button" data-index="4" aria-label="Song requests"></button>
+              <button class="phone-tab" type="button" data-index="5" aria-label="Travel guide"></button>
+              <button class="phone-tab" type="button" data-index="6" aria-label="Packing list"></button>
             </div>
           </div>
         </div>
@@ -2342,7 +2488,7 @@
 
     const mobileQ = window.matchMedia('(max-width: 900px)');
     const reducedQ = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const ROTATE_MS = 5000;
+    const ROTATE_MS = 2000;
 
     let index = 0;
     let timer = null;
