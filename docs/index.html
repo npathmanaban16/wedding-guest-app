@@ -614,14 +614,14 @@
     /* Screens that do not have a hero photo start their content below the
        notch/status-bar zone. */
     .app-screen[data-screen]:not([data-screen="home"]) {
-      padding: 46px 0 60px;
+      padding: 40px 0 60px;
     }
 
     /* Page header used by non-home screens — mirrors the app's schedule
        pageHeader (small gold eyebrow + centered serif title). */
     .app-page-header {
       text-align: center;
-      padding: 6px 20px 14px;
+      padding: 4px 20px 10px;
     }
     .app-page-eyebrow {
       font-family: var(--sans);
@@ -700,7 +700,42 @@
       line-height: 1.4;
     }
 
-    /* Announcements/messages screen — notification cards. */
+    /* Messages screen — segmented control + Announcements / Chat / Attendees. */
+    .app-msg-tabs {
+      display: flex;
+      background: var(--surface-warm);
+      border: 0.5px solid var(--border);
+      border-radius: 999px;
+      padding: 3px;
+      margin: 0 12px 10px;
+      gap: 2px;
+    }
+    .app-msg-tab {
+      flex: 1;
+      font-family: var(--sans);
+      font-weight: 500;
+      font-size: 10px;
+      color: var(--text-muted);
+      padding: 6px 4px;
+      border-radius: 999px;
+      text-align: center;
+      background: transparent;
+      border: none;
+    }
+    .app-msg-tab.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 1px 2px rgba(28, 24, 16, 0.06);
+    }
+    .app-msg-section-label {
+      font-family: var(--sans);
+      font-weight: 500;
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      padding: 6px 4px 2px;
+    }
     .app-note-card {
       background: var(--surface);
       border-radius: 12px;
@@ -729,6 +764,66 @@
       font-size: 11px;
       line-height: 1.5;
       color: var(--text-secondary);
+    }
+    .app-note-reactions {
+      display: flex;
+      gap: 5px;
+      margin-top: 8px;
+    }
+    .app-note-reaction {
+      background: var(--surface-warm);
+      border: 0.5px solid var(--border);
+      border-radius: 999px;
+      padding: 2px 7px;
+      font-size: 10px;
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    /* Attendees grid — 2 columns of small profile cards. */
+    .app-att-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .app-att-card {
+      background: var(--surface);
+      border-radius: 12px;
+      border: 0.5px solid var(--border);
+      padding: 8px 6px 6px;
+      text-align: center;
+    }
+    .app-att-avatar {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(140deg, var(--gold-soft), var(--gold));
+      color: var(--text);
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 4px;
+      letter-spacing: 0.02em;
+    }
+    .app-att-avatar.b { background: linear-gradient(140deg, var(--primary-light), var(--primary)); color: white; }
+    .app-att-avatar.c { background: linear-gradient(140deg, #C4D6C4, var(--forest)); color: white; }
+    .app-att-avatar.d { background: linear-gradient(140deg, #E8CBB6, #B98A64); color: white; }
+    .app-att-name {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 12px;
+      color: var(--text);
+      margin-bottom: 2px;
+      line-height: 1.15;
+    }
+    .app-att-badge {
+      font-family: var(--sans);
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
     }
 
     /* Songs screen — request form + song request list. */
@@ -1596,20 +1691,53 @@
               </div>
             </div>
 
-            <!-- ANNOUNCEMENTS screen — seeded notification from Emma & James. -->
+            <!-- MESSAGES screen — segmented Announcements / Chat / Attendees. -->
             <div class="app-screen" data-screen="announcements">
               <div class="app-page-header">
-                <div class="app-page-eyebrow">Messages</div>
-                <h1 class="app-page-title">Announcements</h1>
-                <p class="app-page-sub">Updates from Emma &amp; James.</p>
+                <div class="app-page-eyebrow">Stay in the loop</div>
+                <h1 class="app-page-title">Messages</h1>
+                <p class="app-page-sub">Announcements, chat, and everyone attending.</p>
+              </div>
+              <div class="app-msg-tabs" role="tablist">
+                <button class="app-msg-tab active" type="button">Announcements</button>
+                <button class="app-msg-tab" type="button">Chat</button>
+                <button class="app-msg-tab" type="button">Attendees</button>
               </div>
               <div class="app-page-body">
+                <div class="app-msg-section-label">Announcements</div>
                 <div class="app-note-card">
                   <div class="app-note-header">
                     <div class="app-note-sender">Emma &amp; James</div>
                     <div class="app-note-time">2d ago</div>
                   </div>
-                  <div class="app-note-body">Welcome to our wedding app! Tap into each tab to explore the schedule, the Switzerland guide, your packing list, and more. We can't wait to celebrate with you.</div>
+                  <div class="app-note-body">Welcome to our wedding app! Explore each tab for the schedule, Switzerland guide, packing list, and more. Can't wait to celebrate with you.</div>
+                  <div class="app-note-reactions">
+                    <span class="app-note-reaction">❤️ 12</span>
+                    <span class="app-note-reaction">🎉 5</span>
+                  </div>
+                </div>
+
+                <div class="app-msg-section-label">Chat</div>
+                <div class="app-note-card">
+                  <div class="app-note-header">
+                    <div class="app-note-sender">Jordan Guest</div>
+                    <div class="app-note-time">3h ago</div>
+                  </div>
+                  <div class="app-note-body">Just landed in Geneva! Train ride to Montreux is unreal.</div>
+                </div>
+
+                <div class="app-msg-section-label">Attendees · 6 guests</div>
+                <div class="app-att-grid">
+                  <div class="app-att-card">
+                    <div class="app-att-avatar">E</div>
+                    <div class="app-att-name">Emma</div>
+                    <div class="app-att-badge">Bride</div>
+                  </div>
+                  <div class="app-att-card">
+                    <div class="app-att-avatar b">J</div>
+                    <div class="app-att-name">James</div>
+                    <div class="app-att-badge">Groom</div>
+                  </div>
                 </div>
               </div>
             </div>
