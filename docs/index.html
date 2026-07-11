@@ -394,8 +394,8 @@
     }
     .app-hero-header {
       position: absolute;
-      left: 0; right: 0; bottom: 12px;
-      padding: 0 20px;
+      left: 0; right: 0; bottom: 22px;
+      padding: 0 22px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -403,44 +403,44 @@
     }
     .app-hero-greeting {
       font-family: var(--sans);
-      font-size: 10px;
-      color: rgba(255, 255, 255, 0.78);
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.75);
       letter-spacing: 0.03em;
-      margin-bottom: 5px;
+      margin-bottom: 10px;
     }
     .app-hero-couple {
       font-family: var(--serif);
       font-weight: 400;
-      font-size: 30px;
+      font-size: 34px;
       line-height: 1;
       color: #FFFFFF;
       letter-spacing: 0.005em;
-      margin-bottom: 6px;
+      margin-bottom: 10px;
     }
     .app-hero-ornament {
       display: flex;
       align-items: center;
       justify-content: center;
       width: 50%;
-      margin-bottom: 5px;
+      margin-bottom: 10px;
     }
     .app-hero-ornament-line {
       flex: 1;
-      height: 1px;
+      height: 0.5px;
       background: rgba(255, 255, 255, 0.42);
     }
     .app-hero-ornament-diamond {
       color: rgba(255, 255, 255, 0.6);
-      font-size: 8px;
-      margin: 0 6px;
+      font-size: 9px;
+      margin: 0 8px;
       line-height: 1;
     }
     .app-hero-location {
       font-family: var(--sans);
       font-weight: 500;
-      font-size: 8px;
-      letter-spacing: 0.24em;
-      color: rgba(255, 255, 255, 0.72);
+      font-size: 9px;
+      letter-spacing: 0.26em;
+      color: rgba(255, 255, 255, 0.7);
       text-transform: uppercase;
     }
 
@@ -1186,12 +1186,12 @@
                     <div class="app-countdown-label">SEC</div>
                   </div>
                 </div>
-                <div class="app-countdown-date">Oct 12, 2026</div>
+                <div class="app-countdown-date">Oct 10, 2026</div>
               </div>
               <div class="app-event-card">
                 <div class="app-event-tag">UP NEXT</div>
                 <div class="app-event-name">Welcome Night</div>
-                <div class="app-event-detail">Saturday, October 10 · 5:30 PM</div>
+                <div class="app-event-detail">Friday, October 9 · 5:30 PM</div>
                 <div class="app-event-venue">Fairmont Terrace</div>
                 <div class="app-event-link">View full schedule →</div>
               </div>
@@ -1641,7 +1641,7 @@
   // Live countdown for the hero phone mockup. Ticks every second so the
   // seconds place visibly moves — makes the mockup feel alive.
   (function () {
-    const target = new Date('2026-10-12T16:00:00Z').getTime();
+    const target = new Date('2026-10-10T16:00:00Z').getTime();
     const els = {
       days: document.getElementById('cd-days'),
       hours: document.getElementById('cd-hours'),
