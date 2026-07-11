@@ -655,40 +655,50 @@
       gap: 8px;
     }
 
-    /* Schedule screen — event cards + venue map + venue photo at bottom. */
-    .app-sched-map-section {
-      padding: 8px 12px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+    /* Schedule screen — timeline (dot + connector) + event cards +
+       collapsible venue map card. */
+    .app-timeline {
+      padding: 4px 12px 12px 26px;
+      position: relative;
     }
-    .app-sched-map-title {
-      font-family: var(--serif);
-      font-weight: 500;
-      font-size: 14px;
-      color: var(--text);
-      padding: 4px 4px 2px;
+    .app-timeline-item {
+      position: relative;
+      margin-bottom: 10px;
     }
-    .app-sched-map {
-      height: 110px;
-      border-radius: 12px;
-      background-color: var(--surface);
-      background-size: cover;
-      background-position: center;
-      border: 0.5px solid var(--border);
+    .app-timeline-item:last-child { margin-bottom: 12px; }
+    .app-timeline-line {
+      position: absolute;
+      left: -13px;
+      top: 20px;
+      bottom: -10px;
+      width: 1px;
+      background: var(--border);
     }
-    .app-sched-hero-photo {
-      height: 96px;
-      border-radius: 12px;
-      background-size: cover;
-      background-position: center;
-      border: 0.5px solid var(--border);
+    .app-timeline-dot {
+      position: absolute;
+      left: -17px;
+      top: 14px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: 2px solid var(--bg);
+      box-shadow: 0 0 0 0.5px var(--border);
     }
     .app-sched-card {
       background: var(--surface);
       border-radius: 12px;
       border: 0.5px solid var(--border);
-      padding: 12px 14px 12px;
+      padding: 10px 12px 10px;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .app-sched-card-body { flex: 1; min-width: 0; }
+    .app-sched-card-chev {
+      color: var(--text-muted);
+      margin-top: 4px;
+      flex-shrink: 0;
     }
     .app-sched-title {
       font-family: var(--serif);
@@ -698,6 +708,36 @@
       margin-bottom: 3px;
       line-height: 1.15;
     }
+
+    /* Collapsed hotel map card — header with tag + title + chevron. */
+    .app-sched-mapcard {
+      background: var(--surface);
+      border-radius: 12px;
+      border: 0.5px solid var(--border);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 4px 12px 0;
+    }
+    .app-sched-mapcard-tag {
+      font-family: var(--sans);
+      font-weight: 500;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+    .app-sched-mapcard-title {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .app-sched-mapcard-chev { color: var(--text-muted); flex-shrink: 0; }
     .app-sched-date {
       font-family: var(--sans);
       font-size: 11px;
@@ -1061,7 +1101,50 @@
       font-size: 14px;
     }
 
-    /* Packing screen — category with checkbox items. */
+    /* Packing screen — overall progress + category with checkbox items. */
+    .app-pack-progress {
+      background: var(--surface);
+      border-radius: 14px;
+      border: 0.5px solid var(--border);
+      padding: 14px 16px 12px;
+      margin: 0 12px 8px;
+      text-align: center;
+    }
+    .app-pack-progress-label {
+      font-family: var(--sans);
+      font-weight: 500;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .app-pack-progress-percent {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 26px;
+      color: var(--primary);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .app-pack-progress-track {
+      height: 4px;
+      background: var(--divider);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+    .app-pack-progress-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 999px;
+      transition: width 0.4s ease;
+    }
+    .app-pack-progress-count {
+      font-family: var(--sans);
+      font-size: 10px;
+      color: var(--text-muted);
+    }
     .app-pack-cat {
       margin-bottom: 6px;
     }
@@ -1765,39 +1848,106 @@
             </div>
             </div>
 
-            <!-- SCHEDULE screen — Alex's view: non-weddingPartyOnly events. -->
+                        <!-- SCHEDULE screen — Alex's view: non-weddingPartyOnly events. -->
             <div class="app-screen" data-screen="schedule">
               <div class="app-page-header">
                 <div class="app-page-eyebrow">Program</div>
                 <h1 class="app-page-title">Wedding Schedule</h1>
                 <p class="app-page-sub">Tap each event for full details, dress code, and color palette.</p>
               </div>
-              <div class="app-page-body">
-                <div class="app-sched-card">
-                  <div class="app-sched-title">Welcome Party</div>
-                  <div class="app-sched-date">Friday, 21 May 2027</div>
-                  <div class="app-sched-time">6:30 PM – 11:00 PM</div>
-                  <div class="app-sched-venue">Fairmont Le Montreux Palace | La Coupole &amp; La Terrasse du Petit Palais</div>
+              <div class="app-timeline">
+                <div class="app-timeline-item">
+                  <div class="app-timeline-line"></div>
+                  <div class="app-timeline-dot"></div>
+                  <div class="app-sched-card">
+                    <div class="app-sched-card-body">
+                      <div class="app-sched-title">Welcome Party</div>
+                      <div class="app-sched-date">Friday, 21 May 2027</div>
+                      <div class="app-sched-time">6:30 PM – 11:00 PM</div>
+                      <div class="app-sched-venue">Fairmont Le Montreux Palace | La Coupole &amp; La Terrasse du Petit Palais</div>
+                    </div>
+                    <svg class="app-sched-card-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  </div>
                 </div>
-                <div class="app-sched-card">
-                  <div class="app-sched-title">Wedding Ceremony</div>
-                  <div class="app-sched-date">Saturday, 22 May 2027</div>
-                  <div class="app-sched-time">5:00 PM</div>
-                  <div class="app-sched-venue">Fairmont Le Montreux Palace | Garden</div>
+                <div class="app-timeline-item">
+                  <div class="app-timeline-line"></div>
+                  <div class="app-timeline-dot"></div>
+                  <div class="app-sched-card">
+                    <div class="app-sched-card-body">
+                      <div class="app-sched-title">Wedding Ceremony</div>
+                      <div class="app-sched-date">Saturday, 22 May 2027</div>
+                      <div class="app-sched-time">5:00 PM</div>
+                      <div class="app-sched-venue">Fairmont Le Montreux Palace | Garden</div>
+                    </div>
+                    <svg class="app-sched-card-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  </div>
                 </div>
-                <div class="app-sched-card">
-                  <div class="app-sched-title">Reception</div>
-                  <div class="app-sched-date">Saturday, 22 May 2027</div>
-                  <div class="app-sched-time">7:30 PM – 1:00 AM</div>
-                  <div class="app-sched-venue">Fairmont Le Montreux Palace | Salle des Fêtes</div>
+                <div class="app-timeline-item">
+                  <div class="app-timeline-dot"></div>
+                  <div class="app-sched-card">
+                    <div class="app-sched-card-body">
+                      <div class="app-sched-title">Reception</div>
+                      <div class="app-sched-date">Saturday, 22 May 2027</div>
+                      <div class="app-sched-time">7:30 PM – 1:00 AM</div>
+                      <div class="app-sched-venue">Fairmont Le Montreux Palace | Salle des Fêtes</div>
+                    </div>
+                    <svg class="app-sched-card-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  </div>
                 </div>
-                <div class="app-sched-map-title">Fairmont Le Montreux Palace</div>
-                <div class="app-sched-map" style="background-image: url('./photo-floorplan.png');" aria-label="Fairmont floor plan"></div>
-                <div class="app-sched-hero-photo" style="background-image: url('./photo-fairmont.png');" aria-label="Fairmont Le Montreux Palace"></div>
+              </div>
+              <div class="app-sched-mapcard">
+                <div>
+                  <div class="app-sched-mapcard-tag">Venue Overview</div>
+                  <div class="app-sched-mapcard-title">Fairmont Le Montreux Palace</div>
+                </div>
+                <svg class="app-sched-mapcard-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
               </div>
             </div>
 
-            <!-- MESSAGES screen — segmented Announcements / Chat / Attendees. -->
+                        <!-- TRAVEL GUIDE screen — Montreux guide section previews. -->
+            <div class="app-screen" data-screen="guide">
+              <div class="app-page-header">
+                <div class="app-page-eyebrow">Montreux Guide</div>
+                <h1 class="app-page-title">Things to Do &amp; See</h1>
+                <p class="app-page-sub">Curated notes from Emma &amp; James.</p>
+              </div>
+              <div class="app-page-body">
+                <div class="app-guide-card">
+                  <div class="app-guide-photo" style="background-image: url('./photo-promenade.png');" aria-label="Montreux Promenade"></div>
+                  <div class="app-guide-text">
+                    <div class="app-guide-title">Getting to Montreux</div>
+                    <div class="app-guide-sub">Flights, trains, transfers</div>
+                  </div>
+                  <div class="app-guide-chev">›</div>
+                </div>
+                <div class="app-guide-card">
+                  <div class="app-guide-photo" style="background-image: url('./photo-rochers.png');" aria-label="Rochers de Naye"></div>
+                  <div class="app-guide-text">
+                    <div class="app-guide-title">Walks &amp; Hikes</div>
+                    <div class="app-guide-sub">Lake Promenade, Rochers de Naye</div>
+                  </div>
+                  <div class="app-guide-chev">›</div>
+                </div>
+                <div class="app-guide-card">
+                  <div class="app-guide-photo" style="background-image: url('./hero-montreux.png');" aria-label="Château de Chillon"></div>
+                  <div class="app-guide-text">
+                    <div class="app-guide-title">Castles</div>
+                    <div class="app-guide-sub">Château de Chillon, Château d'Aigle</div>
+                  </div>
+                  <div class="app-guide-chev">›</div>
+                </div>
+                <div class="app-guide-card">
+                  <div class="app-guide-photo" style="background-image: url('./photo-lavaux.png');" aria-label="Lavaux vineyards"></div>
+                  <div class="app-guide-text">
+                    <div class="app-guide-title">Lavaux &amp; Wine</div>
+                    <div class="app-guide-sub">Vineyard terraces above the lake</div>
+                  </div>
+                  <div class="app-guide-chev">›</div>
+                </div>
+              </div>
+            </div>
+
+                        <!-- MESSAGES screen — segmented Announcements / Chat / Attendees. -->
             <div class="app-screen" data-screen="announcements">
               <div class="app-page-header">
                 <div class="app-page-eyebrow">Stay in the loop</div>
@@ -1848,46 +1998,7 @@
               </div>
             </div>
 
-            <!-- PHOTOS screen — shared album CTA + how-to steps. -->
-            <div class="app-screen" data-screen="photos">
-              <div class="app-page-header">
-                <div class="app-page-eyebrow">Share Your Moments</div>
-                <h1 class="app-page-title">Photo Gallery</h1>
-                <p class="app-page-sub">Share your favorite photos and videos from the weekend.</p>
-              </div>
-              <div class="app-photos-card">
-                <div class="app-photos-icon">
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>
-                </div>
-                <div class="app-photos-title">Emma &amp; James's Shared Album</div>
-                <div class="app-photos-body">All photos and videos from the wedding weekend live here. Add yours and see what everyone else captured.</div>
-                <div class="app-photos-btn">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>
-                  Open in Google Photos
-                </div>
-              </div>
-              <div class="app-photos-steps">
-                <div class="app-photos-steps-title">How to add your photos</div>
-                <div class="app-photos-step">
-                  <div class="app-photos-step-n">1</div>
-                  <div class="app-photos-step-text">Tap "Open in Google Photos" above</div>
-                </div>
-                <div class="app-photos-step">
-                  <div class="app-photos-step-n">2</div>
-                  <div class="app-photos-step-text">Sign in with any Google account</div>
-                </div>
-                <div class="app-photos-step">
-                  <div class="app-photos-step-n">3</div>
-                  <div class="app-photos-step-text">Tap the + button to add photos or videos from your camera roll</div>
-                </div>
-                <div class="app-photos-step">
-                  <div class="app-photos-step-n">4</div>
-                  <div class="app-photos-step-text">They'll appear in the shared album for everyone to see</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- SONGS screen — request form + list from the demo seed. -->
+                        <!-- SONGS screen — request form + list from the demo seed. -->
             <div class="app-screen" data-screen="songs">
               <div class="app-page-header">
                 <div class="app-page-eyebrow">Welcome Party &amp; Reception Playlist</div>
@@ -1940,55 +2051,20 @@
               </div>
             </div>
 
-            <!-- TRAVEL GUIDE screen — Montreux guide section previews. -->
-            <div class="app-screen" data-screen="guide">
-              <div class="app-page-header">
-                <div class="app-page-eyebrow">Montreux Guide</div>
-                <h1 class="app-page-title">Things to Do &amp; See</h1>
-                <p class="app-page-sub">Curated notes from Emma &amp; James.</p>
-              </div>
-              <div class="app-page-body">
-                <div class="app-guide-card">
-                  <div class="app-guide-photo" style="background-image: url('./photo-promenade.png');" aria-label="Montreux Promenade"></div>
-                  <div class="app-guide-text">
-                    <div class="app-guide-title">Getting to Montreux</div>
-                    <div class="app-guide-sub">Flights, trains, transfers</div>
-                  </div>
-                  <div class="app-guide-chev">›</div>
-                </div>
-                <div class="app-guide-card">
-                  <div class="app-guide-photo" style="background-image: url('./photo-rochers.png');" aria-label="Rochers de Naye"></div>
-                  <div class="app-guide-text">
-                    <div class="app-guide-title">Walks &amp; Hikes</div>
-                    <div class="app-guide-sub">Lake Promenade, Rochers de Naye</div>
-                  </div>
-                  <div class="app-guide-chev">›</div>
-                </div>
-                <div class="app-guide-card">
-                  <div class="app-guide-photo" style="background-image: url('./hero-montreux.png');" aria-label="Château de Chillon"></div>
-                  <div class="app-guide-text">
-                    <div class="app-guide-title">Castles</div>
-                    <div class="app-guide-sub">Château de Chillon, Château d'Aigle</div>
-                  </div>
-                  <div class="app-guide-chev">›</div>
-                </div>
-                <div class="app-guide-card">
-                  <div class="app-guide-photo" style="background-image: url('./photo-lavaux.png');" aria-label="Lavaux vineyards"></div>
-                  <div class="app-guide-text">
-                    <div class="app-guide-title">Lavaux &amp; Wine</div>
-                    <div class="app-guide-sub">Vineyard terraces above the lake</div>
-                  </div>
-                  <div class="app-guide-chev">›</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- PACKING screen — Alex's filtered items (non-wedding-party male). -->
+                        <!-- PACKING screen — Alex's filtered items (non-wedding-party male). -->
             <div class="app-screen" data-screen="packing">
               <div class="app-page-header">
                 <div class="app-page-eyebrow">Packing</div>
                 <h1 class="app-page-title">Your Packing List</h1>
                 <p class="app-page-sub">Weather-aware picks for Montreux in May.</p>
+              </div>
+              <div class="app-pack-progress">
+                <div class="app-pack-progress-label">Overall Progress</div>
+                <div class="app-pack-progress-percent">33%</div>
+                <div class="app-pack-progress-track">
+                  <div class="app-pack-progress-fill" style="width: 33%;"></div>
+                </div>
+                <div class="app-pack-progress-count">2 of 6 items packed</div>
               </div>
               <div class="app-page-body">
                 <div class="app-pack-cat">
@@ -2033,15 +2109,54 @@
               </div>
             </div>
 
+                        <!-- PHOTOS screen — shared album CTA + how-to steps. -->
+            <div class="app-screen" data-screen="photos">
+              <div class="app-page-header">
+                <div class="app-page-eyebrow">Share Your Moments</div>
+                <h1 class="app-page-title">Photo Gallery</h1>
+                <p class="app-page-sub">Share your favorite photos and videos from the weekend.</p>
+              </div>
+              <div class="app-photos-card">
+                <div class="app-photos-icon">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>
+                </div>
+                <div class="app-photos-title">Emma &amp; James's Shared Album</div>
+                <div class="app-photos-body">All photos and videos from the wedding weekend live here. Add yours and see what everyone else captured.</div>
+                <div class="app-photos-btn">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>
+                  Open in Google Photos
+                </div>
+              </div>
+              <div class="app-photos-steps">
+                <div class="app-photos-steps-title">How to add your photos</div>
+                <div class="app-photos-step">
+                  <div class="app-photos-step-n">1</div>
+                  <div class="app-photos-step-text">Tap "Open in Google Photos" above</div>
+                </div>
+                <div class="app-photos-step">
+                  <div class="app-photos-step-n">2</div>
+                  <div class="app-photos-step-text">Sign in with any Google account</div>
+                </div>
+                <div class="app-photos-step">
+                  <div class="app-photos-step-n">3</div>
+                  <div class="app-photos-step-text">Tap the + button to add photos or videos from your camera roll</div>
+                </div>
+                <div class="app-photos-step">
+                  <div class="app-photos-step-n">4</div>
+                  <div class="app-photos-step-text">They'll appear in the shared album for everyone to see</div>
+                </div>
+              </div>
+            </div>
+
             </div>
             <div class="phone-tabbar" role="tablist" aria-label="Preview screens">
               <button class="phone-tab active" type="button" data-index="0" aria-label="Home"></button>
               <button class="phone-tab" type="button" data-index="1" aria-label="Schedule"></button>
-              <button class="phone-tab" type="button" data-index="2" aria-label="Messages"></button>
-              <button class="phone-tab" type="button" data-index="3" aria-label="Photos"></button>
+              <button class="phone-tab" type="button" data-index="2" aria-label="Travel guide"></button>
+              <button class="phone-tab" type="button" data-index="3" aria-label="Messages"></button>
               <button class="phone-tab" type="button" data-index="4" aria-label="Song requests"></button>
-              <button class="phone-tab" type="button" data-index="5" aria-label="Travel guide"></button>
-              <button class="phone-tab" type="button" data-index="6" aria-label="Packing list"></button>
+              <button class="phone-tab" type="button" data-index="5" aria-label="Packing list"></button>
+              <button class="phone-tab" type="button" data-index="6" aria-label="Photos"></button>
             </div>
           </div>
         </div>
