@@ -794,6 +794,11 @@
       text-transform: uppercase;
       padding: 6px 4px 2px;
     }
+    /* Nested sub-rotation views inside the Messages screen. Only the
+       .active view renders; the outer carousel timer holds Messages long
+       enough for all three to cycle before advancing. */
+    .app-msg-view { display: none; }
+    .app-msg-view.active { display: flex; flex-direction: column; gap: 8px; }
     .app-note-card {
       background: var(--surface);
       border-radius: 12px;
@@ -1867,44 +1872,101 @@
                 <p class="app-page-sub">Announcements, chat, and everyone attending.</p>
               </div>
               <div class="app-msg-tabs" role="tablist">
-                <button class="app-msg-tab active" type="button">Announcements</button>
-                <button class="app-msg-tab" type="button">Chat</button>
-                <button class="app-msg-tab" type="button">Attendees</button>
+                <button class="app-msg-tab active" type="button" data-msg-tab="0">Announcements</button>
+                <button class="app-msg-tab" type="button" data-msg-tab="1">Chat</button>
+                <button class="app-msg-tab" type="button" data-msg-tab="2">Attendees</button>
               </div>
               <div class="app-page-body">
-                <div class="app-msg-section-label">Announcements</div>
-                <div class="app-note-card">
-                  <div class="app-note-header">
-                    <div class="app-note-sender">Emma &amp; James</div>
-                    <div class="app-note-time">2d ago</div>
+                <!-- Announcements sub-view -->
+                <div class="app-msg-view active" data-msg-view="0">
+                  <div class="app-note-card">
+                    <div class="app-note-header">
+                      <div class="app-note-sender">Emma &amp; James</div>
+                      <div class="app-note-time">2d ago</div>
+                    </div>
+                    <div class="app-note-body">Welcome to our wedding app! Tap into each tab to explore the schedule, the Switzerland guide, your packing list, and more. We can't wait to celebrate with you.</div>
+                    <div class="app-note-reactions">
+                      <span class="app-note-reaction">❤️ 12</span>
+                      <span class="app-note-reaction">🎉 5</span>
+                    </div>
                   </div>
-                  <div class="app-note-body">Welcome to our wedding app! Explore each tab for the schedule, Switzerland guide, packing list, and more. Can't wait to celebrate with you.</div>
-                  <div class="app-note-reactions">
-                    <span class="app-note-reaction">❤️ 12</span>
-                    <span class="app-note-reaction">🎉 5</span>
+                  <div class="app-note-card">
+                    <div class="app-note-header">
+                      <div class="app-note-sender">Emma &amp; James</div>
+                      <div class="app-note-time">6h ago</div>
+                    </div>
+                    <div class="app-note-body">Welcome bags are waiting for you at the Fairmont front desk — grab yours after check-in.</div>
+                    <div class="app-note-reactions">
+                      <span class="app-note-reaction">❤️ 8</span>
+                    </div>
                   </div>
                 </div>
 
-                <div class="app-msg-section-label">Chat</div>
-                <div class="app-note-card">
-                  <div class="app-note-header">
-                    <div class="app-note-sender">Jordan Guest</div>
-                    <div class="app-note-time">3h ago</div>
+                <!-- Chat sub-view -->
+                <div class="app-msg-view" data-msg-view="1">
+                  <div class="app-note-card">
+                    <div class="app-note-header">
+                      <div class="app-note-sender">Jordan Guest</div>
+                      <div class="app-note-time">3h ago</div>
+                    </div>
+                    <div class="app-note-body">Just landed in Geneva! The train ride to Montreux is unreal. See everyone at Welcome Party 🥂</div>
+                    <div class="app-note-reactions">
+                      <span class="app-note-reaction">🙌 3</span>
+                    </div>
                   </div>
-                  <div class="app-note-body">Just landed in Geneva! Train ride to Montreux is unreal.</div>
+                  <div class="app-note-card">
+                    <div class="app-note-header">
+                      <div class="app-note-sender">Sam Morgan</div>
+                      <div class="app-note-time">1h ago</div>
+                    </div>
+                    <div class="app-note-body">Anyone else doing the Rochers de Naye hike on Sunday? Would love company.</div>
+                    <div class="app-note-reactions">
+                      <span class="app-note-reaction">🥾 4</span>
+                      <span class="app-note-reaction">❤️ 2</span>
+                    </div>
+                  </div>
+                  <div class="app-note-card">
+                    <div class="app-note-header">
+                      <div class="app-note-sender">Riley Bennett</div>
+                      <div class="app-note-time">just now</div>
+                    </div>
+                    <div class="app-note-body">Count me in for the hike! Meet in the lobby at 9?</div>
+                  </div>
                 </div>
 
-                <div class="app-msg-section-label">Attendees · 6 guests</div>
-                <div class="app-att-grid">
-                  <div class="app-att-card">
-                    <div class="app-att-avatar">E</div>
-                    <div class="app-att-name">Emma</div>
-                    <div class="app-att-badge">Bride</div>
-                  </div>
-                  <div class="app-att-card">
-                    <div class="app-att-avatar b">J</div>
-                    <div class="app-att-name">James</div>
-                    <div class="app-att-badge">Groom</div>
+                <!-- Attendees sub-view -->
+                <div class="app-msg-view" data-msg-view="2">
+                  <div class="app-att-grid">
+                    <div class="app-att-card">
+                      <div class="app-att-avatar">E</div>
+                      <div class="app-att-name">Emma</div>
+                      <div class="app-att-badge">Bride</div>
+                    </div>
+                    <div class="app-att-card">
+                      <div class="app-att-avatar b">J</div>
+                      <div class="app-att-name">James</div>
+                      <div class="app-att-badge">Groom</div>
+                    </div>
+                    <div class="app-att-card">
+                      <div class="app-att-avatar c">JG</div>
+                      <div class="app-att-name">Jordan Guest</div>
+                      <div class="app-att-badge">Wedding party</div>
+                    </div>
+                    <div class="app-att-card">
+                      <div class="app-att-avatar d">SM</div>
+                      <div class="app-att-name">Sam Morgan</div>
+                      <div class="app-att-badge">Guest</div>
+                    </div>
+                    <div class="app-att-card">
+                      <div class="app-att-avatar">RB</div>
+                      <div class="app-att-name">Riley Bennett</div>
+                      <div class="app-att-badge">Guest</div>
+                    </div>
+                    <div class="app-att-card">
+                      <div class="app-att-avatar b">AC</div>
+                      <div class="app-att-name">Alex Chen</div>
+                      <div class="app-att-badge">You</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2475,9 +2537,41 @@
     const mobileQ = window.matchMedia('(max-width: 900px)');
     const reducedQ = window.matchMedia('(prefers-reduced-motion: reduce)');
     const ROTATE_MS = 2000;
+    // Messages holds longer than a normal screen so its nested sub-tabs
+    // (Announcements → Chat → Attendees) all get a beat before the outer
+    // carousel advances.
+    const MSG_SUB_MS = 1400;
+    const MSG_DWELL = MSG_SUB_MS * 3 + 300;
 
     let index = 0;
     let timer = null;
+    let msgTimer = null;
+    let msgSubIndex = 0;
+
+    function dwellFor(idx) {
+      const s = screens[idx];
+      if (s && s.dataset.screen === 'announcements') return MSG_DWELL;
+      return ROTATE_MS;
+    }
+
+    function setMsgSub(idx) {
+      const views = document.querySelectorAll('[data-screen="announcements"] .app-msg-view');
+      const tabs = document.querySelectorAll('[data-screen="announcements"] .app-msg-tab');
+      if (!views.length) return;
+      const n = views.length;
+      msgSubIndex = ((idx % n) + n) % n;
+      views.forEach((v, i) => v.classList.toggle('active', i === msgSubIndex));
+      tabs.forEach((t, i) => t.classList.toggle('active', i === msgSubIndex));
+    }
+
+    function startMsgSub() {
+      stopMsgSub();
+      if (autoOff()) return;
+      msgTimer = setInterval(() => setMsgSub(msgSubIndex + 1), MSG_SUB_MS);
+    }
+    function stopMsgSub() {
+      if (msgTimer) { clearInterval(msgTimer); msgTimer = null; }
+    }
 
     function setActive(next) {
       index = ((next % screens.length) + screens.length) % screens.length;
@@ -2486,20 +2580,32 @@
         d.classList.toggle('active', i === index);
         d.setAttribute('aria-selected', i === index ? 'true' : 'false');
       });
+      const activeScreen = screens[index];
+      if (activeScreen && activeScreen.dataset.screen === 'announcements') {
+        setMsgSub(0);
+        startMsgSub();
+      } else {
+        stopMsgSub();
+        setMsgSub(0);
+      }
     }
 
     function autoOff() {
       return mobileQ.matches || reducedQ.matches;
     }
 
-    function start() {
+    function schedule() {
       stop();
       if (autoOff()) return;
-      timer = setInterval(() => setActive(index + 1), ROTATE_MS);
+      timer = setTimeout(() => {
+        setActive(index + 1);
+        schedule();
+      }, dwellFor(index));
     }
     function stop() {
-      if (timer) { clearInterval(timer); timer = null; }
+      if (timer) { clearTimeout(timer); timer = null; }
     }
+    function start() { schedule(); }
 
     dots.forEach((d) => {
       d.addEventListener('click', () => {
@@ -2510,10 +2616,25 @@
       });
     });
 
+    // Segmented-control taps inside Messages let a reader jump to a
+    // specific sub-view.
+    document.querySelectorAll('[data-screen="announcements"] .app-msg-tab').forEach((tab, i) => {
+      tab.addEventListener('click', () => {
+        setMsgSub(i);
+        startMsgSub();
+      });
+    });
+
     const phone = document.querySelector('.phone');
     if (phone) {
-      phone.addEventListener('mouseenter', stop);
-      phone.addEventListener('mouseleave', start);
+      phone.addEventListener('mouseenter', () => { stop(); stopMsgSub(); });
+      phone.addEventListener('mouseleave', () => {
+        start();
+        const activeScreen = screens[index];
+        if (activeScreen && activeScreen.dataset.screen === 'announcements') {
+          startMsgSub();
+        }
+      });
     }
 
     // React to viewport or motion-preference changes without a reload.
