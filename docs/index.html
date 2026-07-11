@@ -227,95 +227,6 @@
       header.site .btn { padding: 9px 15px; font-size: 12.5px; }
     }
 
-    /* Mobile nav accordion — hamburger button in the header + a drop-down
-       panel that appears below the sticky nav. Hidden on desktop; on
-       mobile the button toggles to an X and the panel slides in. */
-    .nav-toggle {
-      display: none;
-      align-items: center;
-      justify-content: center;
-      width: 40px;
-      height: 40px;
-      padding: 0;
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      color: var(--text);
-      border-radius: 10px;
-      transition: background 0.15s ease;
-    }
-    .nav-toggle:hover { background: var(--surface-warm); }
-    .nav-toggle:focus-visible {
-      outline: 2px solid var(--primary);
-      outline-offset: 2px;
-    }
-    .nav-toggle-bars {
-      position: relative;
-      display: block;
-      width: 20px;
-      height: 14px;
-    }
-    .nav-toggle-bars::before,
-    .nav-toggle-bars::after,
-    .nav-toggle-bars > span {
-      content: '';
-      position: absolute;
-      left: 0;
-      right: 0;
-      height: 1.75px;
-      background: currentColor;
-      border-radius: 2px;
-      transition: transform 0.22s ease, opacity 0.15s ease;
-    }
-    .nav-toggle-bars::before { top: 0; }
-    .nav-toggle-bars > span { top: 50%; margin-top: -0.875px; }
-    .nav-toggle-bars::after { bottom: 0; }
-    .nav-toggle[aria-expanded="true"] .nav-toggle-bars::before {
-      transform: translateY(6.125px) rotate(45deg);
-    }
-    .nav-toggle[aria-expanded="true"] .nav-toggle-bars > span { opacity: 0; }
-    .nav-toggle[aria-expanded="true"] .nav-toggle-bars::after {
-      transform: translateY(-6.125px) rotate(-45deg);
-    }
-
-    .nav-panel {
-      display: none;
-      background: rgba(245, 240, 232, 0.98);
-      backdrop-filter: saturate(180%) blur(14px);
-      -webkit-backdrop-filter: saturate(180%) blur(14px);
-      border-top: 1px solid var(--divider);
-    }
-    .nav-panel.is-open { display: block; }
-    .nav-panel .container {
-      display: flex;
-      flex-direction: column;
-      padding-top: 6px;
-      padding-bottom: 18px;
-      gap: 2px;
-    }
-    .nav-panel a {
-      padding: 14px 4px;
-      color: var(--text-secondary);
-      text-decoration: none;
-      font-size: 16px;
-      font-weight: 500;
-      border-bottom: 1px solid var(--divider);
-      transition: color 0.15s ease;
-    }
-    .nav-panel a:hover { color: var(--text); }
-    .nav-panel a:last-child { border-bottom: none; }
-    .nav-panel a.btn {
-      border-bottom: none;
-      align-self: stretch;
-      justify-content: center;
-      margin-top: 14px;
-      padding: 13px 20px;
-      font-size: 15px;
-    }
-    @media (max-width: 780px) {
-      .nav-toggle { display: inline-flex; }
-    }
-
     /* Buttons -------------------------------------------------------- */
 
     .btn {
@@ -1760,21 +1671,7 @@
       <a href="#vendors">Vendors</a>
       <a href="#story">Story</a>
     </nav>
-    <a href="#waitlist" class="btn btn-primary nav-desktop-only">Join the waitlist</a>
-    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-panel" aria-label="Menu">
-      <span class="nav-toggle-bars" aria-hidden="true"><span></span></span>
-    </button>
-  </div>
-  <div class="nav-panel" id="nav-panel">
-    <div class="container">
-      <a href="#features">Features</a>
-      <a href="#ask">Ask AI</a>
-      <a href="#couples">Couples</a>
-      <a href="#planners">Planners</a>
-      <a href="#vendors">Vendors</a>
-      <a href="#story">Story</a>
-      <a href="#waitlist" class="btn btn-primary">Join the waitlist</a>
-    </div>
+    <a href="#waitlist" class="btn btn-primary">Join the waitlist</a>
   </div>
 </header>
 
@@ -2606,28 +2503,6 @@
 </footer>
 
 <script>
-  // Mobile nav accordion — hamburger toggles the dropdown panel below the
-  // sticky header. Tapping a link inside the panel closes it, and a
-  // desktop viewport also force-closes it in case the user resized while
-  // it was open.
-  (function () {
-    const toggle = document.querySelector('.nav-toggle');
-    const panel = document.getElementById('nav-panel');
-    if (!toggle || !panel) return;
-    const setOpen = (open) => {
-      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-      panel.classList.toggle('is-open', open);
-    };
-    toggle.addEventListener('click', () => {
-      setOpen(toggle.getAttribute('aria-expanded') !== 'true');
-    });
-    panel.querySelectorAll('a').forEach((a) => {
-      a.addEventListener('click', () => setOpen(false));
-    });
-    const desktopQ = window.matchMedia('(min-width: 781px)');
-    desktopQ.addEventListener('change', (e) => { if (e.matches) setOpen(false); });
-  })();
-
   const header = document.getElementById('siteHeader');
   const onScroll = () => {
     if (window.scrollY > 8) header.classList.add('scrolled');
