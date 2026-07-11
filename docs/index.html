@@ -206,6 +206,21 @@
     .nav-desktop-only { display: flex; }
     @media (max-width: 780px) {
       .nav-desktop-only { display: none; }
+      /* Sticky header on mobile — the 24px desktop gutter was leaving the
+         brand and CTA pressed against the screen edges. Bump the container
+         gutter up and downsize the CTA + brand mark so both sit
+         comfortably inside a bigger edge margin. */
+      .container { padding: 0 28px; }
+      .nav { padding: 14px 0; gap: 12px; }
+      .brand { font-size: 22px; gap: 8px; min-width: 0; }
+      .brand-mark { width: 30px; height: 30px; }
+      header.site .btn { padding: 10px 18px; font-size: 13.5px; }
+    }
+    @media (max-width: 420px) {
+      .container { padding: 0 22px; }
+      .brand { font-size: 20px; gap: 7px; }
+      .brand-mark { width: 28px; height: 28px; }
+      header.site .btn { padding: 9px 15px; font-size: 12.5px; }
     }
 
     /* Buttons -------------------------------------------------------- */
