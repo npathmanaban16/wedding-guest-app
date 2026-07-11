@@ -375,56 +375,73 @@
       position: relative;
       padding: 44px 0 0;
     }
-    /* Wedding hero header — real Tetherly preview account: Emma & James in
-       Montreux, with the demo wedding's hero photo behind the greeting +
-       couple names. A dark bottom gradient keeps the title readable. */
+    /* Wedding hero header — real Tetherly preview account (Emma & James in
+       Montreux). Mirrors app/(tabs)/index.tsx: a centered vertical stack
+       (greeting → couple names → thin-line-◆-thin-line ornament → LOCATION)
+       positioned at the bottom of the hero photo, dark gradient overlay
+       for text contrast. */
     .app-hero {
-      height: 128px;
+      height: 168px;
       margin: 8px 12px 0;
       border-radius: 14px;
       overflow: hidden;
       position: relative;
       background-image:
-        linear-gradient(180deg, rgba(28, 24, 16, 0.1) 0%, rgba(28, 24, 16, 0) 40%, rgba(28, 24, 16, 0.72) 100%),
+        linear-gradient(180deg, rgba(28, 24, 16, 0.05) 0%, rgba(28, 24, 16, 0) 30%, rgba(28, 24, 16, 0.55) 100%),
         url('./hero-montreux.png');
       background-size: cover, cover;
       background-position: center, center;
     }
+    .app-hero-header {
+      position: absolute;
+      left: 0; right: 0; bottom: 12px;
+      padding: 0 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
     .app-hero-greeting {
-      position: absolute;
-      top: 12px; left: 16px;
-      font-family: var(--serif);
-      font-style: italic;
-      font-size: 13px;
-      color: rgba(255, 255, 255, 0.95);
-      letter-spacing: 0.01em;
-      z-index: 2;
-      text-shadow: 0 1px 3px rgba(28, 24, 16, 0.35);
-    }
-    .app-hero-title {
-      position: absolute;
-      bottom: 14px; left: 16px; right: 16px;
-      font-family: var(--serif);
-      font-weight: 500;
-      font-style: italic;
-      font-size: 26px;
-      line-height: 1.05;
-      color: #FFFFFF;
-      letter-spacing: -0.01em;
-      z-index: 2;
-      text-shadow: 0 1px 4px rgba(28, 24, 16, 0.35);
-    }
-    .app-hero-title small {
-      display: block;
       font-family: var(--sans);
-      font-style: normal;
-      font-size: 9px;
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.78);
+      letter-spacing: 0.03em;
+      margin-bottom: 5px;
+    }
+    .app-hero-couple {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 30px;
+      line-height: 1;
+      color: #FFFFFF;
+      letter-spacing: 0.005em;
+      margin-bottom: 6px;
+    }
+    .app-hero-ornament {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 50%;
+      margin-bottom: 5px;
+    }
+    .app-hero-ornament-line {
+      flex: 1;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.42);
+    }
+    .app-hero-ornament-diamond {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 8px;
+      margin: 0 6px;
+      line-height: 1;
+    }
+    .app-hero-location {
+      font-family: var(--sans);
       font-weight: 500;
-      letter-spacing: 0.16em;
-      color: rgba(255, 255, 255, 0.9);
+      font-size: 8px;
+      letter-spacing: 0.24em;
+      color: rgba(255, 255, 255, 0.72);
       text-transform: uppercase;
-      margin-top: 5px;
-      text-shadow: 0 1px 2px rgba(28, 24, 16, 0.4);
     }
 
     /* Scroll area between the hero and the tab bar. */
@@ -1134,15 +1151,20 @@
         <div class="phone">
           <div class="phone-screen">
             <div class="app-hero">
-              <div class="app-hero-greeting">Welcome, Neha</div>
-              <div class="app-hero-title">
-                Emma &amp; James
-                <small>Montreux, Switzerland</small>
+              <div class="app-hero-header">
+                <div class="app-hero-greeting">Welcome, Neha</div>
+                <div class="app-hero-couple">Emma &amp; James</div>
+                <div class="app-hero-ornament">
+                  <span class="app-hero-ornament-line"></span>
+                  <span class="app-hero-ornament-diamond">◆</span>
+                  <span class="app-hero-ornament-line"></span>
+                </div>
+                <div class="app-hero-location">Montreux, Switzerland</div>
               </div>
             </div>
             <div class="app-scroll">
               <div class="app-countdown">
-                <div class="app-countdown-heading">Until the wedding</div>
+                <div class="app-countdown-heading">until the wedding</div>
                 <div class="app-countdown-row">
                   <div class="app-countdown-unit">
                     <div class="app-countdown-value" id="cd-days">—</div>
@@ -1169,7 +1191,7 @@
               <div class="app-event-card">
                 <div class="app-event-tag">UP NEXT</div>
                 <div class="app-event-name">Welcome Night</div>
-                <div class="app-event-detail">Saturday · 5:30 PM</div>
+                <div class="app-event-detail">Saturday, October 10 · 5:30 PM</div>
                 <div class="app-event-venue">Fairmont Terrace</div>
                 <div class="app-event-link">View full schedule →</div>
               </div>
