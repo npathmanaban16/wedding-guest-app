@@ -151,7 +151,11 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 18px 0;
+      /* Longhand so the shorthand doesn't clobber .container's horizontal
+         padding — the header uses <div class="container nav"> so both
+         selectors apply to the same element with equal specificity. */
+      padding-top: 18px;
+      padding-bottom: 18px;
     }
     .brand {
       font-family: var(--serif);
@@ -211,7 +215,7 @@
          gutter up and downsize the CTA + brand mark so both sit
          comfortably inside a bigger edge margin. */
       .container { padding: 0 28px; }
-      .nav { padding: 14px 0; gap: 12px; }
+      .nav { padding-top: 14px; padding-bottom: 14px; gap: 12px; }
       .brand { font-size: 22px; gap: 8px; min-width: 0; }
       .brand-mark { width: 30px; height: 30px; }
       header.site .btn { padding: 10px 18px; font-size: 13.5px; }
