@@ -323,7 +323,9 @@
       }
       .hero-copy p { margin-left: auto; margin-right: auto; }
       .hero-ctas { justify-content: center; }
-      .hero-visual { order: -1; }
+      /* On mobile, keep DOM order: hero copy (headline + CTA) first, phone
+         mockup below. Puts the pitch and "Join the waitlist" in the first
+         viewport instead of behind a 620px phone. */
     }
 
     /* App Store badges ---------------------------------------------- */
