@@ -655,8 +655,17 @@
       gap: 8px;
     }
 
-    /* Schedule screen — event cards similar to the home UP NEXT card
-       but stacked. */
+    /* Schedule screen — venue hero photo + event cards. */
+    .app-sched-hero {
+      padding: 0 12px 10px;
+    }
+    .app-sched-hero-photo {
+      height: 96px;
+      border-radius: 12px;
+      background-size: cover;
+      background-position: center;
+      border: 0.5px solid var(--border);
+    }
     .app-sched-card {
       background: var(--surface);
       border-radius: 12px;
@@ -722,7 +731,57 @@
       color: var(--text-secondary);
     }
 
-    /* Songs screen — song request list. */
+    /* Songs screen — request form + song request list. */
+    .app-song-form {
+      background: var(--surface);
+      border-radius: 12px;
+      border: 0.5px solid var(--border);
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .app-song-form-title {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 15px;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .app-song-input {
+      display: block;
+      background: var(--surface-warm);
+      border: 0.5px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-family: var(--sans);
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .app-song-submit {
+      background: var(--primary);
+      color: var(--surface);
+      border: none;
+      border-radius: 8px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 500;
+      width: 100%;
+      margin-top: 2px;
+    }
+    .app-song-count {
+      font-family: var(--sans);
+      font-size: 10px;
+      color: var(--text-muted);
+      padding: 4px 4px 6px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
     .app-song-row {
       background: var(--surface);
       border-radius: 10px;
@@ -773,14 +832,13 @@
       align-items: center;
       gap: 12px;
     }
-    .app-guide-emoji {
-      width: 32px; height: 32px;
+    .app-guide-photo {
+      width: 48px; height: 48px;
       border-radius: 8px;
-      background: var(--surface-warm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
+      background-size: cover;
+      background-position: center;
+      background-color: var(--surface-warm);
+      border: 0.5px solid var(--border);
       flex-shrink: 0;
     }
     .app-guide-text { flex: 1; min-width: 0; }
@@ -861,37 +919,9 @@
       text-decoration: line-through;
     }
 
-    /* Jump dots below the phone frame — sit outside the phone's rotation
-       so they stay level with the ground. */
-    .phone-dots {
-      position: absolute;
-      bottom: -36px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 8px;
-      z-index: 4;
-    }
-    .phone-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      border: none;
-      background: rgba(28, 24, 16, 0.18);
-      cursor: pointer;
-      padding: 0;
-      transition: background 0.2s ease, transform 0.2s ease;
-    }
-    .phone-dot:hover { background: rgba(28, 24, 16, 0.32); }
-    .phone-dot.active {
-      background: var(--primary);
-      transform: scale(1.25);
-    }
-    @media (max-width: 900px) {
-      .phone-dots { display: none; }
-    }
-
-    /* Bottom tab bar — 5 tabs, subtle icons. */
+    /* Bottom tab bar — 6 tabs, subtle icons. Also serve as the carousel
+       jump-buttons so the reader can pick a screen without leaving the
+       phone frame. */
     .phone-tabbar {
       position: absolute;
       bottom: 0; left: 0; right: 0;
@@ -899,17 +929,27 @@
       border-top: 1px solid var(--divider);
       display: flex;
       justify-content: space-around;
-      padding: 10px 8px 22px;
+      padding: 10px 6px 22px;
+      z-index: 4;
     }
     .phone-tab {
       width: 22px; height: 22px;
       border-radius: 6px;
       background: var(--divider);
       opacity: 0.55;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      transition: background 0.2s ease, opacity 0.2s ease, transform 0.15s ease;
     }
+    .phone-tab:hover { opacity: 0.85; }
     .phone-tab.active {
       background: var(--primary);
       opacity: 1;
+    }
+    .phone-tab:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
     }
 
     @media (max-width: 900px) {
@@ -1527,9 +1567,12 @@
             <!-- SCHEDULE screen — Alex's view: non-weddingPartyOnly events. -->
             <div class="app-screen" data-screen="schedule">
               <div class="app-page-header">
-                <div class="app-page-eyebrow">May 20 – 22, 2027</div>
-                <h1 class="app-page-title">Wedding Weekend</h1>
-                <p class="app-page-sub">Three events across Friday and Saturday.</p>
+                <div class="app-page-eyebrow">Program</div>
+                <h1 class="app-page-title">Wedding Schedule</h1>
+                <p class="app-page-sub">Tap each event for full details, dress code, and color palette.</p>
+              </div>
+              <div class="app-sched-hero">
+                <div class="app-sched-hero-photo" style="background-image: url('./photo-fairmont.png');" aria-label="Fairmont Le Montreux Palace"></div>
               </div>
               <div class="app-page-body">
                 <div class="app-sched-card">
@@ -1571,14 +1614,24 @@
               </div>
             </div>
 
-            <!-- SONGS screen — song requests from the demo seed. -->
+            <!-- SONGS screen — request form + list from the demo seed. -->
             <div class="app-screen" data-screen="songs">
               <div class="app-page-header">
-                <div class="app-page-eyebrow">Song Requests</div>
-                <h1 class="app-page-title">Your Playlist</h1>
-                <p class="app-page-sub">Guest picks going straight to the DJ.</p>
+                <div class="app-page-eyebrow">Welcome Party &amp; Reception Playlist</div>
+                <h1 class="app-page-title">Song Requests</h1>
+                <p class="app-page-sub">What songs do you want to dance to?</p>
               </div>
               <div class="app-page-body">
+                <div class="app-song-form">
+                  <div class="app-song-form-title">Request a song</div>
+                  <div class="app-song-input">e.g. Levitating</div>
+                  <div class="app-song-input">e.g. Dua Lipa</div>
+                  <div class="app-song-submit">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                    Request this song
+                  </div>
+                </div>
+                <div class="app-song-count">4 songs requested so far</div>
                 <div class="app-song-row">
                   <div class="app-song-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
                   <div class="app-song-text">
@@ -1623,7 +1676,7 @@
               </div>
               <div class="app-page-body">
                 <div class="app-guide-card">
-                  <div class="app-guide-emoji">✈️</div>
+                  <div class="app-guide-photo" style="background-image: url('./photo-promenade.png');" aria-label="Montreux Promenade"></div>
                   <div class="app-guide-text">
                     <div class="app-guide-title">Getting to Montreux</div>
                     <div class="app-guide-sub">Flights, trains, transfers</div>
@@ -1631,7 +1684,7 @@
                   <div class="app-guide-chev">›</div>
                 </div>
                 <div class="app-guide-card">
-                  <div class="app-guide-emoji">🥾</div>
+                  <div class="app-guide-photo" style="background-image: url('./photo-rochers.png');" aria-label="Rochers de Naye"></div>
                   <div class="app-guide-text">
                     <div class="app-guide-title">Walks &amp; Hikes</div>
                     <div class="app-guide-sub">Lake Promenade, Rochers de Naye</div>
@@ -1639,7 +1692,7 @@
                   <div class="app-guide-chev">›</div>
                 </div>
                 <div class="app-guide-card">
-                  <div class="app-guide-emoji">🏰</div>
+                  <div class="app-guide-photo" style="background-image: url('./hero-montreux.png');" aria-label="Château de Chillon"></div>
                   <div class="app-guide-text">
                     <div class="app-guide-title">Castles</div>
                     <div class="app-guide-sub">Château de Chillon, Château d'Aigle</div>
@@ -1647,7 +1700,7 @@
                   <div class="app-guide-chev">›</div>
                 </div>
                 <div class="app-guide-card">
-                  <div class="app-guide-emoji">🍇</div>
+                  <div class="app-guide-photo" style="background-image: url('./photo-lavaux.png');" aria-label="Lavaux vineyards"></div>
                   <div class="app-guide-text">
                     <div class="app-guide-title">Lavaux &amp; Wine</div>
                     <div class="app-guide-sub">Vineyard terraces above the lake</div>
@@ -1667,7 +1720,6 @@
               <div class="app-page-body">
                 <div class="app-pack-cat">
                   <div class="app-pack-cat-header">
-                    <span class="app-pack-cat-emoji">👗</span>
                     <span class="app-pack-cat-title">Outfits</span>
                   </div>
                   <div class="app-pack-item done">
@@ -1681,8 +1733,7 @@
                 </div>
                 <div class="app-pack-cat">
                   <div class="app-pack-cat-header">
-                    <span class="app-pack-cat-emoji">🌦️</span>
-                    <span class="app-pack-cat-title">May Weather</span>
+                    <span class="app-pack-cat-title">May Weather Essentials</span>
                   </div>
                   <div class="app-pack-item done">
                     <div class="app-pack-check done"></div>
@@ -1695,7 +1746,6 @@
                 </div>
                 <div class="app-pack-cat">
                   <div class="app-pack-cat-header">
-                    <span class="app-pack-cat-emoji">🧳</span>
                     <span class="app-pack-cat-title">Travel Essentials</span>
                   </div>
                   <div class="app-pack-item">
@@ -1711,22 +1761,15 @@
             </div>
 
             </div>
-            <div class="phone-tabbar">
-              <span class="phone-tab active"></span>
-              <span class="phone-tab"></span>
-              <span class="phone-tab"></span>
-              <span class="phone-tab"></span>
-              <span class="phone-tab"></span>
+            <div class="phone-tabbar" role="tablist" aria-label="Preview screens">
+              <button class="phone-tab active" type="button" data-index="0" aria-label="Home"></button>
+              <button class="phone-tab" type="button" data-index="1" aria-label="Schedule"></button>
+              <button class="phone-tab" type="button" data-index="2" aria-label="Announcements"></button>
+              <button class="phone-tab" type="button" data-index="3" aria-label="Song requests"></button>
+              <button class="phone-tab" type="button" data-index="4" aria-label="Travel guide"></button>
+              <button class="phone-tab" type="button" data-index="5" aria-label="Packing list"></button>
             </div>
           </div>
-        </div>
-        <div class="phone-dots" role="tablist" aria-label="Phone preview screens">
-          <button class="phone-dot active" type="button" data-index="0" aria-label="Home"></button>
-          <button class="phone-dot" type="button" data-index="1" aria-label="Schedule"></button>
-          <button class="phone-dot" type="button" data-index="2" aria-label="Announcements"></button>
-          <button class="phone-dot" type="button" data-index="3" aria-label="Song requests"></button>
-          <button class="phone-dot" type="button" data-index="4" aria-label="Travel guide"></button>
-          <button class="phone-dot" type="button" data-index="5" aria-label="Packing list"></button>
         </div>
       </div>
     </div>
@@ -2166,7 +2209,7 @@
   // Off on mobile and when the viewer prefers reduced motion.
   (function () {
     const screens = document.querySelectorAll('.app-screen');
-    const dots = document.querySelectorAll('.phone-dot');
+    const dots = document.querySelectorAll('.phone-tab');
     if (!screens.length || !dots.length) return;
 
     const mobileQ = window.matchMedia('(max-width: 900px)');
