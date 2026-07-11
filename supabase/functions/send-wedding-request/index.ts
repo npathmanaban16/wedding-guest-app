@@ -31,6 +31,10 @@ interface Payload {
   guestCount?: number | null;
   city?: string | null;
   notes?: string | null;
+  // Where the request came from — the in-app couple-signup screen or the
+  // marketing site's waitlist form. Old app builds don't send this, so
+  // undefined is treated as 'app' for backward compatibility.
+  source?: 'app' | 'web';
 }
 
 const formatRange = (start: string, end?: string | null): string => {
@@ -87,7 +91,7 @@ Deno.serve(async (req) => {
     }
 
     const payload = (await req.json()) as Payload;
-    const { coupleName, weddingDateStart, weddingDateEnd, email, guestCount, city, notes } = payload;
+    const { coupleName, weddingDateStart, weddingDateEnd, email, guestCount, city, notes, source } = payload;
 
     if (!coupleName || !weddingDateStart || !email) {
       return new Response(
@@ -97,11 +101,17 @@ Deno.serve(async (req) => {
     }
 
     const dateStr = formatRange(weddingDateStart, weddingDateEnd);
+    // Old app builds don't send `source`. Treat missing as 'app' so those
+    // requests keep displaying as before instead of showing a mystery
+    // channel in the admin email.
+    const requestSource: 'app' | 'web' = source === 'web' ? 'web' : 'app';
+    const sourceLabel = requestSource === 'web' ? `${APP_NAME} website` : `${APP_NAME} app`;
 
     // ── Admin notification ────────────────────────────────────────
-    const adminSubject = `💍 New wedding request — ${coupleName}`;
+    const adminSubject = `💍 New wedding request — ${coupleName} (${requestSource === 'web' ? 'web' : 'app'})`;
     const adminText =
       `A new couple requested access to ${APP_NAME}:\n\n` +
+      `Source:   ${sourceLabel}\n` +
       `Couple:   ${coupleName}\n` +
       `Date:     ${dateStr}\n` +
       `Email:    ${email}\n` +
@@ -114,6 +124,7 @@ Deno.serve(async (req) => {
         <p style="color: #9A8A78; font-size: 13px; margin-top: 0;">${new Date().toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'short' })}</p>
         <hr style="border: none; border-top: 1px solid #E4D9CC; margin: 20px 0;" />
         <table style="width: 100%; font-size: 15px; line-height: 1.8; color: #1C1810;">
+          <tr><td style="color:#9A8A78; padding-right:12px;">Source</td><td>${sourceLabel}</td></tr>
           <tr><td style="color:#9A8A78; padding-right:12px;">Couple</td><td><strong>${coupleName}</strong></td></tr>
           <tr><td style="color:#9A8A78; padding-right:12px;">Date</td><td>${dateStr}</td></tr>
           <tr><td style="color:#9A8A78; padding-right:12px;">Email</td><td><a href="mailto:${email}" style="color:#7A6A55;">${email}</a></td></tr>
@@ -122,7 +133,7 @@ Deno.serve(async (req) => {
           ${notes ? `<tr><td style="color:#9A8A78; padding-right:12px; vertical-align:top;">Notes</td><td>${notes.replace(/\n/g, '<br/>')}</td></tr>` : ''}
         </table>
         <hr style="border: none; border-top: 1px solid #E4D9CC; margin: 20px 0;" />
-        <p style="font-size: 11px; color: #9A8A78;">Sent from ${APP_NAME}</p>
+        <p style="font-size: 11px; color: #9A8A78;">Sent from ${sourceLabel}</p>
       </div>
     `;
 
