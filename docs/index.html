@@ -3,75 +3,2647 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Wedding Guest App</title>
+  <title>Tetherly · The wedding app your guests will actually love.</title>
+  <meta name="description" content="Schedule, photos, travel guide, songs, messages, and an AI assistant that answers every guest's question. Everything your guests need in one beautiful app, for couples, planners, and vendors." />
+  <meta property="og:title" content="Tetherly · The wedding app your guests will actually love." />
+  <meta property="og:description" content="One elegant app with an AI assistant grounded in your wedding, replacing the spreadsheets, PDFs, and group texts your guests keep losing." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://tetherly-app.com" />
+  <meta name="theme-color" content="#F5F0E8" />
+  <link rel="icon" href="./favicon.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
+    :root {
+      --primary: #7A6A55;
+      --primary-dark: #5C4F3F;
+      --primary-light: #C4B49A;
+      --gold: #C9A870;
+      --gold-soft: #E4D2AC;
+      --forest: #3A4D3A;
+      --forest-soft: #EBF0EB;
+
+      --bg: #F5F0E8;
+      --bg-warm: #EFE7DA;
+      --surface: #FFFFFF;
+      --surface-warm: #FAF8F4;
+
+      --text: #1C1810;
+      --text-secondary: #5A4A38;
+      --text-muted: #9A8A78;
+
+      --border: #E4D9CC;
+      --border-strong: #D4C5B0;
+      --divider: #EDE5D8;
+
+      --serif: 'Cormorant Garamond', 'Times New Roman', serif;
+      --sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+      --radius-sm: 8px;
+      --radius: 14px;
+      --radius-lg: 22px;
+      --radius-xl: 32px;
+
+      --shadow-sm: 0 1px 2px rgba(28, 24, 16, 0.05), 0 2px 8px rgba(28, 24, 16, 0.04);
+      --shadow: 0 4px 16px rgba(28, 24, 16, 0.06), 0 12px 32px rgba(28, 24, 16, 0.05);
+      --shadow-lg: 0 10px 40px rgba(28, 24, 16, 0.08), 0 30px 80px rgba(28, 24, 16, 0.10);
+
+      --container: 1160px;
+      --gutter: 24px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-      background: #FAF7F4;
-      color: #1C1810;
       margin: 0;
-      padding: 48px 24px;
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
+    a { color: inherit; }
+
+    img { max-width: 100%; height: auto; display: block; }
+
+    /* Layout ---------------------------------------------------------- */
+
+    .container {
+      max-width: var(--container);
+      margin: 0 auto;
+      padding: 0 var(--gutter);
+    }
+
+    section {
+      padding: 96px 0;
+      position: relative;
+    }
+
+    section + section { border-top: 1px solid var(--divider); }
+
+    .section-warm { background: var(--surface-warm); }
+
+    /* Typography ------------------------------------------------------ */
+
+    .serif { font-family: var(--serif); }
+
+    .eyebrow {
+      font-family: var(--sans);
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 20px;
+    }
+
+    h1, h2, h3 {
+      font-family: var(--serif);
+      font-weight: 500;
+      color: var(--text);
+      letter-spacing: -0.01em;
+      margin: 0 0 20px 0;
+      line-height: 1.1;
+    }
+
+    h1 { font-size: clamp(44px, 7vw, 84px); font-weight: 500; }
+    h2 { font-size: clamp(34px, 5vw, 56px); }
+    h3 { font-size: 26px; line-height: 1.25; }
+
+    h1 em, h2 em {
+      font-style: italic;
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    p { margin: 0 0 16px 0; color: var(--text-secondary); font-size: 17px; line-height: 1.65; }
+
+    .lead {
+      font-size: 20px;
+      line-height: 1.55;
+      color: var(--text-secondary);
+      max-width: 620px;
+    }
+
+    /* Header --------------------------------------------------------- */
+
+    header.site {
+      position: sticky;
+      top: 0;
+      background: rgba(245, 240, 232, 0.82);
+      backdrop-filter: saturate(180%) blur(14px);
+      -webkit-backdrop-filter: saturate(180%) blur(14px);
+      border-bottom: 1px solid transparent;
+      z-index: 30;
+      transition: border-color 0.2s ease;
+    }
+    header.site.scrolled { border-bottom-color: var(--divider); }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 0;
+    }
+    .brand {
+      font-family: var(--serif);
+      font-size: 26px;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      text-decoration: none;
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand-mark {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+      box-shadow: 0 1px 2px rgba(28, 24, 16, 0.06);
+    }
+    .brand-mark img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      transform: scale(1.1);
+    }
+    /* Footer sits on a dark background — give the frame a soft warm-white
+       inner so the cream-background logo doesn't disappear. */
+    footer .brand-mark {
+      background: var(--surface-warm);
+      border-color: rgba(245, 240, 232, 0.15);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 36px;
+    }
+    .nav-links a {
+      text-decoration: none;
+      color: var(--text-secondary);
+      font-size: 14.5px;
+      font-weight: 500;
+      transition: color 0.15s ease;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-desktop-only { display: flex; }
+    @media (max-width: 780px) {
+      .nav-desktop-only { display: none; }
+    }
+
+    /* Buttons -------------------------------------------------------- */
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 26px;
+      font-family: var(--sans);
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      border-radius: 999px;
+      text-decoration: none;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--text);
+      color: var(--bg);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+    .btn-ghost {
+      background: transparent;
+      border-color: var(--border-strong);
+      color: var(--text);
+    }
+    .btn-ghost:hover { background: var(--surface-warm); }
+    .btn-lg { padding: 17px 32px; font-size: 16px; }
+
+    /* Hero ----------------------------------------------------------- */
+
+    .hero {
+      padding: 88px 0 120px;
+      overflow: hidden;
+      position: relative;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -120px; right: -120px;
+      width: 520px; height: 520px;
+      background: radial-gradient(circle at center, rgba(201, 168, 112, 0.18), transparent 65%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -160px; left: -140px;
+      width: 460px; height: 460px;
+      background: radial-gradient(circle at center, rgba(58, 77, 58, 0.10), transparent 65%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .hero .container {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+      gap: 80px;
+      align-items: center;
+    }
+    .hero-copy .eyebrow { color: var(--forest); }
+    .hero-copy h1 {
+      margin-bottom: 24px;
+    }
+    .hero-copy p {
+      font-size: 20px;
+      max-width: 540px;
+      margin-bottom: 36px;
+    }
+    .hero-ctas {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: center;
+    }
+    .hero-note {
+      margin-top: 24px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 900px) {
+      .hero .container {
+        grid-template-columns: 1fr;
+        gap: 56px;
+        text-align: center;
+      }
+      .hero-copy p { margin-left: auto; margin-right: auto; }
+      .hero-ctas { justify-content: center; }
+      .hero-visual { order: -1; }
+    }
+
+    /* App Store badges ---------------------------------------------- */
+    .stores {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-top: 20px;
+    }
+    .store-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--text);
+      color: var(--bg);
+      text-decoration: none;
+      padding: 10px 18px;
+      border-radius: 12px;
+      font-weight: 500;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    .store-badge:hover { transform: translateY(-1px); }
+    .store-badge.disabled {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px dashed var(--border-strong);
+      cursor: default;
+    }
+    .store-badge.disabled:hover { transform: none; }
+    .store-badge .store-svg { width: 24px; height: 24px; flex-shrink: 0; }
+    .store-badge .store-label { font-size: 10px; letter-spacing: 0.06em; line-height: 1; text-transform: uppercase; opacity: 0.72; }
+    .store-badge .store-name { font-size: 16px; font-family: var(--serif); line-height: 1.1; margin-top: 2px; }
+
+    /* Phone mockup --------------------------------------------------- */
+    .hero-visual {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 560px;
+    }
+    .phone {
+      width: 300px;
+      height: 620px;
+      background: var(--text);
+      border-radius: 46px;
+      padding: 12px;
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      transform: rotate(-3deg);
+    }
+    .phone::after {
+      content: '';
+      position: absolute;
+      top: 22px; left: 50%;
+      transform: translateX(-50%);
+      width: 110px; height: 28px;
+      background: var(--text);
+      border-radius: 18px;
+      z-index: 3;
+    }
+    .phone-screen {
+      background: var(--bg);
+      border-radius: 34px;
+      height: 100%;
+      overflow: hidden;
+      position: relative;
+      padding: 0;
+    }
+    /* Wedding hero header — real Tetherly preview account (Emma & James in
+       Montreux). Mirrors app/(tabs)/index.tsx: a centered vertical stack
+       (greeting → couple names → thin-line-◆-thin-line ornament → LOCATION)
+       positioned at the bottom of the hero photo, dark gradient overlay
+       for text contrast. */
+    .app-hero {
+      height: 240px;
+      margin: 0;
+      border-radius: 0;
+      overflow: hidden;
+      position: relative;
+      background-image:
+        linear-gradient(180deg, rgba(28, 24, 16, 0.5) 0%, rgba(28, 24, 16, 0.15) 30%, rgba(28, 24, 16, 0.1) 45%, rgba(28, 24, 16, 0.35) 75%, rgba(28, 24, 16, 0.62) 100%),
+        url('./hero-montreux.png');
+      background-size: cover, cover;
+      background-position: center, center 65%;
+    }
+    .app-hero-header {
+      position: absolute;
+      left: 0; right: 0; bottom: 22px;
+      padding: 0 22px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .app-hero-greeting {
+      font-family: var(--sans);
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.92);
+      letter-spacing: 0.03em;
+      margin-bottom: 10px;
+      text-shadow: 0 1px 4px rgba(28, 24, 16, 0.65);
+    }
+    .app-hero-couple {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 34px;
+      line-height: 1;
+      color: #FFFFFF;
+      letter-spacing: 0.005em;
+      margin-bottom: 10px;
+      text-shadow: 0 1px 6px rgba(28, 24, 16, 0.45);
+    }
+    .app-hero-ornament {
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      box-sizing: border-box;
+      width: 50%;
+      margin-bottom: 10px;
     }
-    main {
-      max-width: 480px;
-      width: 100%;
-      background: #ffffff;
-      border: 1px solid #E8E1D7;
-      border-radius: 16px;
-      padding: 40px 32px;
-      box-shadow: 0 4px 24px rgba(28, 24, 16, 0.06);
+    .app-hero-ornament-line {
+      flex: 1;
+      height: 0.5px;
+      background: rgba(255, 255, 255, 0.42);
+    }
+    .app-hero-ornament-diamond {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 9px;
+      margin: 0 8px;
+      line-height: 1;
+    }
+    .app-hero-location {
+      font-family: var(--sans);
+      font-weight: 500;
+      font-size: 9px;
+      letter-spacing: 0.26em;
+      color: rgba(255, 255, 255, 0.85);
+      text-transform: uppercase;
+      text-shadow: 0 1px 3px rgba(28, 24, 16, 0.55);
+    }
+
+    /* Scroll area between the hero and the tab bar. */
+    .app-scroll {
+      padding: 12px 12px 60px;
+    }
+
+    /* Countdown card — mirrors the real app's countdown block on the home
+       tab: warm-sand background, serif italic heading, big serif value +
+       tiny sans caps label for each unit, small date at the bottom. */
+    .app-countdown {
+      background: var(--primary);
+      color: #FFFFFF;
+      border-radius: 14px;
+      padding: 14px 14px 12px;
+      margin-bottom: 10px;
       text-align: center;
     }
-    h1 {
+    .app-countdown-heading {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.85);
+      margin-bottom: 10px;
+    }
+    .app-countdown-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    .app-countdown-unit { min-width: 40px; }
+    .app-countdown-value {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 24px;
+      line-height: 1;
+      color: #FFFFFF;
+      font-variant-numeric: tabular-nums;
+    }
+    .app-countdown-label {
+      font-family: var(--sans);
+      font-size: 8px;
+      letter-spacing: 0.18em;
+      color: rgba(255, 255, 255, 0.65);
+      margin-top: 4px;
+    }
+    .app-countdown-sep {
       font-size: 22px;
-      margin: 0 0 8px 0;
-      letter-spacing: 0.3px;
-      color: #1C1810;
+      color: rgba(255, 255, 255, 0.4);
+      line-height: 1;
+      margin-top: 2px;
     }
-    p {
-      color: #6B6558;
-      font-size: 14px;
-      line-height: 1.6;
-      margin: 0 0 24px 0;
+    .app-countdown-date {
+      font-family: var(--sans);
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.7);
+      letter-spacing: 0.03em;
     }
-    ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
+
+    /* UP NEXT event card — white surface, gold left rail, gold "UP NEXT"
+       eyebrow, serif event name, sans venue + link. */
+    .app-event-card {
+      background: var(--surface);
+      border-radius: 14px;
+      padding: 14px 14px 12px;
+      border-left: 3px solid var(--gold);
+      box-shadow: 0 1px 2px rgba(28, 24, 16, 0.06);
+      margin-bottom: 10px;
     }
-    li {
-      margin: 8px 0;
+    .app-event-tag {
+      font-family: var(--sans);
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.22em;
+      color: var(--gold);
+      margin-bottom: 4px;
     }
-    a {
+    .app-event-name {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 17px;
+      line-height: 1.15;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+    .app-event-detail {
+      font-family: var(--sans);
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-bottom: 1px;
+    }
+    .app-event-venue {
+      font-family: var(--sans);
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .app-event-link {
+      font-family: var(--sans);
+      font-weight: 500;
+      font-size: 11px;
+      color: var(--primary);
+    }
+
+    /* Explore section header + quick-card grid. */
+    .app-section-title {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 20px;
+      color: var(--text);
+      margin: 6px 4px 10px;
+    }
+    .app-quick-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .app-quick-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 12px 10px;
+      min-height: 66px;
+    }
+    .app-quick-icon {
+      color: var(--primary);
+      opacity: 0.6;
+      margin-bottom: 6px;
       display: block;
-      padding: 12px 16px;
-      background: #FAF7F4;
-      border: 1px solid #E8E1D7;
-      border-radius: 999px;
-      color: #8B5E6B;
-      text-decoration: none;
+    }
+    .app-quick-title {
+      font-family: var(--serif);
       font-weight: 500;
       font-size: 14px;
-      transition: background 0.15s ease;
+      color: var(--text);
+      line-height: 1.2;
+      margin-bottom: 3px;
     }
-    a:hover, a:focus {
-      background: #F3EDE4;
+    .app-quick-sub {
+      font-family: var(--sans);
+      font-size: 10px;
+      color: var(--text-muted);
+      line-height: 1.3;
+    }
+
+    /* Multi-screen carousel container: each .app-screen fades in/out over
+       the same phone area while the bottom tab bar stays fixed. */
+    .app-screens {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    .app-screen {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.55s ease-in-out;
+      pointer-events: none;
+      background: var(--bg);
+    }
+    .app-screen.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    /* Screens that do not have a hero photo start their content below the
+       notch/status-bar zone. */
+    .app-screen[data-screen]:not([data-screen="home"]) {
+      padding: 40px 0 60px;
+    }
+
+    /* Page header used by non-home screens — mirrors the app's schedule
+       pageHeader (small gold eyebrow + centered serif title). */
+    .app-page-header {
+      text-align: center;
+      padding: 4px 20px 2px;
+    }
+    .app-page-eyebrow {
+      font-family: var(--sans);
+      font-weight: 500;
+      font-size: 9px;
+      letter-spacing: 0.24em;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .app-page-title {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 24px;
+      line-height: 1.1;
+      color: var(--text);
+      letter-spacing: 0.01em;
+      margin: 0;
+    }
+    .app-page-sub {
+      font-family: var(--sans);
+      font-size: 11px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      margin-top: 6px;
+    }
+    .app-page-body {
+      padding: 4px 12px 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* Schedule screen — timeline (dot + connector) + event cards +
+       collapsible venue map card. */
+    .app-timeline {
+      padding: 4px 12px 12px 26px;
+      position: relative;
+    }
+    .app-timeline-item {
+      position: relative;
+      margin-bottom: 10px;
+    }
+    .app-timeline-item:last-child { margin-bottom: 12px; }
+    .app-timeline-line {
+      position: absolute;
+      left: -13px;
+      top: 20px;
+      bottom: -10px;
+      width: 1px;
+      background: var(--border);
+    }
+    .app-timeline-dot {
+      position: absolute;
+      left: -17px;
+      top: 14px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: 2px solid var(--bg);
+      box-shadow: 0 0 0 0.5px var(--border);
+    }
+    .app-sched-card {
+      background: var(--surface);
+      border-radius: 12px;
+      border: 0.5px solid var(--border);
+      padding: 10px 12px 10px;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .app-sched-card-body { flex: 1; min-width: 0; }
+    .app-sched-card-chev {
+      color: var(--text-muted);
+      margin-top: 4px;
+      flex-shrink: 0;
+    }
+    .app-sched-title {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--text);
+      margin-bottom: 3px;
+      line-height: 1.15;
+    }
+
+    /* Collapsed hotel map card — header with tag + title + chevron. */
+    .app-sched-mapcard {
+      background: var(--surface);
+      border-radius: 12px;
+      border: 0.5px solid var(--border);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 4px 12px 0;
+    }
+    .app-sched-mapcard-tag {
+      font-family: var(--sans);
+      font-weight: 500;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+    .app-sched-mapcard-title {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .app-sched-mapcard-chev { color: var(--text-muted); flex-shrink: 0; }
+    .app-sched-date {
+      font-family: var(--sans);
+      font-size: 11px;
+      color: var(--primary);
+      font-weight: 500;
+      margin-bottom: 1px;
+    }
+    .app-sched-time {
+      font-family: var(--sans);
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .app-sched-venue {
+      font-family: var(--sans);
+      font-size: 10px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* Messages screen — segmented control + Announcements / Chat / Attendees. */
+    .app-msg-tabs {
+      display: flex;
+      background: var(--surface-warm);
+      border: 0.5px solid var(--border);
+      border-radius: 999px;
+      padding: 3px;
+      margin: 0 12px 10px;
+      gap: 2px;
+    }
+    .app-msg-tab {
+      flex: 1;
+      font-family: var(--sans);
+      font-weight: 500;
+      font-size: 10px;
+      color: var(--text-muted);
+      padding: 6px 4px;
+      border-radius: 999px;
+      text-align: center;
+      background: transparent;
+      border: none;
+    }
+    .app-msg-tab.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 1px 2px rgba(28, 24, 16, 0.06);
+    }
+    .app-msg-section-label {
+      font-family: var(--sans);
+      font-weight: 500;
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      padding: 6px 4px 2px;
+    }
+    /* Nested sub-rotation views inside the Messages screen. Only the
+       .active view renders; the outer carousel timer holds Messages long
+       enough for all three to cycle before advancing. */
+    .app-msg-view { display: none; }
+    .app-msg-view.active { display: flex; flex-direction: column; gap: 8px; }
+    .app-note-card {
+      background: var(--surface);
+      border-radius: 12px;
+      border: 0.5px solid var(--border);
+      padding: 12px 14px;
+    }
+    .app-note-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .app-note-sender {
+      font-family: var(--sans);
+      font-weight: 600;
+      font-size: 11px;
+      color: var(--text);
+    }
+    .app-note-time {
+      font-family: var(--sans);
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+    .app-note-body {
+      font-family: var(--sans);
+      font-size: 11px;
+      line-height: 1.5;
+      color: var(--text-secondary);
+    }
+    .app-note-reactions {
+      display: flex;
+      gap: 5px;
+      margin-top: 8px;
+    }
+    .app-note-reaction {
+      background: var(--surface-warm);
+      border: 0.5px solid var(--border);
+      border-radius: 999px;
+      padding: 2px 7px;
+      font-size: 10px;
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    /* Attendees grid — 2 columns of small profile cards. */
+    .app-att-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .app-att-card {
+      background: var(--surface);
+      border-radius: 12px;
+      border: 0.5px solid var(--border);
+      padding: 8px 6px 6px;
+      text-align: center;
+    }
+    .app-att-avatar {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(140deg, var(--gold-soft), var(--gold));
+      color: var(--text);
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 4px;
+      letter-spacing: 0.02em;
+    }
+    .app-att-avatar.b { background: linear-gradient(140deg, var(--primary-light), var(--primary)); color: white; }
+    .app-att-avatar.c { background: linear-gradient(140deg, #C4D6C4, var(--forest)); color: white; }
+    .app-att-avatar.d { background: linear-gradient(140deg, #E8CBB6, #B98A64); color: white; }
+    .app-att-name {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 12px;
+      color: var(--text);
+      margin-bottom: 2px;
+      line-height: 1.15;
+    }
+    .app-att-badge {
+      font-family: var(--sans);
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+    }
+
+    /* Songs screen — request form + song request list. */
+    .app-song-form {
+      background: var(--surface);
+      border-radius: 12px;
+      border: 0.5px solid var(--border);
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .app-song-form-title {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 15px;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .app-song-input {
+      display: block;
+      background: var(--surface-warm);
+      border: 0.5px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-family: var(--sans);
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .app-song-submit {
+      background: var(--primary);
+      color: var(--surface);
+      border: none;
+      border-radius: 8px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 500;
+      width: 100%;
+      margin-top: 2px;
+    }
+    .app-song-count {
+      font-family: var(--sans);
+      font-size: 10px;
+      color: var(--text-muted);
+      padding: 4px 4px 6px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+    .app-song-row {
+      background: var(--surface);
+      border-radius: 10px;
+      border: 0.5px solid var(--border);
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .app-song-icon {
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      background: #F4EBD9;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .app-song-text { flex: 1; min-width: 0; }
+    .app-song-title {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.15;
+      margin-bottom: 1px;
+    }
+    .app-song-artist {
+      font-family: var(--sans);
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+    .app-song-by {
+      font-family: var(--sans);
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+
+    /* Travel guide screen — section cards with emoji + title + count. */
+    .app-guide-card {
+      background: var(--surface);
+      border-radius: 12px;
+      border: 0.5px solid var(--border);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .app-guide-photo {
+      width: 48px; height: 48px;
+      border-radius: 8px;
+      background-size: cover;
+      background-position: center;
+      background-color: var(--surface-warm);
+      border: 0.5px solid var(--border);
+      flex-shrink: 0;
+    }
+    .app-guide-text { flex: 1; min-width: 0; }
+    .app-guide-title {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.15;
+      margin-bottom: 1px;
+    }
+    .app-guide-sub {
+      font-family: var(--sans);
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+    .app-guide-chev {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    /* Packing screen — overall progress + category with checkbox items. */
+    .app-pack-progress {
+      background: var(--surface);
+      border-radius: 14px;
+      border: 0.5px solid var(--border);
+      padding: 14px 16px 12px;
+      margin: 0 12px 8px;
+      text-align: center;
+    }
+    .app-pack-progress-label {
+      font-family: var(--sans);
+      font-weight: 500;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .app-pack-progress-percent {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 26px;
+      color: var(--primary);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .app-pack-progress-track {
+      height: 4px;
+      background: var(--divider);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+    .app-pack-progress-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 999px;
+      transition: width 0.4s ease;
+    }
+    .app-pack-progress-count {
+      font-family: var(--sans);
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+    .app-pack-cat {
+      margin-bottom: 6px;
+    }
+    .app-pack-cat-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 4px 8px;
+    }
+    .app-pack-cat-emoji { font-size: 14px; }
+    .app-pack-cat-title {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 13px;
+      color: var(--text);
+    }
+    .app-pack-item {
+      background: var(--surface);
+      border-radius: 10px;
+      border: 0.5px solid var(--border);
+      padding: 9px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .app-pack-check {
+      width: 14px; height: 14px;
+      border-radius: 4px;
+      border: 1.5px solid var(--border-strong);
+      flex-shrink: 0;
+      position: relative;
+    }
+    .app-pack-check.done {
+      background: var(--forest);
+      border-color: var(--forest);
+    }
+    .app-pack-check.done::after {
+      content: '';
+      position: absolute;
+      left: 3px; top: 0px;
+      width: 4px; height: 8px;
+      border: solid white;
+      border-width: 0 1.5px 1.5px 0;
+      transform: rotate(45deg);
+    }
+    .app-pack-label {
+      font-family: var(--sans);
+      font-size: 11px;
+      color: var(--text);
+      line-height: 1.3;
+      flex: 1;
+    }
+    .app-pack-item.done .app-pack-label {
+      color: var(--text-muted);
+      text-decoration: line-through;
+    }
+
+    /* Bottom tab bar — 6 tabs, subtle icons. Also serve as the carousel
+       jump-buttons so the reader can pick a screen without leaving the
+       phone frame. */
+    .phone-tabbar {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--divider);
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 6px 22px;
+      z-index: 4;
+    }
+    .phone-tab {
+      width: 22px; height: 22px;
+      border-radius: 6px;
+      background: var(--divider);
+      opacity: 0.55;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      transition: background 0.2s ease, opacity 0.2s ease, transform 0.15s ease;
+    }
+    .phone-tab:hover { opacity: 0.85; }
+    .phone-tab.active {
+      background: var(--primary);
+      opacity: 1;
+    }
+    .phone-tab:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    @media (max-width: 900px) {
+      .phone { transform: rotate(-2deg) scale(0.9); }
+      .hero-visual { min-height: 520px; }
+    }
+    @media (max-width: 480px) {
+      .phone { transform: rotate(0deg) scale(0.85); }
+    }
+
+    /* Trust bar ------------------------------------------------------ */
+    .trustbar {
+      padding: 40px 0;
+      background: var(--surface-warm);
+      border-top: 1px solid var(--divider);
+      border-bottom: 1px solid var(--divider);
+    }
+    .trustbar-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 24px;
+    }
+    .trust-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+    .trust-item svg { color: var(--forest); flex-shrink: 0; }
+
+    /* Section header ------------------------------------------------ */
+    .section-header {
+      text-align: center;
+      max-width: 720px;
+      margin: 0 auto 64px;
+    }
+    .section-header p { font-size: 19px; margin: 0 auto; }
+
+    /* Features grid -------------------------------------------------- */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px 28px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .feature-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+      border-color: var(--border-strong);
+    }
+    .feature-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: var(--forest-soft);
+      color: var(--forest);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 22px;
+    }
+    .feature-card:nth-child(3n+2) .feature-icon { background: #F4EBD9; color: var(--primary); }
+    .feature-card:nth-child(3n+3) .feature-icon { background: #EDE4D6; color: var(--gold); }
+
+    .feature-card h3 {
+      font-size: 22px;
+      margin-bottom: 10px;
+    }
+    .feature-card p {
+      font-size: 15.5px;
+      color: var(--text-secondary);
+      margin: 0;
+      line-height: 1.55;
+    }
+    @media (max-width: 900px) {
+      .features { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 560px) {
+      .features { grid-template-columns: 1fr; }
+    }
+
+    /* Audience blocks ----------------------------------------------- */
+    .audience {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 80px;
+      align-items: center;
+    }
+    .audience + .audience { margin-top: 120px; }
+    .audience-visual {
+      background: var(--surface-warm);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 40px;
+      min-height: 380px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .audience-visual::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 90% 10%, rgba(201, 168, 112, 0.15), transparent 40%);
+      pointer-events: none;
+    }
+    .audience.reversed .audience-visual { order: -1; }
+    @media (max-width: 900px) {
+      .audience { grid-template-columns: 1fr; gap: 40px; }
+      .audience.reversed .audience-visual { order: 0; }
+    }
+
+    .audience-title-serif {
+      font-family: var(--serif);
+      font-size: clamp(32px, 4vw, 48px);
+      line-height: 1.1;
+      margin-bottom: 20px;
+      color: var(--text);
+    }
+    .audience-title-serif em { font-style: italic; color: var(--primary); }
+
+    .audience-list {
+      list-style: none;
+      padding: 0;
+      margin: 24px 0 0 0;
+    }
+    .audience-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--divider);
+      color: var(--text-secondary);
+      font-size: 16.5px;
+    }
+    .audience-list li:last-child { border-bottom: none; }
+    .audience-list li::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--forest);
+      margin-top: 10px;
+      flex-shrink: 0;
+    }
+    .audience-list li strong { color: var(--text); font-weight: 600; margin-right: 4px; }
+
+    /* Little illustration cards ------------------------------------- */
+    .mini-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: relative;
+      z-index: 1;
+    }
+    .mini-card:last-child { margin-bottom: 0; }
+    .mini-card-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(140deg, var(--gold-soft), var(--gold));
+      flex-shrink: 0;
+    }
+    .mini-card-avatar.b { background: linear-gradient(140deg, var(--primary-light), var(--primary)); }
+    .mini-card-avatar.c { background: linear-gradient(140deg, #C4D6C4, var(--forest)); }
+    .mini-card-title {
+      font-family: var(--serif);
+      font-size: 18px;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .mini-card-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .mini-card-badge {
+      font-size: 11px;
+      background: var(--forest-soft);
+      color: var(--forest);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      margin-left: auto;
+    }
+    .mini-card-badge.gold { background: #F4EBD9; color: var(--primary); }
+
+    /* Ask (AI assistant) chat mockup -------------------------------- */
+    .ask-chat {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      z-index: 1;
+    }
+    .ask-header {
+      align-self: center;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    .ask-header-mark { color: var(--gold); font-size: 14px; line-height: 1; }
+    .ask-msg {
+      display: flex;
+      gap: 10px;
+      max-width: 94%;
+    }
+    .ask-msg.user { align-self: flex-end; }
+    .ask-msg.ai { align-self: flex-start; }
+    .ask-bubble {
+      padding: 12px 16px;
+      font-family: var(--sans);
+      font-size: 14.5px;
+      line-height: 1.5;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+    }
+    .ask-msg.user .ask-bubble {
+      background: var(--text);
+      color: var(--bg);
+      border-color: transparent;
+      border-bottom-right-radius: 4px;
+    }
+    .ask-msg.ai .ask-bubble {
+      background: var(--surface);
+      color: var(--text-secondary);
+      border-bottom-left-radius: 4px;
+    }
+    .ask-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(140deg, var(--gold), var(--primary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--bg);
+      font-size: 15px;
+      font-weight: 600;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+    /* Founder story -------------------------------------------------- */
+    .founder {
+      background: var(--text);
+      color: var(--bg);
+      padding: 120px 0;
+    }
+    .founder h2 { color: var(--bg); font-weight: 400; }
+    .founder h2 em { color: var(--gold-soft); }
+    .founder p { color: rgba(245, 240, 232, 0.75); font-size: 18px; }
+    .founder-attribution {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 40px;
+    }
+    .founder-avatar {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      border: 2px solid rgba(245, 240, 232, 0.15);
+      background: linear-gradient(140deg, var(--gold-soft), var(--gold));
+      flex-shrink: 0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--serif);
+      font-size: 22px;
+      color: var(--text);
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+    .founder-attribution-text {
+      font-family: var(--sans);
+      font-size: 15px;
+      color: rgba(245, 240, 232, 0.9);
+    }
+    .founder-attribution-text small {
+      display: block;
+      font-size: 13px;
+      color: rgba(245, 240, 232, 0.55);
+      margin-top: 2px;
+    }
+    .founder-body {
+      max-width: 720px;
+      margin: 48px 0 0 0;
+    }
+    .founder-body p { margin-bottom: 20px; }
+    .founder-beat {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: clamp(22px, 2.4vw, 28px);
+      line-height: 1.25;
+      color: var(--bg) !important;
+      margin: 36px 0 !important;
+      padding-left: 20px;
+      border-left: 2px solid var(--gold);
+    }
+
+    /* Waitlist ------------------------------------------------------- */
+    .waitlist {
+      padding: 120px 0;
+      background: linear-gradient(180deg, var(--bg) 0%, var(--bg-warm) 100%);
+    }
+    .waitlist-inner {
+      max-width: 640px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .waitlist-form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 40px;
+      text-align: left;
+    }
+    .role-picker {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px;
+    }
+    .role-picker label {
+      cursor: pointer;
+    }
+    .role-picker input { display: none; }
+    .role-picker span {
+      display: block;
+      padding: 10px 12px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border-radius: 999px;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .role-picker input:checked + span {
+      background: var(--text);
+      color: var(--bg);
+    }
+    .email-row {
+      display: flex;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .email-row:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(122, 106, 85, 0.12);
+    }
+    .email-row input[type="email"] {
+      flex: 1;
+      border: none;
+      outline: none;
+      padding: 12px 20px;
+      font-family: var(--sans);
+      font-size: 16px;
+      background: transparent;
+      color: var(--text);
+    }
+    .email-row input[type="email"]::placeholder { color: var(--text-muted); }
+    .email-row button {
+      border: none;
+      padding: 12px 26px;
+      background: var(--text);
+      color: var(--bg);
+      border-radius: 999px;
+      font-family: var(--sans);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+    .email-row button:hover { transform: translateY(-1px); }
+
+    .waitlist-fineprint {
+      margin-top: 20px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 600px) {
+      .role-picker { grid-template-columns: repeat(2, 1fr); border-radius: var(--radius); }
+      .email-row { flex-direction: column; border-radius: var(--radius); padding: 8px; }
+      .email-row input[type="email"] { padding: 14px 12px; }
+      .email-row button { width: 100%; }
+    }
+
+    /* Footer --------------------------------------------------------- */
+    footer {
+      background: var(--text);
+      color: rgba(245, 240, 232, 0.7);
+      padding: 72px 0 40px;
+    }
+    footer .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 48px;
+      margin-bottom: 56px;
+    }
+    footer .brand { color: var(--bg); }
+    footer .brand-mark::after { background: var(--text); }
+    footer p { color: rgba(245, 240, 232, 0.55); font-size: 14.5px; margin: 12px 0 0; max-width: 320px; }
+    footer h4 {
+      font-family: var(--sans);
+      color: var(--bg);
+      font-size: 13px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin: 0 0 18px;
+      font-weight: 600;
+    }
+    footer ul { list-style: none; padding: 0; margin: 0; }
+    footer ul li { margin-bottom: 10px; }
+    footer ul a {
+      color: rgba(245, 240, 232, 0.68);
+      text-decoration: none;
+      font-size: 14.5px;
+      transition: color 0.15s ease;
+    }
+    footer ul a:hover { color: var(--bg); }
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 32px;
+      border-top: 1px solid rgba(245, 240, 232, 0.1);
+      font-size: 13px;
+      color: rgba(245, 240, 232, 0.4);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    @media (max-width: 780px) {
+      footer .footer-grid { grid-template-columns: 1fr 1fr; gap: 40px 24px; }
+    }
+    @media (max-width: 500px) {
+      footer .footer-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Utility -------------------------------------------------------- */
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+
+    @media (max-width: 780px) {
+      section { padding: 72px 0; }
+      .hero { padding: 56px 0 88px; }
+      .founder, .waitlist { padding: 88px 0; }
     }
   </style>
 </head>
 <body>
-  <main>
-    <h1>Wedding Guest App</h1>
-    <p>App documentation and policy pages.</p>
-    <ul>
-      <li><a href="./tetherly-privacy-policy.html">Tetherly Privacy Policy</a></li>
-      <li><a href="./tetherly-support.html">Tetherly Support</a></li>
-    </ul>
-  </main>
+
+<header class="site" id="siteHeader">
+  <div class="container nav">
+    <a class="brand" href="#top" aria-label="Tetherly home">
+      <span class="brand-mark" aria-hidden="true"><img src="./tetherly-logo.png" alt="" /></span>
+      <span>Tetherly</span>
+    </a>
+    <nav class="nav-links nav-desktop-only" aria-label="Primary">
+      <a href="#features">Features</a>
+      <a href="#ask">Ask AI</a>
+      <a href="#couples">Couples</a>
+      <a href="#planners">Planners</a>
+      <a href="#vendors">Vendors</a>
+      <a href="#story">Story</a>
+    </nav>
+    <a href="#waitlist" class="btn btn-primary">Join the waitlist</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-copy">
+        <div class="eyebrow">A wedding companion, made whole</div>
+        <h1>The wedding app your guests will <em>actually</em> love.</h1>
+        <p>Schedule, photos, travel, songs, messages, and a built-in AI assistant that answers every question. Everything your guests need for the weekend, in one beautiful place they'll open every day.</p>
+        <div class="hero-ctas">
+          <a href="#waitlist" class="btn btn-primary btn-lg">Join the waitlist</a>
+          <a href="#features" class="btn btn-ghost btn-lg">See what's inside</a>
+        </div>
+        <div class="stores">
+          <a class="store-badge" href="https://apps.apple.com/us/app/tetherly-wedding-companion/id6762950813" aria-label="Download on the App Store">
+            <svg class="store-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.53 4.08zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+            <span>
+              <span class="store-label">Download on the</span>
+              <span class="store-name">App Store</span>
+            </span>
+          </a>
+          <span class="store-badge disabled" aria-label="Android coming soon">
+            <svg class="store-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85a.637.637 0 0 0-.83.22l-1.88 3.24a11.43 11.43 0 0 0-8.94 0L5.65 5.67a.643.643 0 0 0-.87-.2c-.28.18-.37.54-.22.83L6.4 9.48A10.78 10.78 0 0 0 1 18h22a10.78 10.78 0 0 0-5.4-8.52M7 15.25a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5m10 0a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5"/></svg>
+            <span>
+              <span class="store-label">Coming soon</span>
+              <span class="store-name">to Android</span>
+            </span>
+          </span>
+        </div>
+        <p class="hero-note">Currently onboarding weddings personally. Join the waitlist and we'll get in touch.</p>
+      </div>
+
+      <div class="hero-visual" aria-hidden="true">
+        <!-- CSS mockup of the real Tetherly home screen. Layout mirrors
+             app/(tabs)/index.tsx: hero image with wedding title, an "UP NEXT"
+             event card (gold left rail), a "HENNA LINE OPEN" waitlist card
+             (forest-green left rail), the Explore quick-card grid, and the
+             bottom tab bar. Swap for a real screenshot when we have one we
+             love. -->
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="app-screens">
+            <div class="app-screen active" data-screen="home">
+            <div class="app-hero">
+              <div class="app-hero-header">
+                <div class="app-hero-greeting">Welcome, Alex</div>
+                <div class="app-hero-couple">Emma &amp; James</div>
+                <div class="app-hero-ornament">
+                  <span class="app-hero-ornament-line"></span>
+                  <span class="app-hero-ornament-diamond">◆</span>
+                  <span class="app-hero-ornament-line"></span>
+                </div>
+                <div class="app-hero-location">Montreux, Switzerland</div>
+              </div>
+            </div>
+            <div class="app-scroll">
+              <div class="app-countdown">
+                <div class="app-countdown-heading">until the wedding</div>
+                <div class="app-countdown-row">
+                  <div class="app-countdown-unit">
+                    <div class="app-countdown-value" id="cd-days">0</div>
+                    <div class="app-countdown-label">DAYS</div>
+                  </div>
+                  <div class="app-countdown-sep">:</div>
+                  <div class="app-countdown-unit">
+                    <div class="app-countdown-value" id="cd-hours">0</div>
+                    <div class="app-countdown-label">HRS</div>
+                  </div>
+                  <div class="app-countdown-sep">:</div>
+                  <div class="app-countdown-unit">
+                    <div class="app-countdown-value" id="cd-mins">0</div>
+                    <div class="app-countdown-label">MIN</div>
+                  </div>
+                  <div class="app-countdown-sep">:</div>
+                  <div class="app-countdown-unit">
+                    <div class="app-countdown-value" id="cd-secs">0</div>
+                    <div class="app-countdown-label">SEC</div>
+                  </div>
+                </div>
+                <div class="app-countdown-date">Saturday, 22 May 2027</div>
+              </div>
+              <div class="app-event-card">
+                <div class="app-event-tag">UP NEXT</div>
+                <div class="app-event-name">Welcome Party</div>
+                <div class="app-event-detail">Friday, 21 May 2027</div>
+                <div class="app-event-venue">Fairmont Le Montreux Palace | La Coupole &amp; La Terrasse du Petit Palais</div>
+                <div class="app-event-link">View full schedule →</div>
+              </div>
+              <div class="app-section-title">Explore</div>
+              <div class="app-quick-grid">
+                <div class="app-quick-card">
+                  <svg class="app-quick-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  <div class="app-quick-title">Schedule</div>
+                  <div class="app-quick-sub">All events &amp; dress codes</div>
+                </div>
+                <div class="app-quick-card">
+                  <svg class="app-quick-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  <div class="app-quick-title">Montreux Guide</div>
+                  <div class="app-quick-sub">Things to do &amp; eat</div>
+                </div>
+                <div class="app-quick-card">
+                  <svg class="app-quick-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                  <div class="app-quick-title">Packing List</div>
+                  <div class="app-quick-sub">Outfits &amp; essentials</div>
+                </div>
+                <div class="app-quick-card">
+                  <svg class="app-quick-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  <div class="app-quick-title">Share Photos</div>
+                  <div class="app-quick-sub">Upload memories</div>
+                </div>
+              </div>
+            </div>
+            </div>
+
+                        <!-- SCHEDULE screen — Alex's view: non-weddingPartyOnly events. -->
+            <div class="app-screen" data-screen="schedule">
+              <div class="app-page-header">
+                <div class="app-page-eyebrow">Program</div>
+                <h1 class="app-page-title">Wedding Schedule</h1>
+                <p class="app-page-sub">Tap each event for full details, dress code, and color palette.</p>
+              </div>
+              <div class="app-timeline">
+                <div class="app-timeline-item">
+                  <div class="app-timeline-line"></div>
+                  <div class="app-timeline-dot"></div>
+                  <div class="app-sched-card">
+                    <div class="app-sched-card-body">
+                      <div class="app-sched-title">Welcome Party</div>
+                      <div class="app-sched-date">Friday, 21 May 2027</div>
+                      <div class="app-sched-time">6:30 PM – 11:00 PM</div>
+                      <div class="app-sched-venue">Fairmont Le Montreux Palace | La Coupole &amp; La Terrasse du Petit Palais</div>
+                    </div>
+                    <svg class="app-sched-card-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  </div>
+                </div>
+                <div class="app-timeline-item">
+                  <div class="app-timeline-line"></div>
+                  <div class="app-timeline-dot"></div>
+                  <div class="app-sched-card">
+                    <div class="app-sched-card-body">
+                      <div class="app-sched-title">Wedding Ceremony</div>
+                      <div class="app-sched-date">Saturday, 22 May 2027</div>
+                      <div class="app-sched-time">5:00 PM</div>
+                      <div class="app-sched-venue">Fairmont Le Montreux Palace | Garden</div>
+                    </div>
+                    <svg class="app-sched-card-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  </div>
+                </div>
+                <div class="app-timeline-item">
+                  <div class="app-timeline-dot"></div>
+                  <div class="app-sched-card">
+                    <div class="app-sched-card-body">
+                      <div class="app-sched-title">Reception</div>
+                      <div class="app-sched-date">Saturday, 22 May 2027</div>
+                      <div class="app-sched-time">7:30 PM – 1:00 AM</div>
+                      <div class="app-sched-venue">Fairmont Le Montreux Palace | Salle des Fêtes</div>
+                    </div>
+                    <svg class="app-sched-card-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  </div>
+                </div>
+              </div>
+              <div class="app-sched-mapcard">
+                <div>
+                  <div class="app-sched-mapcard-tag">Venue Overview</div>
+                  <div class="app-sched-mapcard-title">Fairmont Le Montreux Palace</div>
+                </div>
+                <svg class="app-sched-mapcard-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </div>
+            </div>
+
+                        <!-- TRAVEL GUIDE screen — Montreux guide section previews. -->
+            <div class="app-screen" data-screen="guide">
+              <div class="app-page-header">
+                <div class="app-page-eyebrow">Montreux Guide</div>
+                <h1 class="app-page-title">Things to Do &amp; See</h1>
+                <p class="app-page-sub">Curated notes from Emma &amp; James.</p>
+              </div>
+              <div class="app-page-body">
+                <div class="app-guide-card">
+                  <div class="app-guide-photo" style="background-image: url('./photo-promenade.png');" aria-label="Montreux Promenade"></div>
+                  <div class="app-guide-text">
+                    <div class="app-guide-title">Getting to Montreux</div>
+                    <div class="app-guide-sub">Flights, trains, transfers</div>
+                  </div>
+                  <div class="app-guide-chev">›</div>
+                </div>
+                <div class="app-guide-card">
+                  <div class="app-guide-photo" style="background-image: url('./photo-rochers.png');" aria-label="Rochers de Naye"></div>
+                  <div class="app-guide-text">
+                    <div class="app-guide-title">Walks &amp; Hikes</div>
+                    <div class="app-guide-sub">Lake Promenade, Rochers de Naye</div>
+                  </div>
+                  <div class="app-guide-chev">›</div>
+                </div>
+                <div class="app-guide-card">
+                  <div class="app-guide-photo" style="background-image: url('./hero-montreux.png');" aria-label="Château de Chillon"></div>
+                  <div class="app-guide-text">
+                    <div class="app-guide-title">Castles</div>
+                    <div class="app-guide-sub">Château de Chillon, Château d'Aigle</div>
+                  </div>
+                  <div class="app-guide-chev">›</div>
+                </div>
+                <div class="app-guide-card">
+                  <div class="app-guide-photo" style="background-image: url('./photo-lavaux.png');" aria-label="Lavaux vineyards"></div>
+                  <div class="app-guide-text">
+                    <div class="app-guide-title">Lavaux &amp; Wine</div>
+                    <div class="app-guide-sub">Vineyard terraces above the lake</div>
+                  </div>
+                  <div class="app-guide-chev">›</div>
+                </div>
+              </div>
+            </div>
+
+                        <!-- MESSAGES screen — segmented Announcements / Chat / Attendees. -->
+            <div class="app-screen" data-screen="announcements">
+              <div class="app-page-header">
+                <div class="app-page-eyebrow">Stay in the loop</div>
+                <h1 class="app-page-title">Messages</h1>
+                <p class="app-page-sub">Announcements, chat, and everyone attending.</p>
+              </div>
+              <div class="app-msg-tabs" role="tablist">
+                <button class="app-msg-tab active" type="button" data-msg-tab="0">Announcements</button>
+                <button class="app-msg-tab" type="button" data-msg-tab="1">Chat</button>
+                <button class="app-msg-tab" type="button" data-msg-tab="2">Attendees</button>
+              </div>
+              <div class="app-page-body">
+                <!-- Announcements sub-view -->
+                <div class="app-msg-view active" data-msg-view="0">
+                  <div class="app-note-card">
+                    <div class="app-note-header">
+                      <div class="app-note-sender">Emma &amp; James</div>
+                      <div class="app-note-time">2d ago</div>
+                    </div>
+                    <div class="app-note-body">Welcome to our wedding app! Tap into each tab to explore the schedule, the Switzerland guide, your packing list, and more. We can't wait to celebrate with you.</div>
+                    <div class="app-note-reactions">
+                      <span class="app-note-reaction">❤️ 12</span>
+                      <span class="app-note-reaction">🎉 5</span>
+                    </div>
+                  </div>
+                  <div class="app-note-card">
+                    <div class="app-note-header">
+                      <div class="app-note-sender">Emma &amp; James</div>
+                      <div class="app-note-time">6h ago</div>
+                    </div>
+                    <div class="app-note-body">Welcome bags are waiting for you at the Fairmont front desk — grab yours after check-in.</div>
+                    <div class="app-note-reactions">
+                      <span class="app-note-reaction">❤️ 8</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Chat sub-view -->
+                <div class="app-msg-view" data-msg-view="1">
+                  <div class="app-note-card">
+                    <div class="app-note-header">
+                      <div class="app-note-sender">Jordan Guest</div>
+                      <div class="app-note-time">3h ago</div>
+                    </div>
+                    <div class="app-note-body">Just landed in Geneva! The train ride to Montreux is unreal. See everyone at Welcome Party 🥂</div>
+                    <div class="app-note-reactions">
+                      <span class="app-note-reaction">🙌 3</span>
+                    </div>
+                  </div>
+                  <div class="app-note-card">
+                    <div class="app-note-header">
+                      <div class="app-note-sender">Sam Morgan</div>
+                      <div class="app-note-time">1h ago</div>
+                    </div>
+                    <div class="app-note-body">Anyone else doing the Rochers de Naye hike on Sunday? Would love company.</div>
+                    <div class="app-note-reactions">
+                      <span class="app-note-reaction">🥾 4</span>
+                      <span class="app-note-reaction">❤️ 2</span>
+                    </div>
+                  </div>
+                  <div class="app-note-card">
+                    <div class="app-note-header">
+                      <div class="app-note-sender">Riley Bennett</div>
+                      <div class="app-note-time">just now</div>
+                    </div>
+                    <div class="app-note-body">Count me in for the hike! Meet in the lobby at 9?</div>
+                  </div>
+                </div>
+
+                <!-- Attendees sub-view -->
+                <div class="app-msg-view" data-msg-view="2">
+                  <div class="app-att-grid">
+                    <div class="app-att-card">
+                      <div class="app-att-avatar">E</div>
+                      <div class="app-att-name">Emma</div>
+                      <div class="app-att-badge">Bride</div>
+                    </div>
+                    <div class="app-att-card">
+                      <div class="app-att-avatar b">J</div>
+                      <div class="app-att-name">James</div>
+                      <div class="app-att-badge">Groom</div>
+                    </div>
+                    <div class="app-att-card">
+                      <div class="app-att-avatar c">JG</div>
+                      <div class="app-att-name">Jordan Guest</div>
+                      <div class="app-att-badge">Wedding party</div>
+                    </div>
+                    <div class="app-att-card">
+                      <div class="app-att-avatar d">SM</div>
+                      <div class="app-att-name">Sam Morgan</div>
+                      <div class="app-att-badge">Guest</div>
+                    </div>
+                    <div class="app-att-card">
+                      <div class="app-att-avatar">RB</div>
+                      <div class="app-att-name">Riley Bennett</div>
+                      <div class="app-att-badge">Guest</div>
+                    </div>
+                    <div class="app-att-card">
+                      <div class="app-att-avatar b">AC</div>
+                      <div class="app-att-name">Alex Chen</div>
+                      <div class="app-att-badge">You</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+                        <!-- SONGS screen — request form + list from the demo seed. -->
+            <div class="app-screen" data-screen="songs">
+              <div class="app-page-header">
+                <div class="app-page-eyebrow">Welcome Party &amp; Reception Playlist</div>
+                <h1 class="app-page-title">Song Requests</h1>
+                <p class="app-page-sub">What songs do you want to dance to?</p>
+              </div>
+              <div class="app-page-body">
+                <div class="app-song-form">
+                  <div class="app-song-form-title">Request a song</div>
+                  <div class="app-song-input">e.g. Levitating</div>
+                  <div class="app-song-input">e.g. Dua Lipa</div>
+                  <div class="app-song-submit">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                    Request this song
+                  </div>
+                </div>
+                <div class="app-song-count">4 songs requested so far</div>
+                <div class="app-song-row">
+                  <div class="app-song-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
+                  <div class="app-song-text">
+                    <div class="app-song-title">Dancing Queen</div>
+                    <div class="app-song-artist">ABBA</div>
+                  </div>
+                  <div class="app-song-by">Taylor</div>
+                </div>
+                <div class="app-song-row">
+                  <div class="app-song-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
+                  <div class="app-song-text">
+                    <div class="app-song-title">September</div>
+                    <div class="app-song-artist">Earth, Wind &amp; Fire</div>
+                  </div>
+                  <div class="app-song-by">Jordan</div>
+                </div>
+                <div class="app-song-row">
+                  <div class="app-song-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
+                  <div class="app-song-text">
+                    <div class="app-song-title">Can't Stop the Feeling</div>
+                    <div class="app-song-artist">Justin Timberlake</div>
+                  </div>
+                  <div class="app-song-by">Sam</div>
+                </div>
+                <div class="app-song-row">
+                  <div class="app-song-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
+                  <div class="app-song-text">
+                    <div class="app-song-title">Mr. Brightside</div>
+                    <div class="app-song-artist">The Killers</div>
+                  </div>
+                  <div class="app-song-by">Alex</div>
+                </div>
+              </div>
+            </div>
+
+                        <!-- PACKING screen — Alex's filtered items (non-wedding-party male). -->
+            <div class="app-screen" data-screen="packing">
+              <div class="app-page-header">
+                <div class="app-page-eyebrow">Packing</div>
+                <h1 class="app-page-title">Your Packing List</h1>
+                <p class="app-page-sub">Weather-aware picks for Montreux in May.</p>
+              </div>
+              <div class="app-pack-progress">
+                <div class="app-pack-progress-label">Overall Progress</div>
+                <div class="app-pack-progress-percent">33%</div>
+                <div class="app-pack-progress-track">
+                  <div class="app-pack-progress-fill" style="width: 33%;"></div>
+                </div>
+                <div class="app-pack-progress-count">2 of 6 items packed</div>
+              </div>
+              <div class="app-page-body">
+                <div class="app-pack-cat">
+                  <div class="app-pack-cat-header">
+                    <span class="app-pack-cat-title">Outfits</span>
+                  </div>
+                  <div class="app-pack-item done">
+                    <div class="app-pack-check done"></div>
+                    <div class="app-pack-label">Welcome Party outfit</div>
+                  </div>
+                  <div class="app-pack-item">
+                    <div class="app-pack-check"></div>
+                    <div class="app-pack-label">Tuxedo or Black Suit</div>
+                  </div>
+                </div>
+                <div class="app-pack-cat">
+                  <div class="app-pack-cat-header">
+                    <span class="app-pack-cat-title">May Weather Essentials</span>
+                  </div>
+                  <div class="app-pack-item done">
+                    <div class="app-pack-check done"></div>
+                    <div class="app-pack-label">Light waterproof jacket</div>
+                  </div>
+                  <div class="app-pack-item">
+                    <div class="app-pack-check"></div>
+                    <div class="app-pack-label">Sunglasses</div>
+                  </div>
+                </div>
+                <div class="app-pack-cat">
+                  <div class="app-pack-cat-header">
+                    <span class="app-pack-cat-title">Travel Essentials</span>
+                  </div>
+                  <div class="app-pack-item">
+                    <div class="app-pack-check"></div>
+                    <div class="app-pack-label">Passport / ID</div>
+                  </div>
+                  <div class="app-pack-item">
+                    <div class="app-pack-check"></div>
+                    <div class="app-pack-label">Swiss plug adaptor (Type J)</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+            <div class="phone-tabbar" role="tablist" aria-label="Preview screens">
+              <button class="phone-tab active" type="button" data-index="0" aria-label="Home"></button>
+              <button class="phone-tab" type="button" data-index="1" aria-label="Schedule"></button>
+              <button class="phone-tab" type="button" data-index="2" aria-label="Travel guide"></button>
+              <button class="phone-tab" type="button" data-index="3" aria-label="Messages"></button>
+              <button class="phone-tab" type="button" data-index="4" aria-label="Song requests"></button>
+              <button class="phone-tab" type="button" data-index="5" aria-label="Packing list"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRUST BAR -->
+  <div class="trustbar">
+    <div class="container trustbar-inner">
+      <div class="trust-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <span>Built by a couple who lived it</span>
+      </div>
+      <div class="trust-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>Private &amp; invite-only for every wedding</span>
+      </div>
+      <div class="trust-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <span>Made for the moments guests actually remember</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <section id="features">
+    <div class="container">
+      <div class="section-header">
+        <div class="eyebrow">Everything, in one place</div>
+        <h2>The spreadsheet, the group text, the PDF. <em>Replaced.</em></h2>
+        <p>Tetherly gathers everything scattered across your wedding week into a single elegant app your guests will open again and again.</p>
+      </div>
+
+      <div class="features">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <h3>Live schedule</h3>
+          <p>Every event, every venue, every dress code, with "happening now" highlights and last-minute updates pushed to guests instantly.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <h3>Announcements</h3>
+          <p>Send a push to every guest ("shuttle in 15", "wear white for the mehndi") and know it landed on the right screens.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+          </div>
+          <h3>Guest details</h3>
+          <p>Arrival times, hotel plans, dietary restrictions. Guests fill it in once, and you see it all in one place. No more email forms or reply-all threads.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </div>
+          <h3>Guest photo album</h3>
+          <p>A shared, private album for every guest to upload the shots they took. Everything, not just what makes it to Instagram.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+          </div>
+          <h3>Song requests</h3>
+          <p>Guests suggest the tracks they want to hear. Your DJ gets a ranked list, not a hundred forgotten group-text messages.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <h3>Travel guide</h3>
+          <p>Curated hotels, restaurants, and things to do at the destination, with maps and notes from you, not the internet.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+          <h3>Packing list</h3>
+          <p>Weather-aware, per-event packing lists guests can check off. No more last-minute "wait, is it black tie?" texts at midnight.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg>
+          </div>
+          <h3>Guest groups</h3>
+          <p>Wedding party, family, plus-ones, kids. Show the right events to the right people without a spreadsheet in sight.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+          </div>
+          <h3>Live vendor queues</h3>
+          <p>Henna, photos, mehndi stations. Guests join the line from their phone and know where they are in real time.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ASK (AI ASSISTANT) -->
+  <section id="ask" class="section-warm">
+    <div class="container">
+      <div class="audience reversed">
+        <div>
+          <div class="eyebrow">Meet Ask · AI assistant</div>
+          <h2 class="audience-title-serif">The AI that answers your guests, <em>so you don't have to</em>.</h2>
+          <p class="lead">Ask is the floating assistant in every corner of Tetherly. Guests tap it, ask a question, and get a warm, immediate answer, grounded entirely in your wedding, before they'd otherwise text you at 11 p.m.</p>
+          <ul class="audience-list">
+            <li><strong>Grounded in your wedding.</strong> Pulls from your schedule, dress codes, packing list, and travel guide.</li>
+            <li><strong>Personalized per guest.</strong> Hides events and items the guest isn't invited to. Bridal-party details never leak to the general list.</li>
+            <li><strong>Contextual to each tab.</strong> On Schedule, starters shift to "What should I wear?" On the Guide tab, "Best half-day activity near the hotel?"</li>
+            <li><strong>Insights for you.</strong> Every question is logged so you can see what guests are curious about, and update your content.</li>
+          </ul>
+        </div>
+        <div class="audience-visual">
+          <div class="ask-chat">
+            <div class="ask-header">
+              <span class="ask-header-mark">✦</span>
+              <span>Ask</span>
+            </div>
+            <div class="ask-msg user">
+              <div class="ask-bubble">What should I wear to Welcome Night?</div>
+            </div>
+            <div class="ask-msg ai">
+              <div class="ask-avatar">✦</div>
+              <div class="ask-bubble">Welcome Night is festive-casual: breezy shirts, sundresses, comfortable shoes for the rooftop terrace. Warm neutrals like dusty rose or champagne fit the palette. It'll cool off by the water after sunset, so bring a light layer!</div>
+            </div>
+            <div class="ask-msg user">
+              <div class="ask-bubble">Is the ceremony indoors?</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COUPLES -->
+  <section id="couples" class="section-warm">
+    <div class="container">
+      <div class="audience">
+        <div>
+          <div class="eyebrow">For couples</div>
+          <h2 class="audience-title-serif">Give your guests one place, and stop being <em>tech support</em>.</h2>
+          <p class="lead">Your inbox on the wedding week deserves to be love notes, not "what time is the shuttle again?" Tetherly answers the questions before your guests can ask them.</p>
+          <ul class="audience-list">
+            <li><strong>Onboard once.</strong> A single invite code gets every guest into the app in seconds.</li>
+            <li><strong>Update once.</strong> Time or venue change? Every guest sees it, and gets a nudge.</li>
+            <li><strong>Own your memories.</strong> Every photo, song, and message stays in one private, downloadable place.</li>
+            <li><strong>Curate the arrival.</strong> The travel guide is your voice, not TripAdvisor's.</li>
+          </ul>
+        </div>
+        <div class="audience-visual">
+          <div class="mini-card">
+            <span class="mini-card-avatar"></span>
+            <div>
+              <div class="mini-card-title">Priya &amp; Arjun</div>
+              <div class="mini-card-sub">247 guests · 3 events</div>
+            </div>
+            <span class="mini-card-badge">Live</span>
+          </div>
+          <div class="mini-card">
+            <span class="mini-card-avatar b"></span>
+            <div>
+              <div class="mini-card-title">Sangeet moved to 6pm</div>
+              <div class="mini-card-sub">Push sent · 244 delivered</div>
+            </div>
+            <span class="mini-card-badge gold">Sent</span>
+          </div>
+          <div class="mini-card">
+            <span class="mini-card-avatar c"></span>
+            <div>
+              <div class="mini-card-title">142 photos in the album</div>
+              <div class="mini-card-sub">Added by 38 guests today</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLANNERS -->
+  <section id="planners">
+    <div class="container">
+      <div class="audience reversed">
+        <div>
+          <div class="eyebrow">For planners</div>
+          <h2 class="audience-title-serif">The last-minute questions <em>disappear</em>.</h2>
+          <p class="lead">Every planner's week-of inbox looks the same: hundreds of "quick questions" from guests who lost the PDF. Tetherly puts every answer in the guest's pocket so you can focus on the couple.</p>
+          <ul class="audience-list">
+            <li><strong>One source of truth.</strong> Timeline changes propagate everywhere. No more chasing outdated Google Docs.</li>
+            <li><strong>Branded per wedding.</strong> Each couple gets an experience that looks like theirs, not like your agency's.</li>
+            <li><strong>Guest data, structured.</strong> Dietary needs, RSVPs, and groups flow straight from Tetherly into your workflow.</li>
+            <li><strong>Vendor coordination.</strong> Push announcements, live queues, and per-group visibility replace the day-of walkie-talkie chaos.</li>
+          </ul>
+        </div>
+        <div class="audience-visual">
+          <div class="mini-card">
+            <span class="mini-card-avatar b"></span>
+            <div>
+              <div class="mini-card-title">Ceremony pushed to 11:30 am</div>
+              <div class="mini-card-sub">All groups updated · shuttles rescheduled</div>
+            </div>
+            <span class="mini-card-badge">Auto</span>
+          </div>
+          <div class="mini-card">
+            <span class="mini-card-avatar"></span>
+            <div>
+              <div class="mini-card-title">Dietary needs · 12 flagged</div>
+              <div class="mini-card-sub">Exported to caterer this morning</div>
+            </div>
+            <span class="mini-card-badge gold">CSV</span>
+          </div>
+          <div class="mini-card">
+            <span class="mini-card-avatar c"></span>
+            <div>
+              <div class="mini-card-title">Wedding-party-only events hidden</div>
+              <div class="mini-card-sub">Family &amp; guest views clean</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VENDORS -->
+  <section id="vendors" class="section-warm">
+    <div class="container">
+      <div class="audience">
+        <div>
+          <div class="eyebrow">For vendors</div>
+          <h2 class="audience-title-serif">Fewer lines. More time on the <em>work</em>.</h2>
+          <p class="lead">Whether you're a henna artist, a mehndi stylist, or a photobooth, Tetherly's live queue means no clipboards, no crowding, and no missed guests. They wait from their table; you focus on the piece in front of you.</p>
+          <ul class="audience-list">
+            <li><strong>Live queue on the guest's phone.</strong> They see their position update in real time and get pinged when they're up.</li>
+            <li><strong>Presets per artist.</strong> Configure spots-per-guest, average time, and open/closed status from any device.</li>
+            <li><strong>No new app for you.</strong> Your view is a link. Your guests get the same Tetherly they're already using.</li>
+            <li><strong>Books straight into the wedding.</strong> Every guest is already authenticated. No phone numbers, no email captures.</li>
+          </ul>
+        </div>
+        <div class="audience-visual">
+          <div class="mini-card">
+            <span class="mini-card-avatar c"></span>
+            <div>
+              <div class="mini-card-title">Henna Station · Priya</div>
+              <div class="mini-card-sub">Now serving · position 3</div>
+            </div>
+            <span class="mini-card-badge">Open</span>
+          </div>
+          <div class="mini-card">
+            <span class="mini-card-avatar"></span>
+            <div>
+              <div class="mini-card-title">4 people in line</div>
+              <div class="mini-card-sub">Avg. wait · 22 minutes</div>
+            </div>
+          </div>
+          <div class="mini-card">
+            <span class="mini-card-avatar b"></span>
+            <div>
+              <div class="mini-card-title">You're up next, Nikhil</div>
+              <div class="mini-card-sub">Notification sent</div>
+            </div>
+            <span class="mini-card-badge gold">Ping</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOUNDER STORY -->
+  <section id="story" class="founder">
+    <div class="container">
+      <div class="eyebrow" style="color: var(--gold-soft);">Founder story</div>
+      <h2 style="max-width: 780px;">I built Tetherly for our wedding<br /><em>One place for every guest.</em></h2>
+
+      <div class="founder-body">
+        <p>While planning our destination wedding in Switzerland, we realized how difficult it was to gather information from more than 100 guests while also keeping everyone informed, prepared, and connected throughout a multi-day celebration.</p>
+
+        <p>Important details were scattered across our wedding website, emails, group chats, and individual messages. We wanted one place where guests could easily find the weekend itinerary, dress codes, travel guidance, packing reminders, announcements, and everything else they needed without having to search for it.</p>
+
+        <p>But we wanted Tetherly to be more than a place for logistics. We also wanted to build excitement before the wedding and help our guests get to know one another before they arrived.</p>
+
+        <p class="founder-beat">So I built Tetherly.</p>
+
+        <p>During our wedding weekend, our guests used the app to follow event schedules, receive real-time updates, request songs, connect with one another, and even get personalized local recommendations. It also helped our planning team coordinate guest arrivals and deliver welcome gifts to guests' hotel rooms more seamlessly.</p>
+
+        <p>Seeing how much easier and more connected the experience felt showed us that Tetherly could help other couples too.</p>
+
+        <p>Tetherly was created so couples can help every guest feel part of the celebration before they arrive, and connected to every moment once it begins.</p>
+      </div>
+
+      <div class="founder-attribution">
+        <div class="founder-avatar" aria-hidden="true">N</div>
+        <div class="founder-attribution-text">
+          Neha Pathmanaban
+          <small>Founder · Tetherly</small>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WAITLIST -->
+  <section id="waitlist" class="waitlist">
+    <div class="container waitlist-inner">
+      <div class="eyebrow">Join the waitlist</div>
+      <h2>We're onboarding weddings <em>personally</em> right now.</h2>
+      <p class="lead" style="margin-left: auto; margin-right: auto;">Tell us a little about your wedding, agency, or vendor practice, and we'll be in touch with next steps.</p>
+
+      <!--
+        Zero-backend default: this form uses mailto: so submissions land in
+        the Tetherly inbox with no extra service required. When you're ready,
+        swap the <form action="..."> to a Formspree, Loops, ConvertKit, or
+        Buttondown endpoint — the field names below are already sensible.
+      -->
+      <form class="waitlist-form" action="mailto:tetherly.app@gmail.com" method="post" enctype="text/plain">
+        <div class="role-picker" role="radiogroup" aria-label="I am a...">
+          <label>
+            <input type="radio" name="role" value="Couple" checked />
+            <span>Couple</span>
+          </label>
+          <label>
+            <input type="radio" name="role" value="Planner" />
+            <span>Planner</span>
+          </label>
+          <label>
+            <input type="radio" name="role" value="Vendor" />
+            <span>Vendor</span>
+          </label>
+          <label>
+            <input type="radio" name="role" value="Just curious" />
+            <span>Just curious</span>
+          </label>
+        </div>
+
+        <div class="email-row">
+          <label for="waitlist-email" class="sr-only">Email address</label>
+          <input id="waitlist-email" type="email" name="email" placeholder="you@example.com" required autocomplete="email" />
+          <button type="submit">Get on the list</button>
+        </div>
+      </form>
+
+      <p class="waitlist-fineprint">
+        We'll reach out when we can bring your wedding onto Tetherly, or answer whatever you're curious about.
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <a class="brand" href="#top" aria-label="Tetherly home" style="color: var(--bg);">
+          <span class="brand-mark" aria-hidden="true"><img src="./tetherly-logo.png" alt="" /></span>
+          <span>Tetherly</span>
+        </a>
+        <p>A wedding companion app for couples and their guests.</p>
+      </div>
+      <div>
+        <h4>Product</h4>
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#couples">For couples</a></li>
+          <li><a href="#planners">For planners</a></li>
+          <li><a href="#vendors">For vendors</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Get started</h4>
+        <ul>
+          <li><a href="#waitlist">Join the waitlist</a></li>
+          <li><a href="https://apps.apple.com/us/app/tetherly-wedding-companion/id6762950813">Download on iOS</a></li>
+          <li><a href="./tetherly-support.html">Support</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="./tetherly-privacy-policy.html">Privacy policy</a></li>
+          <li><a href="mailto:tetherly.app@gmail.com">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>&copy; <span id="year">2026</span> Tetherly. All rights reserved.</div>
+      <div><a href="mailto:tetherly.app@gmail.com" style="color: rgba(245, 240, 232, 0.5); text-decoration: none;">tetherly.app@gmail.com</a></div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const header = document.getElementById('siteHeader');
+  const onScroll = () => {
+    if (window.scrollY > 8) header.classList.add('scrolled');
+    else header.classList.remove('scrolled');
+  };
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  const yr = document.getElementById('year');
+  if (yr) yr.textContent = new Date().getFullYear();
+
+  // Live countdown for the hero phone mockup. Ticks every second so the
+  // seconds place visibly moves — makes the mockup feel alive.
+  (function () {
+    const target = new Date('2027-05-22T15:00:00Z').getTime();
+    const els = {
+      days: document.getElementById('cd-days'),
+      hours: document.getElementById('cd-hours'),
+      mins: document.getElementById('cd-mins'),
+      secs: document.getElementById('cd-secs'),
+    };
+    if (!els.days) return;
+    const pad = (n) => String(n).padStart(2, '0');
+    function tick() {
+      const diff = Math.max(0, target - Date.now());
+      els.days.textContent = String(Math.floor(diff / 86400000));
+      els.hours.textContent = pad(Math.floor((diff % 86400000) / 3600000));
+      els.mins.textContent = pad(Math.floor((diff % 3600000) / 60000));
+      els.secs.textContent = pad(Math.floor((diff % 60000) / 1000));
+    }
+    tick();
+    setInterval(tick, 1000);
+  })();
+
+  // Phone screen carousel — auto-rotates through Home, Schedule,
+  // Announcements, Songs, Guide, Packing every 5s. Pauses on hover.
+  // Off on mobile and when the viewer prefers reduced motion.
+  (function () {
+    const screens = document.querySelectorAll('.app-screen');
+    const dots = document.querySelectorAll('.phone-tab');
+    if (!screens.length || !dots.length) return;
+
+    const mobileQ = window.matchMedia('(max-width: 900px)');
+    const reducedQ = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const ROTATE_MS = 2000;
+    // Messages holds longer than a normal screen so its nested sub-tabs
+    // (Announcements → Chat → Attendees) all get a beat before the outer
+    // carousel advances.
+    const MSG_SUB_MS = 1400;
+    const MSG_DWELL = MSG_SUB_MS * 3 + 300;
+
+    let index = 0;
+    let timer = null;
+    let msgTimer = null;
+    let msgSubIndex = 0;
+
+    function dwellFor(idx) {
+      const s = screens[idx];
+      if (s && s.dataset.screen === 'announcements') return MSG_DWELL;
+      return ROTATE_MS;
+    }
+
+    function setMsgSub(idx) {
+      const views = document.querySelectorAll('[data-screen="announcements"] .app-msg-view');
+      const tabs = document.querySelectorAll('[data-screen="announcements"] .app-msg-tab');
+      if (!views.length) return;
+      const n = views.length;
+      msgSubIndex = ((idx % n) + n) % n;
+      views.forEach((v, i) => v.classList.toggle('active', i === msgSubIndex));
+      tabs.forEach((t, i) => t.classList.toggle('active', i === msgSubIndex));
+    }
+
+    function startMsgSub() {
+      stopMsgSub();
+      if (autoOff()) return;
+      msgTimer = setInterval(() => setMsgSub(msgSubIndex + 1), MSG_SUB_MS);
+    }
+    function stopMsgSub() {
+      if (msgTimer) { clearInterval(msgTimer); msgTimer = null; }
+    }
+
+    function setActive(next) {
+      index = ((next % screens.length) + screens.length) % screens.length;
+      screens.forEach((s, i) => s.classList.toggle('active', i === index));
+      dots.forEach((d, i) => {
+        d.classList.toggle('active', i === index);
+        d.setAttribute('aria-selected', i === index ? 'true' : 'false');
+      });
+      const activeScreen = screens[index];
+      if (activeScreen && activeScreen.dataset.screen === 'announcements') {
+        setMsgSub(0);
+        startMsgSub();
+      } else {
+        stopMsgSub();
+        setMsgSub(0);
+      }
+    }
+
+    function autoOff() {
+      return mobileQ.matches || reducedQ.matches;
+    }
+
+    function schedule() {
+      stop();
+      if (autoOff()) return;
+      timer = setTimeout(() => {
+        setActive(index + 1);
+        schedule();
+      }, dwellFor(index));
+    }
+    function stop() {
+      if (timer) { clearTimeout(timer); timer = null; }
+    }
+    function start() { schedule(); }
+
+    dots.forEach((d) => {
+      d.addEventListener('click', () => {
+        setActive(parseInt(d.dataset.index, 10));
+        // Restart the interval so the freshly-picked screen gets its
+        // full display window instead of flipping right after tap.
+        start();
+      });
+    });
+
+    // Segmented-control taps inside Messages let a reader jump to a
+    // specific sub-view.
+    document.querySelectorAll('[data-screen="announcements"] .app-msg-tab').forEach((tab, i) => {
+      tab.addEventListener('click', () => {
+        setMsgSub(i);
+        startMsgSub();
+      });
+    });
+
+    const phone = document.querySelector('.phone');
+    if (phone) {
+      phone.addEventListener('mouseenter', () => { stop(); stopMsgSub(); });
+      phone.addEventListener('mouseleave', () => {
+        start();
+        const activeScreen = screens[index];
+        if (activeScreen && activeScreen.dataset.screen === 'announcements') {
+          startMsgSub();
+        }
+      });
+    }
+
+    // React to viewport or motion-preference changes without a reload.
+    mobileQ.addEventListener('change', () => { setActive(0); start(); });
+    reducedQ.addEventListener('change', () => { setActive(0); start(); });
+
+    start();
+  })();
+</script>
+
 </body>
 </html>
