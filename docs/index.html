@@ -2549,7 +2549,6 @@
     const dots = document.querySelectorAll('.phone-tab');
     if (!screens.length || !dots.length) return;
 
-    const mobileQ = window.matchMedia('(max-width: 900px)');
     const reducedQ = window.matchMedia('(prefers-reduced-motion: reduce)');
     const ROTATE_MS = 2000;
     // Messages holds longer than a normal screen so its nested sub-tabs
@@ -2606,7 +2605,7 @@
     }
 
     function autoOff() {
-      return mobileQ.matches || reducedQ.matches;
+      return reducedQ.matches;
     }
 
     function schedule() {
@@ -2652,8 +2651,7 @@
       });
     }
 
-    // React to viewport or motion-preference changes without a reload.
-    mobileQ.addEventListener('change', () => { setActive(0); start(); });
+    // React to motion-preference changes without a reload.
     reducedQ.addEventListener('change', () => { setActive(0); start(); });
 
     start();
