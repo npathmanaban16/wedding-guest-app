@@ -1441,6 +1441,55 @@
       flex-shrink: 0;
       margin-top: 4px;
     }
+
+    /* Ask animation: each message bubble starts faded/lifted and slides
+       in when JS adds .is-visible. The assistant bubble shows a 3-dot
+       "thinking" indicator (mirrors the app's ActivityIndicator spinner
+       inside a pending assistant bubble) and swaps to the answer text
+       when .is-answered lands. */
+    .ask-msg {
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    .ask-msg.is-visible { opacity: 1; transform: none; }
+    .ask-answer .ask-text { display: none; }
+    .ask-answer.is-answered .ask-loading { display: none; }
+    .ask-answer.is-answered .ask-text {
+      display: block;
+      animation: ask-fade-in 0.4s ease;
+    }
+    @keyframes ask-fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .ask-loading {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 2px;
+    }
+    .ask-loading > span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--primary);
+      opacity: 0.35;
+      animation: ask-dot 1.2s infinite ease-in-out;
+    }
+    .ask-loading > span:nth-child(2) { animation-delay: 0.18s; }
+    .ask-loading > span:nth-child(3) { animation-delay: 0.36s; }
+    @keyframes ask-dot {
+      0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+      30% { opacity: 1; transform: translateY(-3px); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .ask-msg { opacity: 1; transform: none; transition: none; }
+      .ask-loading > span { animation: none; opacity: 0.55; }
+      .ask-answer .ask-loading { display: none; }
+      .ask-answer .ask-text { display: block; }
+    }
+
     /* Founder story -------------------------------------------------- */
     .founder {
       background: var(--text);
@@ -2334,7 +2383,7 @@
           </ul>
         </div>
         <div class="audience-visual">
-          <div class="ask-chat">
+          <div class="ask-chat" id="askChat">
             <div class="ask-header">
               <span class="ask-header-mark">✦</span>
               <span>Ask</span>
@@ -2344,10 +2393,20 @@
             </div>
             <div class="ask-msg ai">
               <div class="ask-avatar">✦</div>
-              <div class="ask-bubble">Welcome Night is festive-casual: breezy shirts, sundresses, comfortable shoes for the rooftop terrace. Warm neutrals like dusty rose or champagne fit the palette. It'll cool off by the water after sunset, so bring a light layer!</div>
+              <div class="ask-bubble ask-answer">
+                <span class="ask-loading" aria-hidden="true"><span></span><span></span><span></span></span>
+                <span class="ask-text">Welcome Night is festive-casual: breezy shirts, sundresses, comfortable shoes for the rooftop terrace. Warm neutrals like dusty rose or champagne fit the palette. It'll cool off by the water after sunset, so bring a light layer!</span>
+              </div>
             </div>
             <div class="ask-msg user">
               <div class="ask-bubble">Is the ceremony indoors?</div>
+            </div>
+            <div class="ask-msg ai">
+              <div class="ask-avatar">✦</div>
+              <div class="ask-bubble ask-answer">
+                <span class="ask-loading" aria-hidden="true"><span></span><span></span><span></span></span>
+                <span class="ask-text">Outdoors, in the Fairmont garden at 5 PM. We've got tents on standby if it rains — you'll get a push if plans change.</span>
+              </div>
             </div>
           </div>
         </div>
@@ -2974,6 +3033,63 @@
     }
     tick();
     setInterval(tick, 1000);
+  })();
+
+  // Ask chat animation — loops through: user question fades in →
+  // assistant bubble appears with a 3-dot "thinking" indicator →
+  // indicator swaps for the answer text → second question → repeats.
+  // Mirrors the app's ChatMessage.pending state (an ActivityIndicator
+  // spinner inside an otherwise-empty assistant bubble that gets
+  // replaced with the answer once it arrives).
+  (function () {
+    const chat = document.getElementById('askChat');
+    if (!chat) return;
+    const messages = Array.from(chat.querySelectorAll('.ask-msg'));
+    const answers = Array.from(chat.querySelectorAll('.ask-answer'));
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (reducedMotion.matches) {
+      messages.forEach((m) => m.classList.add('is-visible'));
+      answers.forEach((a) => a.classList.add('is-answered'));
+      return;
+    }
+
+    // Frame = (visible message indexes, answered answer indexes, dwell).
+    // Dwell is how long we stay in the frame before advancing.
+    const frames = [
+      { v: [],           a: [],     dwell:  500 }, // 0 — reset (empty chat)
+      { v: [0],          a: [],     dwell:  950 }, // 1 — user Q1
+      { v: [0, 1],       a: [],     dwell: 1400 }, // 2 — AI1 thinking
+      { v: [0, 1],       a: [0],    dwell: 3300 }, // 3 — AI1 answered
+      { v: [0, 1, 2],    a: [0],    dwell:  950 }, // 4 — user Q2
+      { v: [0, 1, 2, 3], a: [0],    dwell: 1400 }, // 5 — AI2 thinking
+      { v: [0, 1, 2, 3], a: [0, 1], dwell: 4200 }, // 6 — AI2 answered
+    ];
+
+    let idx = 0;
+    let timer = null;
+    let paused = false;
+
+    const applyFrame = () => {
+      const f = frames[idx];
+      messages.forEach((m, i) => m.classList.toggle('is-visible', f.v.includes(i)));
+      answers.forEach((a, i) => a.classList.toggle('is-answered', f.a.includes(i)));
+    };
+    const tick = () => {
+      applyFrame();
+      if (paused) return;
+      timer = setTimeout(() => {
+        idx = (idx + 1) % frames.length;
+        tick();
+      }, frames[idx].dwell);
+    };
+    const stop = () => { if (timer) { clearTimeout(timer); timer = null; } };
+    const start = () => { stop(); tick(); };
+
+    // Pause on hover so a reader can study the last frame.
+    chat.addEventListener('mouseenter', () => { paused = true; stop(); });
+    chat.addEventListener('mouseleave', () => { paused = false; start(); });
+
+    start();
   })();
 
   // Phone screen carousel — auto-rotates through Home, Schedule,
