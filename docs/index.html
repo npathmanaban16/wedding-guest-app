@@ -1597,15 +1597,15 @@
       margin: 8px 0 0;
     }
 
-    /* Optional "Tell us more about your wedding" disclosure. Shown only
-       when role=Couple; expands inline with a subtle animation. */
+    /* Optional "Tell us more about your wedding" disclosure — visible to
+       every role (a planner, family member, or vendor can describe the
+       wedding just as usefully as the couple). Expands inline with a
+       subtle animation. */
     .wl-disclosure {
       margin-top: 4px;
       border-top: 1px solid var(--divider);
       padding-top: 20px;
-      display: none;
     }
-    .wl-disclosure.is-visible { display: block; }
     .wl-disclosure-toggle {
       background: transparent;
       border: none;
@@ -2791,6 +2791,10 @@
     const roleInputs = form.querySelectorAll('input[name="role"]');
 
     let emailWarning = null;
+    // Auto-open the disclosure on the first non-empty email input, but
+    // don't fight the user afterward: once they've explicitly toggled it
+    // (or the auto-open has fired once) we stop touching it.
+    let disclosureAutoOpened = false;
 
     const setHidden = (node, hidden) => {
       if (hidden) node.setAttribute('hidden', '');
@@ -2806,23 +2810,19 @@
       return checked ? checked.value : 'couple';
     };
 
-    // The "Tell us more about your wedding" disclosure only makes sense
-    // for couples. Show it when role=Couple; hide (and close) otherwise.
-    const syncDisclosure = () => {
-      const isCouple = getRole() === 'couple';
-      disclosureEl.classList.toggle('is-visible', isCouple);
-      if (!isCouple) {
-        disclosureToggle.setAttribute('aria-expanded', 'false');
-        detailsEl.classList.remove('is-open');
-      }
+    const setDisclosureOpen = (open) => {
+      disclosureToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      detailsEl.classList.toggle('is-open', open);
     };
-    roleInputs.forEach((r) => r.addEventListener('change', () => { syncDisclosure(); showError(''); }));
-    syncDisclosure();
+
+    roleInputs.forEach((r) => r.addEventListener('change', () => showError('')));
 
     disclosureToggle.addEventListener('click', () => {
       const open = disclosureToggle.getAttribute('aria-expanded') === 'true';
-      disclosureToggle.setAttribute('aria-expanded', open ? 'false' : 'true');
-      detailsEl.classList.toggle('is-open', !open);
+      setDisclosureOpen(!open);
+      // Any explicit toggle counts as the user taking control — stop
+      // auto-opening on further email input.
+      disclosureAutoOpened = true;
     });
 
     // Toggle end-date field with the multi-day checkbox.
@@ -2834,6 +2834,14 @@
     emailEl.addEventListener('input', () => {
       if (emailWarning) { emailWarning = null; setHidden(emailWarningEl, true); }
       showError('');
+      // First time the user types something in the email field, expand
+      // the "Tell us more about your wedding" section so the extra
+      // fields are already visible when they're deciding whether to
+      // fill them out.
+      if (!disclosureAutoOpened && emailEl.value.trim()) {
+        setDisclosureOpen(true);
+        disclosureAutoOpened = true;
+      }
     });
     coupleEl.addEventListener('input', () => showError(''));
     dateEl.addEventListener('input', () => showError(''));
@@ -2932,7 +2940,11 @@
       const role = getRole();
       const couple = coupleEl.value.trim();
       const start = dateEl.value;
-      const hasWeddingDetails = role === 'couple' && !!(couple || start || guestsEl.value || cityEl.value || notesEl.value.trim() || multiEl.checked);
+      const hasWeddingDetails = !!(couple || start || guestsEl.value || cityEl.value || notesEl.value.trim() || multiEl.checked);
+      // Only mirror into wedding_requests when the person submitting IS
+      // the couple — otherwise the wedding_requests row would carry a
+      // planner's / family member's email under the couple's name, which
+      // confuses the existing in-app triage.
       const isFullWeddingRequest = role === 'couple' && !!couple && !!start;
 
       const msg = validate(hasWeddingDetails);
@@ -3009,18 +3021,21 @@
         }
       }
 
-      // 3) Fire-and-forget email notification via the edge function. It
-      //    branches on payload shape — rich admin email + couple
-      //    confirmation for wedding requests, simple admin email for
-      //    plain waitlist signups. Failing here doesn't fail the request.
+      // 3) Fire-and-forget email notification via the edge function.
+      //    Always pass every field the user filled in so the admin email
+      //    reflects the full submission (a planner describing a couple's
+      //    wedding should still see the wedding info in the admin
+      //    notification). The function decides based on role whether to
+      //    send a couple confirmation reply. Failing here doesn't fail
+      //    the request.
       supabaseFetch('/functions/v1/send-wedding-request', {
         method: 'POST',
         body: JSON.stringify({
           email,
           role,
-          coupleName: isFullWeddingRequest ? couple : null,
-          weddingDateStart: isFullWeddingRequest ? start : null,
-          weddingDateEnd: isFullWeddingRequest ? weddingDateEnd : null,
+          coupleName: couple || null,
+          weddingDateStart: start || null,
+          weddingDateEnd,
           guestCount,
           city: waitlistRow.city,
           notes: waitlistRow.notes,

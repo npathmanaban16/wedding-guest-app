@@ -118,18 +118,24 @@ Deno.serve(async (req) => {
     const roleKey = (role ?? 'couple').toLowerCase();
     const roleLabel = ROLE_LABELS[roleKey] ?? role ?? 'Couple';
 
-    // Two shapes: a "wedding request" carries couple_name + wedding date,
-    // gets the rich admin email plus a couple confirmation reply. A
-    // simple "waitlist signup" (email + role only, or a Planner / Vendor
-    // / Just curious submission) gets an admin notification only.
-    const isWeddingRequest = !!(coupleName && weddingDateStart);
-    const dateStr = isWeddingRequest && weddingDateStart
+    // Three shapes to distinguish:
+    //   hasWeddingFields — someone filled couple_name + wedding date
+    //     (could be a couple, or a planner / family member on the
+    //     couple's behalf). Drives whether the admin email shows a
+    //     wedding-request layout and whether the date row is included.
+    //   isCoupleRequest  — hasWeddingFields AND the submitter says they
+    //     ARE the couple. Only this shape gets the couple confirmation
+    //     reply, since that email is addressed to the couple by name.
+    //   Otherwise the admin sees a plain waitlist signup notification.
+    const hasWeddingFields = !!(coupleName && weddingDateStart);
+    const isCoupleRequest = hasWeddingFields && roleKey === 'couple';
+    const dateStr = hasWeddingFields && weddingDateStart
       ? formatRange(weddingDateStart, weddingDateEnd)
       : null;
 
     // ── Admin notification ────────────────────────────────────────
-    const heading = isWeddingRequest ? 'New wedding request' : 'New waitlist signup';
-    const subjectPrefix = isWeddingRequest ? '💍 New wedding request' : '📝 New waitlist signup';
+    const heading = isCoupleRequest ? 'New wedding request' : 'New waitlist signup';
+    const subjectPrefix = isCoupleRequest ? '💍 New wedding request' : '📝 New waitlist signup';
     const identity = coupleName || roleLabel;
     const adminSubject = `${subjectPrefix} — ${identity} (${requestSource})`;
 
@@ -144,7 +150,7 @@ Deno.serve(async (req) => {
     if (notes) rows.push(['Notes', notes]);
 
     const adminText =
-      `A new ${isWeddingRequest ? 'couple requested access to' : 'visitor joined the waitlist for'} ${APP_NAME}:\n\n` +
+      `A new ${isCoupleRequest ? 'couple requested access to' : 'visitor joined the waitlist for'} ${APP_NAME}:\n\n` +
       rows.map(([k, v]) => `${k.padEnd(9, ' ')} ${v}`).join('\n') + '\n';
 
     const adminHtml = `
@@ -182,7 +188,7 @@ Deno.serve(async (req) => {
     // send is best-effort: a failure here shouldn't fail the request,
     // since the admin notification (which is what actually triggers
     // follow-up) has already gone out.
-    if (isWeddingRequest && coupleName && dateStr) {
+    if (isCoupleRequest && coupleName && dateStr) {
       const coupleSubject = `We got your ${APP_NAME} request 💍`;
       const coupleText =
         `Hi ${coupleName},\n\n` +
