@@ -44,7 +44,7 @@ const ROLE_LABELS: Record<string, string> = {
   couple: 'Couple',
   planner: 'Planner',
   vendor: 'Vendor',
-  curious: 'Just curious',
+  other: 'Other',
 };
 
 const formatRange = (start: string, end?: string | null): string => {
