@@ -1541,53 +1541,13 @@
       background: var(--text);
       color: var(--bg);
     }
-    .email-row {
-      display: flex;
-      gap: 10px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 6px;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
-    }
-    .email-row:focus-within {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 4px rgba(122, 106, 85, 0.12);
-    }
-    .email-row input[type="email"] {
-      flex: 1;
-      border: none;
-      outline: none;
-      padding: 12px 20px;
-      font-family: var(--sans);
-      font-size: 16px;
-      background: transparent;
-      color: var(--text);
-      min-width: 0;
-    }
-    .email-row input[type="email"]::placeholder { color: var(--text-muted); }
-    .email-row button {
-      border: none;
-      padding: 12px 26px;
-      background: var(--text);
-      color: var(--bg);
-      border-radius: 999px;
-      font-family: var(--sans);
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.15s ease, opacity 0.15s ease;
-    }
-    .email-row button:hover { transform: translateY(-1px); }
-    .email-row button[disabled] { opacity: 0.6; cursor: not-allowed; transform: none; }
-
     /* Non-blocking MX warning + checking indicator + form-level error.
-       Sit tight against the email row so the user sees them without
-       looking away from the field. */
+       Sit tight against the email field so the user sees them without
+       looking away from the input. */
     .wl-warning, .wl-checking, .wl-error {
       font-family: var(--sans);
       font-size: 13px;
-      margin: 4px 8px 0;
+      margin: 6px 4px 0;
     }
     .wl-warning { color: #B54B4B; }
     .wl-checking { color: var(--text-muted); font-style: italic; }
@@ -1597,56 +1557,6 @@
       margin: 8px 0 0;
     }
 
-    /* Optional "Tell us more about your wedding" disclosure — visible to
-       every role (a planner, family member, or vendor can describe the
-       wedding just as usefully as the couple). Expands inline with a
-       subtle animation. */
-    .wl-disclosure {
-      margin-top: 4px;
-      border-top: 1px solid var(--divider);
-      padding-top: 20px;
-    }
-    .wl-disclosure-toggle {
-      background: transparent;
-      border: none;
-      padding: 0;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-family: var(--sans);
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text-secondary);
-      transition: color 0.15s ease;
-      width: 100%;
-      text-align: left;
-    }
-    .wl-disclosure-toggle:hover { color: var(--text); }
-    .wl-disclosure-toggle .wl-chev {
-      width: 12px; height: 12px;
-      border-right: 1.5px solid currentColor;
-      border-bottom: 1.5px solid currentColor;
-      transform: rotate(45deg) translate(-1px, -1px);
-      transition: transform 0.2s ease;
-      flex-shrink: 0;
-    }
-    .wl-disclosure-toggle[aria-expanded="true"] .wl-chev {
-      transform: rotate(-135deg) translate(-1px, -1px);
-    }
-    .wl-optional-tag {
-      color: var(--text-muted);
-      font-weight: 400;
-      margin-left: auto;
-      font-size: 12px;
-    }
-    .wl-details {
-      display: none;
-      flex-direction: column;
-      gap: 4px;
-      padding-top: 4px;
-    }
-    .wl-details.is-open { display: flex; }
     .wl-field { display: flex; flex-direction: column; margin-top: 14px; }
     .wl-label {
       font-family: var(--sans);
@@ -1735,6 +1645,13 @@
       overflow: hidden;
     }
 
+    .wl-submit-btn {
+      margin-top: 24px;
+      align-self: center;
+      min-width: 220px;
+    }
+    .wl-submit-btn[disabled] { opacity: 0.6; cursor: not-allowed; transform: none; }
+
     .wl-thankyou {
       max-width: 520px;
       margin: 0 auto;
@@ -1774,10 +1691,8 @@
 
     @media (max-width: 600px) {
       .role-picker { grid-template-columns: repeat(2, 1fr); border-radius: var(--radius); }
-      .email-row { flex-direction: column; border-radius: var(--radius); padding: 8px; }
-      .email-row input[type="email"] { padding: 14px 12px; }
-      .email-row button { width: 100%; }
       .wl-row { grid-template-columns: 1fr; }
+      .wl-submit-btn { width: 100%; min-width: 0; }
     }
 
     /* Footer --------------------------------------------------------- */
@@ -2603,7 +2518,7 @@
     <div class="container waitlist-inner">
       <div class="eyebrow">Join the waitlist</div>
       <h2>We're onboarding weddings <em>personally</em> right now.</h2>
-      <p class="lead" style="margin-left: auto; margin-right: auto;">Tell us a little about your wedding and we'll reach out to get your Tetherly app set up.</p>
+      <p class="lead" style="margin-left: auto; margin-right: auto;">Tell us a little about your wedding and we'll be in touch with next steps.</p>
 
       <form class="waitlist-form" id="waitlistForm" novalidate>
         <div class="role-picker" role="radiogroup" aria-label="I am a...">
@@ -2625,64 +2540,57 @@
           </label>
         </div>
 
-        <div class="email-row">
-          <label for="wl-email" class="sr-only">Email address</label>
-          <input id="wl-email" type="email" name="email" placeholder="you@example.com" required autocomplete="email" />
-          <button type="submit" id="wl-submit">
-            <span id="wl-submit-label">Get on the list</span>
-          </button>
+        <div class="wl-field">
+          <label class="wl-label" for="wl-email">Email</label>
+          <input class="wl-input" id="wl-email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required />
+          <p class="wl-checking" id="wl-email-checking" hidden>Checking email…</p>
+          <p class="wl-warning" id="wl-email-warning" hidden></p>
         </div>
-        <p class="wl-checking" id="wl-email-checking" hidden>Checking email…</p>
-        <p class="wl-warning" id="wl-email-warning" hidden></p>
-        <p class="wl-error" id="wl-error" hidden></p>
 
-        <div class="wl-disclosure" id="wl-disclosure">
-          <button type="button" class="wl-disclosure-toggle" id="wl-disclosure-toggle" aria-expanded="false" aria-controls="wl-details">
-            <span class="wl-chev" aria-hidden="true"></span>
-            <span>Tell us more about your wedding</span>
-            <span class="wl-optional-tag">optional</span>
-          </button>
-          <div class="wl-details" id="wl-details">
-            <div class="wl-field">
-              <label class="wl-label" for="wl-couple">Couple</label>
-              <input class="wl-input" id="wl-couple" name="couple" type="text" placeholder="e.g. Emma & James" autocomplete="name" />
-            </div>
+        <div class="wl-field">
+          <label class="wl-label" for="wl-couple">Couple <span class="wl-optional">(optional)</span></label>
+          <input class="wl-input" id="wl-couple" name="couple" type="text" placeholder="e.g. Emma & James" autocomplete="name" />
+        </div>
 
-            <div class="wl-field">
-              <label class="wl-label" for="wl-date">Wedding date</label>
-              <input class="wl-input" id="wl-date" name="date" type="date" />
-            </div>
+        <div class="wl-field">
+          <label class="wl-label" for="wl-date">Wedding date <span class="wl-optional">(optional)</span></label>
+          <input class="wl-input" id="wl-date" name="date" type="date" />
+        </div>
 
-            <label class="wl-toggle">
-              <input class="wl-toggle-input" type="checkbox" id="wl-multi" />
-              <span class="wl-toggle-box" aria-hidden="true"></span>
-              <span>It's a multi-day celebration</span>
-            </label>
+        <label class="wl-toggle">
+          <input class="wl-toggle-input" type="checkbox" id="wl-multi" />
+          <span class="wl-toggle-box" aria-hidden="true"></span>
+          <span>It's a multi-day celebration</span>
+        </label>
 
-            <div class="wl-field" id="wl-endDate-field" hidden>
-              <label class="wl-label" for="wl-endDate">End date</label>
-              <input class="wl-input" id="wl-endDate" name="endDate" type="date" />
-            </div>
+        <div class="wl-field" id="wl-endDate-field" hidden>
+          <label class="wl-label" for="wl-endDate">End date</label>
+          <input class="wl-input" id="wl-endDate" name="endDate" type="date" />
+        </div>
 
-            <p class="wl-help">Dates can be changed later.</p>
+        <p class="wl-help">Dates can be changed later.</p>
 
-            <div class="wl-row">
-              <div class="wl-field">
-                <label class="wl-label" for="wl-guests">Guests <span class="wl-optional">(optional)</span></label>
-                <input class="wl-input" id="wl-guests" name="guestCount" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="e.g. 120" />
-              </div>
-              <div class="wl-field">
-                <label class="wl-label" for="wl-city">City or venue <span class="wl-optional">(optional)</span></label>
-                <input class="wl-input" id="wl-city" name="city" type="text" placeholder="e.g. Montreux" />
-              </div>
-            </div>
-
-            <div class="wl-field">
-              <label class="wl-label" for="wl-notes">Notes <span class="wl-optional">(optional)</span></label>
-              <textarea class="wl-input wl-textarea" id="wl-notes" name="notes" rows="4" placeholder="Tell us a bit more about your wedding — events, hotels, travel info, and whether this is a destination wedding."></textarea>
-            </div>
+        <div class="wl-row">
+          <div class="wl-field">
+            <label class="wl-label" for="wl-guests">Guests <span class="wl-optional">(optional)</span></label>
+            <input class="wl-input" id="wl-guests" name="guestCount" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="e.g. 120" />
+          </div>
+          <div class="wl-field">
+            <label class="wl-label" for="wl-city">City or venue <span class="wl-optional">(optional)</span></label>
+            <input class="wl-input" id="wl-city" name="city" type="text" placeholder="e.g. Montreux" />
           </div>
         </div>
+
+        <div class="wl-field">
+          <label class="wl-label" for="wl-notes">Notes <span class="wl-optional">(optional)</span></label>
+          <textarea class="wl-input wl-textarea" id="wl-notes" name="notes" rows="4" placeholder="Tell us a bit more about your wedding — events, hotels, travel info, and whether this is a destination wedding."></textarea>
+        </div>
+
+        <p class="wl-error" id="wl-error" hidden></p>
+
+        <button type="submit" class="wl-submit-btn btn btn-primary btn-lg" id="wl-submit">
+          <span id="wl-submit-label">Get on the list</span>
+        </button>
 
         <div class="wl-honeypot" aria-hidden="true">
           <label>Website<input type="text" id="wl-website" name="website" tabindex="-1" autocomplete="off" /></label>
@@ -2699,9 +2607,6 @@
         <p class="wl-thankyou-body">We received your request. We'll reach out at <span class="wl-thankyou-email" id="wl-thankyou-email"></span> within a few days to get your wedding set up.</p>
       </div>
 
-      <p class="waitlist-fineprint">
-        We'll reach out when we can bring your wedding onto Tetherly, or answer whatever you're curious about.
-      </p>
     </div>
   </section>
 
@@ -2772,9 +2677,6 @@
     const emailEl = el('wl-email');
     const emailCheckingEl = el('wl-email-checking');
     const emailWarningEl = el('wl-email-warning');
-    const disclosureEl = el('wl-disclosure');
-    const disclosureToggle = el('wl-disclosure-toggle');
-    const detailsEl = el('wl-details');
     const coupleEl = el('wl-couple');
     const dateEl = el('wl-date');
     const multiEl = el('wl-multi');
@@ -2791,10 +2693,6 @@
     const roleInputs = form.querySelectorAll('input[name="role"]');
 
     let emailWarning = null;
-    // Auto-open the disclosure on the first non-empty email input, but
-    // don't fight the user afterward: once they've explicitly toggled it
-    // (or the auto-open has fired once) we stop touching it.
-    let disclosureAutoOpened = false;
 
     const setHidden = (node, hidden) => {
       if (hidden) node.setAttribute('hidden', '');
@@ -2810,20 +2708,7 @@
       return checked ? checked.value : 'couple';
     };
 
-    const setDisclosureOpen = (open) => {
-      disclosureToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-      detailsEl.classList.toggle('is-open', open);
-    };
-
     roleInputs.forEach((r) => r.addEventListener('change', () => showError('')));
-
-    disclosureToggle.addEventListener('click', () => {
-      const open = disclosureToggle.getAttribute('aria-expanded') === 'true';
-      setDisclosureOpen(!open);
-      // Any explicit toggle counts as the user taking control — stop
-      // auto-opening on further email input.
-      disclosureAutoOpened = true;
-    });
 
     // Toggle end-date field with the multi-day checkbox.
     multiEl.addEventListener('change', () => {
@@ -2834,14 +2719,6 @@
     emailEl.addEventListener('input', () => {
       if (emailWarning) { emailWarning = null; setHidden(emailWarningEl, true); }
       showError('');
-      // First time the user types something in the email field, expand
-      // the "Tell us more about your wedding" section so the extra
-      // fields are already visible when they're deciding whether to
-      // fill them out.
-      if (!disclosureAutoOpened && emailEl.value.trim()) {
-        setDisclosureOpen(true);
-        disclosureAutoOpened = true;
-      }
     });
     coupleEl.addEventListener('input', () => showError(''));
     dateEl.addEventListener('input', () => showError(''));
