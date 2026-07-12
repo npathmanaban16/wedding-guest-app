@@ -1509,16 +1509,144 @@
       margin: 0 auto;
       text-align: center;
     }
-    /* Full-parity intake form — mirrors app/couple-signup.tsx so a request
-       submitted from the site matches the shape of one submitted in-app
-       (same DB row, same edge function, same admin email layout). */
     .waitlist-form {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 14px;
       margin-top: 40px;
       text-align: left;
     }
+    .role-picker {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px;
+    }
+    .role-picker label { cursor: pointer; }
+    .role-picker input { display: none; }
+    .role-picker span {
+      display: block;
+      padding: 10px 12px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border-radius: 999px;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .role-picker input:checked + span {
+      background: var(--text);
+      color: var(--bg);
+    }
+    .email-row {
+      display: flex;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .email-row:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(122, 106, 85, 0.12);
+    }
+    .email-row input[type="email"] {
+      flex: 1;
+      border: none;
+      outline: none;
+      padding: 12px 20px;
+      font-family: var(--sans);
+      font-size: 16px;
+      background: transparent;
+      color: var(--text);
+      min-width: 0;
+    }
+    .email-row input[type="email"]::placeholder { color: var(--text-muted); }
+    .email-row button {
+      border: none;
+      padding: 12px 26px;
+      background: var(--text);
+      color: var(--bg);
+      border-radius: 999px;
+      font-family: var(--sans);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+    .email-row button:hover { transform: translateY(-1px); }
+    .email-row button[disabled] { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    /* Non-blocking MX warning + checking indicator + form-level error.
+       Sit tight against the email row so the user sees them without
+       looking away from the field. */
+    .wl-warning, .wl-checking, .wl-error {
+      font-family: var(--sans);
+      font-size: 13px;
+      margin: 4px 8px 0;
+    }
+    .wl-warning { color: #B54B4B; }
+    .wl-checking { color: var(--text-muted); font-style: italic; }
+    .wl-error {
+      color: #B54B4B;
+      text-align: center;
+      margin: 8px 0 0;
+    }
+
+    /* Optional "Tell us more about your wedding" disclosure. Shown only
+       when role=Couple; expands inline with a subtle animation. */
+    .wl-disclosure {
+      margin-top: 4px;
+      border-top: 1px solid var(--divider);
+      padding-top: 20px;
+      display: none;
+    }
+    .wl-disclosure.is-visible { display: block; }
+    .wl-disclosure-toggle {
+      background: transparent;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--sans);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      transition: color 0.15s ease;
+      width: 100%;
+      text-align: left;
+    }
+    .wl-disclosure-toggle:hover { color: var(--text); }
+    .wl-disclosure-toggle .wl-chev {
+      width: 12px; height: 12px;
+      border-right: 1.5px solid currentColor;
+      border-bottom: 1.5px solid currentColor;
+      transform: rotate(45deg) translate(-1px, -1px);
+      transition: transform 0.2s ease;
+      flex-shrink: 0;
+    }
+    .wl-disclosure-toggle[aria-expanded="true"] .wl-chev {
+      transform: rotate(-135deg) translate(-1px, -1px);
+    }
+    .wl-optional-tag {
+      color: var(--text-muted);
+      font-weight: 400;
+      margin-left: auto;
+      font-size: 12px;
+    }
+    .wl-details {
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      padding-top: 4px;
+    }
+    .wl-details.is-open { display: flex; }
     .wl-field { display: flex; flex-direction: column; margin-top: 14px; }
     .wl-label {
       font-family: var(--sans);
@@ -1577,11 +1705,9 @@
       align-items: center;
       justify-content: center;
       transition: background 0.15s ease, border-color 0.15s ease;
+      flex-shrink: 0;
     }
-    .wl-toggle-input:checked + .wl-toggle-box {
-      background: var(--primary);
-      border-color: var(--primary);
-    }
+    .wl-toggle-input:checked + .wl-toggle-box { background: var(--primary); border-color: var(--primary); }
     .wl-toggle-input:checked + .wl-toggle-box::after {
       content: '';
       width: 5px; height: 10px;
@@ -1599,20 +1725,6 @@
       color: var(--text-muted);
       margin: 4px 0 8px;
     }
-    .wl-warning, .wl-checking {
-      font-family: var(--sans);
-      font-size: 12px;
-      color: #B54B4B;
-      margin: 6px 0 0;
-    }
-    .wl-checking { color: var(--text-muted); font-style: italic; }
-    .wl-error {
-      font-family: var(--sans);
-      font-size: 13px;
-      color: #B54B4B;
-      text-align: center;
-      margin: 12px 0 0;
-    }
     /* Off-screen honeypot — real people never see it; naive bots fill it
        in and the submit handler silently discards the request. */
     .wl-honeypot {
@@ -1622,22 +1734,6 @@
       width: 1px; height: 1px;
       overflow: hidden;
     }
-    .wl-submit {
-      margin-top: 28px;
-      align-self: center;
-      min-width: 200px;
-    }
-    .wl-submit[disabled] { opacity: 0.6; cursor: not-allowed; }
-    .wl-submit-spinner {
-      display: inline-block;
-      width: 16px; height: 16px;
-      border: 2px solid rgba(255, 255, 255, 0.35);
-      border-top-color: #FFFFFF;
-      border-radius: 50%;
-      animation: wl-spin 0.75s linear infinite;
-      margin-left: 6px;
-    }
-    @keyframes wl-spin { to { transform: rotate(360deg); } }
 
     .wl-thankyou {
       max-width: 520px;
@@ -1677,8 +1773,11 @@
     }
 
     @media (max-width: 600px) {
+      .role-picker { grid-template-columns: repeat(2, 1fr); border-radius: var(--radius); }
+      .email-row { flex-direction: column; border-radius: var(--radius); padding: 8px; }
+      .email-row input[type="email"] { padding: 14px 12px; }
+      .email-row button { width: 100%; }
       .wl-row { grid-template-columns: 1fr; }
-      .wl-submit { width: 100%; }
     }
 
     /* Footer --------------------------------------------------------- */
@@ -2507,66 +2606,87 @@
       <p class="lead" style="margin-left: auto; margin-right: auto;">Tell us a little about your wedding and we'll reach out to get your Tetherly app set up.</p>
 
       <form class="waitlist-form" id="waitlistForm" novalidate>
-        <div class="wl-field">
-          <label class="wl-label" for="wl-couple">Couple</label>
-          <input class="wl-input" id="wl-couple" name="couple" type="text" placeholder="e.g. Emma & James" autocomplete="name" required />
+        <div class="role-picker" role="radiogroup" aria-label="I am a...">
+          <label>
+            <input type="radio" name="role" value="couple" checked />
+            <span>Couple</span>
+          </label>
+          <label>
+            <input type="radio" name="role" value="planner" />
+            <span>Planner</span>
+          </label>
+          <label>
+            <input type="radio" name="role" value="vendor" />
+            <span>Vendor</span>
+          </label>
+          <label>
+            <input type="radio" name="role" value="curious" />
+            <span>Just curious</span>
+          </label>
         </div>
 
-        <div class="wl-field">
-          <label class="wl-label" for="wl-date">Wedding date</label>
-          <input class="wl-input" id="wl-date" name="date" type="date" required />
+        <div class="email-row">
+          <label for="wl-email" class="sr-only">Email address</label>
+          <input id="wl-email" type="email" name="email" placeholder="you@example.com" required autocomplete="email" />
+          <button type="submit" id="wl-submit">
+            <span id="wl-submit-label">Get on the list</span>
+          </button>
         </div>
+        <p class="wl-checking" id="wl-email-checking" hidden>Checking email…</p>
+        <p class="wl-warning" id="wl-email-warning" hidden></p>
+        <p class="wl-error" id="wl-error" hidden></p>
 
-        <label class="wl-toggle">
-          <input class="wl-toggle-input" type="checkbox" id="wl-multi" />
-          <span class="wl-toggle-box" aria-hidden="true"></span>
-          <span>It's a multi-day celebration</span>
-        </label>
+        <div class="wl-disclosure" id="wl-disclosure">
+          <button type="button" class="wl-disclosure-toggle" id="wl-disclosure-toggle" aria-expanded="false" aria-controls="wl-details">
+            <span class="wl-chev" aria-hidden="true"></span>
+            <span>Tell us more about your wedding</span>
+            <span class="wl-optional-tag">optional</span>
+          </button>
+          <div class="wl-details" id="wl-details">
+            <div class="wl-field">
+              <label class="wl-label" for="wl-couple">Couple</label>
+              <input class="wl-input" id="wl-couple" name="couple" type="text" placeholder="e.g. Emma & James" autocomplete="name" />
+            </div>
 
-        <div class="wl-field" id="wl-endDate-field" hidden>
-          <label class="wl-label" for="wl-endDate">End date</label>
-          <input class="wl-input" id="wl-endDate" name="endDate" type="date" />
-        </div>
+            <div class="wl-field">
+              <label class="wl-label" for="wl-date">Wedding date</label>
+              <input class="wl-input" id="wl-date" name="date" type="date" />
+            </div>
 
-        <p class="wl-help">Dates can be changed later.</p>
+            <label class="wl-toggle">
+              <input class="wl-toggle-input" type="checkbox" id="wl-multi" />
+              <span class="wl-toggle-box" aria-hidden="true"></span>
+              <span>It's a multi-day celebration</span>
+            </label>
 
-        <div class="wl-field">
-          <label class="wl-label" for="wl-email">Email</label>
-          <input class="wl-input" id="wl-email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required />
-          <p class="wl-checking" id="wl-email-checking" hidden>Checking email…</p>
-          <p class="wl-warning" id="wl-email-warning" hidden></p>
-        </div>
+            <div class="wl-field" id="wl-endDate-field" hidden>
+              <label class="wl-label" for="wl-endDate">End date</label>
+              <input class="wl-input" id="wl-endDate" name="endDate" type="date" />
+            </div>
 
-        <div class="wl-field" id="wl-confirm-field" hidden>
-          <label class="wl-label" for="wl-confirm-email">Confirm email</label>
-          <input class="wl-input" id="wl-confirm-email" name="confirmEmail" type="email" placeholder="you@example.com" autocomplete="email" />
-        </div>
+            <p class="wl-help">Dates can be changed later.</p>
 
-        <div class="wl-row">
-          <div class="wl-field">
-            <label class="wl-label" for="wl-guests">Guests <span class="wl-optional">(optional)</span></label>
-            <input class="wl-input" id="wl-guests" name="guestCount" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="e.g. 120" />
+            <div class="wl-row">
+              <div class="wl-field">
+                <label class="wl-label" for="wl-guests">Guests <span class="wl-optional">(optional)</span></label>
+                <input class="wl-input" id="wl-guests" name="guestCount" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="e.g. 120" />
+              </div>
+              <div class="wl-field">
+                <label class="wl-label" for="wl-city">City or venue <span class="wl-optional">(optional)</span></label>
+                <input class="wl-input" id="wl-city" name="city" type="text" placeholder="e.g. Montreux" />
+              </div>
+            </div>
+
+            <div class="wl-field">
+              <label class="wl-label" for="wl-notes">Notes <span class="wl-optional">(optional)</span></label>
+              <textarea class="wl-input wl-textarea" id="wl-notes" name="notes" rows="4" placeholder="Tell us a bit more about your wedding — events, hotels, travel info, and whether this is a destination wedding."></textarea>
+            </div>
           </div>
-          <div class="wl-field">
-            <label class="wl-label" for="wl-city">City or venue <span class="wl-optional">(optional)</span></label>
-            <input class="wl-input" id="wl-city" name="city" type="text" placeholder="e.g. Montreux" />
-          </div>
-        </div>
-
-        <div class="wl-field">
-          <label class="wl-label" for="wl-notes">Notes <span class="wl-optional">(optional)</span></label>
-          <textarea class="wl-input wl-textarea" id="wl-notes" name="notes" rows="4" placeholder="Tell us a bit more about your wedding — events, hotels, travel info, and whether this is a destination wedding."></textarea>
         </div>
 
         <div class="wl-honeypot" aria-hidden="true">
           <label>Website<input type="text" id="wl-website" name="website" tabindex="-1" autocomplete="off" /></label>
         </div>
-
-        <p class="wl-error" id="wl-error" hidden></p>
-
-        <button type="submit" class="wl-submit btn btn-primary btn-lg" id="wl-submit">
-          <span id="wl-submit-label">Request access</span>
-        </button>
       </form>
 
       <div class="wl-thankyou" id="waitlistThankyou" hidden>
@@ -2630,11 +2750,15 @@
 </footer>
 
 <script>
-  // Waitlist form → Supabase. Mirrors app/couple-signup.tsx: same
-  // wedding_requests row shape, same send-wedding-request edge function,
-  // tagged with source: 'web' so the admin email shows where the
-  // request came from. The anon key below is already public in the
-  // shipped app bundle, so exposing it here doesn't leak anything new.
+  // Waitlist form → Supabase. Two shapes:
+  //  - Simple (default): role + email → waitlist_signups row + admin email
+  //  - Rich (Couple + expanded "Tell us more" section): waitlist_signups
+  //    row PLUS a mirrored wedding_requests row (so the existing in-app
+  //    triage flow keeps picking couples up) + rich admin email +
+  //    couple confirmation reply. Both paths hit the same
+  //    send-wedding-request edge function; it adapts by payload shape.
+  // The anon key below is already public in the shipped app bundle, so
+  // exposing it here doesn't leak anything new.
   (function () {
     const SUPABASE_URL = 'https://anezjniflzoxfzxyctja.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_4uSK3ecrM5RBce-3aDh_cw_2YjutNTQ';
@@ -2645,16 +2769,17 @@
     if (!form || !thankyou) return;
 
     const el = (id) => document.getElementById(id);
+    const emailEl = el('wl-email');
+    const emailCheckingEl = el('wl-email-checking');
+    const emailWarningEl = el('wl-email-warning');
+    const disclosureEl = el('wl-disclosure');
+    const disclosureToggle = el('wl-disclosure-toggle');
+    const detailsEl = el('wl-details');
     const coupleEl = el('wl-couple');
     const dateEl = el('wl-date');
     const multiEl = el('wl-multi');
     const endField = el('wl-endDate-field');
     const endDateEl = el('wl-endDate');
-    const emailEl = el('wl-email');
-    const emailCheckingEl = el('wl-email-checking');
-    const emailWarningEl = el('wl-email-warning');
-    const confirmField = el('wl-confirm-field');
-    const confirmEmailEl = el('wl-confirm-email');
     const guestsEl = el('wl-guests');
     const cityEl = el('wl-city');
     const notesEl = el('wl-notes');
@@ -2663,9 +2788,9 @@
     const submitBtn = el('wl-submit');
     const submitLabel = el('wl-submit-label');
     const thankyouEmailEl = el('wl-thankyou-email');
+    const roleInputs = form.querySelectorAll('input[name="role"]');
 
     let emailWarning = null;
-    let checkingEmail = false;
 
     const setHidden = (node, hidden) => {
       if (hidden) node.setAttribute('hidden', '');
@@ -2676,6 +2801,29 @@
       errorEl.textContent = msg;
       setHidden(errorEl, false);
     };
+    const getRole = () => {
+      const checked = form.querySelector('input[name="role"]:checked');
+      return checked ? checked.value : 'couple';
+    };
+
+    // The "Tell us more about your wedding" disclosure only makes sense
+    // for couples. Show it when role=Couple; hide (and close) otherwise.
+    const syncDisclosure = () => {
+      const isCouple = getRole() === 'couple';
+      disclosureEl.classList.toggle('is-visible', isCouple);
+      if (!isCouple) {
+        disclosureToggle.setAttribute('aria-expanded', 'false');
+        detailsEl.classList.remove('is-open');
+      }
+    };
+    roleInputs.forEach((r) => r.addEventListener('change', () => { syncDisclosure(); showError(''); }));
+    syncDisclosure();
+
+    disclosureToggle.addEventListener('click', () => {
+      const open = disclosureToggle.getAttribute('aria-expanded') === 'true';
+      disclosureToggle.setAttribute('aria-expanded', open ? 'false' : 'true');
+      detailsEl.classList.toggle('is-open', !open);
+    });
 
     // Toggle end-date field with the multi-day checkbox.
     multiEl.addEventListener('change', () => {
@@ -2683,17 +2831,13 @@
       if (!multiEl.checked) endDateEl.value = '';
     });
 
-    // Reveal the "confirm email" field only after the user starts typing
-    // in the email field — mirrors the app.
     emailEl.addEventListener('input', () => {
-      setHidden(confirmField, !emailEl.value);
       if (emailWarning) { emailWarning = null; setHidden(emailWarningEl, true); }
       showError('');
     });
     coupleEl.addEventListener('input', () => showError(''));
     dateEl.addEventListener('input', () => showError(''));
     endDateEl.addEventListener('input', () => showError(''));
-    confirmEmailEl.addEventListener('input', () => showError(''));
     guestsEl.addEventListener('input', () => {
       guestsEl.value = guestsEl.value.replace(/[^0-9]/g, '');
     });
@@ -2706,7 +2850,6 @@
         emailWarning = null; setHidden(emailWarningEl, true); return;
       }
       const domain = trimmed.split('@')[1];
-      checkingEmail = true;
       setHidden(emailCheckingEl, false);
       setHidden(emailWarningEl, true);
       try {
@@ -2730,31 +2873,34 @@
         }
       } catch { /* network hiccups shouldn't block a legit signup */ }
       finally {
-        checkingEmail = false;
         setHidden(emailCheckingEl, true);
       }
     });
 
-    const validate = () => {
-      const coupleName = coupleEl.value.trim();
-      const start = dateEl.value;
-      const end = endDateEl.value;
+    const validate = (hasWeddingDetails) => {
       const email = emailEl.value.trim();
-      const confirm = confirmEmailEl.value.trim();
-      if (!coupleName) return 'Please enter the couple name.';
-      if (!start) return 'Please enter your wedding date.';
-      if (multiEl.checked && !end) return 'Please enter the end date, or turn off multi-day.';
-      if (multiEl.checked && end && end < start) return 'End date must be after the start date.';
       if (!email) return 'Please enter your email.';
       if (!EMAIL_RE.test(email)) return 'That email doesn’t look right.';
       if (emailWarning) return emailWarning;
-      if (email.toLowerCase() !== confirm.toLowerCase()) return 'Email addresses don’t match.';
+      if (hasWeddingDetails) {
+        const start = dateEl.value;
+        const end = endDateEl.value;
+        // In the expanded couple section, couple name + date are only
+        // required if the couple actually filled anything in — a partial
+        // fill (name but no date, or date but no name) is what we catch.
+        const partialCouple = !!coupleEl.value.trim() !== !!start;
+        if (partialCouple) {
+          return 'Please fill in both the couple name and the wedding date, or clear both.';
+        }
+        if (multiEl.checked && !end) return 'Please enter the end date, or turn off multi-day.';
+        if (multiEl.checked && end && end < start) return 'End date must be after the start date.';
+      }
       return null;
     };
 
     const setLoading = (loading) => {
       submitBtn.disabled = loading;
-      submitLabel.textContent = loading ? 'Sending…' : 'Request access';
+      submitLabel.textContent = loading ? 'Sending…' : 'Get on the list';
     };
 
     const supabaseFetch = (path, init) => {
@@ -2769,50 +2915,66 @@
       });
     };
 
+    const mapDbError = (errText) => {
+      const lc = (errText || '').toLowerCase();
+      if (lc.includes('rate_limited')) {
+        return 'You just submitted a request. Please wait a minute before trying again.';
+      }
+      if (lc.includes('disposable_email')) {
+        return 'Please use a non-disposable email address.';
+      }
+      return null;
+    };
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       showError('');
-      const msg = validate();
+      const role = getRole();
+      const couple = coupleEl.value.trim();
+      const start = dateEl.value;
+      const hasWeddingDetails = role === 'couple' && !!(couple || start || guestsEl.value || cityEl.value || notesEl.value.trim() || multiEl.checked);
+      const isFullWeddingRequest = role === 'couple' && !!couple && !!start;
+
+      const msg = validate(hasWeddingDetails);
       if (msg) { showError(msg); return; }
       setLoading(true);
 
+      const email = emailEl.value.trim();
+      const parsedGuests = parseInt(guestsEl.value.trim(), 10);
+      const guestCount = Number.isFinite(parsedGuests) ? parsedGuests : null;
+      const weddingDateEnd = multiEl.checked && endDateEl.value ? endDateEl.value : null;
+
       // Honeypot: bot filled the hidden field. Pretend success so it
-      // doesn't retry, but skip the DB insert entirely.
+      // doesn't retry, but skip every DB / email call.
       if (websiteEl.value.trim()) {
-        thankyouEmailEl.textContent = emailEl.value.trim();
+        thankyouEmailEl.textContent = email;
         setHidden(form, true);
         setHidden(thankyou, false);
         setLoading(false);
         return;
       }
 
-      const parsedGuests = parseInt(guestsEl.value.trim(), 10);
-      const dbPayload = {
-        couple_name: coupleEl.value.trim(),
-        wedding_date_start: dateEl.value,
-        wedding_date_end: multiEl.checked && endDateEl.value ? endDateEl.value : null,
-        email: emailEl.value.trim(),
-        guest_count: Number.isFinite(parsedGuests) ? parsedGuests : null,
+      const waitlistRow = {
+        email,
+        role,
+        couple_name: couple || null,
+        wedding_date_start: start || null,
+        wedding_date_end: weddingDateEnd,
+        guest_count: guestCount,
         city: cityEl.value.trim() || null,
         notes: notesEl.value.trim() || null,
       };
 
+      // 1) Always land the row in waitlist_signups.
       try {
-        const res = await supabaseFetch('/rest/v1/wedding_requests', {
+        const res = await supabaseFetch('/rest/v1/waitlist_signups', {
           method: 'POST',
           headers: { 'Prefer': 'return=minimal' },
-          body: JSON.stringify(dbPayload),
+          body: JSON.stringify(waitlistRow),
         });
         if (!res.ok) {
           const errText = await res.text().catch(() => '');
-          const lc = errText.toLowerCase();
-          if (lc.includes('rate_limited')) {
-            showError('You just submitted a request. Please wait a minute before trying again.');
-          } else if (lc.includes('disposable_email')) {
-            showError('Please use a non-disposable email address.');
-          } else {
-            showError('Something went wrong saving your request. Please try again.');
-          }
+          showError(mapDbError(errText) ?? 'Something went wrong saving your request. Please try again.');
           setLoading(false);
           return;
         }
@@ -2822,24 +2984,51 @@
         return;
       }
 
-      // Fire-and-forget email notification, same as the app. If it
-      // fails, the DB row is still saved and the admin sees the request
-      // in the dashboard.
+      // 2) If it's a full couple submission (Couple role + couple name +
+      //    wedding date), also mirror into wedding_requests so the
+      //    existing in-app triage flow picks them up too. This one is
+      //    best-effort — waitlist_signups is the source of truth for web
+      //    signups.
+      if (isFullWeddingRequest) {
+        try {
+          await supabaseFetch('/rest/v1/wedding_requests', {
+            method: 'POST',
+            headers: { 'Prefer': 'return=minimal' },
+            body: JSON.stringify({
+              couple_name: couple,
+              wedding_date_start: start,
+              wedding_date_end: weddingDateEnd,
+              email,
+              guest_count: guestCount,
+              city: waitlistRow.city,
+              notes: waitlistRow.notes,
+            }),
+          });
+        } catch (err) {
+          console.warn('wedding_requests mirror failed (waitlist_signups still saved):', err);
+        }
+      }
+
+      // 3) Fire-and-forget email notification via the edge function. It
+      //    branches on payload shape — rich admin email + couple
+      //    confirmation for wedding requests, simple admin email for
+      //    plain waitlist signups. Failing here doesn't fail the request.
       supabaseFetch('/functions/v1/send-wedding-request', {
         method: 'POST',
         body: JSON.stringify({
-          coupleName: dbPayload.couple_name,
-          weddingDateStart: dbPayload.wedding_date_start,
-          weddingDateEnd: dbPayload.wedding_date_end,
-          email: dbPayload.email,
-          guestCount: dbPayload.guest_count,
-          city: dbPayload.city,
-          notes: dbPayload.notes,
+          email,
+          role,
+          coupleName: isFullWeddingRequest ? couple : null,
+          weddingDateStart: isFullWeddingRequest ? start : null,
+          weddingDateEnd: isFullWeddingRequest ? weddingDateEnd : null,
+          guestCount,
+          city: waitlistRow.city,
+          notes: waitlistRow.notes,
           source: 'web',
         }),
       }).catch((err) => console.warn('send-wedding-request invoke failed:', err));
 
-      thankyouEmailEl.textContent = dbPayload.email;
+      thankyouEmailEl.textContent = email;
       setHidden(form, true);
       setHidden(thankyou, false);
       setLoading(false);
