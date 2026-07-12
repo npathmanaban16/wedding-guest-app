@@ -1557,6 +1557,12 @@
       margin: 8px 0 0;
     }
 
+    /* Wedding fields stay hidden until the user starts typing an email;
+       display: contents when open so the children participate in the
+       .waitlist-form flex-column layout exactly as before. */
+    .wl-extras { display: none; }
+    .wl-extras.is-visible { display: contents; }
+
     .wl-field { display: flex; flex-direction: column; margin-top: 14px; }
     .wl-label {
       font-family: var(--sans);
@@ -2547,43 +2553,45 @@
           <p class="wl-warning" id="wl-email-warning" hidden></p>
         </div>
 
-        <div class="wl-field">
-          <label class="wl-label" for="wl-couple">Couple <span class="wl-optional">(optional)</span></label>
-          <input class="wl-input" id="wl-couple" name="couple" type="text" placeholder="e.g. Emma & James" autocomplete="name" />
-        </div>
-
-        <div class="wl-field">
-          <label class="wl-label" for="wl-date">Wedding date <span class="wl-optional">(optional)</span></label>
-          <input class="wl-input" id="wl-date" name="date" type="date" />
-        </div>
-
-        <label class="wl-toggle">
-          <input class="wl-toggle-input" type="checkbox" id="wl-multi" />
-          <span class="wl-toggle-box" aria-hidden="true"></span>
-          <span>It's a multi-day celebration</span>
-        </label>
-
-        <div class="wl-field" id="wl-endDate-field" hidden>
-          <label class="wl-label" for="wl-endDate">End date</label>
-          <input class="wl-input" id="wl-endDate" name="endDate" type="date" />
-        </div>
-
-        <p class="wl-help">Dates can be changed later.</p>
-
-        <div class="wl-row">
+        <div class="wl-extras" id="wl-extras">
           <div class="wl-field">
-            <label class="wl-label" for="wl-guests">Guests <span class="wl-optional">(optional)</span></label>
-            <input class="wl-input" id="wl-guests" name="guestCount" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="e.g. 120" />
+            <label class="wl-label" for="wl-couple">Name(s) <span class="wl-optional">(optional)</span></label>
+            <input class="wl-input" id="wl-couple" name="couple" type="text" placeholder="e.g. Emma & James" autocomplete="name" />
           </div>
-          <div class="wl-field">
-            <label class="wl-label" for="wl-city">City or venue <span class="wl-optional">(optional)</span></label>
-            <input class="wl-input" id="wl-city" name="city" type="text" placeholder="e.g. Montreux" />
-          </div>
-        </div>
 
-        <div class="wl-field">
-          <label class="wl-label" for="wl-notes">Notes <span class="wl-optional">(optional)</span></label>
-          <textarea class="wl-input wl-textarea" id="wl-notes" name="notes" rows="4" placeholder="Tell us a bit more about your wedding — events, hotels, travel info, and whether this is a destination wedding."></textarea>
+          <div class="wl-field">
+            <label class="wl-label" for="wl-date">Wedding date <span class="wl-optional">(optional)</span></label>
+            <input class="wl-input" id="wl-date" name="date" type="date" />
+          </div>
+
+          <label class="wl-toggle">
+            <input class="wl-toggle-input" type="checkbox" id="wl-multi" />
+            <span class="wl-toggle-box" aria-hidden="true"></span>
+            <span>It's a multi-day celebration</span>
+          </label>
+
+          <div class="wl-field" id="wl-endDate-field" hidden>
+            <label class="wl-label" for="wl-endDate">End date</label>
+            <input class="wl-input" id="wl-endDate" name="endDate" type="date" />
+          </div>
+
+          <p class="wl-help">Dates can be changed later.</p>
+
+          <div class="wl-row">
+            <div class="wl-field">
+              <label class="wl-label" for="wl-guests">Guests <span class="wl-optional">(optional)</span></label>
+              <input class="wl-input" id="wl-guests" name="guestCount" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="e.g. 120" />
+            </div>
+            <div class="wl-field">
+              <label class="wl-label" for="wl-city">City or venue <span class="wl-optional">(optional)</span></label>
+              <input class="wl-input" id="wl-city" name="city" type="text" placeholder="e.g. Montreux" />
+            </div>
+          </div>
+
+          <div class="wl-field">
+            <label class="wl-label" for="wl-notes">Notes <span class="wl-optional">(optional)</span></label>
+            <textarea class="wl-input wl-textarea" id="wl-notes" name="notes" rows="4" placeholder="Tell us a bit more about your wedding — events, hotels, travel info, and whether this is a destination wedding."></textarea>
+          </div>
         </div>
 
         <p class="wl-error" id="wl-error" hidden></p>
@@ -2677,6 +2685,7 @@
     const emailEl = el('wl-email');
     const emailCheckingEl = el('wl-email-checking');
     const emailWarningEl = el('wl-email-warning');
+    const extrasEl = el('wl-extras');
     const coupleEl = el('wl-couple');
     const dateEl = el('wl-date');
     const multiEl = el('wl-multi');
@@ -2719,6 +2728,10 @@
     emailEl.addEventListener('input', () => {
       if (emailWarning) { emailWarning = null; setHidden(emailWarningEl, true); }
       showError('');
+      // First keystroke in the email field reveals the rest of the form
+      // (couple/wedding details). Stays open once shown so the layout
+      // doesn't jump if the user clears the field.
+      if (emailEl.value.trim()) extrasEl.classList.add('is-visible');
     });
     coupleEl.addEventListener('input', () => showError(''));
     dateEl.addEventListener('input', () => showError(''));
