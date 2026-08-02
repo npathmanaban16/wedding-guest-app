@@ -101,9 +101,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       supportsTablet: false,
       bundleIdentifier: v.bundleIdentifier,
       infoPlist: {
-        NSPhotoLibraryUsageDescription:       `Allow ${v.usageDescriptionSubject} to access your photos to share memories.`,
-        NSCameraUsageDescription:             `Allow ${v.usageDescriptionSubject} to use your camera to capture memories.`,
-        NSPhotoLibraryAddUsageDescription:    `Allow ${v.usageDescriptionSubject} to save photos.`,
+        NSPhotoLibraryUsageDescription:       `${v.usageDescriptionSubject} accesses your photo library so you can pick a photo to upload — for example, setting your guest profile picture or attaching a photo to a message you post in the wedding chat.`,
+        NSCameraUsageDescription:             `${v.usageDescriptionSubject} uses your camera so you can take a photo to upload — for example, capturing a new guest profile picture or a photo to attach to a message in the wedding chat.`,
         NSUserNotificationsUsageDescription:  `Allow ${v.usageDescriptionSubject} to send you wedding updates and reminders.`,
         // Declares the app does not use non-exempt encryption, so App Store
         // submissions don't prompt the export-compliance questionnaire.
@@ -139,8 +138,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       [
         'expo-image-picker',
         {
-          photosPermission: `Allow ${v.usageDescriptionSubject} to access your photos.`,
-          cameraPermission: `Allow ${v.usageDescriptionSubject} to use your camera.`,
+          photosPermission: `${v.usageDescriptionSubject} accesses your photo library so you can pick a photo to upload — for example, setting your guest profile picture or attaching a photo to a message you post in the wedding chat.`,
+          cameraPermission: `${v.usageDescriptionSubject} uses your camera so you can take a photo to upload — for example, capturing a new guest profile picture or a photo to attach to a message in the wedding chat.`,
         },
       ],
       [
