@@ -55,7 +55,7 @@ insert into public.weddings (
   'Arjun & Ila',
   '2026-09-12T19:00:00Z',
   'The Ritz-Carlton, Laguna Niguel',
-  'Laguna Niguel',
+  'Dana Point',
   '#ArjunAndIla2026',
   'https://example.com/arjun-and-ila',
   'neha.pathmanaban.2016@gmail.com',
@@ -382,7 +382,7 @@ on conflict (wedding_id, event_id) do update set
 
 
 -- ─── Destination Guide ───────────────────────────────────────────────────────
--- Laguna Niguel / Orange County content tailored to Arjun & Ila's wedding.
+-- Dana Point / Orange County content tailored to Arjun & Ila's wedding.
 -- Stored as a single wedding_guides row (migration 027). currency_code is
 -- left null — this is a domestic US wedding and the live-FX widget isn't
 -- relevant. photo_strip is empty for now; upload Ritz / coast photos to the
@@ -397,15 +397,15 @@ insert into public.wedding_guides (
   currency_code, filter_pills, sections, quick_facts, photo_strip
 ) values (
   'a0000000-0000-0000-0000-000000000003',
-  'Laguna Niguel Guide',
+  'Dana Point Guide',
   'Orange County & Beyond',
-  'Everything you need to know about Laguna Niguel and making the most of your trip.',
+  'Everything you need to know about Dana Point and making the most of your trip.',
   null,
   $g$["All","Transport","Sightseeing","Activity","Restaurant","Bar","Practical"]$g$::jsonb,
   $g$[
     {
       "id": "getting-there",
-      "title": "Getting to Laguna Niguel",
+      "title": "Getting to Dana Point",
       "emoji": "✈️",
       "items": [
         {
@@ -621,7 +621,7 @@ insert into public.wedding_guides (
           "id": "driving",
           "name": "Driving",
           "category": "Practical",
-          "description": "Driving is on the right. Right turn on red is permitted unless posted otherwise. The 73 is a toll road running north from Laguna Niguel toward Newport — about $8 each way if you take it back to SNA or LAX."
+          "description": "Driving is on the right. Right turn on red is permitted unless posted otherwise. The 73 is a toll road running north from Dana Point toward Newport — about $8 each way if you take it back to SNA or LAX."
         },
         {
           "id": "plug",
@@ -666,7 +666,7 @@ insert into public.wedding_guides (
 
 
 -- ─── Packing List ────────────────────────────────────────────────────────────
--- Laguna Niguel / Orange County / Indian + black-tie packing content
+-- Dana Point / Orange County / Indian + black-tie packing content
 -- tailored to Arjun & Ila's weekend. Stored as a single row in
 -- public.wedding_packing_lists (migration 028).
 --
@@ -935,7 +935,7 @@ insert into public.wedding_packing_lists (
   ]$g$::jsonb,
   $g${
     "title": "Tip: Pack for sun by day, ocean breeze by night",
-    "text": "September in Laguna Niguel is warm and dry during the day but can be cool and windy in the evening. Pack a light layer for the outdoor ceremony and evening events by the water, and don't forget sunscreen for the noon Bluffs Lawn ceremony."
+    "text": "September in Dana Point is warm and dry during the day but can be cool and windy in the evening. Pack a light layer for the outdoor ceremony and evening events by the water, and don't forget sunscreen for the noon Bluffs Lawn ceremony."
   }$g$::jsonb
 ) on conflict (wedding_id) do update set
   page_title         = excluded.page_title,
