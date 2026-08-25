@@ -152,6 +152,7 @@ export default function CoupleSignupScreen() {
         guestCount: payload.guest_count,
         city: payload.city,
         notes: payload.notes,
+        source: 'app',
       },
     }).catch((e) => console.warn('send-wedding-request invoke failed:', e));
 

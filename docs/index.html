@@ -323,7 +323,12 @@
       }
       .hero-copy p { margin-left: auto; margin-right: auto; }
       .hero-ctas { justify-content: center; }
-      .hero-visual { order: -1; }
+      /* Store badges are flex items, so text-align on .hero-copy doesn't
+         reach them — center them explicitly. */
+      .stores { justify-content: center; }
+      /* On mobile, keep DOM order: hero copy (headline + CTA) first, phone
+         mockup below. Puts the pitch and "Join the waitlist" in the first
+         viewport instead of behind a 620px phone. */
     }
 
     /* App Store badges ---------------------------------------------- */
@@ -1436,6 +1441,55 @@
       flex-shrink: 0;
       margin-top: 4px;
     }
+
+    /* Ask animation: each message bubble starts faded/lifted and slides
+       in when JS adds .is-visible. The assistant bubble shows a 3-dot
+       "thinking" indicator (mirrors the app's ActivityIndicator spinner
+       inside a pending assistant bubble) and swaps to the answer text
+       when .is-answered lands. */
+    .ask-msg {
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    .ask-msg.is-visible { opacity: 1; transform: none; }
+    .ask-answer .ask-text { display: none; }
+    .ask-answer.is-answered .ask-loading { display: none; }
+    .ask-answer.is-answered .ask-text {
+      display: block;
+      animation: ask-fade-in 0.4s ease;
+    }
+    @keyframes ask-fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .ask-loading {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 2px;
+    }
+    .ask-loading > span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--primary);
+      opacity: 0.35;
+      animation: ask-dot 1.2s infinite ease-in-out;
+    }
+    .ask-loading > span:nth-child(2) { animation-delay: 0.18s; }
+    .ask-loading > span:nth-child(3) { animation-delay: 0.36s; }
+    @keyframes ask-dot {
+      0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+      30% { opacity: 1; transform: translateY(-3px); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .ask-msg { opacity: 1; transform: none; transition: none; }
+      .ask-loading > span { animation: none; opacity: 0.55; }
+      .ask-answer .ask-loading { display: none; }
+      .ask-answer .ask-text { display: block; }
+    }
+
     /* Founder story -------------------------------------------------- */
     .founder {
       background: var(--text);
@@ -1520,9 +1574,7 @@
       border-radius: 999px;
       padding: 6px;
     }
-    .role-picker label {
-      cursor: pointer;
-    }
+    .role-picker label { cursor: pointer; }
     .role-picker input { display: none; }
     .role-picker span {
       display: block;
@@ -1538,43 +1590,153 @@
       background: var(--text);
       color: var(--bg);
     }
-    .email-row {
-      display: flex;
-      gap: 10px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 6px;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    /* Non-blocking MX warning + checking indicator + form-level error.
+       Sit tight against the email field so the user sees them without
+       looking away from the input. */
+    .wl-warning, .wl-checking, .wl-error {
+      font-family: var(--sans);
+      font-size: 13px;
+      margin: 6px 4px 0;
     }
-    .email-row:focus-within {
+    .wl-warning { color: #B54B4B; }
+    .wl-checking { color: var(--text-muted); font-style: italic; }
+    .wl-error {
+      color: #B54B4B;
+      text-align: center;
+      margin: 8px 0 0;
+    }
+
+    /* Wedding fields stay hidden until the user starts typing an email;
+       display: contents when open so the children participate in the
+       .waitlist-form flex-column layout exactly as before. */
+    .wl-extras { display: none; }
+    .wl-extras.is-visible { display: contents; }
+
+    .wl-field { display: flex; flex-direction: column; margin-top: 14px; }
+    .wl-label {
+      font-family: var(--sans);
+      font-weight: 500;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .wl-optional {
+      font-weight: 400;
+      font-size: 9px;
+      letter-spacing: 0.05em;
+      text-transform: none;
+      color: var(--text-muted);
+    }
+    .wl-input {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-family: var(--sans);
+      font-size: 15px;
+      color: var(--text);
+      background: var(--surface);
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .wl-input:focus {
       border-color: var(--primary);
       box-shadow: 0 0 0 4px rgba(122, 106, 85, 0.12);
     }
-    .email-row input[type="email"] {
-      flex: 1;
-      border: none;
-      outline: none;
-      padding: 12px 20px;
+    .wl-input::placeholder { color: var(--text-muted); }
+    .wl-textarea { min-height: 96px; resize: vertical; padding-top: 12px; font-family: var(--sans); }
+    .wl-row { display: grid; grid-template-columns: 1fr 1.6fr; gap: 10px; }
+    .wl-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+      cursor: pointer;
+      font-family: var(--sans);
+      font-size: 14px;
+      color: var(--text-secondary);
+      user-select: none;
+    }
+    .wl-toggle-input { position: absolute; opacity: 0; pointer-events: none; }
+    .wl-toggle-box {
+      width: 20px; height: 20px;
+      border: 1px solid var(--border-strong);
+      border-radius: 5px;
+      background: var(--surface);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease, border-color 0.15s ease;
+      flex-shrink: 0;
+    }
+    .wl-toggle-input:checked + .wl-toggle-box { background: var(--primary); border-color: var(--primary); }
+    .wl-toggle-input:checked + .wl-toggle-box::after {
+      content: '';
+      width: 5px; height: 10px;
+      border: solid #FFFFFF;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg) translate(-1px, -1px);
+    }
+    .wl-toggle-input:focus-visible + .wl-toggle-box {
+      box-shadow: 0 0 0 3px rgba(122, 106, 85, 0.25);
+    }
+    .wl-help {
+      font-family: var(--sans);
+      font-style: italic;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin: 4px 0 8px;
+    }
+    /* Off-screen honeypot — real people never see it; naive bots fill it
+       in and the submit handler silently discards the request. */
+    .wl-honeypot {
+      position: absolute;
+      left: -9999px;
+      top: -9999px;
+      width: 1px; height: 1px;
+      overflow: hidden;
+    }
+
+    .wl-submit-btn {
+      margin-top: 24px;
+      align-self: center;
+      min-width: 220px;
+    }
+    .wl-submit-btn[disabled] { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .wl-thankyou {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 24px 0 12px;
+      text-align: center;
+    }
+    .wl-thankyou-ornament {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40%;
+      margin: 0 auto 18px;
+    }
+    .wl-ornament-line { flex: 1; height: 0.5px; background: var(--primary-light); }
+    .wl-ornament-diamond { color: var(--primary-light); font-size: 12px; margin: 0 8px; }
+    .wl-thankyou-title {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 34px;
+      color: var(--text);
+      margin: 0 0 12px;
+    }
+    .wl-thankyou-body {
       font-family: var(--sans);
       font-size: 16px;
-      background: transparent;
-      color: var(--text);
+      color: var(--text-secondary);
+      line-height: 1.55;
+      margin: 0;
     }
-    .email-row input[type="email"]::placeholder { color: var(--text-muted); }
-    .email-row button {
-      border: none;
-      padding: 12px 26px;
-      background: var(--text);
-      color: var(--bg);
-      border-radius: 999px;
-      font-family: var(--sans);
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.15s ease;
-    }
-    .email-row button:hover { transform: translateY(-1px); }
+    .wl-thankyou-email { font-weight: 600; color: var(--text); }
 
     .waitlist-fineprint {
       margin-top: 20px;
@@ -1584,9 +1746,8 @@
 
     @media (max-width: 600px) {
       .role-picker { grid-template-columns: repeat(2, 1fr); border-radius: var(--radius); }
-      .email-row { flex-direction: column; border-radius: var(--radius); padding: 8px; }
-      .email-row input[type="email"] { padding: 14px 12px; }
-      .email-row button { width: 100%; }
+      .wl-row { grid-template-columns: 1fr; }
+      .wl-submit-btn { width: 100%; min-width: 0; }
     }
 
     /* Footer --------------------------------------------------------- */
@@ -1681,23 +1842,10 @@
         <p>Schedule, photos, travel, songs, messages, and a built-in AI assistant that answers every question. Everything your guests need for the weekend, in one beautiful place they'll open every day.</p>
         <div class="hero-ctas">
           <a href="#waitlist" class="btn btn-primary btn-lg">Join the waitlist</a>
-          <a href="#features" class="btn btn-ghost btn-lg">See what's inside</a>
-        </div>
-        <div class="stores">
-          <a class="store-badge" href="https://apps.apple.com/us/app/tetherly-wedding-companion/id6762950813" aria-label="Download on the App Store">
-            <svg class="store-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.53 4.08zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
-            <span>
-              <span class="store-label">Download on the</span>
-              <span class="store-name">App Store</span>
-            </span>
+          <a href="https://apps.apple.com/us/app/tetherly-wedding-companion/id6762950813" class="btn btn-ghost btn-lg" aria-label="Download on the App Store">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.53 4.08zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+            Download
           </a>
-          <span class="store-badge disabled" aria-label="Android coming soon">
-            <svg class="store-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85a.637.637 0 0 0-.83.22l-1.88 3.24a11.43 11.43 0 0 0-8.94 0L5.65 5.67a.643.643 0 0 0-.87-.2c-.28.18-.37.54-.22.83L6.4 9.48A10.78 10.78 0 0 0 1 18h22a10.78 10.78 0 0 0-5.4-8.52M7 15.25a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5m10 0a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5"/></svg>
-            <span>
-              <span class="store-label">Coming soon</span>
-              <span class="store-name">to Android</span>
-            </span>
-          </span>
         </div>
         <p class="hero-note">Currently onboarding weddings personally. Join the waitlist and we'll get in touch.</p>
       </div>
@@ -2235,7 +2383,7 @@
           </ul>
         </div>
         <div class="audience-visual">
-          <div class="ask-chat">
+          <div class="ask-chat" id="askChat">
             <div class="ask-header">
               <span class="ask-header-mark">✦</span>
               <span>Ask</span>
@@ -2245,10 +2393,20 @@
             </div>
             <div class="ask-msg ai">
               <div class="ask-avatar">✦</div>
-              <div class="ask-bubble">Welcome Night is festive-casual: breezy shirts, sundresses, comfortable shoes for the rooftop terrace. Warm neutrals like dusty rose or champagne fit the palette. It'll cool off by the water after sunset, so bring a light layer!</div>
+              <div class="ask-bubble ask-answer">
+                <span class="ask-loading" aria-hidden="true"><span></span><span></span><span></span></span>
+                <span class="ask-text">Welcome Night is festive-casual: breezy shirts, sundresses, comfortable shoes for the rooftop terrace. Warm neutrals like dusty rose or champagne fit the palette. It'll cool off by the water after sunset, so bring a light layer!</span>
+              </div>
             </div>
             <div class="ask-msg user">
               <div class="ask-bubble">Is the ceremony indoors?</div>
+            </div>
+            <div class="ask-msg ai">
+              <div class="ask-avatar">✦</div>
+              <div class="ask-bubble ask-answer">
+                <span class="ask-loading" aria-hidden="true"><span></span><span></span><span></span></span>
+                <span class="ask-text">Outdoors, in the Fairmont garden at 5 PM. We've got tents on standby if it rains — you'll get a push if plans change.</span>
+              </div>
             </div>
           </div>
         </div>
@@ -2425,44 +2583,97 @@
     <div class="container waitlist-inner">
       <div class="eyebrow">Join the waitlist</div>
       <h2>We're onboarding weddings <em>personally</em> right now.</h2>
-      <p class="lead" style="margin-left: auto; margin-right: auto;">Tell us a little about your wedding, agency, or vendor practice, and we'll be in touch with next steps.</p>
+      <p class="lead" style="margin-left: auto; margin-right: auto;">Tell us a little about your wedding and we'll be in touch with next steps.</p>
 
-      <!--
-        Zero-backend default: this form uses mailto: so submissions land in
-        the Tetherly inbox with no extra service required. When you're ready,
-        swap the <form action="..."> to a Formspree, Loops, ConvertKit, or
-        Buttondown endpoint — the field names below are already sensible.
-      -->
-      <form class="waitlist-form" action="mailto:tetherly.app@gmail.com" method="post" enctype="text/plain">
+      <form class="waitlist-form" id="waitlistForm" novalidate>
         <div class="role-picker" role="radiogroup" aria-label="I am a...">
           <label>
-            <input type="radio" name="role" value="Couple" checked />
+            <input type="radio" name="role" value="couple" checked />
             <span>Couple</span>
           </label>
           <label>
-            <input type="radio" name="role" value="Planner" />
+            <input type="radio" name="role" value="planner" />
             <span>Planner</span>
           </label>
           <label>
-            <input type="radio" name="role" value="Vendor" />
+            <input type="radio" name="role" value="vendor" />
             <span>Vendor</span>
           </label>
           <label>
-            <input type="radio" name="role" value="Just curious" />
-            <span>Just curious</span>
+            <input type="radio" name="role" value="other" />
+            <span>Other</span>
           </label>
         </div>
 
-        <div class="email-row">
-          <label for="waitlist-email" class="sr-only">Email address</label>
-          <input id="waitlist-email" type="email" name="email" placeholder="you@example.com" required autocomplete="email" />
-          <button type="submit">Get on the list</button>
+        <div class="wl-field">
+          <label class="wl-label" for="wl-email">Email</label>
+          <input class="wl-input" id="wl-email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required />
+          <p class="wl-checking" id="wl-email-checking" hidden>Checking email…</p>
+          <p class="wl-warning" id="wl-email-warning" hidden></p>
+        </div>
+
+        <div class="wl-extras" id="wl-extras">
+          <div class="wl-field">
+            <label class="wl-label" for="wl-couple">Name(s) <span class="wl-optional">(optional)</span></label>
+            <input class="wl-input" id="wl-couple" name="couple" type="text" placeholder="e.g. Emma & James" autocomplete="name" />
+          </div>
+
+          <div class="wl-field">
+            <label class="wl-label" for="wl-date">Wedding date <span class="wl-optional">(optional)</span></label>
+            <input class="wl-input" id="wl-date" name="date" type="date" />
+          </div>
+
+          <label class="wl-toggle">
+            <input class="wl-toggle-input" type="checkbox" id="wl-multi" />
+            <span class="wl-toggle-box" aria-hidden="true"></span>
+            <span>It's a multi-day celebration</span>
+          </label>
+
+          <div class="wl-field" id="wl-endDate-field" hidden>
+            <label class="wl-label" for="wl-endDate">End date</label>
+            <input class="wl-input" id="wl-endDate" name="endDate" type="date" />
+          </div>
+
+          <p class="wl-help">Dates can be changed later.</p>
+
+          <div class="wl-row">
+            <div class="wl-field">
+              <label class="wl-label" for="wl-guests">Guests <span class="wl-optional">(optional)</span></label>
+              <input class="wl-input" id="wl-guests" name="guestCount" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="e.g. 120" />
+            </div>
+            <div class="wl-field">
+              <label class="wl-label" for="wl-city">City or venue <span class="wl-optional">(optional)</span></label>
+              <input class="wl-input" id="wl-city" name="city" type="text" placeholder="e.g. Montreux" />
+            </div>
+          </div>
+
+          <div class="wl-field">
+            <label class="wl-label" for="wl-notes">Notes <span class="wl-optional">(optional)</span></label>
+            <textarea class="wl-input wl-textarea" id="wl-notes" name="notes" rows="4" placeholder="Tell us a bit more about your wedding — events, hotels, travel info, and whether this is a destination wedding."></textarea>
+          </div>
+        </div>
+
+        <p class="wl-error" id="wl-error" hidden></p>
+
+        <button type="submit" class="wl-submit-btn btn btn-primary btn-lg" id="wl-submit">
+          <span id="wl-submit-label">Get on the list</span>
+        </button>
+
+        <div class="wl-honeypot" aria-hidden="true">
+          <label>Website<input type="text" id="wl-website" name="website" tabindex="-1" autocomplete="off" /></label>
         </div>
       </form>
 
-      <p class="waitlist-fineprint">
-        We'll reach out when we can bring your wedding onto Tetherly, or answer whatever you're curious about.
-      </p>
+      <div class="wl-thankyou" id="waitlistThankyou" hidden>
+        <div class="wl-thankyou-ornament" aria-hidden="true">
+          <span class="wl-ornament-line"></span>
+          <span class="wl-ornament-diamond">◆</span>
+          <span class="wl-ornament-line"></span>
+        </div>
+        <h3 class="wl-thankyou-title">Thank you!</h3>
+        <p class="wl-thankyou-body">We received your request. We'll reach out at <span class="wl-thankyou-email" id="wl-thankyou-email"></span> within a few days to get your wedding set up.</p>
+      </div>
+
     </div>
   </section>
 
@@ -2511,6 +2722,285 @@
 </footer>
 
 <script>
+  // Waitlist form → Supabase. Two shapes:
+  //  - Simple (default): role + email → waitlist_signups row + admin email
+  //  - Rich (Couple + expanded "Tell us more" section): waitlist_signups
+  //    row PLUS a mirrored wedding_requests row (so the existing in-app
+  //    triage flow keeps picking couples up) + rich admin email +
+  //    couple confirmation reply. Both paths hit the same
+  //    send-wedding-request edge function; it adapts by payload shape.
+  // The anon key below is already public in the shipped app bundle, so
+  // exposing it here doesn't leak anything new.
+  (function () {
+    const SUPABASE_URL = 'https://anezjniflzoxfzxyctja.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_4uSK3ecrM5RBce-3aDh_cw_2YjutNTQ';
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    const form = document.getElementById('waitlistForm');
+    const thankyou = document.getElementById('waitlistThankyou');
+    if (!form || !thankyou) return;
+
+    const el = (id) => document.getElementById(id);
+    const emailEl = el('wl-email');
+    const emailCheckingEl = el('wl-email-checking');
+    const emailWarningEl = el('wl-email-warning');
+    const extrasEl = el('wl-extras');
+    const coupleEl = el('wl-couple');
+    const dateEl = el('wl-date');
+    const multiEl = el('wl-multi');
+    const endField = el('wl-endDate-field');
+    const endDateEl = el('wl-endDate');
+    const guestsEl = el('wl-guests');
+    const cityEl = el('wl-city');
+    const notesEl = el('wl-notes');
+    const websiteEl = el('wl-website');
+    const errorEl = el('wl-error');
+    const submitBtn = el('wl-submit');
+    const submitLabel = el('wl-submit-label');
+    const thankyouEmailEl = el('wl-thankyou-email');
+    const roleInputs = form.querySelectorAll('input[name="role"]');
+
+    let emailWarning = null;
+
+    const setHidden = (node, hidden) => {
+      if (hidden) node.setAttribute('hidden', '');
+      else node.removeAttribute('hidden');
+    };
+    const showError = (msg) => {
+      if (!msg) { errorEl.textContent = ''; setHidden(errorEl, true); return; }
+      errorEl.textContent = msg;
+      setHidden(errorEl, false);
+    };
+    const getRole = () => {
+      const checked = form.querySelector('input[name="role"]:checked');
+      return checked ? checked.value : 'couple';
+    };
+
+    roleInputs.forEach((r) => r.addEventListener('change', () => showError('')));
+
+    // Toggle end-date field with the multi-day checkbox.
+    multiEl.addEventListener('change', () => {
+      setHidden(endField, !multiEl.checked);
+      if (!multiEl.checked) endDateEl.value = '';
+    });
+
+    emailEl.addEventListener('input', () => {
+      if (emailWarning) { emailWarning = null; setHidden(emailWarningEl, true); }
+      showError('');
+      // First keystroke in the email field reveals the rest of the form
+      // (couple/wedding details). Stays open once shown so the layout
+      // doesn't jump if the user clears the field.
+      if (emailEl.value.trim()) extrasEl.classList.add('is-visible');
+    });
+    coupleEl.addEventListener('input', () => showError(''));
+    dateEl.addEventListener('input', () => showError(''));
+    endDateEl.addEventListener('input', () => showError(''));
+    guestsEl.addEventListener('input', () => {
+      guestsEl.value = guestsEl.value.replace(/[^0-9]/g, '');
+    });
+
+    // On blur, do the same non-blocking MX-record check the app does —
+    // catches typos like "gmial.com" before we hit the DB.
+    emailEl.addEventListener('blur', async () => {
+      const trimmed = emailEl.value.trim();
+      if (!trimmed || !EMAIL_RE.test(trimmed)) {
+        emailWarning = null; setHidden(emailWarningEl, true); return;
+      }
+      const domain = trimmed.split('@')[1];
+      setHidden(emailCheckingEl, false);
+      setHidden(emailWarningEl, true);
+      try {
+        const res = await fetch(
+          `https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=MX`,
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        const hasMx = Array.isArray(data.Answer)
+          && data.Answer.some((a) => a && a.type === 15);
+        if (data.Status === 3) {
+          emailWarning = "We couldn't find that domain. Please double-check your email.";
+        } else if (!hasMx) {
+          emailWarning = `We couldn't find an email server for ${domain}. Please double-check your email.`;
+        } else {
+          emailWarning = null;
+        }
+        if (emailWarning) {
+          emailWarningEl.textContent = emailWarning;
+          setHidden(emailWarningEl, false);
+        }
+      } catch { /* network hiccups shouldn't block a legit signup */ }
+      finally {
+        setHidden(emailCheckingEl, true);
+      }
+    });
+
+    const validate = (hasWeddingDetails) => {
+      const email = emailEl.value.trim();
+      if (!email) return 'Please enter your email.';
+      if (!EMAIL_RE.test(email)) return 'That email doesn’t look right.';
+      if (emailWarning) return emailWarning;
+      if (hasWeddingDetails) {
+        const start = dateEl.value;
+        const end = endDateEl.value;
+        // In the expanded couple section, couple name + date are only
+        // required if the couple actually filled anything in — a partial
+        // fill (name but no date, or date but no name) is what we catch.
+        const partialCouple = !!coupleEl.value.trim() !== !!start;
+        if (partialCouple) {
+          return 'Please fill in both the couple name and the wedding date, or clear both.';
+        }
+        if (multiEl.checked && !end) return 'Please enter the end date, or turn off multi-day.';
+        if (multiEl.checked && end && end < start) return 'End date must be after the start date.';
+      }
+      return null;
+    };
+
+    const setLoading = (loading) => {
+      submitBtn.disabled = loading;
+      submitLabel.textContent = loading ? 'Sending…' : 'Get on the list';
+    };
+
+    const supabaseFetch = (path, init) => {
+      return fetch(`${SUPABASE_URL}${path}`, {
+        ...init,
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+          ...(init && init.headers ? init.headers : {}),
+        },
+      });
+    };
+
+    const mapDbError = (errText) => {
+      const lc = (errText || '').toLowerCase();
+      if (lc.includes('rate_limited')) {
+        return 'You just submitted a request. Please wait a minute before trying again.';
+      }
+      if (lc.includes('disposable_email')) {
+        return 'Please use a non-disposable email address.';
+      }
+      return null;
+    };
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      showError('');
+      const role = getRole();
+      const couple = coupleEl.value.trim();
+      const start = dateEl.value;
+      const hasWeddingDetails = !!(couple || start || guestsEl.value || cityEl.value || notesEl.value.trim() || multiEl.checked);
+      // Only mirror into wedding_requests when the person submitting IS
+      // the couple — otherwise the wedding_requests row would carry a
+      // planner's / family member's email under the couple's name, which
+      // confuses the existing in-app triage.
+      const isFullWeddingRequest = role === 'couple' && !!couple && !!start;
+
+      const msg = validate(hasWeddingDetails);
+      if (msg) { showError(msg); return; }
+      setLoading(true);
+
+      const email = emailEl.value.trim();
+      const parsedGuests = parseInt(guestsEl.value.trim(), 10);
+      const guestCount = Number.isFinite(parsedGuests) ? parsedGuests : null;
+      const weddingDateEnd = multiEl.checked && endDateEl.value ? endDateEl.value : null;
+
+      // Honeypot: bot filled the hidden field. Pretend success so it
+      // doesn't retry, but skip every DB / email call.
+      if (websiteEl.value.trim()) {
+        thankyouEmailEl.textContent = email;
+        setHidden(form, true);
+        setHidden(thankyou, false);
+        setLoading(false);
+        return;
+      }
+
+      const waitlistRow = {
+        email,
+        role,
+        couple_name: couple || null,
+        wedding_date_start: start || null,
+        wedding_date_end: weddingDateEnd,
+        guest_count: guestCount,
+        city: cityEl.value.trim() || null,
+        notes: notesEl.value.trim() || null,
+      };
+
+      // 1) Always land the row in waitlist_signups.
+      try {
+        const res = await supabaseFetch('/rest/v1/waitlist_signups', {
+          method: 'POST',
+          headers: { 'Prefer': 'return=minimal' },
+          body: JSON.stringify(waitlistRow),
+        });
+        if (!res.ok) {
+          const errText = await res.text().catch(() => '');
+          showError(mapDbError(errText) ?? 'Something went wrong saving your request. Please try again.');
+          setLoading(false);
+          return;
+        }
+      } catch {
+        showError('Network hiccup — please try again in a moment.');
+        setLoading(false);
+        return;
+      }
+
+      // 2) If it's a full couple submission (Couple role + couple name +
+      //    wedding date), also mirror into wedding_requests so the
+      //    existing in-app triage flow picks them up too. This one is
+      //    best-effort — waitlist_signups is the source of truth for web
+      //    signups.
+      if (isFullWeddingRequest) {
+        try {
+          await supabaseFetch('/rest/v1/wedding_requests', {
+            method: 'POST',
+            headers: { 'Prefer': 'return=minimal' },
+            body: JSON.stringify({
+              couple_name: couple,
+              wedding_date_start: start,
+              wedding_date_end: weddingDateEnd,
+              email,
+              guest_count: guestCount,
+              city: waitlistRow.city,
+              notes: waitlistRow.notes,
+            }),
+          });
+        } catch (err) {
+          console.warn('wedding_requests mirror failed (waitlist_signups still saved):', err);
+        }
+      }
+
+      // 3) Fire-and-forget email notification via the edge function.
+      //    Always pass every field the user filled in so the admin email
+      //    reflects the full submission (a planner describing a couple's
+      //    wedding should still see the wedding info in the admin
+      //    notification). The function decides based on role whether to
+      //    send a couple confirmation reply. Failing here doesn't fail
+      //    the request.
+      supabaseFetch('/functions/v1/send-wedding-request', {
+        method: 'POST',
+        body: JSON.stringify({
+          email,
+          role,
+          coupleName: couple || null,
+          weddingDateStart: start || null,
+          weddingDateEnd,
+          guestCount,
+          city: waitlistRow.city,
+          notes: waitlistRow.notes,
+          source: 'web',
+        }),
+      }).catch((err) => console.warn('send-wedding-request invoke failed:', err));
+
+      thankyouEmailEl.textContent = email;
+      setHidden(form, true);
+      setHidden(thankyou, false);
+      setLoading(false);
+      // Scroll the thank-you into view when the form was very tall.
+      thankyou.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  })();
+
   const header = document.getElementById('siteHeader');
   const onScroll = () => {
     if (window.scrollY > 8) header.classList.add('scrolled');
@@ -2543,6 +3033,63 @@
     }
     tick();
     setInterval(tick, 1000);
+  })();
+
+  // Ask chat animation — loops through: user question fades in →
+  // assistant bubble appears with a 3-dot "thinking" indicator →
+  // indicator swaps for the answer text → second question → repeats.
+  // Mirrors the app's ChatMessage.pending state (an ActivityIndicator
+  // spinner inside an otherwise-empty assistant bubble that gets
+  // replaced with the answer once it arrives).
+  (function () {
+    const chat = document.getElementById('askChat');
+    if (!chat) return;
+    const messages = Array.from(chat.querySelectorAll('.ask-msg'));
+    const answers = Array.from(chat.querySelectorAll('.ask-answer'));
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (reducedMotion.matches) {
+      messages.forEach((m) => m.classList.add('is-visible'));
+      answers.forEach((a) => a.classList.add('is-answered'));
+      return;
+    }
+
+    // Frame = (visible message indexes, answered answer indexes, dwell).
+    // Dwell is how long we stay in the frame before advancing.
+    const frames = [
+      { v: [],           a: [],     dwell:  500 }, // 0 — reset (empty chat)
+      { v: [0],          a: [],     dwell:  950 }, // 1 — user Q1
+      { v: [0, 1],       a: [],     dwell: 1400 }, // 2 — AI1 thinking
+      { v: [0, 1],       a: [0],    dwell: 3300 }, // 3 — AI1 answered
+      { v: [0, 1, 2],    a: [0],    dwell:  950 }, // 4 — user Q2
+      { v: [0, 1, 2, 3], a: [0],    dwell: 1400 }, // 5 — AI2 thinking
+      { v: [0, 1, 2, 3], a: [0, 1], dwell: 4200 }, // 6 — AI2 answered
+    ];
+
+    let idx = 0;
+    let timer = null;
+    let paused = false;
+
+    const applyFrame = () => {
+      const f = frames[idx];
+      messages.forEach((m, i) => m.classList.toggle('is-visible', f.v.includes(i)));
+      answers.forEach((a, i) => a.classList.toggle('is-answered', f.a.includes(i)));
+    };
+    const tick = () => {
+      applyFrame();
+      if (paused) return;
+      timer = setTimeout(() => {
+        idx = (idx + 1) % frames.length;
+        tick();
+      }, frames[idx].dwell);
+    };
+    const stop = () => { if (timer) { clearTimeout(timer); timer = null; } };
+    const start = () => { stop(); tick(); };
+
+    // Pause on hover so a reader can study the last frame.
+    chat.addEventListener('mouseenter', () => { paused = true; stop(); });
+    chat.addEventListener('mouseleave', () => { paused = false; start(); });
+
+    start();
   })();
 
   // Phone screen carousel — auto-rotates through Home, Schedule,
