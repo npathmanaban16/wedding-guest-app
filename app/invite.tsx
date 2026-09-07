@@ -19,6 +19,7 @@ import type { WeddingRow } from '@/services/wedding';
 import { supabase } from '@/lib/supabase';
 import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 import { awaitHeroImage, prefetchHeroImage } from '@/utils/heroImage';
+import { isNetworkError } from '@/utils/serverError';
 
 // Shared normalization — mirrors WeddingContext so invite-screen validation
 // agrees with the validation the provider applies after login.
@@ -109,8 +110,17 @@ export default function InviteScreen() {
       // login.tsx for the rationale. Capped at 2.5s inside the helper.
       await awaitHeroImage(resolved.wedding.hero_image_url);
       router.replace('/(tabs)');
-    } catch {
-      setError("Couldn't reach the server. Please check your connection and try again.");
+    } catch (err) {
+      // Logged, not swallowed: every backend failure used to surface as
+      // "couldn't reach the server" with nothing written down, so an auth
+      // rejection, an RLS denial, or a paused project all looked to us
+      // like the guest had bad wifi.
+      console.error('[invite] login failed', err);
+      setError(
+        isNetworkError(err)
+          ? "Couldn't reach the server. Please check your connection and try again."
+          : "The server couldn't handle that right now. Please try again in a moment.",
+      );
       shake();
     } finally {
       setLoading(false);

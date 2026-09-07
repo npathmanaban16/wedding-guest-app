@@ -1,5 +1,5 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, AppState, Image, StyleSheet, Text, View } from 'react-native';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, AppState, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   DEFAULT_WEDDING_ID,
@@ -14,7 +14,7 @@ import {
   type WeddingPackingList,
   type WeddingSchedulePage,
 } from '@/constants/weddingData';
-import { Colors } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 import {
   fetchAdmins,
   fetchGuests,
@@ -33,6 +33,7 @@ import { fetchWeddingPackingList } from '@/services/packing';
 import { fetchWeddingSchedulePage } from '@/services/schedulePage';
 import { fetchGuestGroups, type GuestGroup } from '@/services/guestGroups';
 import { prefetchHeroImage } from '@/utils/heroImage';
+import { describeServerError } from '@/utils/serverError';
 
 export type { AdminRole, Gender, GuestGroup };
 
@@ -216,6 +217,13 @@ const AUTH_STORAGE_KEY = '@wedding_guest_name';
 // "[object Object]"). Feeding that into Supabase gives a 22P02 uuid error.
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+// A wedding load that fails once isn't a verdict — a phone waking on a weak
+// connection, or a backend that has to spin up, routinely drops the first
+// request. Retry a couple of times with backoff before showing the error
+// screen; past that it's the guest's call via "Try again".
+const LOAD_ATTEMPTS = 3;
+const LOAD_RETRY_DELAYS_MS = [800, 2500];
+
 function normalizeName(name: string): string {
   return name.toLowerCase().trim().replace(/\s+/g, ' ');
 }
@@ -254,6 +262,21 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
   const [loadState, setLoadState] = useState<'idle' | 'loading' | 'ready' | 'error'>(
     DEFAULT_WEDDING_ID ? 'loading' : 'idle',
   );
+  // Server-side detail behind a failed load (auth rejected, RLS denial,
+  // missing table…). Null for a plain connectivity drop, where "check your
+  // connection" is the honest advice.
+  const [loadErrorDetail, setLoadErrorDetail] = useState<string | null>(null);
+  // Bumped by the error screen's "Try again". The loader keys off this
+  // instead of its own output: an earlier version listed `wedding` and
+  // `loadState` in the load effect's deps, so every failure re-ran the
+  // effect, which flipped state back to 'loading' and refetched — an
+  // unbounded retry loop that hammered Supabase and flickered the error
+  // screen for as long as the backend stayed down.
+  const [retryToken, setRetryToken] = useState(0);
+  const retryLoad = useCallback(() => setRetryToken((t) => t + 1), []);
+  // Wedding id whose slices are already in state. Stands in for reading
+  // `wedding`/`loadState` inside the effect so both stay out of its deps.
+  const loadedWeddingIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     // Only runs on SaaS builds — N&N initialized sessionReady=true above.
@@ -273,7 +296,9 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!weddingId) {
+      loadedWeddingIdRef.current = null;
       setLoadState('idle');
+      setLoadErrorDetail(null);
       setWedding(null);
       setGuests([]);
       setAdmins([]);
@@ -299,66 +324,81 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
     // weddingId. If they already match, skip re-fetching — otherwise we'd
     // flip loadState back to 'loading' for a render, unmount the tree, and
     // eat router.replace('/login').
-    if (wedding?.id === weddingId && loadState === 'ready') {
+    if (loadedWeddingIdRef.current === weddingId) {
       return;
     }
     setLoadState('loading');
+    setLoadErrorDetail(null);
     let cancelled = false;
     (async () => {
-      try {
-        const [w, g, a, e, gd, pl, sp, gg] = await Promise.all([
-          fetchWedding(weddingId),
-          fetchGuests(weddingId),
-          fetchAdmins(weddingId),
-          // Events / guide / packing / schedule-page / groups failing
-          // shouldn't take the whole wedding load down — we fall back
-          // to code defaults / no gating if any is unreachable.
-          fetchWeddingEvents(weddingId).catch((err) => {
-            console.warn('[WeddingProvider] failed to load wedding_events', err);
-            return [];
-          }),
-          fetchWeddingGuide(weddingId).catch((err) => {
-            console.warn('[WeddingProvider] failed to load wedding_guides', err);
-            return null;
-          }),
-          fetchWeddingPackingList(weddingId).catch((err) => {
-            console.warn('[WeddingProvider] failed to load wedding_packing_lists', err);
-            return null;
-          }),
-          fetchWeddingSchedulePage(weddingId).catch((err) => {
-            console.warn('[WeddingProvider] failed to load wedding_schedule_pages', err);
-            return null;
-          }),
-          fetchGuestGroups(weddingId).catch((err) => {
-            console.warn('[WeddingProvider] failed to load guest_groups', err);
-            return [] as GuestGroup[];
-          }),
-        ]);
-        if (cancelled) return;
-        if (!w) {
-          // Stored invite points at a wedding that no longer exists — drop it
-          // so the user falls back to the invite screen.
-          console.warn('[WeddingProvider] wedding not found; clearing session', weddingId);
-          await AsyncStorage.removeItem(WEDDING_ID_STORAGE_KEY);
-          setWeddingId(null);
+      for (let attempt = 1; attempt <= LOAD_ATTEMPTS; attempt += 1) {
+        try {
+          const [w, g, a, e, gd, pl, sp, gg] = await Promise.all([
+            fetchWedding(weddingId),
+            fetchGuests(weddingId),
+            fetchAdmins(weddingId),
+            // Events / guide / packing / schedule-page / groups failing
+            // shouldn't take the whole wedding load down — we fall back
+            // to code defaults / no gating if any is unreachable.
+            fetchWeddingEvents(weddingId).catch((err) => {
+              console.warn('[WeddingProvider] failed to load wedding_events', err);
+              return [];
+            }),
+            fetchWeddingGuide(weddingId).catch((err) => {
+              console.warn('[WeddingProvider] failed to load wedding_guides', err);
+              return null;
+            }),
+            fetchWeddingPackingList(weddingId).catch((err) => {
+              console.warn('[WeddingProvider] failed to load wedding_packing_lists', err);
+              return null;
+            }),
+            fetchWeddingSchedulePage(weddingId).catch((err) => {
+              console.warn('[WeddingProvider] failed to load wedding_schedule_pages', err);
+              return null;
+            }),
+            fetchGuestGroups(weddingId).catch((err) => {
+              console.warn('[WeddingProvider] failed to load guest_groups', err);
+              return [] as GuestGroup[];
+            }),
+          ]);
+          if (cancelled) return;
+          if (!w) {
+            // Stored invite points at a wedding that no longer exists — drop it
+            // so the user falls back to the invite screen.
+            console.warn('[WeddingProvider] wedding not found; clearing session', weddingId);
+            await AsyncStorage.removeItem(WEDDING_ID_STORAGE_KEY);
+            setWeddingId(null);
+            return;
+          }
+          setWedding(w);
+          setGuests(g);
+          setAdmins(a);
+          setDbEvents(e);
+          setDbGuide(gd);
+          setDbPackingList(pl);
+          setDbSchedulePage(sp);
+          setGuestGroups(gg);
+          loadedWeddingIdRef.current = weddingId;
+          setLoadState('ready');
           return;
+        } catch (err) {
+          if (cancelled) return;
+          console.error(
+            `[WeddingProvider] failed to load wedding data (attempt ${attempt}/${LOAD_ATTEMPTS})`,
+            err,
+          );
+          if (attempt === LOAD_ATTEMPTS) {
+            setLoadErrorDetail(describeServerError(err));
+            setLoadState('error');
+            return;
+          }
+          await new Promise((resolve) => setTimeout(resolve, LOAD_RETRY_DELAYS_MS[attempt - 1]));
+          if (cancelled) return;
         }
-        setWedding(w);
-        setGuests(g);
-        setAdmins(a);
-        setDbEvents(e);
-        setDbGuide(gd);
-        setDbPackingList(pl);
-        setDbSchedulePage(sp);
-        setGuestGroups(gg);
-        setLoadState('ready');
-      } catch (err) {
-        console.error('[WeddingProvider] failed to load wedding data', err);
-        if (!cancelled) setLoadState('error');
       }
     })();
     return () => { cancelled = true; };
-  }, [weddingId, wedding, loadState]);
+  }, [weddingId, retryToken]);
 
   const applyResolvedWedding = useCallback(
     async ({ wedding: w, guests: g, admins: a }: ResolvedWedding): Promise<void> => {
@@ -409,6 +449,7 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
       setDbPackingList(pl);
       setDbSchedulePage(sp);
       setGuestGroups(gg);
+      loadedWeddingIdRef.current = w.id;
       setLoadState('ready');
       setWeddingId(w.id);
     },
@@ -793,8 +834,21 @@ export function WeddingProvider({ children }: { children: React.ReactNode }) {
   if (loadState === 'error') {
     return (
       <View style={styles.center}>
-        <Text style={styles.errorText}>Couldn't reach the server.</Text>
-        <Text style={styles.errorText}>Please check your connection and restart the app.</Text>
+        <Text style={styles.errorText}>Couldn't load your wedding.</Text>
+        <Text style={styles.errorText}>
+          {loadErrorDetail
+            ? 'The server answered with an error. Please try again in a moment.'
+            : 'Please check your connection and try again.'}
+        </Text>
+        {loadErrorDetail && <Text style={styles.errorDetail}>{loadErrorDetail}</Text>}
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={retryLoad}
+          activeOpacity={0.75}
+          accessibilityRole="button"
+        >
+          <Text style={styles.retryButtonText}>TRY AGAIN</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -879,5 +933,30 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     textAlign: 'center',
     marginTop: 8,
+  },
+  // Verbatim server message — deliberately small and muted: it's there so a
+  // guest can read it back to us, not as something they need to act on.
+  errorDetail: {
+    fontFamily: Fonts.sans,
+    fontSize: Typography.xs,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    marginTop: Spacing.md,
+  },
+  retryButton: {
+    paddingHorizontal: Spacing.xxl,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    marginTop: Spacing.xl,
+    minWidth: 180,
+  },
+  retryButtonText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: Typography.xs,
+    letterSpacing: 3,
+    color: Colors.primary,
   },
 });
