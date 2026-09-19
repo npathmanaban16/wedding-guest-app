@@ -92,6 +92,13 @@ export const ARJUN_ILA_WEDDING_ID = 'a0000000-0000-0000-0000-000000000003';
 // onboarding form matched to a Mexico City trip.
 export const SERENA_MATTHEW_WEDDING_ID = 'a0000000-0000-0000-0000-000000000004';
 
+// Sachi & Rahul — May 2027 wedding weekend on Beech Mountain, North
+// Carolina, across the Overlook Barn property (Mountain House, Mary's
+// Meadow, Cliffside Barn, Overlook Barn). Lodging up there is mostly
+// cabins rather than hotels, so their shortlist below leads with the
+// rental options guests actually book.
+export const SACHI_RAHUL_WEDDING_ID = 'a0000000-0000-0000-0000-000000000005';
+
 // Emma & James — the Tetherly demo wedding. Same venue (Fairmont Le
 // Montreux Palace) as N&N, one year forward, so the Montreux hotel
 // shortlist applies here too.
@@ -144,6 +151,14 @@ export function getTravelWindow(
       max: new Date('2027-11-10'),
       checkInInitial: new Date(2027, 10, 5),  // Fri 5 Nov 2027 — day before church ceremony
       checkOutInitial: new Date(2027, 10, 8), // Mon 8 Nov 2027 — morning after reception
+    };
+  }
+  if (weddingId === SACHI_RAHUL_WEDDING_ID) {
+    return {
+      min: new Date('2027-05-03'),
+      max: new Date('2027-05-13'),
+      checkInInitial: new Date(2027, 4, 6),  // Thu 6 May 2027 — Mehendi evening
+      checkOutInitial: new Date(2027, 4, 9), // Sun 9 May 2027 — morning after reception
     };
   }
   // Fallback: derive from the wedding_date field on the wedding row.
@@ -205,6 +220,17 @@ const HOTEL_OPTIONS_SERENA_MATTHEW = [
   'Hyatt Regency Mexico City',
 ];
 
+// Beech Mountain and Banner Elk run on cabins and small inns rather than
+// resort hotels, so the shortlist leads with the rental options most
+// guests will actually pick and names the two inns on the mountain itself.
+const HOTEL_OPTIONS_SACHI_RAHUL = [
+  'Cabin or rental on Beech Mountain',
+  'Beech Alpen Inn',
+  'Top of the Beech Inn',
+  'Cabin or rental in Banner Elk',
+  'Hotel in Boone or Blowing Rock',
+];
+
 export function getHotelOptionsForWedding(
   weddingId: string | null | undefined,
 ): string[] {
@@ -212,6 +238,7 @@ export function getHotelOptionsForWedding(
   if (weddingId === EMMA_JAMES_WEDDING_ID) return HOTEL_OPTIONS_NN;
   if (weddingId === ARJUN_ILA_WEDDING_ID) return HOTEL_OPTIONS_ARJUN_ILA;
   if (weddingId === SERENA_MATTHEW_WEDDING_ID) return HOTEL_OPTIONS_SERENA_MATTHEW;
+  if (weddingId === SACHI_RAHUL_WEDDING_ID) return HOTEL_OPTIONS_SACHI_RAHUL;
   return [];
 }
 
@@ -260,6 +287,14 @@ export function getArrivalPlaceholders(
     return {
       arrivalTime: 'e.g. 2:00 PM on Fri 5 Nov',
       flightNumber: 'e.g. AM1234 arriving MEX 2:00 PM',
+    };
+  }
+  // Most guests fly into Charlotte and drive roughly 2.5 hours up, so the
+  // hint pairs a late-morning landing with a mid-afternoon arrival.
+  if (weddingId === SACHI_RAHUL_WEDDING_ID) {
+    return {
+      arrivalTime: 'e.g. 2:30 PM on Thu 6 May',
+      flightNumber: 'e.g. AA1234 arriving CLT 11:00 AM',
     };
   }
   // Fallback: anchor the hint on the same check-in day the travel window
