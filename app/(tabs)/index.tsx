@@ -13,6 +13,7 @@ import {
   Platform,
   AppState,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -245,7 +246,16 @@ export default function HomeScreen() {
         style={[styles.heroImage, { paddingTop: insets.top + Spacing.xl }]}
         resizeMode="cover"
       >
-        <View style={styles.heroOverlay} />
+        <LinearGradient
+          colors={[
+            'rgba(0,0,0,0.26)',
+            'rgba(0,0,0,0.06)',
+            'rgba(0,0,0,0.42)',
+            'rgba(0,0,0,0.68)',
+          ]}
+          locations={[0, 0.34, 0.72, 1]}
+          style={styles.heroOverlay}
+        />
         <View style={styles.header}>
           <Text style={styles.heroGreeting}>Welcome, {firstName}</Text>
           <Text style={styles.heroCoupleNames}>{wedding.couple_names}</Text>
@@ -499,6 +509,15 @@ export default function HomeScreen() {
   );
 }
 
+// Soft drop shadow shared by every line of hero text. Cheap insurance
+// for the cases the gradient can't cover on its own — a couple who upload
+// a photo that is bright right where their names land.
+const heroTextShadow = {
+  textShadowColor: 'rgba(0,0,0,0.45)',
+  textShadowOffset: { width: 0, height: 1 },
+  textShadowRadius: 6,
+} as const;
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { paddingBottom: 40 },
@@ -514,9 +533,14 @@ const styles = StyleSheet.create({
     // flash — the earlier `Colors.textPrimary` version looked bad here.
     backgroundColor: Colors.background,
   },
+  // Bottom-weighted scrim rather than a flat wash. A uniform 28% black
+  // dimmed the whole photo and still lost the location line against a
+  // pale subject (white flowers, bright sky, snow). The gradient keeps
+  // the middle of the image near its true brightness and concentrates
+  // the darkening where the text actually sits, with a light top band so
+  // the status bar stays readable over a bright sky.
   heroOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.28)',
   },
   header: {
     alignItems: 'center',
@@ -526,9 +550,10 @@ const styles = StyleSheet.create({
   heroGreeting: {
     fontFamily: Fonts.sans,
     fontSize: Typography.sm,
-    color: 'rgba(255,255,255,0.75)',
+    color: 'rgba(255,255,255,0.92)',
     marginBottom: Spacing.sm,
     letterSpacing: 0.3,
+    ...heroTextShadow,
   },
   heroCoupleNames: {
     fontFamily: Fonts.serif,
@@ -537,6 +562,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 58,
     marginBottom: Spacing.md,
+    ...heroTextShadow,
   },
   ornamentRow: {
     flexDirection: 'row',
@@ -544,13 +570,18 @@ const styles = StyleSheet.create({
     width: '50%',
     marginBottom: Spacing.sm,
   },
-  heroOrnamentLine: { flex: 1, height: 0.5, backgroundColor: 'rgba(255,255,255,0.4)' },
-  heroOrnamentDiamond: { color: 'rgba(255,255,255,0.6)', fontSize: 9, marginHorizontal: Spacing.sm },
+  heroOrnamentLine: { flex: 1, height: 0.5, backgroundColor: 'rgba(255,255,255,0.55)' },
+  heroOrnamentDiamond: { color: 'rgba(255,255,255,0.75)', fontSize: 9, marginHorizontal: Spacing.sm },
+  // Full white at 12px rather than 70% white at 11px. Wide letter-spacing
+  // thins a line out considerably, so this one needs the contrast the
+  // couple's name can afford to give up.
   heroLocation: {
     fontFamily: Fonts.sansMedium,
-    fontSize: Typography.xs,
+    fontSize: 12,
     letterSpacing: 2.5,
-    color: 'rgba(255,255,255,0.7)',
+    color: Colors.white,
+    textAlign: 'center',
+    ...heroTextShadow,
   },
 
   countdownCard: {
