@@ -23,16 +23,14 @@
 -- Invite code:    SACHIRAHUL2027
 -- Admin logins:   Sachi Pathak, Rahul Sharma  (both seeded as admins)
 -- Admin password: SachiRahul   (home-tab admin unlock)
+-- Planner login: Sindu Seelam (role='planner'). The 'planner' role
+--                carries full admin powers in the app, so she gets the
+--                same toolkit as the couple behind the same password.
 -- Henna artists:  Priya Nair, Meera Joshi (role='henna_artist') —
 --                 placeholder names; swap once the real artists are
 --                 booked. They share one station and queue.
 --
 -- Placeholders to update once Sachi confirms details:
---   * planner_name is null — the Announcements composer only offers
---     "send as the planner" when this is set. One-liner once you have
---     the name:
---       update public.weddings set planner_name = 'Jordan'
---         where id = 'a0000000-0000-0000-0000-000000000005';
 --   * End times. Sachi gave start times only, so every event carries
 --     end_at = null and clients fall back to a 1-hour calendar block.
 --     Fill in end_at per event once the timeline is locked.
@@ -79,7 +77,7 @@ insert into public.weddings (
   'https://example.com/registry',
   null,
   '#6B7F5E',
-  null,
+  'Sindu Seelam',
   'https://example.com/photos',
   'SachiRahul'
 ) on conflict (id) do update set
@@ -93,10 +91,12 @@ insert into public.weddings (
   contact_email    = excluded.contact_email,
   registry_url     = excluded.registry_url,
   theme_color      = excluded.theme_color,
+  planner_name     = excluded.planner_name,
   photo_album_url  = excluded.photo_album_url,
   admin_password   = excluded.admin_password;
-  -- hero_image_url and planner_name intentionally NOT overwritten on
-  -- conflict so values set via the dashboard aren't clobbered by a re-run.
+  -- hero_image_url intentionally NOT overwritten on conflict — it points at
+  -- a file uploaded through the dashboard, not at anything this file knows,
+  -- so a re-run must not clobber it.
 
 
 -- ─── Guests ──────────────────────────────────────────────────────────────────
@@ -146,6 +146,24 @@ insert into public.wedding_admins (wedding_id, guest_name) values
   ('a0000000-0000-0000-0000-000000000005', 'Sachi Pathak'),
   ('a0000000-0000-0000-0000-000000000005', 'Rahul Sharma')
 on conflict (wedding_id, guest_name) do nothing;
+
+-- Wedding planner login. Unlike the vendor roles below, 'planner'
+-- carries full admin powers (see isAdmin in context/WeddingContext.tsx),
+-- so Sindu lands on the normal guest tabs and can unlock the same admin
+-- tools as Sachi and Rahul with the shared admin password. She is
+-- deliberately NOT in the guests table, so she stays out of the
+-- Attendees directory. To take the login away and leave only the
+-- "send as the planner" byline:
+--   delete from public.wedding_admins
+--    where wedding_id = 'a0000000-0000-0000-0000-000000000005'
+--      and guest_name = 'Sindu Seelam';
+insert into public.wedding_admins
+  (wedding_id, guest_name, is_wedding_party, gender, role)
+values
+  ('a0000000-0000-0000-0000-000000000005', 'Sindu Seelam', true, null, 'planner')
+on conflict (wedding_id, guest_name) do update set
+  is_wedding_party = excluded.is_wedding_party,
+  role             = excluded.role;
 
 -- Henna artist vendor logins (role='henna_artist'). Login-only, no admin
 -- powers; lands on /henna-artist after signing in. Two artists share one
