@@ -32,8 +32,9 @@
 --
 -- Placeholders to update once Sachi confirms details:
 --   * End times. Sachi gave start times only, so every event carries
---     end_at = null and clients fall back to a 1-hour calendar block.
---     Fill in end_at per event once the timeline is locked.
+--     end_at = null. Nothing in the app reads end_at today — the end time
+--     guests see is whatever is written into time_label — so this changes
+--     no screen, but fill both in once the timeline is locked.
 --   * Mountain House address. Mary's Meadow, Cliffside Barn and
 --     Overlook Barn are all on the Overlook Barn property at 830
 --     Elderberry Ridge Road; the Mountain House is seeded against the
@@ -253,8 +254,9 @@ insert into public.notifications (wedding_id, message, sender) values
 --
 -- All start times are stored as UTC. North Carolina is on EDT (UTC−4) in
 -- May, so e.g. 6:00 PM EDT on Thu 6 May 2027 = 2027-05-06T22:00:00Z.
--- end_at is null on every row — Sachi gave start times only. Clients fall
--- back to a 1-hour calendar block until real end times are confirmed.
+-- end_at is null on every row — Sachi gave start times only. No screen
+-- reads end_at today (the displayed end time comes from time_label), so
+-- this costs nothing until the real end times are confirmed.
 --
 -- Idempotent: re-running this seed upserts each row by (wedding_id, event_id).
 
