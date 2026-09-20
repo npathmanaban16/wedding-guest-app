@@ -133,7 +133,13 @@ insert into public.guests
   ('a0000000-0000-0000-0000-000000000005', 'Sameer Rao',       false, false, 'male',   null),
   ('a0000000-0000-0000-0000-000000000005', 'Grace Whitfield',  false, false, 'female', null),
   ('a0000000-0000-0000-0000-000000000005', 'Jun-ho Park',      false, false, 'male',   null),
-  ('a0000000-0000-0000-0000-000000000005', 'Farah Siddiqui',   false, false, 'female', null)
+  ('a0000000-0000-0000-0000-000000000005', 'Farah Siddiqui',   false, false, 'female', null),
+  -- Real testers added for the pitch, so Neha can hand someone a login
+  -- and watch them use it cold. gender is null on both — it is only used
+  -- to filter the packing list, and an unknown gender shows every item,
+  -- which is the right default until either of them says otherwise.
+  ('a0000000-0000-0000-0000-000000000005', 'Sayantanee Das',   false, false, null,     null),
+  ('a0000000-0000-0000-0000-000000000005', 'Guhan',            false, false, null,     null)
 on conflict (wedding_id, canonical_name) do update set
   is_wedding_party   = excluded.is_wedding_party,
   is_couple          = excluded.is_couple,
