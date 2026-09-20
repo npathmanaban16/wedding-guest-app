@@ -129,7 +129,6 @@ insert into public.guests
   ('a0000000-0000-0000-0000-000000000005', 'Elena Vasquez',    true,  false, 'female', 'partner'),
   ('a0000000-0000-0000-0000-000000000005', 'Dilip Pathak',     false, false, 'male',   null),
   ('a0000000-0000-0000-0000-000000000005', 'Hetal Pathak',     false, false, 'female', null),
-  ('a0000000-0000-0000-0000-000000000005', 'Anita Desai',      false, false, 'female', null),
   ('a0000000-0000-0000-0000-000000000005', 'Sameer Rao',       false, false, 'male',   null),
   ('a0000000-0000-0000-0000-000000000005', 'Grace Whitfield',  false, false, 'female', null),
   ('a0000000-0000-0000-0000-000000000005', 'Jun-ho Park',      false, false, 'male',   null),
