@@ -139,7 +139,7 @@ insert into public.guests
   -- to filter the packing list, and an unknown gender shows every item,
   -- which is the right default until either of them says otherwise.
   ('a0000000-0000-0000-0000-000000000005', 'Sayantanee Das',   false, false, null,     null),
-  ('a0000000-0000-0000-0000-000000000005', 'Guhan',            false, false, null,     null)
+  ('a0000000-0000-0000-0000-000000000005', 'Guhan Muruganandam', false, false, null,  null)
 on conflict (wedding_id, canonical_name) do update set
   is_wedding_party   = excluded.is_wedding_party,
   is_couple          = excluded.is_couple,
